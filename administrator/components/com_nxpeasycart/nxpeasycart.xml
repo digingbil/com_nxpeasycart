@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" method="upgrade" version="5.0">
     <name>COM_NXPEASYCART</name>
-    <creationDate>2024-06-28</creationDate>
-    <author>NXP Commerce</author>
-    <authorEmail>hello@nxp-commerce.local</authorEmail>
-    <authorUrl>https://nxp-commerce.local</authorUrl>
-    <copyright>Copyright (C) 2024 NXP Commerce. All rights reserved.</copyright>
+    <creationDate>2025-10-28</creationDate>
+    <author>nexusplugins.com</author>
+    <authorEmail>hello@nexusplugins.com</authorEmail>
+    <authorUrl>https://nexusplugins.com</authorUrl>
+    <copyright>Copyright (C) 2024 NXP Commerce - 2025 nexusplugins.com. All rights reserved.</copyright>
     <version>0.1.0</version>
+    <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <description>COM_NXPEASYCART_XML_DESCRIPTION</description>
 
     <namespace path="src">Nxp\EasyCart</namespace>
@@ -42,13 +43,13 @@
         <menu img="class:cart">COM_NXPEASYCART</menu>
 
         <submenu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=app" view="app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=products" view="products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_MENU_ORDERS</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=customers" view="customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=coupons" view="coupons">COM_NXPEASYCART_MENU_COUPONS</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=settings" view="settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
-            <menu link="index.php?option=com_nxpeasycart&amp;view=logs" view="logs">COM_NXPEASYCART_MENU_LOGS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=app" view="app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
+            <menu link="option=com_nxpeasycart&amp;view=products" view="products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_MENU_ORDERS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=customers" view="customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=coupons" view="coupons">COM_NXPEASYCART_MENU_COUPONS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=settings" view="settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=logs" view="logs">COM_NXPEASYCART_MENU_LOGS</menu>
         </submenu>
 
         <files>
@@ -57,6 +58,7 @@
             <folder>sql</folder>
             <folder>forms</folder>
             <folder>language</folder>
+            <folder>tmpl</folder>
             <filename>com_nxpeasycart.php</filename>
         </files>
 
@@ -71,6 +73,7 @@
 
         <files>
             <folder>src</folder>
+            <folder>tmpl</folder>
             <filename>com_nxpeasycart.php</filename>
         </files>
 
@@ -81,6 +84,6 @@
     </site>
 
     <updateservers>
-        <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nxp-commerce.local/com_nxpeasycart.xml</server>
+        <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nexusplugins.com/com_nxpeasycart.xml</server>
     </updateservers>
 </extension>

@@ -327,6 +327,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 -   Runtime dependencies are limited to the component’s needs (`psr/simple-cache`, `guzzlehttp/guzzle`, `ramsey/uuid`, `brick/money`).
 -   `joomla/joomla-cms` stays in `require-dev`—install it locally for tooling, but exclude it from release artifacts (`composer install --no-dev --optimize-autoloader`).
 -   During development, symlink `administrator/components/com_nxpeasycart/vendor` and `components/com_nxpeasycart/vendor` to the repo’s root `vendor/` directory so Joomla can load the same autoloader.
+-   Symlink the language files into Joomla (`administrator/language/en-GB/com_nxpeasycart*.ini` and `language/en-GB/com_nxpeasycart*.ini`) to avoid missing translations when working from a symlinked component.
 -   For deployment, generate a clean build (`composer install --no-dev`, `npm run build:admin`) and package the trimmed `vendor/` directory alongside component files. Never execute Composer inside `/var/www/html/j5.loc`.
 -   The component manifest is stored as `administrator/components/com_nxpeasycart/nxpeasycart.xml` (filename without the `com_` prefix) so Joomla Discover can detect it. After deploying files, run **System → Discover** (or `php cli/joomla.php extension:discover`) and then complete the install from the Discover list.
 
