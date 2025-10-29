@@ -1,23 +1,19 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\View\Products;
+namespace Nxp\EasyCart\Admin\Administrator\View\Products;
+
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 
-\defined('_JEXEC') or die;
-
 /**
- * Products listing placeholder view.
+ * Products listing view placeholder.
  */
 class HtmlView extends BaseHtmlView
 {
     /**
-     * Render the view.
-     *
-     * @param string|null $tpl Template name.
-     *
-     * @return void
+     * {@inheritDoc}
      */
     public function display($tpl = null): void
     {

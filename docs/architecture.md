@@ -3,18 +3,16 @@
 ## Component layout
 
 - `administrator/components/com_nxpeasycart`
-  - `com_nxpeasycart.php`: entry point enforcing `_JEXEC` and wiring the controller.
   - `services/provider.php`: registers the component, MVC factory, and dispatcher with Joomla's DI container.
   - `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
-  - `src/`: PSR-4 namespaced administrator classes (`Nxp\EasyCart\Admin\…`).
+  - `src/Administrator/`: PSR-4 namespaced administrator classes (`Nxp\EasyCart\Admin\Administrator\…`).
     - `Controller/ApiController.php`: task router delegating to JSON resource controllers.
     - `Controller/Api/*Controller.php`: JSON endpoints returning RFC-7807-style payloads.
-    - `Model/ProductModel.php` + `Model/ProductsModel.php`: table-backed product storage and listing.
+    - `Model/*.php`: table-backed product storage and listing.
     - `Table/ProductTable.php`: database gateway enforcing slug uniqueness.
   - `sql/`: install, uninstall, and future update scripts for the `#__nxp_*` tables.
   - `forms/product.xml`: Joomla form definition used to validate API payloads.
 - `components/com_nxpeasycart`
-  - `com_nxpeasycart.php`: site entry point.
   - `src/`: storefront controllers/views in the `Nxp\EasyCart\Site\…` namespace.
 
 The admin view exposes a `<div id="nxp-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
@@ -38,7 +36,9 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 ## Admin SPA build
 
 - Web assets are declared in `media/com_nxpeasycart/joomla.asset.json` under the handle `com_nxpeasycart.admin`.
-- `media/com_nxpeasycart/src/admin-main.js` is compiled through Vite (`build/vite.config.admin.js`) into `media/com_nxpeasycart/js/admin.iife.js` with CSS emitted to `media/com_nxpeasycart/css/admin.css`.
+- `media/com_nxpeasycart/src/admin-main.js` (Vue 3) is compiled through Vite (`build/vite.config.admin.js`) into `media/com_nxpeasycart/js/admin.iife.js` with CSS emitted to `media/com_nxpeasycart/css/admin.css`.
+- The shell currently renders a products grid fed by `/index.php?option=com_nxpeasycart&task=api.products.list&format=json`, complete with CSRF-aware requests and basic search/refresh controls.
+- Additional API controllers for orders and customers return placeholder payloads, ready for expansion into full CRUD flows.
 - The Joomla view registers the asset handle and exposes CSRF tokens/API endpoints via `data-*` attributes on the mount node to keep the SPA stateless and CSRF-safe.
 
 ## Next steps

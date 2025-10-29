@@ -1,13 +1,13 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Controller;
+namespace Nxp\EasyCart\Admin\Administrator\Controller;
+
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
-use Nxp\EasyCart\Admin\Controller\Api\AbstractJsonController;
+use Nxp\EasyCart\Admin\Administrator\Controller\Api\AbstractJsonController;
 use RuntimeException;
-
-\defined('_JEXEC') or die;
 
 /**
  * Router controller that proxies API tasks to resource controllers.
@@ -48,7 +48,7 @@ class ApiController extends BaseController
     private function loadResourceController(string $resource): AbstractJsonController
     {
         $resource = ucfirst($resource);
-        $class = 'Nxp\\EasyCart\\Admin\\Controller\\Api\\' . $resource . 'Controller';
+        $class = __NAMESPACE__ . '\\Api\\' . $resource . 'Controller';
 
         if (!class_exists($class)) {
             throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_API_RESOURCE_NOT_FOUND', $resource));

@@ -6,18 +6,33 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 
 $wa = $this->document->getWebAssetManager();
-$wa->useStyle('com_nxpeasycart.admin');
 $wa->useScript('com_nxpeasycart.admin');
 
 $token = Session::getFormToken();
 $productsEndpoint = 'index.php?option=com_nxpeasycart&task=api.products.list&format=json';
+
+$dataAttributes = [
+    'csrf-token' => $token,
+    'products-endpoint' => $productsEndpoint,
+    'app-title' => Text::_('COM_NXPEASYCART'),
+    'app-lead' => Text::_('COM_NXPEASYCART_ADMIN_PLACEHOLDER'),
+    'products-panel-title' => Text::_('COM_NXPEASYCART_MENU_PRODUCTS'),
+    'products-panel-lead' => Text::_('COM_NXPEASYCART_PRODUCTS_LEAD'),
+    'products-refresh' => Text::_('COM_NXPEASYCART_PRODUCTS_REFRESH'),
+    'products-search-placeholder' => Text::_('COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER'),
+    'products-loading' => Text::_('COM_NXPEASYCART_PRODUCTS_LOADING'),
+    'products-empty' => Text::_('COM_NXPEASYCART_PRODUCTS_EMPTY'),
+    'status-active' => Text::_('COM_NXPEASYCART_STATUS_ACTIVE'),
+    'status-inactive' => Text::_('COM_NXPEASYCART_STATUS_INACTIVE'),
+];
 ?>
 
 <div
     id="nxp-admin-app"
     class="nxp-admin-app"
-    data-csrf-token="<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>"
-    data-products-endpoint="<?php echo htmlspecialchars($productsEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php foreach ($dataAttributes as $key => $value) : ?>
+        data-<?php echo $key; ?>="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php endforeach; ?>
 >
     <div class="nxp-admin-app__placeholder">
         <h1 class="nxp-admin-app__title">

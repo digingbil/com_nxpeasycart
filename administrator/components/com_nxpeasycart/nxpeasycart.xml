@@ -59,7 +59,7 @@
             <folder>forms</folder>
             <folder>language</folder>
             <folder>tmpl</folder>
-            <filename>com_nxpeasycart.php</filename>
+            <filename>LICENSE.txt</filename>
         </files>
 
         <languages folder="language">

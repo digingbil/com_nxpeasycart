@@ -1,27 +1,27 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\View\Logs;
+namespace Nxp\EasyCart\Admin\Administrator\View\App;
+
+\defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 
-\defined('_JEXEC') or die;
-
 /**
- * Logs placeholder view.
+ * Basic HTML view for the admin dashboard wrapper.
  */
 class HtmlView extends BaseHtmlView
 {
     /**
-     * Render the view.
+     * View display method.
      *
-     * @param string|null $tpl Template name.
+     * @param string|null $tpl Template file to use
      *
      * @return void
      */
     public function display($tpl = null): void
     {
-        $this->document->setTitle(Text::_('COM_NXPEASYCART_MENU_LOGS'));
+        $this->document->setTitle(Text::_('COM_NXPEASYCART'));
 
         parent::display($tpl);
     }

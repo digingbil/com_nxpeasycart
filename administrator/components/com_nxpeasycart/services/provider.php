@@ -3,13 +3,13 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
-use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
-use Joomla\CMS\Extension\Service\Provider\MVCFactoryProvider;
 use Joomla\CMS\Extension\ComponentInterface;
+use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
+use Joomla\CMS\Extension\Service\Provider\MVCFactory;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
-use Nxp\EasyCart\Admin\Extension\NxpEasyCartComponent;
+use Nxp\EasyCart\Admin\Administrator\Extension\NxpEasyCartComponent;
 
 return new class implements ServiceProviderInterface {
     /**
@@ -21,12 +21,16 @@ return new class implements ServiceProviderInterface {
      */
     public function register(Container $container): void
     {
-        $container->registerServiceProvider(new MVCFactoryProvider('com_nxpeasycart'));
-        $container->registerServiceProvider(new ComponentDispatcherFactory('com_nxpeasycart'));
+        \JLoader::registerNamespace('Nxp\\EasyCart\\Admin', __DIR__ . '/../src', false, false, 'psr4');
 
-        $container->alias(MVCFactoryInterface::class, 'mvc.factory.com_nxpeasycart');
+        $container->registerServiceProvider(new MVCFactory('\\Nxp\\EasyCart\\Admin'));
+        $container->registerServiceProvider(new ComponentDispatcherFactory('\\Nxp\\EasyCart\\Admin'));
+
+        // Expose the MVC factory under a component-specific alias for legacy lookups.
+        $container->alias('mvc.factory.com_nxpeasycart', MVCFactoryInterface::class);
+
         $container->set(
-            NxpEasyCartComponent::class,
+            ComponentInterface::class,
             static function (Container $container): NxpEasyCartComponent {
                 return new NxpEasyCartComponent(
                     $container->get(ComponentDispatcherFactoryInterface::class),
@@ -34,7 +38,5 @@ return new class implements ServiceProviderInterface {
                 );
             }
         );
-
-        $container->alias(ComponentInterface::class, NxpEasyCartComponent::class);
     }
 };

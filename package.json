@@ -7,6 +7,10 @@
     "build:admin": "vite build --config build/vite.config.admin.js"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
     "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "vue": "^3.5.11"
   }
 }

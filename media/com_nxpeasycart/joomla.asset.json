@@ -3,6 +3,8 @@
     "name": "com_nxpeasycart",
     "assets": {
         "com_nxpeasycart.admin": {
+            "name": "com_nxpeasycart.admin",
+            "type": "script",
             "js": [
                 "media/com_nxpeasycart/js/admin.iife.js"
             ],

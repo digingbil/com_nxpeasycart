@@ -22,6 +22,8 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   **JavaScript only**: absolutely no TypeScript. All client bundles (including Vue) must be authored in ES6 JavaScript.
 
+-   **Autoloading**: Never use `require_once`; wire every PHP class through PSR-4 namespaces and Joomla/composer autoloaders.
+
 -   **Standards**: PSR-4 autoloading, PSR-12 code style, PSR-16 caching; Joomla Web Asset Manager; Namespaced Joomla MVC.
 
 -   **DB naming**: `#__nxp_*` tables (Joomla prefix \+ `nxp_…`).
