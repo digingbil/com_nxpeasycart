@@ -3,7 +3,7 @@
 ## Component layout
 
 - `administrator/components/com_nxpeasycart`
-  - `services/provider.php`: registers the component, MVC factory, and dispatcher with Joomla's DI container.
+  - `services/provider.php`: registers the component, MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
   - `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
   - `src/Administrator/`: PSR-4 namespaced administrator classes (`Nxp\EasyCart\Admin\Administrator\…`).
     - `Controller/ApiController.php`: task router delegating to JSON resource controllers.
@@ -40,6 +40,9 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 - The shell currently renders a products grid fed by `/index.php?option=com_nxpeasycart&task=api.products.list&format=json`, complete with CSRF-aware requests and basic search/refresh controls.
 - Additional API controllers for orders and customers return placeholder payloads, ready for expansion into full CRUD flows.
 - The Joomla view registers the asset handle and exposes CSRF tokens/API endpoints via `data-*` attributes on the mount node to keep the SPA stateless and CSRF-safe.
+- Admin UI is composed from Vue single-file components (`src/app/App.vue`, `src/app/components`) with composables like `useProducts` and `useTranslations`, leveraging `Joomla.Text` for localisation instead of hard-coded translation objects.
+- Admin UI is composed from Vue single-file components (`src/app/App.vue`, `src/app/components`) with composables like `useProducts` and `useTranslations`, leveraging `Joomla.Text` for localisation instead of hard-coded translation objects.
+- `media/com_nxpeasycart/src/api.js` exposes an `ApiClient` that unifies request headers, CSRF handling, and HTTP verb helpers, with domain methods starting at `fetchProducts()`.
 
 ## Next steps
 

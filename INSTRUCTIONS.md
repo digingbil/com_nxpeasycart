@@ -10,6 +10,8 @@ Joomla’s big carts try to be everything; **our advantage is clarity \+ speed t
 
 -   **Predictable, low-risk updates**
 
+-   **High quality, modular, extensible code** for all PHP, JavaScript, and Vue deliverables.
+
 Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-offs, optimize for time-to-first-sale and reliability over feature breadth.
 
 # **0\) Guiding principles (non-negotiables)**
@@ -21,6 +23,8 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 -   **Simplicity**: MVP scope, clean admin SPA, server-rendered storefront with progressive Vue “islands.”
 
 -   **JavaScript only**: absolutely no TypeScript. All client bundles (including Vue) must be authored in ES6 JavaScript.
+
+-   **Modular Vue admin**: build the admin SPA with Vue single-file components, composables, and (when needed) Pinia stores—no monolithic scripts or inline templates; keep logic and translations in dedicated helpers.
 
 -   **Autoloading**: Never use `require_once`; wire every PHP class through PSR-4 namespaces and Joomla/composer autoloaders.
 
@@ -106,47 +110,47 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 # **3\) Database model (prefix `#__nxp_…`)**
 
--   `#__nxp_products`  
-     `(id PK, slug, title, short_desc, long_desc, images JSON, active TINYINT, created, created_by, modified, modified_by)`
+-   `#__nxp_products`
+    `(id PK, slug, title, short_desc, long_desc, images JSON, active TINYINT, created, created_by, modified, modified_by)`
 
--   `#__nxp_variants`  
-     `(id PK, product_id FK, sku UNIQUE, price_cents INT, currency CHAR(3), stock INT, options JSON, weight DECIMAL(10,3), active)`
+-   `#__nxp_variants`
+    `(id PK, product_id FK, sku UNIQUE, price_cents INT, currency CHAR(3), stock INT, options JSON, weight DECIMAL(10,3), active)`
 
--   `#__nxp_categories`  
-     `(id PK, slug, title, parent_id, sort)`
+-   `#__nxp_categories`
+    `(id PK, slug, title, parent_id, sort)`
 
--   `#__nxp_product_categories`  
-     `(product_id, category_id, PRIMARY KEY(product_id,category_id))`
+-   `#__nxp_product_categories`
+    `(product_id, category_id, PRIMARY KEY(product_id,category_id))`
 
--   `#__nxp_orders`  
-     `(id PK, order_no UNIQUE, user_id NULL, email, billing JSON, shipping JSON, subtotal_cents, tax_cents, shipping_cents, discount_cents, total_cents, currency, state ENUM('cart','pending','paid','fulfilled','refunded','canceled'), locale, created, modified)`
+-   `#__nxp_orders`
+    `(id PK, order_no UNIQUE, user_id NULL, email, billing JSON, shipping JSON, subtotal_cents, tax_cents, shipping_cents, discount_cents, total_cents, currency, state ENUM('cart','pending','paid','fulfilled','refunded','canceled'), locale, created, modified)`
 
--   `#__nxp_order_items`  
-     `(id PK, order_id FK, product_id, variant_id, sku, title, qty, unit_price_cents, tax_rate DECIMAL(5,2), total_cents)`
+-   `#__nxp_order_items`
+    `(id PK, order_id FK, product_id, variant_id, sku, title, qty, unit_price_cents, tax_rate DECIMAL(5,2), total_cents)`
 
--   `#__nxp_transactions`  
-     `(id PK, order_id FK, gateway, ext_id, status, amount_cents, payload JSON, event_idempotency_key VARCHAR(128), created)`
+-   `#__nxp_transactions`
+    `(id PK, order_id FK, gateway, ext_id, status, amount_cents, payload JSON, event_idempotency_key VARCHAR(128), created)`
 
--   `#__nxp_coupons`  
-     `(id PK, code UNIQUE, type ENUM('percent','fixed'), value DECIMAL(10,2), min_total_cents, start, end, max_uses, times_used, active)`
+-   `#__nxp_coupons`
+    `(id PK, code UNIQUE, type ENUM('percent','fixed'), value DECIMAL(10,2), min_total_cents, start, end, max_uses, times_used, active)`
 
--   `#__nxp_tax_rates`  
-     `(id PK, country, region, rate DECIMAL(5,2), inclusive TINYINT, priority)`
+-   `#__nxp_tax_rates`
+    `(id PK, country, region, rate DECIMAL(5,2), inclusive TINYINT, priority)`
 
--   `#__nxp_shipping_rules`  
-     `(id PK, name, type ENUM('flat','free_over'), price_cents, threshold_cents, regions JSON, active)`
+-   `#__nxp_shipping_rules`
+    `(id PK, name, type ENUM('flat','free_over'), price_cents, threshold_cents, regions JSON, active)`
 
--   `#__nxp_audit`  
-     `(id PK, actor, action, object_type, object_id, meta JSON, created)`
+-   `#__nxp_audit`
+    `(id PK, actor, action, object_type, object_id, meta JSON, created)`
 
--   `#__nxp_settings`  
-     `(key PK, value TEXT)` (for simple K/V; sensitive values via Joomla secrets)
+-   `#__nxp_settings`
+    `(key PK, value TEXT)` (for simple K/V; sensitive values via Joomla secrets)
 
--   `#__nxp_carts` (optional, if DB-backed cart)  
-     `(id PK UUID, user_id NULL, session_id, data JSON, updated)`
+-   `#__nxp_carts` (optional, if DB-backed cart)
+    `(id PK UUID, user_id NULL, session_id, data JSON, updated)`
 
-**Indexes**: slugs, sku, order_no, transactions (ext_id, idempotency), foreign keys for integrity.  
- **Charset**: `utf8mb4` \+ `utf8mb4_unicode_ci`.
+**Indexes**: slugs, sku, order_no, transactions (ext_id, idempotency), foreign keys for integrity.
+**Charset**: `utf8mb4` \+ `utf8mb4_unicode_ci`.
 
 ---
 
@@ -224,7 +228,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   Products CRUD (variants, images, categories)
 
--   Orders list/detail (transactions timeline)
+-   Orders list/detail (transactions timeline)f
 
 -   Coupons/Taxes/Shipping rules
 
@@ -339,15 +343,15 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 **Local development environment**
 
--   **Local Joomla 5 install path:**  
-     **`/var/www/html/j5.loc`**
+-   **Local Joomla 5 install path:**
+    **`/var/www/html/j5.loc`**
 
--   **Local site URL:**  
-     **`http://j5.loc`**
+-   **Local site URL:**
+    **`http://j5.loc`**
 
--   **Credentials:**  
-     **Stored securely in `configuration.php` (already present in local Joomla setup).**  
-     **⚠️ Do not expose or hardcode credentials elsewhere.**
+-   **Credentials:**
+    **Stored securely in `configuration.php` (already present in local Joomla setup).**
+    **⚠️ Do not expose or hardcode credentials elsewhere.**
 
 **Working scope**
 

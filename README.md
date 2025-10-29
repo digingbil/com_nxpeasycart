@@ -48,6 +48,8 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 - `media/com_nxpeasycart/src/admin-main.js` bootstraps the Vue 3 admin shell which currently renders a products grid powered by the `/api.products.*` endpoints.
 - CSRF tokens and API endpoints are exposed via `data-*` attributes in the admin template for the SPA to consume.
 - A placeholder `media/com_nxpeasycart/js/admin.iife.js` ships with the repo so the asset loads prior to the first Vite build; running `npm run build:admin` overwrites it with the compiled Vue app. The bundled asset registers under `com_nxpeasycart.admin` and carries its CSS dependency automatically.
+- Vue single-file components (`src/app/App.vue`, `src/app/components`) and composables (`src/app/composables`) keep the admin bundle modular, with `useTranslations` delegating to `Joomla.Text` instead of hard-coded dictionaries.
+- An `ApiClient` wrapper (`media/com_nxpeasycart/src/api.js`) standardises GET/POST/PUT/DELETE requests with Joomla's CSRF headers and exposes helpers like `fetchProducts` for domain-specific calls.
 
 ## Changelog summary
 
