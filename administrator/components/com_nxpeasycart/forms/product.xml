@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <field
+        name="id"
+        type="hidden"
+        filter="int"
+    />
+
+    <field
+        name="title"
+        type="text"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_TITLE"
+        required="true"
+        filter="string"
+    />
+
+    <field
+        name="slug"
+        type="text"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_SLUG"
+        filter="string"
+    />
+
+    <field
+        name="short_desc"
+        type="textarea"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_SHORT_DESC"
+        filter="safehtml"
+    />
+
+    <field
+        name="long_desc"
+        type="textarea"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_LONG_DESC"
+        filter="safehtml"
+    />
+
+    <field
+        name="active"
+        type="radio"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_ACTIVE"
+        default="1"
+        class="btn-group"
+    >
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+    </field>
+</form>

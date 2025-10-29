@@ -1,0 +1,12 @@
+{
+  "name": "nxp-easy-cart",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:admin": "vite --config build/vite.config.admin.js",
+    "build:admin": "vite build --config build/vite.config.admin.js"
+  },
+  "devDependencies": {
+    "vite": "^5.2.0"
+  }
+}

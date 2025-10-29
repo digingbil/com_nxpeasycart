@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="component" method="upgrade" version="5.0">
+    <name>COM_NXPEASYCART</name>
+    <creationDate>2024-06-28</creationDate>
+    <author>NXP Commerce</author>
+    <authorEmail>hello@nxp-commerce.local</authorEmail>
+    <authorUrl>https://nxp-commerce.local</authorUrl>
+    <copyright>Copyright (C) 2024 NXP Commerce. All rights reserved.</copyright>
+    <version>0.1.0</version>
+    <description>COM_NXPEASYCART_XML_DESCRIPTION</description>
+
+    <namespace path="src">Nxp\EasyCart</namespace>
+
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8mb4">sql/install.mysql.utf8.sql</file>
+        </sql>
+    </install>
+
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8mb4">sql/uninstall.mysql.utf8.sql</file>
+        </sql>
+    </uninstall>
+
+    <update>
+        <schemas>
+            <schemapath type="mysql">sql/updates/mysql</schemapath>
+        </schemas>
+    </update>
+
+    <media destination="com_nxpeasycart" folder="../../media/com_nxpeasycart">
+        <filename>index.html</filename>
+        <filename>joomla.asset.json</filename>
+        <folder>css</folder>
+        <folder>js</folder>
+    </media>
+
+    <administration>
+        <namespace path="src">Nxp\EasyCart\Admin</namespace>
+
+        <menu img="class:cart">COM_NXPEASYCART</menu>
+
+        <submenu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=app" view="app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=products" view="products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_MENU_ORDERS</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=customers" view="customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=coupons" view="coupons">COM_NXPEASYCART_MENU_COUPONS</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=settings" view="settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
+            <menu link="index.php?option=com_nxpeasycart&amp;view=logs" view="logs">COM_NXPEASYCART_MENU_LOGS</menu>
+        </submenu>
+
+        <files>
+            <folder>services</folder>
+            <folder>src</folder>
+            <folder>sql</folder>
+            <folder>forms</folder>
+            <folder>language</folder>
+            <filename>com_nxpeasycart.php</filename>
+        </files>
+
+        <languages folder="language">
+            <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
+            <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
+        </languages>
+    </administration>
+
+    <site>
+        <namespace path="src">Nxp\EasyCart\Site</namespace>
+
+        <files>
+            <folder>src</folder>
+            <filename>com_nxpeasycart.php</filename>
+        </files>
+
+        <languages folder="../../language">
+            <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
+            <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
+        </languages>
+    </site>
+
+    <updateservers>
+        <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nxp-commerce.local/com_nxpeasycart.xml</server>
+    </updateservers>
+</extension>

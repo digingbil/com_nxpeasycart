@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS `#__nxp_audit`;
+DROP TABLE IF EXISTS `#__nxp_coupons`;
+DROP TABLE IF EXISTS `#__nxp_transactions`;
+DROP TABLE IF EXISTS `#__nxp_order_items`;
+DROP TABLE IF EXISTS `#__nxp_orders`;
+DROP TABLE IF EXISTS `#__nxp_variants`;
+DROP TABLE IF EXISTS `#__nxp_product_categories`;
+DROP TABLE IF EXISTS `#__nxp_categories`;
+DROP TABLE IF EXISTS `#__nxp_products`;

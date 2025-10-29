@@ -1,0 +1,72 @@
+# Composer & PHP artifacts
+/vendor/
+node_modules/
+composer.lock
+/.phpunit.result.cache
+/tests/_output/
+/tests/_support/_generated/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+/out/
+.settings/
+/nbproject/
+/nb-build.xml
+/nbdist/
+*.sublime-project
+*.sublime-workspace
+.atom/
+.project
+.classpath
+*.launch
+
+# Deployment files
+/deploy.php
+/release-config.json
+/make-release.sh
+/scripts
+/REFERENCE_ONLY_unusedimagefinder_REFERENCE_ONLY/
+
+# AI assistants
+.copilot/
+.tabnine/
+.gemini/
+.claude/
+
+# Build artifacts
+*.zip
+*.tar.gz
+/build/
+/dist/
+.release-stage/
+.phpunit.result.cache
+var/
+JOOMLA_MIGRATION_GUIDELINE.md
+joomla_component_symlinking.sh
+
+# Generated frontend assets
+media/com_nxpeasyforms/css/admin-*.css
+
+# Temporary files
+*~
+*.lock
+*.temp
+~$*

@@ -1,0 +1,20 @@
+{
+    "$schema": "https://developer.joomla.org/assets/joomla.asset.schema.json",
+    "name": "com_nxpeasycart",
+    "assets": {
+        "com_nxpeasycart.admin": {
+            "js": [
+                "media/com_nxpeasycart/js/admin.iife.js"
+            ],
+            "css": [
+                "media/com_nxpeasycart/css/admin.css"
+            ],
+            "dependencies": [
+                "core"
+            ],
+            "attributes": {
+                "defer": true
+            }
+        }
+    }
+}
