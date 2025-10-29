@@ -32,18 +32,34 @@ class ApiClient {
         };
 
         const response = await fetch(url, config);
+        let payload = null;
+
+        const raw = await response.text();
+
+        if (raw) {
+            try {
+                payload = JSON.parse(raw);
+            } catch (error) {
+                // Ignore JSON parse errors; handled below
+            }
+        }
 
         if (!response.ok) {
-            throw new Error(`Request failed with status ${response.status}`);
+            const error = new Error(payload?.message || `Request failed with status ${response.status}`);
+            error.code = response.status;
+            error.details = payload?.data || payload?.errors || null;
+
+            throw error;
         }
 
-        const payload = await response.json();
+        if (payload?.success === false) {
+            const error = new Error(payload.message || 'Unknown API error');
+            error.details = payload.data || payload.errors || null;
 
-        if (payload.success === false) {
-            throw new Error(payload.message || 'Unknown API error');
+            throw error;
         }
 
-        return payload;
+        return payload ?? {};
     }
 
     /**
@@ -116,6 +132,50 @@ class ApiClient {
             items: body.data ?? [],
             pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
         };
+    }
+
+    /**
+     * Create a product.
+     */
+    async createProduct({ endpoint, data }) {
+        const payload = await this.post(endpoint, data);
+
+        return payload.data?.item ?? null;
+    }
+
+    /**
+     * Update a product.
+     */
+    async updateProduct({ endpoint, id, data }) {
+        const url = this.appendId(endpoint, id);
+        const payload = await this.put(url, data);
+
+        return payload.data?.item ?? null;
+    }
+
+    /**
+     * Delete products.
+     */
+    async deleteProducts({ endpoint, ids }) {
+        const payload = await this.delete(endpoint, {
+            body: JSON.stringify({ ids }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return payload.data?.deleted ?? [];
+    }
+
+    /**
+     * Append an id query parameter to endpoint.
+     */
+    appendId(endpoint, id) {
+        const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+        const url = new URL(endpoint, origin);
+        url.searchParams.set('id', String(id));
+
+        return `${url.pathname}?${url.searchParams.toString()}`;
     }
 }
 

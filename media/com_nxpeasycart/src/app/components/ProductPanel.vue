@@ -21,6 +21,9 @@
         <button class="nxp-btn" type="button" @click="emitRefresh" :disabled="state.loading">
           {{ __('COM_NXPEASYCART_PRODUCTS_REFRESH', 'Refresh', [], 'productsRefresh') }}
         </button>
+        <button class="nxp-btn nxp-btn--primary" type="button" @click="openCreate">
+          {{ __('COM_NXPEASYCART_PRODUCTS_ADD', 'Add product') }}
+        </button>
       </div>
     </header>
 
@@ -32,16 +35,31 @@
       {{ __('COM_NXPEASYCART_PRODUCTS_LOADING', 'Loading products…', [], 'productsLoading') }}
     </div>
 
-    <ProductTable
-      v-else
-      :items="state.items"
+    <div v-else class="nxp-admin-panel__body">
+      <ProductTable
+        :items="state.items"
+        :translate="__"
+        @edit="openEdit"
+        @delete="confirmDelete"
+      />
+    </div>
+
+    <ProductEditor
+      :open="isEditorOpen"
+      :product="editorProduct"
+      :saving="state.saving"
       :translate="__"
+      :errors="state.validationErrors"
+      @submit="handleSubmit"
+      @cancel="closeEditor"
     />
   </section>
 </template>
 
 <script setup>
+import { computed, reactive, ref, watch } from 'vue';
 import ProductTable from './ProductTable.vue';
+import ProductEditor from './ProductEditor.vue';
 
 const props = defineProps({
   state: {
@@ -54,9 +72,73 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['create', 'update', 'delete', 'refresh', 'search']);
+
 const __ = props.translate;
 
-const emit = defineEmits(['refresh', 'search']);
+const editorState = reactive({
+  mode: 'create',
+  product: null,
+});
+
+const isEditorOpen = ref(false);
+
+const editorProduct = computed(() => editorState.product);
+
+const openCreate = () => {
+  props.state.validationErrors = [];
+  props.state.error = '';
+  editorState.mode = 'create';
+  editorState.product = {
+    title: '',
+    slug: '',
+    short_desc: '',
+    long_desc: '',
+    active: true,
+  };
+  isEditorOpen.value = true;
+};
+
+const openEdit = (product) => {
+  props.state.validationErrors = [];
+  props.state.error = '';
+  editorState.mode = 'edit';
+  editorState.product = {
+    id: product.id,
+    title: product.title,
+    slug: product.slug,
+    short_desc: product.short_desc,
+    long_desc: product.long_desc,
+    active: Boolean(product.active),
+  };
+  isEditorOpen.value = true;
+};
+
+const closeEditor = () => {
+  isEditorOpen.value = false;
+  props.state.validationErrors = [];
+};
+
+const handleSubmit = async (payload) => {
+  const data = {
+    ...payload,
+    active: payload.active ? 1 : 0,
+  };
+
+  if (editorState.mode === 'edit' && editorState.product?.id) {
+    emit('update', { id: editorState.product.id, data });
+  } else {
+    emit('create', data);
+  }
+};
+
+const confirmDelete = async (productId) => {
+  const message = __('COM_NXPEASYCART_PRODUCTS_DELETE_CONFIRM', 'Delete this product?');
+
+  if (window.confirm(message)) {
+    emit('delete', [productId]);
+  }
+};
 
 const emitRefresh = () => {
   emit('refresh');
@@ -65,4 +147,15 @@ const emitRefresh = () => {
 const emitSearch = () => {
   emit('search');
 };
+
+watch(
+  () => props.state.saving,
+  (saving, wasSaving) => {
+    if (wasSaving && !saving && isEditorOpen.value) {
+      if (!props.state.validationErrors.length && !props.state.error) {
+        closeEditor();
+      }
+    }
+  }
+);
 </script>

@@ -30,7 +30,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   **Standards**: PSR-4 autoloading, PSR-12 code style, PSR-16 caching; Joomla Web Asset Manager; Namespaced Joomla MVC.
 
--   **DB naming**: `#__nxp_*` tables (Joomla prefix \+ `nxp_…`).
+-   **DB naming**: `#__nxp_easycart_*` tables (Joomla prefix \+ `nxp_easycart_…`).
 
 ---
 
@@ -108,49 +108,75 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 ---
 
-# **3\) Database model (prefix `#__nxp_…`)**
+# **3\) Database model (prefix `#__nxp_easycart_…`)**
 
--   `#__nxp_products`
+-   `#__nxp_easycart_products`
     `(id PK, slug, title, short_desc, long_desc, images JSON, active TINYINT, created, created_by, modified, modified_by)`
 
--   `#__nxp_variants`
+-   `#__nxp_easycart_variants`
     `(id PK, product_id FK, sku UNIQUE, price_cents INT, currency CHAR(3), stock INT, options JSON, weight DECIMAL(10,3), active)`
 
--   `#__nxp_categories`
+-   `#__nxp_easycart_categories`
     `(id PK, slug, title, parent_id, sort)`
 
--   `#__nxp_product_categories`
+-   `#__nxp_easycart_product_categories`
     `(product_id, category_id, PRIMARY KEY(product_id,category_id))`
 
--   `#__nxp_orders`
+-   `#__nxp_easycart_orders`
     `(id PK, order_no UNIQUE, user_id NULL, email, billing JSON, shipping JSON, subtotal_cents, tax_cents, shipping_cents, discount_cents, total_cents, currency, state ENUM('cart','pending','paid','fulfilled','refunded','canceled'), locale, created, modified)`
 
--   `#__nxp_order_items`
+-   `#__nxp_easycart_order_items`
     `(id PK, order_id FK, product_id, variant_id, sku, title, qty, unit_price_cents, tax_rate DECIMAL(5,2), total_cents)`
 
--   `#__nxp_transactions`
+-   `#__nxp_easycart_transactions`
     `(id PK, order_id FK, gateway, ext_id, status, amount_cents, payload JSON, event_idempotency_key VARCHAR(128), created)`
 
--   `#__nxp_coupons`
+-   `#__nxp_easycart_coupons`
     `(id PK, code UNIQUE, type ENUM('percent','fixed'), value DECIMAL(10,2), min_total_cents, start, end, max_uses, times_used, active)`
 
--   `#__nxp_tax_rates`
+-   `#__nxp_easycart_tax_rates`
     `(id PK, country, region, rate DECIMAL(5,2), inclusive TINYINT, priority)`
 
--   `#__nxp_shipping_rules`
+-   `#__nxp_easycart_shipping_rules`
     `(id PK, name, type ENUM('flat','free_over'), price_cents, threshold_cents, regions JSON, active)`
 
--   `#__nxp_audit`
+-   `#__nxp_easycart_audit`
     `(id PK, actor, action, object_type, object_id, meta JSON, created)`
 
--   `#__nxp_settings`
+-   `#__nxp_easycart_settings`
     `(key PK, value TEXT)` (for simple K/V; sensitive values via Joomla secrets)
 
--   `#__nxp_carts` (optional, if DB-backed cart)
+-   `#__nxp_easycart_carts` (optional, if DB-backed cart)
     `(id PK UUID, user_id NULL, session_id, data JSON, updated)`
 
 **Indexes**: slugs, sku, order_no, transactions (ext_id, idempotency), foreign keys for integrity.
 **Charset**: `utf8mb4` \+ `utf8mb4_unicode_ci`.
+
+---
+
+# **3.1) Single-currency MVP guardrails (ship fast)**
+
+To maximise “clarity + speed to first sale,” run the storefront in a single currency initially. Add these guardrails to avoid surprises and keep a clean upgrade path to multi-currency later:
+
+1. Store settings (required)
+
+-   Base currency: one required setting (e.g., `USD`).
+-   Allowed currencies: hard-lock to `[base_currency]` only for MVP.
+
+2. Consistency enforcement (validation)
+
+-   Variants: `variants.currency` must equal `base_currency` when creating/updating products.
+-   Orders: all orders must be created in `base_currency`; reject/normalize any other currency at cart/checkout.
+
+3. UX copy (clarity for buyers)
+
+-   Always display the currency symbol/code alongside prices and totals.
+-   If you later show “estimated” converted prices, label them clearly as estimates and always settle the cart/order in the base currency.
+
+Notes
+
+-   This keeps pricing, accounting, taxes, and gateway setup simple for MVP.
+-   The schema already stores `currency` on variants and orders, so you can add multi-currency later without data migrations (e.g., per-currency price lists or FX conversion with rate locking).
 
 ---
 
@@ -162,7 +188,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   **CSRF**: `JHtml::_('form.token')` in forms; `X-CSRF-Token`/`X-Joomla-Token` for APIs.
 
--   **Sessions**: use Joomla session for cart id; optionally mirror to `#__nxp_carts`.
+-   **Sessions**: use Joomla session for cart id; optionally mirror to `#__nxp_easycart_carts`.
 
 -   **HTTPS**: middleware/guard on checkout (redirect if not HTTPS).
 
@@ -186,7 +212,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   Transition guards; no shipping before `paid`.
 
--   All transitions logged in `#__nxp_audit`.
+-   All transitions logged in `#__nxp_easycart_audit`.
 
 **Rounding rules**
 
@@ -232,7 +258,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   Coupons/Taxes/Shipping rules
 
--   Settings (gateways, email templates, currencies)
+– Settings (gateways, email templates, currencies) - Base currency (single-currency MVP)
 
 -   Logs (failed webhooks, audit)
 
@@ -258,7 +284,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 
 -   Mini cart: small Vue component; Cart/Checkout forms server-rendered with progressive enhancement.
 
--   Cart persistence: session id \+ cookie; sync with `#__nxp_carts` if enabled.
+-   Cart persistence: session id \+ cookie; sync with `#__nxp_easycart_carts` if enabled.
 
 ---
 

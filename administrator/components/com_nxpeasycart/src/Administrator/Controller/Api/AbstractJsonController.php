@@ -40,7 +40,15 @@ abstract class AbstractJsonController extends BaseController
      */
     protected function respond($data, int $code = 200): JsonResponse
     {
-        return new JsonResponse($data, '', $code);
+        if ($this->app && \method_exists($this->app, 'setHeader')) {
+            $this->app->setHeader('status', $code);
+        }
+
+        http_response_code($code);
+
+        $hasError = $code >= 400;
+
+        return new JsonResponse($data, '', $hasError);
     }
 
     /**

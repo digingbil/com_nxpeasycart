@@ -10,6 +10,9 @@
         <th scope="col">{{ __('JFIELD_ALIAS_LABEL', 'Slug') }}</th>
         <th scope="col">{{ __('JSTATUS', 'Status') }}</th>
         <th scope="col">{{ __('JGLOBAL_CREATED_DATE', 'Created') }}</th>
+        <th scope="col" class="nxp-admin-table__actions">
+          {{ __('JGLOBAL_ACTIONS', 'Actions') }}
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -31,6 +34,22 @@
           </span>
         </td>
         <td>{{ item.created }}</td>
+        <td class="nxp-admin-table__actions">
+          <button
+            class="nxp-btn nxp-btn--link"
+            type="button"
+            @click="$emit('edit', item)"
+          >
+            {{ __('JGLOBAL_EDIT', 'Edit') }}
+          </button>
+          <button
+            class="nxp-btn nxp-btn--link nxp-btn--danger"
+            type="button"
+            @click="$emit('delete', item.id)"
+          >
+            {{ __('JTRASH', 'Delete') }}
+          </button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -47,6 +66,8 @@ const props = defineProps({
     required: true,
   },
 });
+
+defineEmits(['edit', 'delete']);
 
 const __ = props.translate;
 </script>

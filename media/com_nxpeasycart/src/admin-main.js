@@ -8,12 +8,18 @@ if (!mount) {
     console.warn('[NXP Easy Cart] Admin mount point not found.');
 } else {
     const csrfToken = mount.getAttribute('data-csrf-token') ?? '';
-    const productsEndpoint = mount.getAttribute('data-products-endpoint') ?? '';
     const dataset = Object.assign({}, mount.dataset);
+
+    const productsEndpoints = {
+        list: dataset.productsEndpoint ?? '',
+        create: dataset.productsEndpointCreate ?? '',
+        update: dataset.productsEndpointUpdate ?? '',
+        delete: dataset.productsEndpointDelete ?? '',
+    };
 
     createApp(App, {
         csrfToken,
-        productsEndpoint,
+        productsEndpoints,
         dataset,
     }).mount(mount);
 }

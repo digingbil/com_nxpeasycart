@@ -9,11 +9,17 @@ $wa = $this->document->getWebAssetManager();
 $wa->useScript('com_nxpeasycart.admin');
 
 $token = Session::getFormToken();
-$productsEndpoint = 'index.php?option=com_nxpeasycart&task=api.products.list&format=json';
+$productsEndpointList = 'index.php?option=com_nxpeasycart&task=api.products.list&format=json';
+$productsEndpointStore = 'index.php?option=com_nxpeasycart&task=api.products.store&format=json';
+$productsEndpointUpdate = 'index.php?option=com_nxpeasycart&task=api.products.update&format=json';
+$productsEndpointDelete = 'index.php?option=com_nxpeasycart&task=api.products.delete&format=json';
 
 $dataAttributes = [
     'csrf-token' => $token,
-    'products-endpoint' => $productsEndpoint,
+    'products-endpoint' => $productsEndpointList,
+    'products-endpoint-create' => $productsEndpointStore,
+    'products-endpoint-update' => $productsEndpointUpdate,
+    'products-endpoint-delete' => $productsEndpointDelete,
     'app-title' => Text::_('COM_NXPEASYCART'),
     'app-lead' => Text::_('COM_NXPEASYCART_ADMIN_PLACEHOLDER'),
     'products-panel-title' => Text::_('COM_NXPEASYCART_MENU_PRODUCTS'),

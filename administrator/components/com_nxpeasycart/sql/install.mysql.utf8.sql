@@ -1,6 +1,6 @@
 -- NXP Easy Cart install schema
 
-CREATE TABLE IF NOT EXISTS `#__nxp_products` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `slug` VARCHAR(190) NOT NULL,
   `title` VARCHAR(255) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_products` (
   UNIQUE KEY `idx_nxp_products_slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_categories` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `slug` VARCHAR(190) NOT NULL,
   `title` VARCHAR(255) NOT NULL,
@@ -27,19 +27,19 @@ CREATE TABLE IF NOT EXISTS `#__nxp_categories` (
   KEY `idx_nxp_categories_parent` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_product_categories` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_product_categories` (
   `product_id` INT UNSIGNED NOT NULL,
   `category_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`product_id`, `category_id`),
   CONSTRAINT `fk_nxp_product_categories_product`
-    FOREIGN KEY (`product_id`) REFERENCES `#__nxp_products` (`id`)
+    FOREIGN KEY (`product_id`) REFERENCES `#__nxp_easycart_products` (`id`)
     ON DELETE CASCADE,
   CONSTRAINT `fk_nxp_product_categories_category`
-    FOREIGN KEY (`category_id`) REFERENCES `#__nxp_categories` (`id`)
+    FOREIGN KEY (`category_id`) REFERENCES `#__nxp_easycart_categories` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_variants` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` INT UNSIGNED NOT NULL,
   `sku` VARCHAR(64) NOT NULL,
@@ -53,11 +53,11 @@ CREATE TABLE IF NOT EXISTS `#__nxp_variants` (
   UNIQUE KEY `idx_nxp_variants_sku` (`sku`),
   KEY `idx_nxp_variants_product` (`product_id`),
   CONSTRAINT `fk_nxp_variants_product`
-    FOREIGN KEY (`product_id`) REFERENCES `#__nxp_products` (`id`)
+    FOREIGN KEY (`product_id`) REFERENCES `#__nxp_easycart_products` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_orders` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_no` VARCHAR(40) NOT NULL,
   `user_id` INT UNSIGNED NULL,
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_orders` (
   KEY `idx_nxp_orders_state` (`state`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_order_items` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_order_items` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` INT UNSIGNED NOT NULL,
   `product_id` INT UNSIGNED NULL,
@@ -94,11 +94,11 @@ CREATE TABLE IF NOT EXISTS `#__nxp_order_items` (
   PRIMARY KEY (`id`),
   KEY `idx_nxp_order_items_order` (`order_id`),
   CONSTRAINT `fk_nxp_order_items_order`
-    FOREIGN KEY (`order_id`) REFERENCES `#__nxp_orders` (`id`)
+    FOREIGN KEY (`order_id`) REFERENCES `#__nxp_easycart_orders` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_transactions` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_transactions` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_id` INT UNSIGNED NOT NULL,
   `gateway` VARCHAR(64) NOT NULL,
@@ -112,11 +112,11 @@ CREATE TABLE IF NOT EXISTS `#__nxp_transactions` (
   KEY `idx_nxp_transactions_order` (`order_id`),
   KEY `idx_nxp_transactions_external` (`gateway`, `ext_id`),
   CONSTRAINT `fk_nxp_transactions_order`
-    FOREIGN KEY (`order_id`) REFERENCES `#__nxp_orders` (`id`)
+    FOREIGN KEY (`order_id`) REFERENCES `#__nxp_easycart_orders` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_coupons` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_coupons` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `code` VARCHAR(64) NOT NULL,
   `type` ENUM('percent','fixed') NOT NULL DEFAULT 'percent',
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_coupons` (
   UNIQUE KEY `idx_nxp_coupons_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `#__nxp_audit` (
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_audit` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `entity_type` VARCHAR(64) NOT NULL,
   `entity_id` INT UNSIGNED NOT NULL,

@@ -12,6 +12,9 @@
     <ProductPanel
       :state="state"
       :translate="__"
+      @create="onCreate"
+      @update="onUpdate"
+      @delete="onDelete"
       @refresh="onRefresh"
       @search="onSearch"
     />
@@ -28,9 +31,9 @@ const props = defineProps({
     type: String,
     default: '',
   },
-  productsEndpoint: {
-    type: String,
-    default: '',
+  productsEndpoints: {
+    type: Object,
+    default: () => ({ list: '', create: '', update: '', delete: '' }),
   },
   dataset: {
     type: Object,
@@ -40,8 +43,8 @@ const props = defineProps({
 
 const { __ } = useTranslations(props.dataset);
 
-const { state, refresh, search } = useProducts({
-  endpoint: props.productsEndpoint,
+const { state, refresh, search, createProduct, updateProduct, deleteProducts } = useProducts({
+  endpoints: props.productsEndpoints,
   token: props.csrfToken,
 });
 
@@ -51,5 +54,20 @@ const onRefresh = () => {
 
 const onSearch = () => {
   search();
+};
+
+const onCreate = async (payload) => {
+  await createProduct(payload);
+  refresh();
+};
+
+const onUpdate = async ({ id, data }) => {
+  await updateProduct(id, data);
+  refresh();
+};
+
+const onDelete = async (ids) => {
+  await deleteProducts(ids);
+  refresh();
 };
 </script>
