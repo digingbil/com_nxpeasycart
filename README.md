@@ -4,11 +4,13 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 
 ## Overview
 
--   Namespaced Joomla MVC structure for administrator (`Nxp\\EasyCart\\Admin\\Administrator`) and site (`Nxp\\EasyCart\\Site`) applications.
+-   Namespaced Joomla MVC structure for administrator (`Nxp\\EasyCart\\Admin\\Administrator`) and site (`Nxp\\EasyCart\\Site`) applications, backed by a custom `EasyCartMVCFactory` so the dispatcher resolves controllers on both clients.
 -   Install/uninstall SQL covering the core NXP data model (`#__nxp_easycart_*` tables).
 -   Service provider bootstrap for Joomla's dependency injection container (no legacy `com_nxpeasycart.php` entry file).
+-   Cart and order services wired through the DI container, enforcing single-currency rules via the configuration helper and hydrating JSON billing/shipping payloads.
 -   JSON product API endpoints with ACL + CSRF enforcement powering the admin SPA.
--   Vue-based admin panel for catalogue management (products, variants, categories, images) plus storefront templates ready for Vue “islands”.
+-   Orders JSON API backed by `OrderService` for listing, creation, and state transitions with totals + line items.
+-   Vue-based admin panel for catalogue management (products, variants, categories, images) plus storefront templates ready for Vue “islands”; the site dispatcher currently renders a storefront placeholder pending catalogue wiring.
 
 ### Currency decision (MVP)
 
@@ -66,6 +68,11 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 -   The admin products panel now includes create/edit/delete flows with image management, category tagging, and variant tables, backed by shared composables and the JSON API.
 -   Component configuration exposes the single-currency guardrail; the admin editor reflects the configured currency and server-side validation ensures every variant uses it.
 -   Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid “Unknown asset” errors during development.
+
+## Storefront cart
+
+-   Frontend requests resolve the active cart through `CartSessionService`, which ties the Joomla session to the `#__nxp_easycart_carts` table and guarantees the payload uses the configured base currency.
+-   The session helper exposes the hydrated cart on the application input (`com_nxpeasycart.cart`) so upcoming cart/checkout views can consume a consistent structure.
 
 ## Changelog summary
 

@@ -3,7 +3,8 @@
 ## Component layout
 
 -   `administrator/components/com_nxpeasycart`
-    -   `services/provider.php`: registers the component, MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
+    -   `services/provider.php`: registers the component, custom MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
+    -   `src/Administrator/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Nxp\EasyCart\Site` namespace while keeping administrator and API traffic on `Nxp\EasyCart\Admin\Administrator`.
     -   `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
     -   `src/Administrator/`: PSR-4 namespaced administrator classes (`Nxp\EasyCart\Admin\Administrator\…`).
         -   `Controller/ApiController.php`: task router delegating to JSON resource controllers.
@@ -15,7 +16,7 @@
     -   `sql/`: install, uninstall, and future update scripts for the `#__nxp_easycart_*` tables.
     -   `forms/product.xml`: Joomla form definition used to validate API payloads.
 -   `components/com_nxpeasycart`
-    -   `src/`: storefront controllers/views in the `Nxp\EasyCart\Site\…` namespace.
+    -   `src/`: storefront controllers/views in the `Nxp\EasyCart\Site\…` namespace; the default `DisplayController` now renders a storefront placeholder until catalogue templates are connected.
 
 The admin view exposes a `<div id="nxp-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
 
@@ -38,6 +39,8 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 -   `AbstractJsonController` enforces ACL (`core.manage`, `core.create`, `core.edit`, `core.delete`), CSRF tokens via `Session::checkToken('request')`, and standard JSON responses.
 -   `ProductsController` implements browse/store/update/destroy endpoints operating on the `#__nxp_easycart_products` table using the Joomla MVC model and table classes.
 -   `ProductModel` wraps saves in DB transactions, persisting product rows alongside related variants (`#__nxp_easycart_variants`) and category assignments (`#__nxp_easycart_product_categories`), with JSON serialisation for images/options.
+-   Service layer classes (`CartService`, `OrderService`) encapsulate persistence for carts and orders, enforcing the single-currency guardrail via `ConfigHelper` and handling JSON serialisation/hydration for billing, shipping, line items, and stored cart payloads.
+-   On the storefront, `CartSessionService` maps Joomla sessions to database-backed carts and injects the hydrated cart payload into the application input for downstream controllers/views.
 -   API responses return hydrated products including variant collections, category metadata, image arrays, and computed summaries (variant counts, price range, currency hints).
 
 ## Admin SPA build
