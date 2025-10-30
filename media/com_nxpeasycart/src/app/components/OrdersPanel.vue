@@ -49,9 +49,47 @@
 
     <div v-else class="nxp-admin-panel__body nxp-admin-panel__body--orders">
       <div class="nxp-admin-panel__table">
+        <div class="nxp-admin-panel__selection" v-if="hasSelection">
+          <span>{{ selectionSummary }}</span>
+          <select
+            class="nxp-admin-select"
+            v-model="bulkState"
+            :aria-label="__('COM_NXPEASYCART_ORDERS_BULK_STATE', 'Select target state', [], 'ordersBulkState')"
+          >
+            <option value="">
+              {{ __('COM_NXPEASYCART_ORDERS_BULK_STATE_PLACEHOLDER', 'Choose state…', [], 'ordersBulkStatePlaceholder') }}
+            </option>
+            <option
+              v-for="option in state.orderStates"
+              :key="`bulk-${option}`"
+              :value="option"
+            >
+              {{ stateLabel(option) }}
+            </option>
+          </select>
+          <button
+            class="nxp-btn nxp-btn--primary"
+            type="button"
+            :disabled="!bulkState || state.saving"
+            @click="emitBulkTransition"
+          >
+            {{ __('COM_NXPEASYCART_ORDERS_BULK_APPLY', 'Apply', [], 'ordersBulkApply') }}
+          </button>
+          <button
+            class="nxp-link-button"
+            type="button"
+            @click="emitClearSelection"
+          >
+            {{ __('COM_NXPEASYCART_ORDERS_CLEAR_SELECTION', 'Clear', [], 'ordersClearSelection') }}
+          </button>
+        </div>
+
         <table class="nxp-admin-table">
           <thead>
             <tr>
+              <th scope="col" class="nxp-admin-table__select">
+                {{ __('COM_NXPEASYCART_ORDERS_TABLE_SELECT', 'Select', [], 'ordersTableSelect') }}
+              </th>
               <th scope="col">{{ __('COM_NXPEASYCART_ORDERS_TABLE_ORDER', 'Order', [], 'ordersTableOrder') }}</th>
               <th scope="col">{{ __('COM_NXPEASYCART_ORDERS_TABLE_CUSTOMER', 'Customer', [], 'ordersTableCustomer') }}</th>
               <th scope="col">{{ __('COM_NXPEASYCART_ORDERS_TABLE_TOTAL', 'Total', [], 'ordersTableTotal') }}</th>
@@ -64,7 +102,7 @@
           </thead>
           <tbody>
             <tr v-if="!state.items.length">
-              <td colspan="6">
+              <td colspan="7">
                 {{ __('COM_NXPEASYCART_ORDERS_EMPTY', 'No orders found.', [], 'ordersEmpty') }}
               </td>
             </tr>
@@ -73,6 +111,15 @@
               :key="order.id"
               :class="{ 'is-active': state.activeOrder && state.activeOrder.id === order.id }"
             >
+              <td class="nxp-admin-table__select">
+                <input
+                  type="checkbox"
+                  class="nxp-admin-checkbox"
+                  :checked="isSelected(order.id)"
+                  @change="emitToggleSelection(order.id)"
+                  :aria-label="__('COM_NXPEASYCART_ORDERS_SELECT_ORDER', 'Select order', [], 'ordersSelectOrder')"
+                />
+              </td>
               <th scope="row">
                 <button
                   class="nxp-link-button"
@@ -207,13 +254,64 @@
             {{ __('COM_NXPEASYCART_ORDERS_NO_SHIPPING', 'Shipping information not provided.', [], 'ordersNoShipping') }}
           </p>
         </section>
+
+        <section
+          class="nxp-admin-panel__section"
+          v-if="state.activeOrder.transactions && state.activeOrder.transactions.length"
+        >
+          <h4>{{ __('COM_NXPEASYCART_ORDERS_TRANSACTIONS_LABEL', 'Payments', [], 'ordersTransactionsLabel') }}</h4>
+          <ul class="nxp-admin-list">
+            <li v-for="transaction in state.activeOrder.transactions" :key="transaction.id">
+              <div class="nxp-admin-list__title">
+                {{ transaction.gateway }} · {{ formatCurrency(transaction.amount_cents, state.activeOrder.currency) }}
+              </div>
+              <div class="nxp-admin-list__meta">
+                {{ transactionStatusLabel(transaction) }} · {{ formatDate(transaction.created) }}
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="nxp-admin-panel__section">
+          <h4>{{ __('COM_NXPEASYCART_ORDERS_NOTE_LABEL', 'Add note', [], 'ordersNoteLabel') }}</h4>
+          <form class="nxp-admin-form" @submit.prevent="emitAddNote">
+            <textarea
+              class="nxp-form-textarea"
+              rows="3"
+              v-model="noteDraft"
+              :placeholder="__('COM_NXPEASYCART_ORDERS_NOTE_PLACEHOLDER', 'Leave a fulfilment note…', [], 'ordersNotePlaceholder')"
+            ></textarea>
+            <div class="nxp-admin-form__actions">
+              <button class="nxp-btn" type="submit" :disabled="!noteReady || state.saving">
+                {{ __('COM_NXPEASYCART_ORDERS_NOTE_SUBMIT', 'Save note', [], 'ordersNoteSubmit') }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="nxp-admin-panel__section">
+          <h4>{{ __('COM_NXPEASYCART_ORDERS_TIMELINE_LABEL', 'History', [], 'ordersTimelineLabel') }}</h4>
+          <ul class="nxp-admin-list" v-if="state.activeOrder.timeline && state.activeOrder.timeline.length">
+            <li v-for="entry in state.activeOrder.timeline" :key="entry.id">
+              <div class="nxp-admin-list__title">
+                {{ historyLabel(entry) }}
+              </div>
+              <div class="nxp-admin-list__meta">
+                {{ formatDate(entry.created) }}
+              </div>
+            </li>
+          </ul>
+          <p v-else class="nxp-admin-panel__muted">
+            {{ __('COM_NXPEASYCART_ORDERS_TIMELINE_EMPTY', 'No history recorded yet.', [], 'ordersTimelineEmpty') }}
+          </p>
+        </section>
       </aside>
     </div>
   </section>
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   state: {
@@ -226,7 +324,19 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['refresh', 'search', 'filter', 'view', 'close', 'transition', 'page']);
+const emit = defineEmits([
+  'refresh',
+  'search',
+  'filter',
+  'view',
+  'close',
+  'transition',
+  'page',
+  'bulk-transition',
+  'toggle-selection',
+  'clear-selection',
+  'add-note',
+]);
 
 const __ = props.translate;
 
@@ -243,6 +353,34 @@ const formatWithPlaceholders = (text, replacements = []) => {
 };
 
 const selections = reactive({});
+const bulkState = ref('');
+const noteDraft = ref('');
+const noteReady = computed(() => noteDraft.value.trim().length > 0);
+
+const selectedIds = computed(() => {
+  const selection = props.state?.selection;
+
+  if (!selection || typeof selection.values !== 'function') {
+    return [];
+  }
+
+  return Array.from(selection.values());
+});
+
+const hasSelection = computed(() => selectedIds.value.length > 0);
+
+watch(selectedIds, (ids) => {
+  if (!ids.length) {
+    bulkState.value = '';
+  }
+});
+
+watch(
+  () => props.state.activeOrder?.id,
+  () => {
+    noteDraft.value = '';
+  }
+);
 
 watch(
   () => props.state.items,
@@ -363,4 +501,121 @@ const emitTransition = (order) => {
 const emitPage = (page) => {
   emit('page', page);
 };
+
+const isSelected = (orderId) => props.state?.selection?.has?.(orderId) ?? false;
+
+const emitToggleSelection = (orderId) => {
+  emit('toggle-selection', orderId);
+};
+
+const emitClearSelection = () => {
+  bulkState.value = '';
+  emit('clear-selection');
+};
+
+const emitBulkTransition = () => {
+  if (!hasSelection.value || !bulkState.value) {
+    return;
+  }
+
+  emit('bulk-transition', {
+    ids: [...selectedIds.value],
+    state: bulkState.value,
+  });
+};
+
+const emitAddNote = () => {
+  if (!props.state.activeOrder) {
+    return;
+  }
+
+  const message = noteDraft.value.trim();
+
+  if (!message) {
+    return;
+  }
+
+  emit('add-note', {
+    id: props.state.activeOrder.id,
+    message,
+  });
+
+  noteDraft.value = '';
+};
+
+const selectionSummary = computed(() =>
+  formatWithPlaceholders(
+    __('COM_NXPEASYCART_ORDERS_SELECTED_COUNT', '%s selected', [], 'ordersSelectedCount'),
+    [String(selectedIds.value.length)]
+  )
+);
+
+const historyLabel = (entry) => {
+  if (!entry || !entry.action) {
+    return '';
+  }
+
+  switch (entry.action) {
+    case 'order.created':
+      return __('COM_NXPEASYCART_ORDERS_TIMELINE_CREATED', 'Order created', [], 'ordersTimelineCreated');
+    case 'order.state.transitioned': {
+      const from = stateLabel(entry.context?.from ?? '');
+      const to = stateLabel(entry.context?.to ?? '');
+      return formatWithPlaceholders(
+        __('COM_NXPEASYCART_ORDERS_TIMELINE_STATE', 'State changed from %s to %s', [], 'ordersTimelineState'),
+        [from || entry.context?.from || '', to || entry.context?.to || '']
+      );
+    }
+    case 'order.note':
+      return (
+        entry.context?.message
+        || __('COM_NXPEASYCART_ORDERS_TIMELINE_NOTE', 'Note added', [], 'ordersTimelineNote')
+      );
+    default:
+      return entry.action;
+  }
+};
+
+const transactionStatusLabel = (transaction) =>
+  __(
+    `COM_NXPEASYCART_TRANSACTION_STATUS_${String(transaction.status || '').toUpperCase()}`,
+    transaction.status || ''
+  );
 </script>
+
+<style scoped>
+.nxp-admin-panel__selection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.nxp-admin-table__select {
+  width: 3rem;
+  text-align: center;
+}
+
+.nxp-admin-table__select .nxp-admin-checkbox {
+  margin: 0 auto;
+}
+
+.nxp-admin-checkbox {
+  width: 1rem;
+  height: 1rem;
+}
+
+.nxp-admin-panel__section .nxp-admin-list {
+  gap: 0.5rem;
+}
+
+.nxp-admin-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.nxp-admin-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

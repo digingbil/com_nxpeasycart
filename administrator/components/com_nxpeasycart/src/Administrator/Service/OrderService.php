@@ -5,10 +5,12 @@ namespace Nxp\EasyCart\Admin\Administrator\Service;
 \defined('_JEXEC') or die;
 
 use JsonException;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
+use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 use Throwable;
@@ -25,14 +27,35 @@ class OrderService
      */
     private DatabaseInterface $db;
 
+    private ?AuditService $audit = null;
+
+    private function getAuditService(): AuditService
+    {
+        if ($this->audit === null) {
+            $container = Factory::getContainer();
+
+            if (!$container->has(AuditService::class)) {
+                $container->set(
+                    AuditService::class,
+                    static fn ($container) => new AuditService($container->get(DatabaseInterface::class))
+                );
+            }
+
+            $this->audit = $container->get(AuditService::class);
+        }
+
+        return $this->audit;
+    }
+
     /**
      * OrderService constructor.
      *
      * @param DatabaseInterface $db Database connector
      */
-    public function __construct(DatabaseInterface $db)
+    public function __construct(DatabaseInterface $db, ?AuditService $audit = null)
     {
         $this->db = $db;
+        $this->audit = $audit;
     }
 
     /**
@@ -56,7 +79,7 @@ class OrderService
      *   'order_no' => 'EC-12345678'
      * ]
      */
-    public function create(array $payload): array
+    public function create(array $payload, ?int $actorId = null): array
     {
         $normalised = $this->normaliseOrderPayload($payload);
         $items = $this->normaliseOrderItems($payload['items'] ?? []);
@@ -112,6 +135,18 @@ class OrderService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_CREATE_FAILED'), 0, $exception);
         }
 
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.created',
+            [
+                'order_no' => $normalised['order_no'],
+                'state' => $normalised['state'],
+                'total_cents' => $totals['total_cents'],
+            ],
+            $actorId
+        );
+
         $order = $this->getByNumber($normalised['order_no']);
 
         if (!$order) {
@@ -140,7 +175,7 @@ class OrderService
             return null;
         }
 
-        return $this->mapOrderRow($row);
+        return $this->mapOrderRow($row, null, true);
     }
 
     /**
@@ -168,18 +203,28 @@ class OrderService
             return null;
         }
 
-        return $this->mapOrderRow($row);
+        return $this->mapOrderRow($row, null, true);
     }
 
     /**
      * Update an order state and return the updated representation.
      */
-    public function transitionState(int $orderId, string $state): array
+    public function transitionState(int $orderId, string $state, ?int $actorId = null): array
     {
         $state = strtolower(trim($state));
 
         if (!\in_array($state, self::ORDER_STATES, true)) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_STATE_INVALID'));
+        }
+
+        $current = $this->get($orderId);
+
+        if (!$current) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        if ($current['state'] === $state) {
+            return $current;
         }
 
         $query = $this->db->getQuery(true)
@@ -192,13 +237,84 @@ class OrderService
         $this->db->setQuery($query);
         $this->db->execute();
 
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.state.transitioned',
+            [
+                'from' => $current['state'],
+                'to' => $state,
+            ],
+            $actorId
+        );
+
+        $updated = $this->get($orderId);
+
+        if (!$updated) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        return $updated;
+    }
+
+    /**
+     * Transition multiple orders and return updated representations.
+     *
+     * @return array{updated: array<int, array<string, mixed>>, failed: array<int, array<string, mixed>>}
+     */
+    public function bulkTransition(array $orderIds, string $state, ?int $actorId = null): array
+    {
+        $unique = array_unique(array_map('intval', $orderIds));
+        $updated = [];
+        $failed = [];
+
+        foreach ($unique as $orderId) {
+            if ($orderId <= 0) {
+                continue;
+            }
+
+            try {
+                $updated[] = $this->transitionState($orderId, $state, $actorId);
+            } catch (RuntimeException $exception) {
+                $failed[] = [
+                    'id' => $orderId,
+                    'message' => $exception->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'updated' => $updated,
+            'failed' => $failed,
+        ];
+    }
+
+    /**
+     * Append an audit note for fulfilment context.
+     */
+    public function addNote(int $orderId, string $message, ?int $actorId = null): array
+    {
+        $message = trim($message);
+
+        if ($message === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOTE_REQUIRED'));
+        }
+
         $order = $this->get($orderId);
 
         if (!$order) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
 
-        return $order;
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.note',
+            ['message' => $message],
+            $actorId
+        );
+
+        return $this->get($orderId);
     }
 
     /**
@@ -408,12 +524,16 @@ class OrderService
     /**
      * Convert DB row to array representation with decoded JSON.
      */
-    private function mapOrderRow(object $row, ?array $items = null): array
+    private function mapOrderRow(object $row, ?array $items = null, bool $includeHistory = false): array
     {
         $items ??= $this->getOrderItems((int) $row->id);
+        $orderId = (int) $row->id;
+
+        $transactions = $includeHistory ? $this->getTransactions($orderId) : [];
+        $timeline = $includeHistory ? $this->getAuditTrail($orderId) : [];
 
         return [
-            'id' => (int) $row->id,
+            'id' => $orderId,
             'order_no' => (string) $row->order_no,
             'user_id' => $row->user_id !== null ? (int) $row->user_id : null,
             'email' => (string) $row->email,
@@ -430,6 +550,8 @@ class OrderService
             'created' => (string) $row->created,
             'modified' => $row->modified !== null ? (string) $row->modified : null,
             'items' => $items,
+            'transactions' => $transactions,
+            'timeline' => $timeline,
         ];
     }
 
@@ -526,6 +648,54 @@ class OrderService
         }
 
         return $map;
+    }
+
+    /**
+     * Retrieve gateway transactions for the order.
+     */
+    private function getTransactions(int $orderId): array
+    {
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__nxp_easycart_transactions'))
+            ->where($this->db->quoteName('order_id') . ' = :orderId')
+            ->order($this->db->quoteName('created') . ' DESC')
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+
+        $rows = $this->db->loadObjectList() ?: [];
+
+        return array_map(function ($row) {
+            $payload = [];
+
+            if (!empty($row->payload)) {
+                $decoded = json_decode($row->payload, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $payload = $decoded;
+                }
+            }
+
+            return [
+                'id' => (int) $row->id,
+                'gateway' => (string) $row->gateway,
+                'external_id' => $row->ext_id !== null ? (string) $row->ext_id : null,
+                'status' => (string) $row->status,
+                'amount_cents' => (int) $row->amount_cents,
+                'payload' => $payload,
+                'idempotency_key' => $row->event_idempotency_key !== null ? (string) $row->event_idempotency_key : null,
+                'created' => (string) $row->created,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Retrieve audit trail entries for the order.
+     */
+    private function getAuditTrail(int $orderId): array
+    {
+        return $this->getAuditService()->forOrder($orderId);
     }
 
     /**

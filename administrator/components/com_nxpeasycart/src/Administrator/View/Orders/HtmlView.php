@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
+use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
 
 /**
@@ -41,10 +42,20 @@ class HtmlView extends BaseHtmlView
     {
         $container = Factory::getContainer();
 
+        if (!$container->has(AuditService::class)) {
+            $container->set(
+                AuditService::class,
+                static fn ($container) => new AuditService($container->get(DatabaseInterface::class))
+            );
+        }
+
         if (!$container->has(OrderService::class)) {
             $container->set(
                 OrderService::class,
-                static fn ($container): OrderService => new OrderService($container->get(DatabaseInterface::class))
+                static fn ($container): OrderService => new OrderService(
+                    $container->get(DatabaseInterface::class),
+                    $container->get(AuditService::class)
+                )
             );
         }
 

@@ -25,10 +25,38 @@ $productsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=a
 $ordersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.list&format=json';
 $ordersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.show&format=json';
 $ordersEndpointTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json';
+$ordersEndpointBulkTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.bulkTransition&format=json';
+$ordersEndpointNote = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.note&format=json';
+$dashboardEndpoint = $adminBase . '/index.php?option=com_nxpeasycart&task=api.dashboard.summary&format=json';
+$customersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.list&format=json';
+$customersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.show&format=json';
+$couponsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.list&format=json';
+$couponsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.store&format=json';
+$couponsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.update&format=json';
+$couponsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.delete&format=json';
+$taxEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.list&format=json';
+$taxEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.store&format=json';
+$taxEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.update&format=json';
+$taxEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.delete&format=json';
+$shippingEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.list&format=json';
+$shippingEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.store&format=json';
+$shippingEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.update&format=json';
+$shippingEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.delete&format=json';
+$settingsEndpointGet = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.show&format=json';
+$settingsEndpointSave = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json';
+$logsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.logs.list&format=json';
 $params = ComponentHelper::getParams('com_nxpeasycart');
 $baseCurrency = strtoupper($params->get('base_currency', 'USD'));
 $section = Factory::getApplication()->input->getCmd('appSection', 'dashboard');
 $ordersPreload = property_exists($this, 'orders') && \is_array($this->orders) ? $this->orders : ['items' => [], 'pagination' => []];
+$dashboardSummary = property_exists($this, 'dashboardSummary') && \is_array($this->dashboardSummary) ? $this->dashboardSummary : [];
+$dashboardChecklist = property_exists($this, 'dashboardChecklist') && \is_array($this->dashboardChecklist) ? $this->dashboardChecklist : [];
+$customersPreload = property_exists($this, 'customers') && \is_array($this->customers) ? $this->customers : ['items' => [], 'pagination' => []];
+$couponsPreload = property_exists($this, 'coupons') && \is_array($this->coupons) ? $this->coupons : ['items' => [], 'pagination' => []];
+$taxPreload = property_exists($this, 'taxRates') && \is_array($this->taxRates) ? $this->taxRates : ['items' => []];
+$shippingPreload = property_exists($this, 'shippingRules') && \is_array($this->shippingRules) ? $this->shippingRules : ['items' => []];
+$settingsPreload = property_exists($this, 'settingsData') && \is_array($this->settingsData) ? $this->settingsData : [];
+$logsPreload = property_exists($this, 'logsData') && \is_array($this->logsData) ? $this->logsData : ['items' => [], 'pagination' => []];
 $navItems = [
     [
         'id' => 'dashboard',
@@ -67,6 +95,72 @@ $navItems = [
     ],
 ];
 $orderStates = ['cart', 'pending', 'paid', 'fulfilled', 'refunded', 'canceled'];
+$jsonOptions = JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP;
+
+$appConfig = [
+    'activeSection' => $section,
+    'baseCurrency' => $baseCurrency,
+    'navItems' => $navItems,
+    'orderStates' => $orderStates,
+    'preload' => [
+        'orders' => $ordersPreload,
+        'dashboard' => [
+            'summary' => $dashboardSummary,
+            'checklist' => $dashboardChecklist,
+        ],
+        'customers' => $customersPreload,
+        'coupons' => $couponsPreload,
+        'tax' => $taxPreload,
+        'shipping' => $shippingPreload,
+        'settings' => $settingsPreload,
+        'logs' => $logsPreload,
+    ],
+    'endpoints' => [
+        'dashboard' => $dashboardEndpoint,
+        'products' => [
+            'list' => $productsEndpointList,
+            'create' => $productsEndpointStore,
+            'update' => $productsEndpointUpdate,
+            'delete' => $productsEndpointDelete,
+        ],
+        'orders' => [
+            'list' => $ordersEndpointList,
+            'show' => $ordersEndpointShow,
+            'transition' => $ordersEndpointTransition,
+            'bulkTransition' => $ordersEndpointBulkTransition,
+            'note' => $ordersEndpointNote,
+        ],
+        'customers' => [
+            'list' => $customersEndpointList,
+            'show' => $customersEndpointShow,
+        ],
+        'coupons' => [
+            'list' => $couponsEndpointList,
+            'create' => $couponsEndpointStore,
+            'update' => $couponsEndpointUpdate,
+            'delete' => $couponsEndpointDelete,
+        ],
+        'tax' => [
+            'list' => $taxEndpointList,
+            'create' => $taxEndpointStore,
+            'update' => $taxEndpointUpdate,
+            'delete' => $taxEndpointDelete,
+        ],
+        'shipping' => [
+            'list' => $shippingEndpointList,
+            'create' => $shippingEndpointStore,
+            'update' => $shippingEndpointUpdate,
+            'delete' => $shippingEndpointDelete,
+        ],
+        'settings' => [
+            'show' => $settingsEndpointGet,
+            'update' => $settingsEndpointSave,
+        ],
+        'logs' => [
+            'list' => $logsEndpointList,
+        ],
+    ],
+];
 
 switch ($section) {
     case 'products':
@@ -144,10 +238,128 @@ $dataAttributes = [
     'orders-transition-success' => Text::_('COM_NXPEASYCART_ORDERS_TRANSITION_SUCCESS'),
     'orders-transition-error' => Text::_('COM_NXPEASYCART_ORDERS_TRANSITION_ERROR'),
     'orders-no-shipping' => Text::_('COM_NXPEASYCART_ORDERS_NO_SHIPPING'),
-    'orders-preload' => json_encode($ordersPreload['items'] ?? [], JSON_UNESCAPED_SLASHES),
-    'orders-preload-pagination' => json_encode($ordersPreload['pagination'] ?? [], JSON_UNESCAPED_SLASHES),
-    'nav-items' => json_encode($navItems, JSON_UNESCAPED_SLASHES),
-    'order-states' => json_encode($orderStates, JSON_UNESCAPED_SLASHES),
+    'orders-table-select' => Text::_('COM_NXPEASYCART_ORDERS_TABLE_SELECT'),
+    'orders-select-order' => Text::_('COM_NXPEASYCART_ORDERS_SELECT_ORDER'),
+    'orders-selected-count' => Text::_('COM_NXPEASYCART_ORDERS_SELECTED_COUNT'),
+    'orders-bulk-state' => Text::_('COM_NXPEASYCART_ORDERS_BULK_STATE'),
+    'orders-bulk-state-placeholder' => Text::_('COM_NXPEASYCART_ORDERS_BULK_STATE_PLACEHOLDER'),
+    'orders-bulk-apply' => Text::_('COM_NXPEASYCART_ORDERS_BULK_APPLY'),
+    'orders-clear-selection' => Text::_('COM_NXPEASYCART_ORDERS_CLEAR_SELECTION'),
+    'orders-transactions-label' => Text::_('COM_NXPEASYCART_ORDERS_TRANSACTIONS_LABEL'),
+    'orders-timeline-label' => Text::_('COM_NXPEASYCART_ORDERS_TIMELINE_LABEL'),
+    'orders-timeline-empty' => Text::_('COM_NXPEASYCART_ORDERS_TIMELINE_EMPTY'),
+    'orders-timeline-created' => Text::_('COM_NXPEASYCART_ORDERS_TIMELINE_CREATED'),
+    'orders-timeline-state' => Text::_('COM_NXPEASYCART_ORDERS_TIMELINE_STATE'),
+    'orders-timeline-note' => Text::_('COM_NXPEASYCART_ORDERS_TIMELINE_NOTE'),
+    'orders-note-label' => Text::_('COM_NXPEASYCART_ORDERS_NOTE_LABEL'),
+    'orders-note-placeholder' => Text::_('COM_NXPEASYCART_ORDERS_NOTE_PLACEHOLDER'),
+    'orders-note-submit' => Text::_('COM_NXPEASYCART_ORDERS_NOTE_SUBMIT'),
+    'product-images-placeholder' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PLACEHOLDER'),
+    'product-images-select' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_SELECT'),
+    'product-images-move-up' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_MOVE_UP'),
+    'product-images-move-down' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_MOVE_DOWN'),
+    'product-images-remove' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_REMOVE'),
+    'product-images-add' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_ADD'),
+    'product-images-prompt' => Text::_('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PROMPT'),
+    'customers-panel-title' => Text::_('COM_NXPEASYCART_MENU_CUSTOMERS'),
+    'customers-panel-lead' => Text::_('COM_NXPEASYCART_CUSTOMERS_LEAD'),
+    'customers-refresh' => Text::_('COM_NXPEASYCART_CUSTOMERS_REFRESH'),
+    'customers-search-placeholder' => Text::_('COM_NXPEASYCART_CUSTOMERS_SEARCH_PLACEHOLDER'),
+    'customers-loading' => Text::_('COM_NXPEASYCART_CUSTOMERS_LOADING'),
+    'customers-empty' => Text::_('COM_NXPEASYCART_CUSTOMERS_EMPTY'),
+    'customers-table-email' => Text::_('COM_NXPEASYCART_CUSTOMERS_TABLE_EMAIL'),
+    'customers-table-name' => Text::_('COM_NXPEASYCART_CUSTOMERS_TABLE_NAME'),
+    'customers-table-orders' => Text::_('COM_NXPEASYCART_CUSTOMERS_TABLE_ORDERS'),
+    'customers-table-total' => Text::_('COM_NXPEASYCART_CUSTOMERS_TABLE_TOTAL'),
+    'customers-table-last' => Text::_('COM_NXPEASYCART_CUSTOMERS_TABLE_LAST'),
+    'customers-details-close' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_CLOSE'),
+    'customers-details-summary' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_SUMMARY'),
+    'customers-details-name' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_NAME'),
+    'customers-details-total' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_TOTAL'),
+    'customers-details-orders' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS'),
+    'customers-details-last' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_LAST'),
+    'customers-details-billing' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_BILLING'),
+    'customers-details-shipping' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_SHIPPING'),
+    'customers-details-no-shipping' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING'),
+    'customers-details-orders-list' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS_LIST'),
+    'customers-details-no-orders' => Text::_('COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_ORDERS'),
+    'coupons-panel-title' => Text::_('COM_NXPEASYCART_MENU_COUPONS'),
+    'coupons-panel-lead' => Text::_('COM_NXPEASYCART_COUPONS_LEAD'),
+    'coupons-refresh' => Text::_('COM_NXPEASYCART_COUPONS_REFRESH'),
+    'coupons-add' => Text::_('COM_NXPEASYCART_COUPONS_ADD'),
+    'coupons-search-placeholder' => Text::_('COM_NXPEASYCART_COUPONS_SEARCH_PLACEHOLDER'),
+    'coupons-loading' => Text::_('COM_NXPEASYCART_COUPONS_LOADING'),
+    'coupons-empty' => Text::_('COM_NXPEASYCART_COUPONS_EMPTY'),
+    'coupons-table-code' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_CODE'),
+    'coupons-table-type' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_TYPE'),
+    'coupons-table-value' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_VALUE'),
+    'coupons-table-min-total' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_MIN_TOTAL'),
+    'coupons-table-active' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_ACTIVE'),
+    'coupons-table-usage' => Text::_('COM_NXPEASYCART_COUPONS_TABLE_USAGE'),
+    'coupons-details-close' => Text::_('COM_NXPEASYCART_COUPONS_DETAILS_CLOSE'),
+    'coupons-form-code' => Text::_('COM_NXPEASYCART_COUPONS_FORM_CODE'),
+    'coupons-form-type' => Text::_('COM_NXPEASYCART_COUPONS_FORM_TYPE'),
+    'coupons-form-value' => Text::_('COM_NXPEASYCART_COUPONS_FORM_VALUE'),
+    'coupons-form-min-total' => Text::_('COM_NXPEASYCART_COUPONS_FORM_MIN_TOTAL'),
+    'coupons-form-start' => Text::_('COM_NXPEASYCART_COUPONS_FORM_START'),
+    'coupons-form-end' => Text::_('COM_NXPEASYCART_COUPONS_FORM_END'),
+    'coupons-form-max-uses' => Text::_('COM_NXPEASYCART_COUPONS_FORM_MAX_USES'),
+    'coupons-form-active' => Text::_('COM_NXPEASYCART_COUPONS_FORM_ACTIVE'),
+    'coupons-form-save' => Text::_('COM_NXPEASYCART_COUPONS_FORM_SAVE'),
+    'coupons-form-cancel' => Text::_('COM_NXPEASYCART_COUPONS_FORM_CANCEL'),
+    'coupons-form-type-percent' => Text::_('COM_NXPEASYCART_COUPONS_FORM_TYPE_PERCENT'),
+    'coupons-form-type-fixed' => Text::_('COM_NXPEASYCART_COUPONS_FORM_TYPE_FIXED'),
+    'coupons-delete-confirm' => Text::_('COM_NXPEASYCART_COUPONS_DELETE_CONFIRM'),
+    'orders-preload' => json_encode($ordersPreload['items'] ?? [], $jsonOptions),
+    'orders-preload-pagination' => json_encode($ordersPreload['pagination'] ?? [], $jsonOptions),
+    'dashboard-summary' => json_encode($dashboardSummary, $jsonOptions),
+    'dashboard-checklist' => json_encode($dashboardChecklist, $jsonOptions),
+    'customers-preload' => json_encode($customersPreload['items'] ?? [], $jsonOptions),
+    'customers-preload-pagination' => json_encode($customersPreload['pagination'] ?? [], $jsonOptions),
+    'coupons-preload' => json_encode($couponsPreload['items'] ?? [], $jsonOptions),
+    'tax-preload' => json_encode($taxPreload['items'] ?? [], $jsonOptions),
+    'tax-preload-pagination' => json_encode($taxPreload['pagination'] ?? [], $jsonOptions),
+    'shipping-preload' => json_encode($shippingPreload['items'] ?? [], $jsonOptions),
+    'shipping-preload-pagination' => json_encode($shippingPreload['pagination'] ?? [], $jsonOptions),
+    'settings-preload' => json_encode($settingsPreload, $jsonOptions),
+    'logs-preload' => json_encode($logsPreload['items'] ?? [], $jsonOptions),
+    'logs-preload-pagination' => json_encode($logsPreload['pagination'] ?? [], $jsonOptions),
+    'config' => json_encode($appConfig, $jsonOptions),
+    'nav-items' => json_encode($navItems, $jsonOptions),
+    'order-states' => json_encode($orderStates, $jsonOptions),
+    'dashboard-endpoint' => $dashboardEndpoint,
+    'orders-endpoint-bulk' => $ordersEndpointBulkTransition,
+    'orders-endpoint-note' => $ordersEndpointNote,
+    'customers-endpoint' => $customersEndpointList,
+    'customers-endpoint-show' => $customersEndpointShow,
+    'coupons-endpoint' => $couponsEndpointList,
+    'coupons-endpoint-create' => $couponsEndpointStore,
+    'coupons-endpoint-update' => $couponsEndpointUpdate,
+    'coupons-endpoint-delete' => $couponsEndpointDelete,
+    'tax-endpoint' => $taxEndpointList,
+    'tax-endpoint-create' => $taxEndpointStore,
+    'tax-endpoint-update' => $taxEndpointUpdate,
+    'tax-endpoint-delete' => $taxEndpointDelete,
+    'shipping-endpoint' => $shippingEndpointList,
+    'shipping-endpoint-create' => $shippingEndpointStore,
+    'shipping-endpoint-update' => $shippingEndpointUpdate,
+    'shipping-endpoint-delete' => $shippingEndpointDelete,
+    'settings-endpoint-show' => $settingsEndpointGet,
+    'settings-endpoint-update' => $settingsEndpointSave,
+    'logs-endpoint' => $logsEndpointList,
+    'dashboard-title' => Text::_('COM_NXPEASYCART_MENU_DASHBOARD'),
+    'dashboard-lead' => Text::_('COM_NXPEASYCART_DASHBOARD_LEAD'),
+    'dashboard-refresh' => Text::_('COM_NXPEASYCART_DASHBOARD_REFRESH'),
+    'dashboard-metric-products' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_PRODUCTS'),
+    'dashboard-metric-products-total' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_PRODUCTS_TOTAL'),
+    'dashboard-metric-orders' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_ORDERS'),
+    'dashboard-metric-orders-count' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_ORDERS_COUNT'),
+    'dashboard-metric-customers' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_CUSTOMERS'),
+    'dashboard-metric-customers-hint' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_CUSTOMERS_HINT'),
+    'dashboard-metric-month' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_MONTH'),
+    'dashboard-metric-currency' => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_CURRENCY'),
+    'dashboard-checklist-title' => Text::_('COM_NXPEASYCART_DASHBOARD_CHECKLIST'),
+    'dashboard-checklist-action' => Text::_('COM_NXPEASYCART_DASHBOARD_CHECKLIST_ACTION'),
 ];
 ?>
 

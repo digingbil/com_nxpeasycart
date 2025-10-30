@@ -158,6 +158,197 @@ class ApiClient {
         };
     }
 
+    async fetchCustomers({ endpoint, limit = 20, start = 0, search = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+        const items = body.items ?? [];
+        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
+
+        return {
+            items,
+            pagination,
+        };
+    }
+
+    async fetchCustomer({ endpoint, email }) {
+        const url = this.mergeParams(endpoint, { email });
+        const payload = await this.get(url);
+
+        return payload.data?.customer ?? null;
+    }
+
+    async fetchCoupons({ endpoint, limit = 20, start = 0, search = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+
+        return {
+            items: body.items ?? [],
+            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+        };
+    }
+
+    async createCoupon({ endpoint, data }) {
+        const payload = await this.post(endpoint, data);
+
+        return payload.data?.coupon ?? null;
+    }
+
+    async updateCoupon({ endpoint, id, data }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.put(url, data);
+
+        return payload.data?.coupon ?? null;
+    }
+
+    async deleteCoupons({ endpoint, ids }) {
+        const payload = await this.delete(endpoint, {
+            body: JSON.stringify({ ids }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return payload.data?.deleted ?? 0;
+    }
+
+    async fetchTaxRates({ endpoint, limit = 20, start = 0, search = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+
+        return {
+            items: body.items ?? [],
+            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+        };
+    }
+
+    async createTaxRate({ endpoint, data }) {
+        const payload = await this.post(endpoint, data);
+
+        return payload.data?.rate ?? null;
+    }
+
+    async updateTaxRate({ endpoint, id, data }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.put(url, data);
+
+        return payload.data?.rate ?? null;
+    }
+
+    async deleteTaxRates({ endpoint, ids }) {
+        const payload = await this.delete(endpoint, {
+            body: JSON.stringify({ ids }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return payload.data?.deleted ?? 0;
+    }
+
+    async fetchShippingRules({ endpoint, limit = 20, start = 0, search = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+
+        return {
+            items: body.items ?? [],
+            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+        };
+    }
+
+    async createShippingRule({ endpoint, data }) {
+        const payload = await this.post(endpoint, data);
+
+        return payload.data?.rule ?? null;
+    }
+
+    async updateShippingRule({ endpoint, id, data }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.put(url, data);
+
+        return payload.data?.rule ?? null;
+    }
+
+    async deleteShippingRules({ endpoint, ids }) {
+        const payload = await this.delete(endpoint, {
+            body: JSON.stringify({ ids }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return payload.data?.deleted ?? 0;
+    }
+
+    async fetchLogs({ endpoint, limit = 20, start = 0, search = '', entity = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+            entity: entity || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+
+        return {
+            items: body.items ?? [],
+            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+        };
+    }
+
+    /**
+     * Retrieve dashboard metrics and checklist.
+     */
+    async fetchDashboard({ endpoint }) {
+        if (!endpoint) {
+            return {};
+        }
+
+        const payload = await this.get(endpoint);
+
+        return payload.data ?? {};
+    }
+
+    async fetchSettings({ endpoint }) {
+        if (!endpoint) {
+            return {};
+        }
+
+        const payload = await this.get(endpoint);
+
+        return payload.data?.settings ?? {};
+    }
+
+    async updateSettings({ endpoint, data }) {
+        const payload = await this.put(endpoint, data);
+
+        return payload.data?.settings ?? {};
+    }
+
     /**
      * Retrieve a single order by id or number.
      */
@@ -178,6 +369,29 @@ class ApiClient {
     async transitionOrder({ endpoint, id, state }) {
         const url = this.mergeParams(endpoint, { id });
         const payload = await this.post(url, { state });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
+     * Transition multiple orders in one request.
+     */
+    async bulkTransitionOrders({ endpoint, ids, state }) {
+        const body = {
+            ids,
+            state,
+        };
+
+        const payload = await this.post(endpoint, body);
+
+        return payload.data ?? {};
+    }
+
+    /**
+     * Append an admin note to an order.
+     */
+    async addOrderNote({ endpoint, id, message }) {
+        const payload = await this.post(endpoint, { id, message });
 
         return payload.data?.order ?? null;
     }

@@ -2,14 +2,9 @@
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Language\Text;
-?>
+use Joomla\CMS\Factory;
 
-<div class="nxp-admin-view-placeholder">
-    <h2 class="nxp-admin-view-placeholder__title">
-        <?php echo Text::_('COM_NXPEASYCART_MENU_SETTINGS'); ?>
-    </h2>
-    <p class="nxp-admin-view-placeholder__lead">
-        <?php echo Text::_('COM_NXPEASYCART_VIEW_SETTINGS_PLACEHOLDER'); ?>
-    </p>
-</div>
+$app = Factory::getApplication();
+$app->input->set('appSection', 'settings');
+
+require __DIR__ . '/../app/default.php';

@@ -33,7 +33,16 @@ class ApiController extends BaseController
         $resource = array_shift($segments);
         $action = $segments ? implode('.', $segments) : 'browse';
 
+        if (strcasecmp($resource, 'api') === 0 && !empty($segments)) {
+            $resource = array_shift($segments);
+            $action = $segments ? implode('.', $segments) : 'browse';
+        }
+
+        $this->debug(sprintf('Dispatch request task=%s => resource=%s action=%s', $task, $resource, $action));
+
         $controller = $this->loadResourceController($resource);
+
+        $this->debug(sprintf('Loaded controller %s', get_class($controller)));
 
         return $controller->execute($action);
     }
@@ -51,6 +60,15 @@ class ApiController extends BaseController
         $class = __NAMESPACE__ . '\\Api\\' . $resource . 'Controller';
 
         if (!class_exists($class)) {
+            $path = __DIR__ . '/Api/' . $resource . 'Controller.php';
+
+            if (is_file($path)) {
+                require_once $path;
+                $this->debug(sprintf('Included controller file %s', $path));
+            }
+        }
+
+        if (!class_exists($class)) {
             throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_API_RESOURCE_NOT_FOUND', $resource));
         }
 
@@ -61,5 +79,19 @@ class ApiController extends BaseController
         }
 
         return new $class($config, $this->factory, $this->app, $this->input);
+    }
+
+    private function debug(string $message): void
+    {
+        try {
+            $logFile = defined('JPATH_LOGS')
+                ? rtrim(JPATH_LOGS, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'com_nxpeasycart-api.log'
+                : sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'com_nxpeasycart-api.log';
+
+            $line = sprintf("[%s] %s\n", gmdate('c'), $message);
+            file_put_contents($logFile, $line, FILE_APPEND);
+        } catch (\Throwable $exception) {
+            // Swallow logging errors.
+        }
     }
 }

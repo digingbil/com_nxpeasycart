@@ -52,8 +52,11 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 -   The shell renders product and order workspaces fed by `/index.php?option=com_nxpeasycart&task=api.products.list&format=json` and `/index.php?option=com_nxpeasycart&task=api.orders.list&format=json`, featuring search/filter controls, optimistic updates, and state transitions.
 -   The Joomla view registers the asset handle and exposes CSRF tokens/API endpoints via `data-*` attributes on the mount node to keep the SPA stateless and CSRF-safe.
 -   Admin UI is composed from Vue single-file components (`src/app/App.vue`, `src/app/components`) with composables like `useProducts` and `useTranslations`, leveraging `Joomla.Text` for localisation instead of hard-coded translation objects.
+-   Translation helpers now normalise `%s` replacements and currency fallbacks, while the dashboard adopts Joomla 5's Font Awesome iconography for checklist states.
 -   `media/com_nxpeasycart/src/api.js` exposes an `ApiClient` that unifies request headers, CSRF handling, and HTTP verb helpers, with domain methods starting at `fetchProducts()`.
 -   Products can now be created, edited, and deleted directly from the admin grid via a reusable modal editor component that manages images, category chips, and variant tables, syncing payloads with the JSON endpoints. Orders can be searched, filtered by state, inspected, and transitioned from the same SPA.
+-   The settings workspace persists store metadata, tax rates, and shipping rules via the new JSON controllers (`api.settings.*`, `api.tax.*`, `api.shipping.*`), with Vue panels keeping draft state and validation errors in sync.
+-   An audit logs surface streams entries from `#__nxp_easycart_audit`, enabling admins to filter and review lifecycle events without leaving the SPA.
 -   A server-rendered orders fallback table ships inside the Joomla view so administrators can see seed data immediately; it removes itself once the Vue bundle mounts. The fallback now also preloads order data into the Vue app via data attributes so the SPA can hydrate without another request.
 -   Admin endpoints are emitted as absolute Joomla administrator URLs and the API client merges query parameters onto those URLs, preventing accidental site-app routing. Translation helpers now run placeholder strings through `Joomla.sprintf`, so labels like “0 items” render correctly even when the core translations supply `%s` placeholders.
 -   On the storefront, the product view detects missing/invalid slugs and renders the onboarding placeholder copy instead of raising a 404, allowing `/index.php?option=com_nxpeasycart` to remain functional while catalog data is still being seeded.
@@ -107,9 +110,9 @@ Variant payloads accept `price` (major units), `currency`, `stock`, `weight`, `a
 
 ## Next steps
 
-1. Extend the admin surface to cover orders, carts, and customer management (API + SPA routes).
-2. Add configuration endpoints for payment gateway settings and surface them in the admin UI.
-3. Introduce domain services (money, inventory, orders) backed by the schema created here, including stock reservation rules and audit logging.
+1. Wire payment gateway configuration and checkout workflows, building on the existing settings infrastructure.
+2. Implement storefront cart and checkout surfaces that consume the tax, shipping, and coupon services created for the admin.
+3. Expand automated coverage around the new admin APIs (settings, tax, shipping, logs) with PHPUnit and Vue component tests.
 
 ## Testing reference
 

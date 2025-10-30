@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\Input\Input;
 use RuntimeException;
 
 /**
@@ -23,13 +24,13 @@ class AbstractJsonController extends BaseController
      * @param MVCFactoryInterface|null  $factory MVC factory
      * @param CMSApplicationInterface|null $app  Application instance
      */
-    public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
+    public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null, Input $input = null)
     {
         if (!\is_array($config)) {
             $config = [];
         }
 
-        parent::__construct($config, $factory, $app);
+        parent::__construct($config, $factory, $app, $input);
 
         $this->input = $this->app->getInput();
     }

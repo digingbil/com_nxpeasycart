@@ -11,6 +11,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use RuntimeException;
+use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
 
 /**
@@ -42,6 +43,8 @@ class OrdersController extends AbstractJsonController
             'store', 'create'         => $this->store(),
             'show', 'detail'          => $this->show(),
             'transition', 'state'     => $this->transition(),
+            'bulktransition', 'bulk'  => $this->bulkTransition(),
+            'note'                    => $this->note(),
             default                   => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -80,9 +83,10 @@ class OrdersController extends AbstractJsonController
         $this->assertToken();
 
         $payload = $this->decodePayload();
+        $actorId = $this->app?->getIdentity()?->id ?? null;
 
         $service = $this->getOrderService();
-        $order = $service->create($payload);
+        $order = $service->create($payload, $actorId);
 
         return $this->respond(['order' => $order], 201);
     }
@@ -131,7 +135,71 @@ class OrdersController extends AbstractJsonController
         }
 
         $service = $this->getOrderService();
-        $order = $service->transitionState($id, $state);
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+        $order = $service->transitionState($id, $state, $actorId);
+
+        return $this->respond(['order' => $order]);
+    }
+
+    /**
+     * Transition multiple orders.
+     */
+    protected function bulkTransition(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $ids = isset($payload['ids']) && \is_array($payload['ids'])
+            ? array_map('intval', $payload['ids'])
+            : [];
+
+        if (empty($ids)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $state = isset($payload['state']) ? (string) $payload['state'] : '';
+
+        if (trim($state) === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_STATE_INVALID'), 400);
+        }
+
+        $service = $this->getOrderService();
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+        $result = $service->bulkTransition($ids, $state, $actorId);
+
+        return $this->respond([
+            'updated' => $result['updated'],
+            'failed' => $result['failed'],
+        ]);
+    }
+
+    /**
+     * Record a note against an order.
+     */
+    protected function note(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+
+        if ($id <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $message = isset($payload['message']) ? (string) $payload['message'] : '';
+
+        if (trim($message) === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOTE_REQUIRED'), 400);
+        }
+
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+        $service = $this->getOrderService();
+        $order = $service->addNote($id, $message, $actorId);
 
         return $this->respond(['order' => $order]);
     }
@@ -166,7 +234,19 @@ class OrdersController extends AbstractJsonController
         if (!$container->has(OrderService::class)) {
             $container->set(
                 OrderService::class,
-                static fn ($container): OrderService => new OrderService($container->get(DatabaseInterface::class))
+                static function ($container): OrderService {
+                    if (!$container->has(AuditService::class)) {
+                        $container->set(
+                            AuditService::class,
+                            static fn ($container) => new AuditService($container->get(DatabaseInterface::class))
+                        );
+                    }
+
+                    return new OrderService(
+                        $container->get(DatabaseInterface::class),
+                        $container->get(AuditService::class)
+                    );
+                }
             );
         }
 

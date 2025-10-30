@@ -13,6 +13,8 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 -   Orders JSON API backed by `OrderService` for listing, creation, and state transitions with totals + line items.
 -   Vue-based admin panel for catalogue management (products, variants, categories, images) plus storefront templates ready for Vue “islands”; the site dispatcher now renders live product detail pages with SEO metadata and JSON-LD.
 -   JSON controllers share a base responder that streams the encoded payload to the client, ensuring admin API requests always return proper JSON bodies.
+-   Admin settings workspace manages store defaults, tax rates, and shipping rules through dedicated services and JSON endpoints consumed by the Vue SPA.
+-   Logs workspace exposes the audit trail stored in `#__nxp_easycart_audit`, helping administrators review order state changes and other lifecycle events.
 -   Admin orders fallback preloads data for the Vue SPA and orders API endpoints are emitted with absolute administrator URLs to prevent accidental front-end routing.
 -   Storefront view now gracefully renders the onboarding placeholder when no product slug is supplied instead of throwing a 404, keeping the landing experience clean during early development.
 
@@ -70,6 +72,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 -   CSRF tokens and API endpoints are exposed via `data-*` attributes in the admin template for the SPA to consume.
 -   A placeholder `media/com_nxpeasycart/js/admin.iife.js` ships with the repo so the asset loads prior to the first Vite build; running `npm run build:admin` overwrites it with the compiled Vue app. The bundled asset registers under `com_nxpeasycart.admin` and carries its CSS dependency automatically.
 -   Vue single-file components (`src/app/App.vue`, `src/app/components`) and composables (`src/app/composables`) keep the admin bundle modular, with `useTranslations` delegating to `Joomla.Text` instead of hard-coded dictionaries.
+-   The dashboard surface now normalises translation placeholders, applies currency-aware metrics, and renders Font Awesome checklist icons to match the Joomla 5 visual language.
 -   The admin products panel now includes create/edit/delete flows with image management, category tagging, and variant tables, backed by shared composables and the JSON API.
 -   Component configuration exposes the single-currency guardrail; the admin editor reflects the configured currency and server-side validation ensures every variant uses it.
 -   Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid “Unknown asset” errors during development.

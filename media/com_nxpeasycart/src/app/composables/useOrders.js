@@ -13,32 +13,37 @@ const deriveEndpoint = (listEndpoint, action) => {
   return `${url.pathname}?${url.searchParams.toString()}`;
 };
 
-export function useOrders({ endpoints, token, states = [] }) {
+export function useOrders({ endpoints, token, states = [], preload = {} }) {
   const api = createApiClient({ token });
 
   const listEndpoint = endpoints?.list ?? '';
   const showEndpoint = endpoints?.show ?? deriveEndpoint(listEndpoint, 'show');
   const transitionEndpoint = endpoints?.transition ?? deriveEndpoint(listEndpoint, 'transition');
+  const bulkTransitionEndpoint = endpoints?.bulkTransition ?? deriveEndpoint(listEndpoint, 'bulkTransition');
+  const noteEndpoint = endpoints?.note ?? deriveEndpoint(listEndpoint, 'note');
 
   const abortSupported = typeof AbortController !== 'undefined';
   const abortRef = ref(null);
+  const preloadItems = Array.isArray(preload?.items) ? preload.items : [];
+  const preloadPagination = preload?.pagination && typeof preload.pagination === 'object' ? preload.pagination : {};
 
   const state = reactive({
     loading: false,
     saving: false,
     error: '',
     transitionError: '',
-    items: [],
+    items: [...preloadItems],
     pagination: {
-      total: 0,
-      limit: 20,
-      pages: 0,
-      current: 1,
+      total: preloadPagination.total ?? preloadItems.length,
+      limit: preloadPagination.limit ?? 20,
+      pages: preloadPagination.pages ?? 0,
+      current: preloadPagination.current ?? 1,
     },
     search: '',
     filterState: '',
     orderStates: Array.isArray(states) && states.length ? states : ['pending', 'paid', 'fulfilled', 'refunded', 'canceled'],
     activeOrder: null,
+    selection: new Set(),
   });
 
   const loadOrders = async () => {
@@ -76,6 +81,7 @@ export function useOrders({ endpoints, token, states = [] }) {
         ...pagination,
         current: pagination.current && pagination.current > 0 ? pagination.current : 1,
       };
+      state.selection.clear();
     } catch (error) {
       if (error?.name === 'AbortError') {
         return;
@@ -116,6 +122,22 @@ export function useOrders({ endpoints, token, states = [] }) {
 
     state.pagination.current = target;
     loadOrders();
+  };
+
+  const clearSelection = () => {
+    state.selection.clear();
+  };
+
+  const toggleSelection = (orderId) => {
+    if (!orderId) {
+      return;
+    }
+
+    if (state.selection.has(orderId)) {
+      state.selection.delete(orderId);
+    } else {
+      state.selection.add(orderId);
+    }
   };
 
   const nextPage = () => {
@@ -224,6 +246,45 @@ export function useOrders({ endpoints, token, states = [] }) {
     }
   };
 
+  const bulkTransition = async (ids, nextState) => {
+    if (!bulkTransitionEndpoint) {
+      throw new Error('Bulk transition endpoint unavailable.');
+    }
+
+    if (!Array.isArray(ids) || !ids.length) {
+      return { updated: [] };
+    }
+
+    state.saving = true;
+
+    try {
+      const payload = await api.bulkTransitionOrders({
+        endpoint: bulkTransitionEndpoint,
+        ids,
+        state: nextState,
+      });
+
+      const updatedOrders = Array.isArray(payload.updated) ? payload.updated : [];
+
+      updatedOrders.forEach((order) => {
+        updateOrderList(order);
+
+        if (state.activeOrder && state.activeOrder.id === order.id) {
+          state.activeOrder = order;
+        }
+      });
+
+      clearSelection();
+
+      return { updated: updatedOrders };
+    } catch (error) {
+      state.transitionError = error?.message ?? 'Unknown error';
+      throw error;
+    } finally {
+      state.saving = false;
+    }
+  };
+
   onMounted(() => {
     loadOrders();
   });
@@ -240,6 +301,44 @@ export function useOrders({ endpoints, token, states = [] }) {
     viewOrder,
     closeOrder,
     transitionOrder,
+    bulkTransition,
+    toggleSelection,
+    clearSelection,
+    addNote: async (orderId, message) => {
+      if (!noteEndpoint) {
+        throw new Error('Note endpoint unavailable.');
+      }
+
+      if (!orderId || !message || !message.trim()) {
+        return null;
+      }
+
+      state.transitionError = '';
+      state.saving = true;
+
+      try {
+        const order = await api.addOrderNote({
+          endpoint: noteEndpoint,
+          id: orderId,
+          message,
+        });
+
+        if (order) {
+          updateOrderList(order);
+
+          if (state.activeOrder && state.activeOrder.id === order.id) {
+            state.activeOrder = order;
+          }
+        }
+
+        return order;
+      } catch (error) {
+        state.transitionError = error?.message ?? 'Unknown error';
+        throw error;
+      } finally {
+        state.saving = false;
+      }
+    },
   };
 }
 

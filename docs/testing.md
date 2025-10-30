@@ -4,7 +4,7 @@ NXP Easy Cart ships with multiple surfaces (Joomla MVC, JSON APIs, Vue admin SPA
 
 ## 1. Unit tests (PHPUnit)
 
-- **Scope**: domain services (`CartService`, `OrderService` soon shipping/payment abstractions), helper utilities (config, money, slug generation), table validation rules.
+- **Scope**: domain services (`CartService`, `OrderService`, `CustomerService`, `CouponService`, `TaxService`, `ShippingRuleService`, `SettingsService`, `AuditService`), helper utilities (config, money, slug generation), table validation rules.
 - **Structure**: `tests/phpunit/unit/...` mirroring namespace; one test class per service/table.
 - **Fixtures**: rely on SQLite in-memory where possible; seed with thin dataset builders to avoid brittle fixtures.
 - **Assertions**: focus on invariants—currency enforcement, state transitions, transactional integrity, JSON serialisation helpers.
@@ -23,7 +23,7 @@ NXP Easy Cart ships with multiple surfaces (Joomla MVC, JSON APIs, Vue admin SPA
 
 ## 4. Frontend (Vue) tests
 
-- **Unit**: Vitest + Vue Test Utils for composables (`useProducts`, `useOrders`) and leaf components. Mock fetch client, validate optimistic updates, error handling.
+- **Unit**: Vitest + Vue Test Utils for composables (`useProducts`, `useOrders`, `useCustomers`, `useCoupons`, `useSettings`, `useTaxRates`, `useShippingRules`, `useLogs`) and leaf components. Mock fetch client, validate optimistic updates, error handling, and translation helpers (placeholder substitution/currency fallbacks).
 - **Component snapshots**: minimal usage; prefer behavioural assertions to avoid churn.
 
 ## 5. End-to-end (Playwright)

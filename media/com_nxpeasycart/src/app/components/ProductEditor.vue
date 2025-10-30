@@ -36,13 +36,14 @@
           <label class="nxp-form-label" for="product-slug">
             {{ __('COM_NXPEASYCART_FIELD_PRODUCT_SLUG', 'Slug') }}
           </label>
-          <input
-            id="product-slug"
-            class="nxp-form-input"
-            type="text"
-            v-model.trim="form.slug"
-            :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_SLUG_PLACEHOLDER', 'Auto-generated if left empty')"
-          />
+        <input
+          id="product-slug"
+          class="nxp-form-input"
+          type="text"
+          v-model.trim="form.slug"
+          @input="onSlugInput"
+          :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_SLUG_PLACEHOLDER', 'Auto-generated if left empty')"
+        />
         </div>
 
         <div class="nxp-form-field">
@@ -83,15 +84,59 @@
 
         <div class="nxp-form-field">
           <label class="nxp-form-label" for="product-images">
-            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES', 'Image URLs') }}
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES', 'Images') }}
           </label>
-          <textarea
-            id="product-images"
-            class="nxp-form-textarea"
-            rows="2"
-            v-model="imagesInput"
-            :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PLACEHOLDER', 'One URL per line')"
-          ></textarea>
+          <div id="product-images" class="nxp-image-list">
+            <div
+              v-for="(image, index) in form.images"
+              :key="`product-image-${index}`"
+              class="nxp-image-row"
+            >
+              <input
+                :id="`product-image-${index}`"
+                class="nxp-form-input"
+                type="text"
+                v-model.trim="form.images[index]"
+                :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PLACEHOLDER', 'https://example.com/image.jpg', [], 'productImagesPlaceholder')"
+              />
+              <div class="nxp-image-row__actions">
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link"
+                  @click="selectImage(index)"
+                >
+                  {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_SELECT', 'Select', [], 'productImagesSelect') }}
+                </button>
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link"
+                  @click="moveImage(index, -1)"
+                  :disabled="index === 0"
+                >
+                  {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_MOVE_UP', 'Up', [], 'productImagesMoveUp') }}
+                </button>
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link"
+                  @click="moveImage(index, 1)"
+                  :disabled="index === form.images.length - 1"
+                >
+                  {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_MOVE_DOWN', 'Down', [], 'productImagesMoveDown') }}
+                </button>
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link nxp-btn--danger"
+                  @click="removeImage(index)"
+                  :aria-label="__('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_REMOVE', 'Remove image', [], 'productImagesRemove')"
+                >
+                  {{ __('COM_NXPEASYCART_REMOVE', 'Remove') }}
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="nxp-btn" @click="addImage">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_ADD', 'Add image', [], 'productImagesAdd') }}
+          </button>
           <p class="nxp-form-help">
             {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_HELP', 'These URLs are stored as-is; ensure they are publicly accessible.') }}
           </p>
@@ -160,6 +205,13 @@
               </h4>
               <button
                 type="button"
+                class="nxp-btn nxp-btn--link"
+                @click="duplicateVariant(index)"
+              >
+                {{ __('COM_NXPEASYCART_FIELD_VARIANT_DUPLICATE', 'Duplicate') }}
+              </button>
+              <button
+                type="button"
                 class="nxp-btn nxp-btn--link nxp-btn--danger"
                 @click="removeVariant(index)"
                 :disabled="form.variants.length <= 1"
@@ -193,6 +245,7 @@
                   min="0"
                   step="0.01"
                   v-model.trim="variant.price"
+                  @blur="formatVariantPrice(index)"
                   required
                 />
               </div>
@@ -361,12 +414,12 @@ const form = reactive({
   short_desc: '',
   long_desc: '',
   active: true,
+  images: [],
   categories: [],
   variants: [],
 });
-
-const imagesInput = ref('');
 const categoryDraft = ref('');
+const slugEdited = ref(false);
 
 const mode = computed(() => (props.product && props.product.id ? 'edit' : 'create'));
 
@@ -386,12 +439,36 @@ const blankOption = () => ({
   value: '',
 });
 
+const slugify = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  return value
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 190);
+};
+
+const onSlugInput = () => {
+  slugEdited.value = true;
+  form.slug = slugify(form.slug);
+};
+
 const resetCategories = (categories) => {
   form.categories.splice(0, form.categories.length, ...categories);
 };
 
 const resetVariants = (variants) => {
   form.variants.splice(0, form.variants.length, ...variants);
+};
+
+const resetImages = (images) => {
+  form.images.splice(0, form.images.length, ...images);
 };
 
 const normaliseOptions = (options) => {
@@ -443,7 +520,7 @@ const applyProduct = (product) => {
   form.active = source.active !== undefined ? Boolean(source.active) : true;
 
   const images = Array.isArray(source.images) ? source.images.map((image) => String(image ?? '').trim()).filter(Boolean) : [];
-  imagesInput.value = images.join('\n');
+  resetImages(images);
 
   const categories = Array.isArray(source.categories)
     ? source.categories
@@ -463,6 +540,7 @@ const applyProduct = (product) => {
 
   resetCategories(categories);
   resetVariants(normaliseVariants(source.variants));
+  slugEdited.value = Boolean(form.slug);
 };
 
 watch(
@@ -472,6 +550,21 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  () => form.title,
+  (title) => {
+    if (!slugEdited.value) {
+      form.slug = slugify(title);
+    }
+  }
+);
+
+watch(baseCurrency, (currency) => {
+  form.variants.forEach((variant) => {
+    variant.currency = currency;
+  });
+});
 
 const addCategory = () => {
   const value = categoryDraft.value.trim();
@@ -531,11 +624,98 @@ const removeVariantOption = (variantIndex, optionIndex) => {
 
 const variantKey = (variant, index) => `${variant.id || 'new'}-${index}`;
 
+const duplicateVariant = (index) => {
+  const original = form.variants[index];
+
+  if (!original) {
+    return;
+  }
+
+  const clone = JSON.parse(JSON.stringify(original));
+  clone.id = 0;
+  clone.sku = [clone.sku || 'SKU', 'COPY'].join('-').replace(/-+/g, '-');
+  clone.active = true;
+
+  form.variants.splice(index + 1, 0, clone);
+};
+
+const formatVariantPrice = (index) => {
+  const variant = form.variants[index];
+
+  if (!variant) {
+    return;
+  }
+
+  const numeric = Number.parseFloat(variant.price);
+
+  if (Number.isNaN(numeric)) {
+    return;
+  }
+
+  variant.price = numeric.toFixed(2);
+};
+
+const ensureImagesArray = () => {
+  if (!Array.isArray(form.images)) {
+    form.images = [];
+  }
+};
+
+const addImage = () => {
+  ensureImagesArray();
+  form.images.push('');
+};
+
+const removeImage = (index) => {
+  ensureImagesArray();
+  form.images.splice(index, 1);
+};
+
+const moveImage = (index, offset) => {
+  ensureImagesArray();
+
+  const current = form.images[index];
+
+  if (current === undefined) {
+    return;
+  }
+
+  const nextIndex = index + offset;
+
+  if (nextIndex < 0 || nextIndex >= form.images.length) {
+    return;
+  }
+
+  form.images.splice(index, 1);
+  form.images.splice(nextIndex, 0, current);
+};
+
+const selectImage = (index) => {
+  ensureImagesArray();
+
+  const current = form.images[index] ?? '';
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const value = window.prompt(__('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PROMPT', 'Image URL'), current);
+
+  if (value !== null && value.trim() !== '') {
+    form.images[index] = value.trim();
+  }
+};
+
 const submit = () => {
-  const payloadImages = imagesInput.value
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line !== '');
+  ensureImagesArray();
+
+  const payloadImages = Array.from(
+    new Set(
+      form.images
+        .map((image) => String(image ?? '').trim())
+        .filter((image) => image !== '')
+    )
+  );
 
   const payloadCategories = form.categories.map((category) => category.trim()).filter((category) => category !== '');
 
@@ -592,10 +772,36 @@ watch(
       // When save completes successfully, reset to fresh state
       if (mode.value === 'create') {
         applyProduct(null);
-        imagesInput.value = '';
         categoryDraft.value = '';
+        slugEdited.value = false;
       }
     }
   }
 );
 </script>
+
+<style scoped>
+.nxp-image-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.nxp-image-row {
+  display: grid;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .nxp-image-row {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+.nxp-image-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+</style>

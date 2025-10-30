@@ -1,17 +1,41 @@
-export const __ = (key, fallback = '', replacements = []) => {
-    const text = window?.Joomla?.Text;
+const applyReplacements = (message, replacements = []) => {
+    if (!replacements.length) {
+        return message;
+    }
 
-    if (text && typeof text._ === 'function') {
-        const value = replacements.length
-            ? text._(key, replacements)
-            : text._(key);
+    const sprintf = window?.Joomla?.sprintf;
 
-        if (value && value !== key) {
-            return value;
+    if (typeof sprintf === 'function') {
+        try {
+            return sprintf.call(window.Joomla, message, ...replacements);
+        } catch (error) {
+            // Fall back to naive replacement when sprintf fails.
         }
     }
 
-    return fallback;
+    let output = String(message);
+
+    replacements.forEach((replacement) => {
+        const value = replacement ?? '';
+        output = output.replace('%s', String(value));
+    });
+
+    return output;
+};
+
+export const __ = (key, fallback = '', replacements = []) => {
+    const text = window?.Joomla?.Text;
+    let message = fallback || key;
+
+    if (text && typeof text._ === 'function') {
+        const translated = text._(key);
+
+        if (translated && translated !== key) {
+            message = translated;
+        }
+    }
+
+    return applyReplacements(message, replacements);
 };
 
 export function useTranslations(dataset = {}) {
