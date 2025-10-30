@@ -137,6 +137,52 @@ class ApiClient {
     }
 
     /**
+     * Fetch orders with pagination and filters.
+     */
+    async fetchOrders({ endpoint, limit = 20, start = 0, search = '', state = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+            state: state || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+        const items = body.items ?? body.data ?? [];
+        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
+
+        return {
+            items,
+            pagination,
+        };
+    }
+
+    /**
+     * Retrieve a single order by id or number.
+     */
+    async fetchOrder({ endpoint, id = null, orderNumber = '' }) {
+        const url = this.mergeParams(endpoint, {
+            id: id || undefined,
+            order_no: orderNumber || undefined,
+        });
+
+        const payload = await this.get(url);
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
+     * Transition an order to a new state.
+     */
+    async transitionOrder({ endpoint, id, state }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.post(url, { state });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
      * Create a product.
      */
     async createProduct({ endpoint, data }) {
@@ -149,7 +195,7 @@ class ApiClient {
      * Update a product.
      */
     async updateProduct({ endpoint, id, data }) {
-        const url = this.appendId(endpoint, id);
+        const url = this.mergeParams(endpoint, { id });
         const payload = await this.put(url, data);
 
         return payload.data?.item ?? null;
@@ -172,12 +218,22 @@ class ApiClient {
     /**
      * Append an id query parameter to endpoint.
      */
-    appendId(endpoint, id) {
-        const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
-        const url = new URL(endpoint, origin);
-        url.searchParams.set('id', String(id));
+    mergeParams(endpoint, params = {}) {
+        const search = new URLSearchParams();
 
-        return `${url.pathname}?${url.searchParams.toString()}`;
+        Object.entries(params).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === '') {
+                return;
+            }
+
+            search.set(key, String(value));
+        });
+
+        if (!search.toString()) {
+            return endpoint;
+        }
+
+        return `${endpoint}${endpoint.includes('?') ? '&' : '?'}${search.toString()}`;
     }
 }
 

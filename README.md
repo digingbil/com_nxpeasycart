@@ -8,9 +8,14 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 -   Install/uninstall SQL covering the core NXP data model (`#__nxp_easycart_*` tables).
 -   Service provider bootstrap for Joomla's dependency injection container (no legacy `com_nxpeasycart.php` entry file).
 -   Cart and order services wired through the DI container, enforcing single-currency rules via the configuration helper and hydrating JSON billing/shipping payloads.
+-   Orders workspace in the admin SPA for filtering, viewing, and transitioning order state against the JSON API.
 -   JSON product API endpoints with ACL + CSRF enforcement powering the admin SPA.
 -   Orders JSON API backed by `OrderService` for listing, creation, and state transitions with totals + line items.
--   Vue-based admin panel for catalogue management (products, variants, categories, images) plus storefront templates ready for Vue “islands”; the site dispatcher currently renders a storefront placeholder pending catalogue wiring.
+-   Vue-based admin panel for catalogue management (products, variants, categories, images) plus storefront templates ready for Vue “islands”; the site dispatcher now renders live product detail pages with SEO metadata and JSON-LD.
+-   JSON controllers share a base responder that streams the encoded payload to the client, ensuring admin API requests always return proper JSON bodies.
+-   Admin orders fallback preloads data for the Vue SPA and orders API endpoints are emitted with absolute administrator URLs to prevent accidental front-end routing.
+-   Storefront view now gracefully renders the onboarding placeholder when no product slug is supplied instead of throwing a 404, keeping the landing experience clean during early development.
+
 
 ### Currency decision (MVP)
 
@@ -73,6 +78,14 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 
 -   Frontend requests resolve the active cart through `CartSessionService`, which ties the Joomla session to the `#__nxp_easycart_carts` table and guarantees the payload uses the configured base currency.
 -   The session helper exposes the hydrated cart on the application input (`com_nxpeasycart.cart`) so upcoming cart/checkout views can consume a consistent structure.
+
+-   Admin orders view now includes a lightweight PHP fallback table so seeded data is visible even before the Vue bundle is rebuilt; the fallback strips itself once the SPA mounts.
+-   SPA endpoints now use absolute admin URLs plus scoped query merging, avoiding `Invalid controller class` errors and keeping detail panels in sync with preloaded data.
+-   The component’s product view uses the existing placeholder copy whenever a specific product cannot be resolved, so hitting `/index.php?option=com_nxpeasycart` stays within the guided onboarding flow.
+
+## Testing
+
+-   See `docs/testing.md` for the current automation blueprint covering PHPUnit (unit/integration), API contract runs, Vue unit tests, and Playwright E2E journeys.
 
 ## Changelog summary
 

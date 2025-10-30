@@ -52,7 +52,15 @@ class AbstractJsonController extends BaseController
 
         $hasError = $code >= 400;
 
-        return new JsonResponse($data, '', $hasError);
+        $response = new JsonResponse($data, '', $hasError);
+
+        if ($this->app && \method_exists($this->app, 'setHeader')) {
+            $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        }
+
+        echo $response;
+
+        return $response;
     }
 
     /**

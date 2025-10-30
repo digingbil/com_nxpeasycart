@@ -9,6 +9,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\Database\DatabaseInterface;
 use RuntimeException;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
 
@@ -160,7 +161,15 @@ class OrdersController extends AbstractJsonController
      */
     private function getOrderService(): OrderService
     {
-        return Factory::getContainer()->get(OrderService::class);
+        $container = Factory::getContainer();
+
+        if (!$container->has(OrderService::class)) {
+            $container->set(
+                OrderService::class,
+                static fn ($container): OrderService => new OrderService($container->get(DatabaseInterface::class))
+            );
+        }
+
+        return $container->get(OrderService::class);
     }
 }
-

@@ -17,13 +17,56 @@ $this->document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.ii
 $this->document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/admin.css');
 
 $token = Session::getFormToken();
-$productsEndpointList = 'index.php?option=com_nxpeasycart&task=api.products.list&format=json';
-$productsEndpointStore = 'index.php?option=com_nxpeasycart&task=api.products.store&format=json';
-$productsEndpointUpdate = 'index.php?option=com_nxpeasycart&task=api.products.update&format=json';
-$productsEndpointDelete = 'index.php?option=com_nxpeasycart&task=api.products.delete&format=json';
+$adminBase = rtrim(Uri::base(), '/');
+$productsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.list&format=json';
+$productsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json';
+$productsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json';
+$productsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.delete&format=json';
+$ordersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.list&format=json';
+$ordersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.show&format=json';
+$ordersEndpointTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json';
 $params = ComponentHelper::getParams('com_nxpeasycart');
 $baseCurrency = strtoupper($params->get('base_currency', 'USD'));
 $section = Factory::getApplication()->input->getCmd('appSection', 'dashboard');
+$ordersPreload = property_exists($this, 'orders') && \is_array($this->orders) ? $this->orders : ['items' => [], 'pagination' => []];
+$navItems = [
+    [
+        'id' => 'dashboard',
+        'title' => Text::_('COM_NXPEASYCART_MENU_DASHBOARD'),
+        'link' => 'index.php?option=com_nxpeasycart&view=app',
+    ],
+    [
+        'id' => 'products',
+        'title' => Text::_('COM_NXPEASYCART_MENU_PRODUCTS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=products',
+    ],
+    [
+        'id' => 'orders',
+        'title' => Text::_('COM_NXPEASYCART_MENU_ORDERS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=orders',
+    ],
+    [
+        'id' => 'customers',
+        'title' => Text::_('COM_NXPEASYCART_MENU_CUSTOMERS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=customers',
+    ],
+    [
+        'id' => 'coupons',
+        'title' => Text::_('COM_NXPEASYCART_MENU_COUPONS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=coupons',
+    ],
+    [
+        'id' => 'settings',
+        'title' => Text::_('COM_NXPEASYCART_MENU_SETTINGS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=settings',
+    ],
+    [
+        'id' => 'logs',
+        'title' => Text::_('COM_NXPEASYCART_MENU_LOGS'),
+        'link' => 'index.php?option=com_nxpeasycart&view=logs',
+    ],
+];
+$orderStates = ['cart', 'pending', 'paid', 'fulfilled', 'refunded', 'canceled'];
 
 switch ($section) {
     case 'products':
@@ -65,6 +108,9 @@ $dataAttributes = [
     'products-endpoint-create' => $productsEndpointStore,
     'products-endpoint-update' => $productsEndpointUpdate,
     'products-endpoint-delete' => $productsEndpointDelete,
+    'orders-endpoint' => $ordersEndpointList,
+    'orders-endpoint-show' => $ordersEndpointShow,
+    'orders-endpoint-transition' => $ordersEndpointTransition,
     'app-title' => $appTitle,
     'app-lead' => $appLead,
     'app-title-key' => $appTitleKey,
@@ -79,6 +125,29 @@ $dataAttributes = [
     'status-active' => Text::_('COM_NXPEASYCART_STATUS_ACTIVE'),
     'status-inactive' => Text::_('COM_NXPEASYCART_STATUS_INACTIVE'),
     'base-currency' => $baseCurrency,
+    'orders-panel-title' => Text::_('COM_NXPEASYCART_MENU_ORDERS'),
+    'orders-panel-lead' => Text::_('COM_NXPEASYCART_ORDERS_LEAD'),
+    'orders-refresh' => Text::_('COM_NXPEASYCART_ORDERS_REFRESH'),
+    'orders-search-placeholder' => Text::_('COM_NXPEASYCART_ORDERS_SEARCH_PLACEHOLDER'),
+    'orders-filter-state' => Text::_('COM_NXPEASYCART_ORDERS_FILTER_STATE'),
+    'orders-loading' => Text::_('COM_NXPEASYCART_ORDERS_LOADING'),
+    'orders-empty' => Text::_('COM_NXPEASYCART_ORDERS_EMPTY'),
+    'orders-state-transitions' => Text::_('COM_NXPEASYCART_ORDERS_TRANSITIONS'),
+    'orders-details-title' => Text::_('COM_NXPEASYCART_ORDERS_DETAILS_TITLE'),
+    'orders-details-close' => Text::_('COM_NXPEASYCART_ORDERS_DETAILS_CLOSE'),
+    'orders-state-label' => Text::_('COM_NXPEASYCART_ORDERS_STATE_LABEL'),
+    'orders-total-label' => Text::_('COM_NXPEASYCART_ORDERS_TOTAL_LABEL'),
+    'orders-currency-label' => Text::_('COM_NXPEASYCART_ORDERS_CURRENCY_LABEL'),
+    'orders-items-label' => Text::_('COM_NXPEASYCART_ORDERS_ITEMS_LABEL'),
+    'orders-billing-label' => Text::_('COM_NXPEASYCART_ORDERS_BILLING_LABEL'),
+    'orders-shipping-label' => Text::_('COM_NXPEASYCART_ORDERS_SHIPPING_LABEL'),
+    'orders-transition-success' => Text::_('COM_NXPEASYCART_ORDERS_TRANSITION_SUCCESS'),
+    'orders-transition-error' => Text::_('COM_NXPEASYCART_ORDERS_TRANSITION_ERROR'),
+    'orders-no-shipping' => Text::_('COM_NXPEASYCART_ORDERS_NO_SHIPPING'),
+    'orders-preload' => json_encode($ordersPreload['items'] ?? [], JSON_UNESCAPED_SLASHES),
+    'orders-preload-pagination' => json_encode($ordersPreload['pagination'] ?? [], JSON_UNESCAPED_SLASHES),
+    'nav-items' => json_encode($navItems, JSON_UNESCAPED_SLASHES),
+    'order-states' => json_encode($orderStates, JSON_UNESCAPED_SLASHES),
 ];
 ?>
 

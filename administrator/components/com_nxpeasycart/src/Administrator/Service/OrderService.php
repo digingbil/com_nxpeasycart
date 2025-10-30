@@ -493,7 +493,8 @@ class OrderService
         foreach ($orderIds as $index => $orderId) {
             $placeholder = ':orderId' . $index;
             $placeholders[] = $placeholder;
-            $query->bind($placeholder, (int) $orderId, ParameterType::INTEGER);
+            $boundId = (int) $orderId;
+            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
         }
 
         $query->where($this->db->quoteName('order_id') . ' IN (' . implode(',', $placeholders) . ')');

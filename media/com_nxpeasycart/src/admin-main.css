@@ -415,3 +415,147 @@
     color: #6c757d;
     font-size: 0.85rem;
 }
+
+.nxp-admin-select {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 0.45rem 0.75rem;
+    background: #fff;
+    min-width: 160px;
+}
+
+.nxp-link-button {
+    border: none;
+    background: none;
+    color: #0d6efd;
+    padding: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.nxp-link-button:hover {
+    text-decoration: underline;
+}
+
+.nxp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f1f3f5;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.nxp-admin-panel__body--orders {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.nxp-admin-panel__table {
+    flex: 1 1 420px;
+    min-width: 320px;
+}
+
+.nxp-admin-panel__sidebar {
+    flex: 0 0 320px;
+    max-width: 360px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 1.25rem;
+    position: relative;
+}
+
+.nxp-admin-panel__sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.nxp-admin-panel__section {
+    margin-bottom: 1.5rem;
+}
+
+.nxp-admin-panel__section:last-child {
+    margin-bottom: 0;
+}
+
+.nxp-admin-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nxp-admin-list__title {
+    font-weight: 600;
+}
+
+.nxp-admin-list__meta {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.nxp-admin-panel__total {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.nxp-admin-panel__muted {
+    color: #6c757d;
+    margin: 0;
+}
+
+.nxp-admin-address {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-style: normal;
+}
+
+.nxp-admin-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.nxp-admin-pagination__status {
+    font-weight: 600;
+    color: #495057;
+}
+
+.nxp-admin-nav {
+    display: flex;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.75rem;
+}
+
+.nxp-admin-nav a {
+    color: #495057;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nxp-admin-nav a:hover {
+    background: #f8f9fa;
+    color: #0d6efd;
+}
+
+.nxp-admin-nav a.is-active {
+    background: #0d6efd;
+    color: #fff;
+}

@@ -54,6 +54,12 @@ class ApiController extends BaseController
             throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_API_RESOURCE_NOT_FOUND', $resource));
         }
 
-        return new $class($this->config, $this->factory, $this->app);
+        $config = $this->config ?? [];
+
+        if (!\is_array($config)) {
+            $config = [];
+        }
+
+        return new $class($config, $this->factory, $this->app, $this->input);
     }
 }
