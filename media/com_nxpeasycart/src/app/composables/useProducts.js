@@ -21,6 +21,8 @@ export function useProducts({ endpoints, token }) {
   const updateEndpoint = endpoints?.update ?? deriveEndpoint(listEndpoint, 'update');
   const deleteEndpoint = endpoints?.delete ?? deriveEndpoint(listEndpoint, 'delete');
 
+  const abortSupported = typeof AbortController !== 'undefined';
+
   const state = reactive({
     loading: false,
     saving: false,
@@ -50,17 +52,17 @@ export function useProducts({ endpoints, token }) {
     state.error = '';
     state.validationErrors = [];
 
-    if (abortRef.value) {
+    if (abortRef.value && abortSupported) {
       abortRef.value.abort();
     }
 
-    const controller = new AbortController();
+    const controller = abortSupported ? new AbortController() : null;
     abortRef.value = controller;
 
     try {
       const { items, pagination } = await api.fetchProducts({
         endpoint: listEndpoint,
-        signal: controller.signal,
+        signal: controller ? controller.signal : undefined,
         limit: state.pagination.limit,
         start: Math.max(0, (state.pagination.current - 1) * state.pagination.limit),
         search: state.search.trim(),
@@ -79,7 +81,7 @@ export function useProducts({ endpoints, token }) {
 
       state.error = error?.message ?? 'Unknown error';
     } finally {
-      if (abortRef.value === controller) {
+      if (abortSupported && abortRef.value === controller) {
         abortRef.value = null;
       }
 

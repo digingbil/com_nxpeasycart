@@ -14,7 +14,7 @@ use RuntimeException;
 /**
  * Base controller for JSON API endpoints.
  */
-abstract class AbstractJsonController extends BaseController
+class AbstractJsonController extends BaseController
 {
     /**
      * AbstractJsonController constructor.
@@ -25,6 +25,10 @@ abstract class AbstractJsonController extends BaseController
      */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
+        if (!\is_array($config)) {
+            $config = [];
+        }
+
         parent::__construct($config, $factory, $app);
 
         $this->input = $this->app->getInput();
@@ -74,5 +78,30 @@ abstract class AbstractJsonController extends BaseController
      *
      * @return mixed
      */
-    abstract public function execute($task);
+    public function execute($task)
+    {
+        throw new RuntimeException('JSON controllers must implement their own execute method.', 500);
+    }
+
+    /**
+     * Ensure the user has the required permission.
+     */
+    protected function assertCan(string $action): void
+    {
+        $user = $this->app?->getIdentity();
+
+        if (!$user || !$user->authorise($action, 'com_nxpeasycart')) {
+            throw new RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+    }
+
+    /**
+     * Ensure the request has a valid Joomla token.
+     */
+    protected function assertToken(): void
+    {
+        if (!\Joomla\CMS\Session\Session::checkToken('request')) {
+            throw new RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+        }
+    }
 }

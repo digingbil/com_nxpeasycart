@@ -60,6 +60,7 @@
             <folder>forms</folder>
             <folder>language</folder>
             <folder>tmpl</folder>
+            <filename>config.xml</filename>
             <filename>script.php</filename>
             <filename>LICENSE.txt</filename>
         </files>

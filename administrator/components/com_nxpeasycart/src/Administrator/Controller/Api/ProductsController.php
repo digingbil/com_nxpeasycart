@@ -47,7 +47,7 @@ class ProductsController extends AbstractJsonController
     /**
      * List products.
      */
-    private function list(): JsonResponse
+    protected function list(): JsonResponse
     {
         $this->assertCan('core.manage');
 
@@ -61,10 +61,12 @@ class ProductsController extends AbstractJsonController
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
 
-        $items = array_map(
-            fn ($item) => $this->transformProduct($item),
-            $model->getItems()
-        );
+        $items = [];
+        $productModel = $this->getProductModel();
+
+        foreach ($model->getItems() as $item) {
+            $items[] = $this->transformProduct($productModel->hydrateItem($item));
+        }
 
         $pagination = $model->getPagination();
 
@@ -85,7 +87,7 @@ class ProductsController extends AbstractJsonController
     /**
      * Create a product.
      */
-    private function store(): JsonResponse
+    protected function store(): JsonResponse
     {
         $this->assertCan('core.create');
         $this->assertToken();
@@ -118,7 +120,7 @@ class ProductsController extends AbstractJsonController
     /**
      * Update a product.
      */
-    private function update(): JsonResponse
+    protected function update(): JsonResponse
     {
         $this->assertCan('core.edit');
         $this->assertToken();
@@ -154,7 +156,7 @@ class ProductsController extends AbstractJsonController
     /**
      * Delete products.
      */
-    private function delete(): JsonResponse
+    protected function delete(): JsonResponse
     {
         $this->assertCan('core.delete');
         $this->assertToken();
@@ -202,28 +204,6 @@ class ProductsController extends AbstractJsonController
     }
 
     /**
-     * Ensure the user has permission.
-     */
-    private function assertCan(string $action): void
-    {
-        $user = $this->app->getIdentity();
-
-        if (!$user->authorise($action, 'com_nxpeasycart')) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_NOT_AUTHORISED'), 403);
-        }
-    }
-
-    /**
-     * Ensure CSRF token is valid.
-     */
-    private function assertToken(): void
-    {
-        if (!Session::checkToken('request')) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_TOKEN'), 403);
-        }
-    }
-
-    /**
      * Get the product admin model.
      */
     private function getProductModel()
@@ -236,6 +216,43 @@ class ProductsController extends AbstractJsonController
      */
     private function transformProduct($item): array
     {
+        $images = [];
+
+        foreach ($item->images ?? [] as $image) {
+            $images[] = (string) $image;
+        }
+
+        $variants = [];
+
+        foreach ($item->variants ?? [] as $variant) {
+            $variant = (array) $variant;
+
+            $priceCents = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
+
+            $variants[] = [
+                'id' => isset($variant['id']) ? (int) $variant['id'] : 0,
+                'sku' => (string) ($variant['sku'] ?? ''),
+                'price_cents' => $priceCents,
+                'price' => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
+                'currency' => (string) ($variant['currency'] ?? ''),
+                'stock' => isset($variant['stock']) ? (int) $variant['stock'] : 0,
+                'options' => $variant['options'] ?? null,
+                'weight' => $variant['weight'] ?? null,
+                'active' => isset($variant['active']) ? (bool) $variant['active'] : false,
+            ];
+        }
+
+        $categories = [];
+
+        foreach ($item->categories ?? [] as $category) {
+            $category = (array) $category;
+            $categories[] = [
+                'id' => isset($category['id']) ? (int) $category['id'] : 0,
+                'title' => (string) ($category['title'] ?? ''),
+                'slug' => (string) ($category['slug'] ?? ''),
+            ];
+        }
+
         return [
             'id'          => (int) $item->id,
             'title'       => (string) $item->title,
@@ -243,10 +260,73 @@ class ProductsController extends AbstractJsonController
             'short_desc'  => $item->short_desc,
             'long_desc'   => $item->long_desc,
             'active'      => (bool) $item->active,
+            'images'      => $images,
+            'variants'    => $variants,
+            'categories'  => $categories,
+            'summary'     => [
+                'variants' => $this->buildVariantSummary($variants),
+            ],
             'created'     => (string) $item->created,
             'created_by'  => (int) $item->created_by,
             'modified'    => $item->modified,
             'modified_by' => $item->modified_by ? (int) $item->modified_by : null,
         ];
+    }
+
+    /**
+     * Build a lightweight summary for variant collections.
+     *
+     * @param array<int, array<string, mixed>> $variants
+     */
+    private function buildVariantSummary(array $variants): array
+    {
+        if (empty($variants)) {
+            return [
+                'count' => 0,
+                'currency' => null,
+                'multiple_currencies' => false,
+                'price_min_cents' => null,
+                'price_max_cents' => null,
+                'price_min' => null,
+                'price_max' => null,
+            ];
+        }
+
+        $count = \count($variants);
+        $currencies = [];
+        $min = null;
+        $max = null;
+
+        foreach ($variants as $variant) {
+            $currency = (string) ($variant['currency'] ?? '');
+            $currencies[$currency] = true;
+
+            $price = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
+
+            $min = $min === null ? $price : min($min, $price);
+            $max = $max === null ? $price : max($max, $price);
+        }
+
+        $currencyKeys = array_keys(array_filter($currencies));
+        $multipleCurrencies = \count($currencyKeys) > 1;
+        $resolvedCurrency = $multipleCurrencies ? null : ($currencyKeys[0] ?? null);
+
+        return [
+            'count' => $count,
+            'currency' => $resolvedCurrency,
+            'multiple_currencies' => $multipleCurrencies,
+            'price_min_cents' => $min,
+            'price_max_cents' => $max,
+            'price_min' => $min !== null ? $this->formatPrice($min) : null,
+            'price_max' => $max !== null ? $this->formatPrice($max) : null,
+        ];
+    }
+
+    /**
+     * Format cents into a decimal string with two fraction digits.
+     */
+    private function formatPrice(int $cents): string
+    {
+        return number_format($cents / 100, 2, '.', '');
     }
 }

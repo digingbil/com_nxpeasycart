@@ -6,10 +6,10 @@
             "name": "com_nxpeasycart.admin",
             "type": "script",
             "js": [
-                "media/com_nxpeasycart/js/admin.iife.js"
+                "js/admin.iife.js"
             ],
             "css": [
-                "media/com_nxpeasycart/css/admin.css"
+                "css/admin.css"
             ],
             "dependencies": [
                 "core"

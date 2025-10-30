@@ -78,6 +78,7 @@ class ProductsModel extends ListModel
                     $db->quoteName('a.created_by'),
                     $db->quoteName('a.modified'),
                     $db->quoteName('a.modified_by'),
+                    $db->quoteName('a.images'),
                 ]
             )
             ->from($db->quoteName('#__nxp_easycart_products', 'a'));

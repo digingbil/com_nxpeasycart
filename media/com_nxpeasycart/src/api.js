@@ -127,10 +127,12 @@ class ApiClient {
 
         const payload = await this.get(url, { signal });
         const body = payload.data ?? {};
+        const items = body.items ?? body.data ?? [];
+        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
 
         return {
-            items: body.data ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            items,
+            pagination,
         };
     }
 

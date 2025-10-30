@@ -5,16 +5,15 @@ namespace Nxp\EasyCart\Admin\Administrator\Table;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Application\ApplicationHelper;
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Database\ParameterType;
 
 /**
- * Database table for products.
+ * Database table for product categories.
  */
-class ProductTable extends Table
+class CategoryTable extends Table
 {
     /**
      * Constructor.
@@ -23,7 +22,7 @@ class ProductTable extends Table
      */
     public function __construct(DatabaseDriver $db)
     {
-        parent::__construct('#__nxp_easycart_products', 'id', $db);
+        parent::__construct('#__nxp_easycart_categories', 'id', $db);
     }
 
     /**
@@ -31,8 +30,10 @@ class ProductTable extends Table
      */
     public function check()
     {
-        if (empty($this->title)) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_TITLE_REQUIRED'));
+        $this->title = trim((string) $this->title);
+
+        if ($this->title === '') {
+            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_TITLE_REQUIRED'));
 
             return false;
         }
@@ -41,10 +42,10 @@ class ProductTable extends Table
             $this->slug = ApplicationHelper::stringURLSafe($this->title);
         }
 
-        $this->slug = ApplicationHelper::stringURLSafe($this->slug);
+        $this->slug = ApplicationHelper::stringURLSafe((string) $this->slug);
 
         if ($this->slug === '') {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SLUG_EXISTS'));
+            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_INVALID'));
 
             return false;
         }
@@ -63,12 +64,21 @@ class ProductTable extends Table
 
         $db->setQuery($query);
 
-        if ((int) $db->loadResult()) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SLUG_EXISTS'));
+        if ((int) $db->loadResult() > 0) {
+            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_EXISTS'));
 
             return false;
+        }
+
+        $this->sort = (int) $this->sort;
+
+        if ($this->parent_id !== null && $this->parent_id !== '') {
+            $this->parent_id = (int) $this->parent_id;
+        } else {
+            $this->parent_id = null;
         }
 
         return parent::check();
     }
 }
+

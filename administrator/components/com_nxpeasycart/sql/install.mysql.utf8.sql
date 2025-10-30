@@ -142,3 +142,43 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_audit` (
   PRIMARY KEY (`id`),
   KEY `idx_nxp_audit_entity` (`entity_type`, `entity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_tax_rates` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `country` CHAR(2) NOT NULL,
+  `region` VARCHAR(32) NULL,
+  `rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `inclusive` TINYINT(1) NOT NULL DEFAULT 0,
+  `priority` INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_nxp_tax_rates_country_region` (`country`, `region`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_shipping_rules` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(190) NOT NULL,
+  `type` ENUM('flat','free_over') NOT NULL DEFAULT 'flat',
+  `price_cents` INT NOT NULL DEFAULT 0,
+  `threshold_cents` INT NULL,
+  `regions` JSON NULL,
+  `active` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  KEY `idx_nxp_shipping_rules_active` (`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_settings` (
+  `key` VARCHAR(190) NOT NULL,
+  `value` TEXT NULL,
+  PRIMARY KEY (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_carts` (
+  `id` CHAR(36) NOT NULL,
+  `user_id` INT UNSIGNED NULL,
+  `session_id` VARCHAR(128) NULL,
+  `data` JSON NULL,
+  `updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_nxp_carts_session` (`session_id`),
+  KEY `idx_nxp_carts_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -39,6 +39,7 @@
       <ProductTable
         :items="state.items"
         :translate="__"
+        :base-currency="baseCurrency"
         @edit="openEdit"
         @delete="confirmDelete"
       />
@@ -48,6 +49,7 @@
       :open="isEditorOpen"
       :product="editorProduct"
       :saving="state.saving"
+      :base-currency="baseCurrency"
       :translate="__"
       :errors="state.validationErrors"
       @submit="handleSubmit"
@@ -70,6 +72,10 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  baseCurrency: {
+    type: String,
+    default: 'USD',
+  },
 });
 
 const emit = defineEmits(['create', 'update', 'delete', 'refresh', 'search']);
@@ -83,6 +89,8 @@ const editorState = reactive({
 
 const isEditorOpen = ref(false);
 
+const baseCurrency = computed(() => (props.baseCurrency || 'USD').toUpperCase());
+
 const editorProduct = computed(() => editorState.product);
 
 const openCreate = () => {
@@ -95,6 +103,9 @@ const openCreate = () => {
     short_desc: '',
     long_desc: '',
     active: true,
+    images: [],
+    categories: [],
+    variants: [],
   };
   isEditorOpen.value = true;
 };
@@ -103,14 +114,7 @@ const openEdit = (product) => {
   props.state.validationErrors = [];
   props.state.error = '';
   editorState.mode = 'edit';
-  editorState.product = {
-    id: product.id,
-    title: product.title,
-    slug: product.slug,
-    short_desc: product.short_desc,
-    long_desc: product.long_desc,
-    active: Boolean(product.active),
-  };
+  editorState.product = JSON.parse(JSON.stringify(product));
   isEditorOpen.value = true;
 };
 
@@ -132,11 +136,12 @@ const handleSubmit = async (payload) => {
   }
 };
 
-const confirmDelete = async (productId) => {
-  const message = __('COM_NXPEASYCART_PRODUCTS_DELETE_CONFIRM', 'Delete this product?');
+const confirmDelete = async (product) => {
+  const name = product?.title ?? '';
+  const message = __('COM_NXPEASYCART_PRODUCTS_DELETE_CONFIRM_NAME', 'Delete "%s"?', [name || '#']);
 
   if (window.confirm(message)) {
-    emit('delete', [productId]);
+    emit('delete', [product.id]);
   }
 };
 

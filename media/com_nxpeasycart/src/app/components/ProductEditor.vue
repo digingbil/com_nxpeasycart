@@ -9,7 +9,7 @@
             : __('COM_NXPEASYCART_PRODUCTS_ADD', 'Add product')
           }}
         </h2>
-        <button type="button" class="nxp-modal__close" @click="cancel" aria-label="Close">
+        <button type="button" class="nxp-modal__close" @click="cancel" :aria-label="__('JCLOSE', 'Close')">
           &times;
         </button>
       </header>
@@ -41,7 +41,7 @@
             class="nxp-form-input"
             type="text"
             v-model.trim="form.slug"
-            placeholder="auto-generated"
+            :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_SLUG_PLACEHOLDER', 'Auto-generated if left empty')"
           />
         </div>
 
@@ -81,6 +81,231 @@
           />
         </div>
 
+        <div class="nxp-form-field">
+          <label class="nxp-form-label" for="product-images">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES', 'Image URLs') }}
+          </label>
+          <textarea
+            id="product-images"
+            class="nxp-form-textarea"
+            rows="2"
+            v-model="imagesInput"
+            :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_PLACEHOLDER', 'One URL per line')"
+          ></textarea>
+          <p class="nxp-form-help">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_HELP', 'These URLs are stored as-is; ensure they are publicly accessible.') }}
+          </p>
+        </div>
+
+        <div class="nxp-form-field">
+          <label class="nxp-form-label" for="product-category-input">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORIES', 'Categories') }}
+          </label>
+          <div class="nxp-chip-input">
+            <span
+              v-for="(category, index) in form.categories"
+              :key="`category-${index}`"
+              class="nxp-chip"
+            >
+              {{ category }}
+              <button
+                type="button"
+                class="nxp-chip__remove"
+                @click="removeCategory(index)"
+                :aria-label="__('COM_NXPEASYCART_REMOVE_CATEGORY', 'Remove category')"
+              >
+                &times;
+              </button>
+            </span>
+            <input
+              id="product-category-input"
+              type="text"
+              class="nxp-chip-input__field"
+              v-model="categoryDraft"
+              @keydown.enter.prevent="addCategory"
+              :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORY_PLACEHOLDER', 'Press Enter to add a category')"
+            />
+          </div>
+          <p class="nxp-form-help">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORIES_HELP', 'Categories are created automatically when they do not already exist.') }}
+          </p>
+        </div>
+
+        <section class="nxp-variant-section">
+          <header class="nxp-variant-section__header">
+            <h3 class="nxp-variant-section__title">
+              {{ __('COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS', 'Variants') }}
+            </h3>
+            <button
+              type="button"
+              class="nxp-btn"
+              @click="addVariant"
+            >
+              {{ __('COM_NXPEASYCART_FIELD_PRODUCT_VARIANT_ADD', 'Add variant') }}
+            </button>
+          </header>
+
+          <p class="nxp-form-help">
+            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS_HELP', 'Each product needs at least one variant with a price and currency.') }}
+          </p>
+
+          <article
+            v-for="(variant, index) in form.variants"
+            :key="variantKey(variant, index)"
+            class="nxp-variant-card"
+          >
+            <header class="nxp-variant-card__header">
+              <h4 class="nxp-variant-card__title">
+                {{ __('COM_NXPEASYCART_FIELD_PRODUCT_VARIANT_HEADING', 'Variant %s', [String(index + 1)]) }}
+              </h4>
+              <button
+                type="button"
+                class="nxp-btn nxp-btn--link nxp-btn--danger"
+                @click="removeVariant(index)"
+                :disabled="form.variants.length <= 1"
+              >
+                {{ __('COM_NXPEASYCART_FIELD_PRODUCT_VARIANT_REMOVE', 'Remove') }}
+              </button>
+            </header>
+
+            <div class="nxp-variant-card__grid">
+              <div class="nxp-form-field">
+                <label class="nxp-form-label" :for="`variant-sku-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_SKU', 'SKU') }}
+                </label>
+                <input
+                  :id="`variant-sku-${index}`"
+                  class="nxp-form-input"
+                  type="text"
+                  v-model.trim="variant.sku"
+                  required
+                />
+              </div>
+
+              <div class="nxp-form-field">
+                <label class="nxp-form-label" :for="`variant-price-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_PRICE', 'Price') }}
+                </label>
+                <input
+                  :id="`variant-price-${index}`"
+                  class="nxp-form-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  v-model.trim="variant.price"
+                  required
+                />
+              </div>
+
+              <div class="nxp-form-field">
+                <label class="nxp-form-label" :for="`variant-currency-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_CURRENCY', 'Currency') }}
+                </label>
+                <input
+                  :id="`variant-currency-${index}`"
+                  class="nxp-form-input"
+                  type="text"
+                  maxlength="3"
+                  v-model.trim="variant.currency"
+                  readonly
+                  aria-readonly="true"
+                />
+                <p class="nxp-form-help">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_CURRENCY_HELP', 'Variants inherit the store base currency (%s).', [baseCurrency]) }}
+                </p>
+              </div>
+
+              <div class="nxp-form-field">
+                <label class="nxp-form-label" :for="`variant-stock-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_STOCK', 'Stock') }}
+                </label>
+                <input
+                  :id="`variant-stock-${index}`"
+                  class="nxp-form-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  v-model.number="variant.stock"
+                />
+              </div>
+
+              <div class="nxp-form-field">
+                <label class="nxp-form-label" :for="`variant-weight-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_WEIGHT', 'Weight (kg)') }}
+                </label>
+                <input
+                  :id="`variant-weight-${index}`"
+                  class="nxp-form-input"
+                  type="number"
+                  min="0"
+                  step="0.001"
+                  v-model.trim="variant.weight"
+                />
+              </div>
+
+              <div class="nxp-form-field nxp-form-field--inline">
+                <label class="nxp-form-label" :for="`variant-active-${index}`">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_ACTIVE', 'Published') }}
+                </label>
+                <input
+                  :id="`variant-active-${index}`"
+                  class="nxp-form-checkbox"
+                  type="checkbox"
+                  v-model="variant.active"
+                />
+              </div>
+            </div>
+
+            <section class="nxp-variant-options">
+              <header class="nxp-variant-options__header">
+                <h5 class="nxp-variant-options__title">
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_OPTIONS', 'Options') }}
+                </h5>
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link"
+                  @click="addVariantOption(index)"
+                >
+                  {{ __('COM_NXPEASYCART_FIELD_VARIANT_OPTION_ADD', 'Add option') }}
+                </button>
+              </header>
+
+              <p class="nxp-form-help">
+                {{ __('COM_NXPEASYCART_FIELD_VARIANT_OPTIONS_HELP', 'Add optional key/value pairs such as Size or Colour.') }}
+              </p>
+
+              <div
+                v-for="(option, optionIndex) in variant.options"
+                :key="`variant-${index}-option-${optionIndex}`"
+                class="nxp-variant-option-row"
+              >
+                <input
+                  :id="`variant-${index}-option-name-${optionIndex}`"
+                  class="nxp-form-input"
+                  type="text"
+                  v-model.trim="option.name"
+                  :placeholder="__('COM_NXPEASYCART_FIELD_VARIANT_OPTION_NAME', 'Name (e.g. Size)')"
+                />
+                <input
+                  :id="`variant-${index}-option-value-${optionIndex}`"
+                  class="nxp-form-input"
+                  type="text"
+                  v-model.trim="option.value"
+                  :placeholder="__('COM_NXPEASYCART_FIELD_VARIANT_OPTION_VALUE', 'Value (e.g. Large)')"
+                />
+                <button
+                  type="button"
+                  class="nxp-btn nxp-btn--link nxp-btn--danger"
+                  @click="removeVariantOption(index, optionIndex)"
+                  :aria-label="__('COM_NXPEASYCART_FIELD_VARIANT_OPTION_REMOVE', 'Remove option')"
+                >
+                  {{ __('COM_NXPEASYCART_REMOVE', 'Remove') }}
+                </button>
+              </div>
+            </section>
+          </article>
+        </section>
+
         <footer class="nxp-modal__actions">
           <button type="button" class="nxp-btn" @click="cancel" :disabled="saving">
             {{ __('JCANCEL', 'Cancel') }}
@@ -95,7 +320,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
   open: {
@@ -109,6 +334,10 @@ const props = defineProps({
   saving: {
     type: Boolean,
     default: false,
+  },
+  baseCurrency: {
+    type: String,
+    default: 'USD',
   },
   translate: {
     type: Function,
@@ -124,37 +353,249 @@ const emit = defineEmits(['submit', 'cancel']);
 
 const __ = props.translate;
 
-const blank = () => ({
+const baseCurrency = computed(() => (props.baseCurrency || 'USD').toUpperCase());
+
+const form = reactive({
   title: '',
   slug: '',
   short_desc: '',
   long_desc: '',
   active: true,
+  categories: [],
+  variants: [],
 });
 
-const form = reactive(blank());
+const imagesInput = ref('');
+const categoryDraft = ref('');
 
 const mode = computed(() => (props.product && props.product.id ? 'edit' : 'create'));
+
+const blankVariant = () => ({
+  id: 0,
+  sku: '',
+  price: '',
+  currency: baseCurrency.value,
+  stock: 0,
+  weight: '',
+  active: true,
+  options: [],
+});
+
+const blankOption = () => ({
+  name: '',
+  value: '',
+});
+
+const resetCategories = (categories) => {
+  form.categories.splice(0, form.categories.length, ...categories);
+};
+
+const resetVariants = (variants) => {
+  form.variants.splice(0, form.variants.length, ...variants);
+};
+
+const normaliseOptions = (options) => {
+  if (Array.isArray(options)) {
+    return options.map((option) => ({
+      name: String(option?.name ?? option?.key ?? '').trim(),
+      value: String(option?.value ?? '').trim(),
+    }));
+  }
+
+  if (options && typeof options === 'object') {
+    return Object.entries(options).map(([name, value]) => ({
+      name: String(name ?? '').trim(),
+      value: String(value ?? '').trim(),
+    }));
+  }
+
+  return [];
+};
+
+const normaliseVariants = (variants) => {
+  if (!Array.isArray(variants) || variants.length === 0) {
+    return [blankVariant()];
+  }
+
+  return variants.map((variant) => ({
+    id: Number.parseInt(variant?.id ?? 0, 10) || 0,
+    sku: String(variant?.sku ?? '').trim(),
+    price: variant?.price != null ? String(variant.price) : (
+      Number.isFinite(variant?.price_cents)
+        ? (variant.price_cents / 100).toFixed(2)
+        : ''
+    ),
+    currency: String(variant?.currency ?? baseCurrency.value).toUpperCase(),
+    stock: Number.parseInt(variant?.stock ?? 0, 10) || 0,
+    weight: variant?.weight != null ? String(variant.weight) : '',
+    active: variant?.active !== undefined ? Boolean(variant.active) : true,
+    options: normaliseOptions(variant?.options),
+  }));
+};
+
+const applyProduct = (product) => {
+  const source = product ? JSON.parse(JSON.stringify(product)) : {};
+
+  form.title = source.title ?? '';
+  form.slug = source.slug ?? '';
+  form.short_desc = source.short_desc ?? '';
+  form.long_desc = source.long_desc ?? '';
+  form.active = source.active !== undefined ? Boolean(source.active) : true;
+
+  const images = Array.isArray(source.images) ? source.images.map((image) => String(image ?? '').trim()).filter(Boolean) : [];
+  imagesInput.value = images.join('\n');
+
+  const categories = Array.isArray(source.categories)
+    ? source.categories
+      .map((category) => {
+        if (typeof category === 'string') {
+          return category.trim();
+        }
+
+        if (category && typeof category === 'object') {
+          return String(category.title ?? category.slug ?? '').trim();
+        }
+
+        return '';
+      })
+      .filter((value) => value !== '')
+    : [];
+
+  resetCategories(categories);
+  resetVariants(normaliseVariants(source.variants));
+};
 
 watch(
   () => props.product,
   (product) => {
-    const source = product || blank();
-
-    form.title = source.title ?? '';
-    form.slug = source.slug ?? '';
-    form.short_desc = source.short_desc ?? '';
-    form.long_desc = source.long_desc ?? '';
-    form.active = source.active ?? true;
+    applyProduct(product);
   },
   { immediate: true }
 );
 
+const addCategory = () => {
+  const value = categoryDraft.value.trim();
+
+  if (!value) {
+    return;
+  }
+
+  const exists = form.categories.some((category) => category.toLowerCase() === value.toLowerCase());
+
+  if (!exists) {
+    form.categories.push(value);
+  }
+
+  categoryDraft.value = '';
+};
+
+const removeCategory = (index) => {
+  form.categories.splice(index, 1);
+};
+
+const addVariant = () => {
+  form.variants.push(blankVariant());
+};
+
+const removeVariant = (index) => {
+  if (form.variants.length <= 1) {
+    return;
+  }
+
+  form.variants.splice(index, 1);
+};
+
+const addVariantOption = (variantIndex) => {
+  const target = form.variants[variantIndex];
+
+  if (!target) {
+    return;
+  }
+
+  if (!Array.isArray(target.options)) {
+    target.options = [];
+  }
+
+  target.options.push(blankOption());
+};
+
+const removeVariantOption = (variantIndex, optionIndex) => {
+  const target = form.variants[variantIndex];
+
+  if (!target || !Array.isArray(target.options)) {
+    return;
+  }
+
+  target.options.splice(optionIndex, 1);
+};
+
+const variantKey = (variant, index) => `${variant.id || 'new'}-${index}`;
+
 const submit = () => {
-  emit('submit', { ...form });
+  const payloadImages = imagesInput.value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line !== '');
+
+  const payloadCategories = form.categories.map((category) => category.trim()).filter((category) => category !== '');
+
+  const payloadVariants = form.variants.map((variant) => {
+    const options = Array.isArray(variant.options)
+      ? variant.options
+        .map((option) => ({
+          name: String(option?.name ?? '').trim(),
+          value: String(option?.value ?? '').trim(),
+        }))
+        .filter((option) => option.name !== '' && option.value !== '')
+      : [];
+
+    const stock = Number.isFinite(Number(variant.stock))
+      ? Math.max(0, parseInt(variant.stock, 10))
+      : 0;
+
+    const weight = variant.weight !== null && variant.weight !== '' ? String(variant.weight).trim() : null;
+
+    return {
+      id: variant.id || 0,
+      sku: variant.sku.trim(),
+      price: variant.price !== null && variant.price !== undefined ? String(variant.price).trim() : '',
+      currency: variant.currency ? String(variant.currency).trim().toUpperCase() : baseCurrency.value,
+      stock,
+      weight,
+      active: Boolean(variant.active),
+      options,
+    };
+  });
+
+  const payload = {
+    title: form.title.trim(),
+    slug: form.slug.trim(),
+    short_desc: form.short_desc ?? '',
+    long_desc: form.long_desc ?? '',
+    active: Boolean(form.active),
+    images: payloadImages,
+    categories: payloadCategories,
+    variants: payloadVariants,
+  };
+
+  emit('submit', payload);
 };
 
 const cancel = () => {
   emit('cancel');
 };
+
+watch(
+  () => props.saving,
+  (saving, wasSaving) => {
+    if (wasSaving && !saving && props.errors.length === 0) {
+      // When save completes successfully, reset to fresh state
+      if (mode.value === 'create') {
+        applyProduct(null);
+        imagesInput.value = '';
+        categoryDraft.value = '';
+      }
+    }
+  }
+);
 </script>

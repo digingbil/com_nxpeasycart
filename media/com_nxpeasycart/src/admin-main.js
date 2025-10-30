@@ -17,6 +17,8 @@ if (!mount) {
         delete: dataset.productsEndpointDelete ?? '',
     };
 
+    console.info('[NXP Easy Cart] Booting admin SPA', { dataset, productsEndpoints });
+
     createApp(App, {
         csrfToken,
         productsEndpoints,

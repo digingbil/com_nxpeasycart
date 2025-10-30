@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset
+        name="general"
+        label="COM_NXPEASYCART_CONFIG_FIELDSET_GENERAL"
+    >
+        <field
+            name="base_currency"
+            type="text"
+            default="USD"
+            label="COM_NXPEASYCART_CONFIG_BASE_CURRENCY"
+            description="COM_NXPEASYCART_CONFIG_BASE_CURRENCY_DESC"
+            filter="cmd"
+            size="6"
+            maxlength="3"
+            inputmode="text"
+            pattern="[A-Za-z]{3}"
+        />
+    </fieldset>
+</form>
