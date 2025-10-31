@@ -17,33 +17,34 @@ $this->document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.ii
 $this->document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/admin.css');
 
 $token = Session::getFormToken();
+$tokenQuery = $token . '=1';
 $adminBase = rtrim(Uri::base(), '/');
 $productsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.list&format=json';
-$productsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json';
-$productsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json';
-$productsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.delete&format=json';
+$productsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json&' . $tokenQuery;
+$productsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json&' . $tokenQuery;
+$productsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.delete&format=json&' . $tokenQuery;
 $ordersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.list&format=json';
 $ordersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.show&format=json';
-$ordersEndpointTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json';
-$ordersEndpointBulkTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.bulkTransition&format=json';
-$ordersEndpointNote = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.note&format=json';
+$ordersEndpointTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json&' . $tokenQuery;
+$ordersEndpointBulkTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.bulkTransition&format=json&' . $tokenQuery;
+$ordersEndpointNote = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.note&format=json&' . $tokenQuery;
 $dashboardEndpoint = $adminBase . '/index.php?option=com_nxpeasycart&task=api.dashboard.summary&format=json';
 $customersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.list&format=json';
 $customersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.show&format=json';
 $couponsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.list&format=json';
-$couponsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.store&format=json';
-$couponsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.update&format=json';
-$couponsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.delete&format=json';
+$couponsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.store&format=json&' . $tokenQuery;
+$couponsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.update&format=json&' . $tokenQuery;
+$couponsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.delete&format=json&' . $tokenQuery;
 $taxEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.list&format=json';
-$taxEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.store&format=json';
-$taxEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.update&format=json';
-$taxEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.delete&format=json';
+$taxEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.store&format=json&' . $tokenQuery;
+$taxEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.update&format=json&' . $tokenQuery;
+$taxEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.tax.delete&format=json&' . $tokenQuery;
 $shippingEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.list&format=json';
-$shippingEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.store&format=json';
-$shippingEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.update&format=json';
-$shippingEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.delete&format=json';
+$shippingEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.store&format=json&' . $tokenQuery;
+$shippingEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.update&format=json&' . $tokenQuery;
+$shippingEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.delete&format=json&' . $tokenQuery;
 $settingsEndpointGet = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.show&format=json';
-$settingsEndpointSave = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json';
+$settingsEndpointSave = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json&' . $tokenQuery;
 $logsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.logs.list&format=json';
 $params = ComponentHelper::getParams('com_nxpeasycart');
 $baseCurrency = strtoupper($params->get('base_currency', 'USD'));
@@ -370,12 +371,41 @@ $dataAttributes = [
         data-<?php echo $key; ?>="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>"
     <?php endforeach; ?>
 >
-    <div class="nxp-admin-app__placeholder">
-        <h1 class="nxp-admin-app__title">
-            <?php echo htmlspecialchars($appTitle, ENT_QUOTES, 'UTF-8'); ?>
-        </h1>
-        <p class="nxp-admin-app__lead">
-            <?php echo htmlspecialchars($appLead, ENT_QUOTES, 'UTF-8'); ?>
-        </p>
-    </div>
+    <section class="nxp-admin-app__shell nxp-admin-app__shell--loading">
+        <header class="nxp-admin-app__header">
+            <h1 class="nxp-admin-app__title">
+                <?php echo htmlspecialchars($appTitle, ENT_QUOTES, 'UTF-8'); ?>
+            </h1>
+            <p class="nxp-admin-app__lead">
+                <?php echo htmlspecialchars($appLead, ENT_QUOTES, 'UTF-8'); ?>
+            </p>
+        </header>
+
+        <?php if (!empty($navItems)) : ?>
+            <nav class="nxp-admin-nav nxp-admin-nav--loading" aria-label="<?php echo Text::_('JGLOBAL_NAVIGATION'); ?>">
+                <?php foreach ($navItems as $item) : ?>
+                    <?php
+                        $link = htmlspecialchars($item['link'], ENT_QUOTES, 'UTF-8');
+                        $title = htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8');
+                        $isActive = $item['id'] === $section;
+                    ?>
+                    <a
+                        href="<?php echo $link; ?>"
+                        class="<?php echo $isActive ? 'is-active' : ''; ?>"
+                        <?php echo $isActive ? 'aria-current="page"' : ''; ?>
+                    >
+                        <?php echo $title; ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        <?php endif; ?>
+
+        <div class="nxp-admin-panel nxp-admin-panel--placeholder">
+            <div class="nxp-admin-panel__body">
+                <p class="nxp-admin-panel__lead">
+                    <?php echo htmlspecialchars($appLead, ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+            </div>
+        </div>
+    </section>
 </div>

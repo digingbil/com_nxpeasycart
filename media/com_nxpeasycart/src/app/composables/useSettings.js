@@ -5,6 +5,10 @@ const normaliseSettings = (data = {}) => {
   const store = data.store ?? {};
   const payments = data.payments ?? {};
 
+  const baseCurrency = typeof data.base_currency === 'string' && data.base_currency.trim() !== ''
+    ? data.base_currency.trim().toUpperCase()
+    : 'USD';
+
   return {
     store: {
       name: store.name ?? '',
@@ -14,7 +18,7 @@ const normaliseSettings = (data = {}) => {
     payments: {
       configured: Boolean(payments.configured),
     },
-    base_currency: data.base_currency ?? 'USD',
+    base_currency: baseCurrency,
   };
 };
 

@@ -72,7 +72,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 -   CSRF tokens and API endpoints are exposed via `data-*` attributes in the admin template for the SPA to consume.
 -   A placeholder `media/com_nxpeasycart/js/admin.iife.js` ships with the repo so the asset loads prior to the first Vite build; running `npm run build:admin` overwrites it with the compiled Vue app. The bundled asset registers under `com_nxpeasycart.admin` and carries its CSS dependency automatically.
 -   Vue single-file components (`src/app/App.vue`, `src/app/components`) and composables (`src/app/composables`) keep the admin bundle modular, with `useTranslations` delegating to `Joomla.Text` instead of hard-coded dictionaries.
--   The dashboard surface now normalises translation placeholders, applies currency-aware metrics, and renders Font Awesome checklist icons to match the Joomla 5 visual language.
+-   The dashboard surface now normalises translation placeholders, applies currency-aware metrics, renders Font Awesome checklist icons, and links directly into the SPA settings workspace for base-currency updates.
 -   The admin products panel now includes create/edit/delete flows with image management, category tagging, and variant tables, backed by shared composables and the JSON API.
 -   Component configuration exposes the single-currency guardrail; the admin editor reflects the configured currency and server-side validation ensures every variant uses it.
 -   Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid “Unknown asset” errors during development.
@@ -94,3 +94,4 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 
 -   **M0 – Component scaffold**: Initial manifest, service provider, admin/site controllers & views, database schema stubs, developer tooling baseline, JSON product API, and Vite-based admin bundler skeleton.
 -   **M1 – Products CRUD**: Admin SPA delivers full product management (images, categories, variants) with validated JSON endpoints and improved UX.
+-   **Bugfix – Admin product save routing**: API router now preserves dotted task names (`api.products.store` etc.), restoring the ability to create products from the Vue admin.

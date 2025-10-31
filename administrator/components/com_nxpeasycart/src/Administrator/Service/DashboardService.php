@@ -62,7 +62,7 @@ class DashboardService
                 'id' => 'set_currency',
                 'label' => 'COM_NXPEASYCART_CHECKLIST_SET_CURRENCY',
                 'completed' => $baseCurrency !== '',
-                'link' => 'index.php?option=com_config&view=component&component=com_nxpeasycart',
+                'link' => 'index.php?option=com_nxpeasycart&view=settings',
             ],
             [
                 'id' => 'add_product',

@@ -7,11 +7,11 @@ class ApiClient {
         this.token = token;
     }
 
-    /**
-     * Perform a request with default Joomla headers and error handling.
-     *
-     * @param {string} url Fully resolved request URL
-     * @param {RequestInit} options Fetch configuration
+   /**
+    * Perform a request with default Joomla headers and error handling.
+    *
+    * @param {string} url Fully resolved request URL
+    * @param {RequestInit} options Fetch configuration
      * @returns {Promise<any>}
      */
     async request(url, options = {}) {
@@ -19,10 +19,10 @@ class ApiClient {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'X-CSRF-Token': this.token,
+                Accept: 'application/json',
             },
             credentials: 'same-origin',
+            cache: 'no-store',
             ...options,
         };
 
@@ -31,7 +31,18 @@ class ApiClient {
             ...(options.headers || {}),
         };
 
-        const response = await fetch(url, config);
+        const method = String(config.method || 'GET').toUpperCase();
+        let requestUrl = url;
+
+        if (this.token) {
+            config.headers['X-CSRF-Token'] = this.token;
+
+            if (method !== 'GET') {
+                requestUrl = this.ensureTokenOnUrl(requestUrl);
+            }
+        }
+
+        const response = await fetch(requestUrl, config);
         let payload = null;
 
         const raw = await response.text();
@@ -60,6 +71,36 @@ class ApiClient {
         }
 
         return payload ?? {};
+    }
+
+    /**
+     * Ensure the CSRF token is attached to the request URL.
+     */
+    ensureTokenOnUrl(url) {
+        if (!this.token) {
+            return url;
+        }
+
+        const tokenParam = encodeURIComponent(this.token);
+
+        try {
+            const origin = typeof window !== 'undefined' && window.location ? window.location.origin : undefined;
+            const parsed = new URL(url, origin);
+
+            if (!parsed.searchParams.has(this.token)) {
+                parsed.searchParams.set(this.token, '1');
+            }
+
+            return parsed.toString();
+        } catch (error) {
+            if (url.includes(`${tokenParam}=`)) {
+                return url;
+            }
+
+            const separator = url.includes('?') ? '&' : '?';
+
+            return `${url}${separator}${tokenParam}=1`;
+        }
     }
 
     /**

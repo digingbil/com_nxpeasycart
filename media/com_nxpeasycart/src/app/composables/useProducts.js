@@ -99,9 +99,26 @@ export function useProducts({ endpoints, token }) {
     loadProducts();
   };
 
+  const toMessage = (value) => {
+    if (!value) {
+      return '';
+    }
+
+    if (typeof value === 'string') {
+      return value;
+    }
+
+    if (typeof value === 'object' && value.message) {
+      return String(value.message);
+    }
+
+    return String(value);
+  };
+
   const handleApiError = (error, { setValidation = false } = {}) => {
     if (error?.code === 422 && setValidation) {
-      state.validationErrors = Array.isArray(error.details) ? error.details : [error.details].filter(Boolean);
+      const details = Array.isArray(error.details) ? error.details : [error.details].filter(Boolean);
+      state.validationErrors = details.map(toMessage).filter((message) => message !== '');
       return;
     }
 

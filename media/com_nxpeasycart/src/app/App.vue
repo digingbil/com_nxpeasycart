@@ -173,15 +173,6 @@ const parseJSON = (value, fallback) => {
   }
 };
 
-const baseCurrency = computed(() => {
-  const value = props.dataset?.baseCurrency ?? '';
-
-  if (typeof value === 'string' && value.trim() !== '') {
-    return value.trim().toUpperCase();
-  }
-
-  return 'USD';
-});
 
 const navItems = computed(() => {
   if (Array.isArray(props.config?.navItems)) {
@@ -348,6 +339,21 @@ const {
   preload: settingsPreload,
 });
 
+const datasetBaseCurrency = computed(() => {
+  const value = props.dataset?.baseCurrency ?? '';
+  return typeof value === 'string' ? value.trim().toUpperCase() : '';
+});
+
+const settingsBaseCurrency = computed(() => {
+  const value = settingsState?.values?.base_currency ?? '';
+  return typeof value === 'string' ? value.trim().toUpperCase() : '';
+});
+
+const baseCurrency = computed(() => {
+  const currency = settingsBaseCurrency.value || datasetBaseCurrency.value;
+  return currency !== '' ? currency : 'USD';
+});
+
 const taxPreload = props.config?.preload?.tax ?? {
   items: parseJSON(props.dataset?.taxPreload, []),
   pagination: parseJSON(props.dataset?.taxPreloadPagination, {}),
@@ -418,18 +424,30 @@ const onProductSearch = () => {
 };
 
 const onProductCreate = async (payload) => {
-  await createProduct(payload);
-  refreshProducts();
+  try {
+    await createProduct(payload);
+    refreshProducts();
+  } catch (error) {
+    // Errors surface via products state; suppress unhandled promise rejections.
+  }
 };
 
 const onProductUpdate = async ({ id, data }) => {
-  await updateProduct(id, data);
-  refreshProducts();
+  try {
+    await updateProduct(id, data);
+    refreshProducts();
+  } catch (error) {
+    // Errors surface via products state.
+  }
 };
 
 const onProductDelete = async (ids) => {
-  await deleteProducts(ids);
-  refreshProducts();
+  try {
+    await deleteProducts(ids);
+    refreshProducts();
+  } catch (error) {
+    // Errors surface via products state.
+  }
 };
 
 const onDashboardRefresh = () => {

@@ -1,7 +1,7 @@
 <?php
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Installer\InstallerHelper;
+use Joomla\CMS\Installer\Installer;
 use Joomla\CMS\Log\Log;
 use Joomla\Database\DatabaseInterface;
 
@@ -50,7 +50,7 @@ class Com_NxpeasycartInstallerScript
         $container = Factory::getContainer();
         $db = $container->get(DatabaseInterface::class);
 
-        $queries = InstallerHelper::splitSql(file_get_contents($path));
+        $queries = Installer::splitSql(file_get_contents($path));
 
         foreach ($queries as $query) {
             $query = trim($query);

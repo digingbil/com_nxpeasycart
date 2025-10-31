@@ -23,7 +23,14 @@ class ApiController extends BaseController
      */
     public function execute($task)
     {
-        $task = trim((string) $task);
+        $rawTaskParam = $_GET['task'] ?? $_POST['task'] ?? $this->input->get('task', '', 'RAW');
+
+        if (!\is_string($rawTaskParam)) {
+            $rawTaskParam = '';
+        }
+
+        $rawTaskParam = preg_replace('/[^A-Za-z0-9._-]/', '', $rawTaskParam);
+        $task = trim($rawTaskParam !== '' ? $rawTaskParam : (string) $task);
 
         if ($task === '') {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_API_TASK_REQUIRED'));

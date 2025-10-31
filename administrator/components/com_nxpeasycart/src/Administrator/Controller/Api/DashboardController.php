@@ -26,12 +26,19 @@ class DashboardController extends AbstractJsonController
     /** @inheritDoc */
     public function execute($task)
     {
-        $task = strtolower((string) $task ?: 'summary');
+        $task = strtolower((string) $task);
+
+        if (str_contains($task, '.')) {
+            $segments = array_filter(explode('.', $task));
+            $task = trim((string) array_pop($segments));
+        }
+
+        $task = $task !== '' ? $task : 'summary';
 
         return match ($task) {
-            'summary' => $this->summary(),
+            'summary', 'browse', 'list' => $this->summary(),
             default => $this->respond([
-                'message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND'),
+                'message' => Text::sprintf('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND', $task),
             ], 404),
         };
     }

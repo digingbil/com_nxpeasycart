@@ -34,18 +34,13 @@ class SettingsController extends AbstractJsonController
 
         $this->debug(sprintf('SettingsController handling task=%s', $task));
 
-        switch ($task) {
-            case 'show':
-            case 'browse':
-                return $this->show();
-            case 'update':
-                return $this->update();
-            default:
-                return $this->respond([
-                    'message' => Text::sprintf('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND', $task),
-                    'debug_task' => $task,
-                ], 404);
-        }
+        return match ($task) {
+            'show', 'browse' => $this->show(),
+            'update' => $this->update(),
+            default => $this->respond([
+                'message' => Text::sprintf('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND', $task),
+            ], 404),
+        };
     }
 
     protected function show(): JsonResponse
@@ -78,6 +73,8 @@ class SettingsController extends AbstractJsonController
 
         $store = isset($payload['store']) && \is_array($payload['store']) ? $payload['store'] : [];
         $payments = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
+        $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
+        unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
 
@@ -99,12 +96,22 @@ class SettingsController extends AbstractJsonController
 
         $paymentsConfigured = isset($payments['configured']) ? (bool) $payments['configured'] : false;
 
+        if ($baseCurrencyInput !== null) {
+            try {
+                ConfigHelper::setBaseCurrency((string) $baseCurrencyInput);
+            } catch (RuntimeException $exception) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_SETTINGS_BASE_CURRENCY_INVALID'), 400, $exception);
+            }
+        }
+
         $service = $this->getService();
 
         $service->set('store.name', $name);
         $service->set('store.email', $email);
         $service->set('store.phone', $phone);
         $service->set('payments.configured', $paymentsConfigured);
+
+        $baseCurrency = ConfigHelper::getBaseCurrency();
 
         return $this->respond([
             'settings' => [
@@ -116,7 +123,7 @@ class SettingsController extends AbstractJsonController
                 'payments' => [
                     'configured' => $paymentsConfigured,
                 ],
-                'base_currency' => ConfigHelper::getBaseCurrency(),
+                'base_currency' => $baseCurrency,
             ],
         ]);
     }

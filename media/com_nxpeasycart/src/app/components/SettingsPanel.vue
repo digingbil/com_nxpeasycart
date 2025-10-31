@@ -97,9 +97,19 @@
           <label class="nxp-form-label" for="settings-base-currency">
             {{ __('COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY', 'Base currency', [], 'settingsGeneralBaseCurrency') }}
           </label>
-          <div class="nxp-form-static" id="settings-base-currency">
-            {{ baseCurrency }}
-          </div>
+          <input
+            id="settings-base-currency"
+            class="nxp-form-input nxp-form-input--uppercase"
+            type="text"
+            v-model.trim="settingsDraft.baseCurrency"
+            minlength="3"
+            maxlength="3"
+            pattern="[A-Za-z]{3}"
+            required
+          />
+          <p class="nxp-form-help">
+            {{ __('COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY_HELP', 'Use ISO 4217 currency codes such as USD or EUR.', [], 'settingsGeneralBaseCurrencyHelp') }}
+          </p>
         </div>
 
         <div class="nxp-form-field nxp-form-field--inline">
@@ -112,6 +122,9 @@
             type="checkbox"
             v-model="settingsDraft.paymentsConfigured"
           />
+          <p class="nxp-form-help">
+            {{ __('COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_HELP', 'Track when core payment settings are complete (used by dashboard checklist).', [], 'settingsGeneralPaymentsHelp') }}
+          </p>
         </div>
 
         <div class="nxp-settings-actions">
@@ -464,9 +477,13 @@ const shippingState = props.shippingState;
 const activeTab = ref('general');
 
 const baseCurrency = computed(() => {
-  const stateCurrency = settingsState?.values?.base_currency;
   const fallback = props.baseCurrency || 'USD';
-  const value = typeof stateCurrency === 'string' && stateCurrency.trim() !== '' ? stateCurrency : fallback;
+  const draft = typeof settingsDraft.baseCurrency === 'string' ? settingsDraft.baseCurrency.trim() : '';
+  const stateCurrency = typeof settingsState?.values?.base_currency === 'string'
+    ? settingsState.values.base_currency.trim()
+    : '';
+
+  const value = draft !== '' ? draft : (stateCurrency !== '' ? stateCurrency : fallback);
 
   return value.toUpperCase();
 });
@@ -476,6 +493,7 @@ const settingsDraft = reactive({
   storeEmail: '',
   storePhone: '',
   paymentsConfigured: false,
+  baseCurrency: '',
 });
 
 const taxDraft = reactive({
@@ -506,6 +524,9 @@ const applySettings = (values = {}) => {
     storeEmail: store.email ?? '',
     storePhone: store.phone ?? '',
     paymentsConfigured: Boolean(payments.configured),
+    baseCurrency: typeof values?.base_currency === 'string'
+      ? values.base_currency.trim().toUpperCase()
+      : (props.baseCurrency || 'USD').toUpperCase(),
   });
 };
 
@@ -520,15 +541,19 @@ watch(
 const refreshGeneral = () => emit('refresh-settings');
 
 const saveGeneral = () => {
+  const currency = (settingsDraft.baseCurrency || '').trim().toUpperCase();
+
   emit('save-settings', {
     store: {
       name: settingsDraft.storeName,
       email: settingsDraft.storeEmail,
       phone: settingsDraft.storePhone,
+      base_currency: currency,
     },
     payments: {
       configured: settingsDraft.paymentsConfigured,
     },
+    base_currency: currency,
   });
 };
 
@@ -541,6 +566,19 @@ watch(
   (saving, wasSaving) => {
     if (wasSaving && !saving && !settingsState.error) {
       applySettings(settingsState.values ?? {});
+    }
+  }
+);
+
+watch(
+  () => settingsDraft.baseCurrency,
+  (value) => {
+    if (typeof value === 'string') {
+      const normalised = value.replace(/[^A-Za-z]/g, '').toUpperCase();
+
+      if (normalised !== value) {
+        settingsDraft.baseCurrency = normalised;
+      }
     }
   }
 );
@@ -743,6 +781,11 @@ const shippingTypeLabel = (type) => {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+}
+
+.nxp-form-input--uppercase {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .nxp-form-static {

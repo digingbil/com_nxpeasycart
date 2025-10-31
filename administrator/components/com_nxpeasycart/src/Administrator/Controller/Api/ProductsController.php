@@ -6,6 +6,7 @@ namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
@@ -16,6 +17,7 @@ use RuntimeException;
  */
 class ProductsController extends AbstractJsonController
 {
+
     /**
      * Constructor.
      *
@@ -26,6 +28,12 @@ class ProductsController extends AbstractJsonController
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
         parent::__construct($config, $factory, $app);
+
+        Log::addLogger(
+            ['text_file' => 'com_nxpeasycart-products.php', 'extension' => 'com_nxpeasycart-products'],
+            Log::ALL,
+            ['com_nxpeasycart.products']
+        );
     }
 
     /**
@@ -89,30 +97,44 @@ class ProductsController extends AbstractJsonController
      */
     protected function store(): JsonResponse
     {
+        $this->debug('store: entry point reached');
         $this->assertCan('core.create');
         $this->assertToken();
 
         $data = $this->decodePayload();
+        $this->debug('store: incoming payload', $data);
 
         $model = $this->getProductModel();
 
         $form = $model->getForm($data, false);
 
         if ($form === false) {
+            $this->debug('store: getForm failed', [$model->getError()]);
             throw new RuntimeException($model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SAVE_FAILED'), 500);
         }
 
         $validData = $model->validate($form, $data);
 
         if ($validData === false) {
-            return $this->respond(['errors' => $model->getErrors()], 422);
+            $errors = $model->getErrors();
+            $this->debug('store: validation failed', $errors);
+
+            return $this->respond(['errors' => $errors], 422);
         }
 
         if (!$model->save($validData)) {
+            $this->debug('store: save failed', [$model->getError(), $model->getErrors()]);
             throw new RuntimeException($model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SAVE_FAILED'), 500);
         }
 
-        $item = $model->getItem((int) $model->getState($model->getName() . '.id'));
+        $id = (int) $model->getState($model->getName() . '.id');
+
+        if ($id <= 0) {
+            $id = (int) $model->getTable()->id;
+        }
+
+        $item = $model->getItem($id);
+        $this->debug('store: product created', ['id' => $id]);
 
         return $this->respond(['item' => $this->transformProduct($item)], 201);
     }
@@ -328,5 +350,14 @@ class ProductsController extends AbstractJsonController
     private function formatPrice(int $cents): string
     {
         return number_format($cents / 100, 2, '.', '');
+    }
+
+    private function debug(string $message, $context = null): void
+    {
+        if ($context !== null) {
+            $message .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
+        Log::add($message, Log::INFO, 'com_nxpeasycart.products');
     }
 }
