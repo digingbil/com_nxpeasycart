@@ -40,6 +40,10 @@ class HtmlView extends BaseHtmlView
         $document = $this->document;
         $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
+        $wa = $document->getWebAssetManager();
+        $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
+        $wa->useScript('com_nxpeasycart.site');
+
         $model = $this->getModel();
         $product = $model ? $model->getItem() : null;
 

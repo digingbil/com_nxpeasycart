@@ -17,6 +17,19 @@
             "attributes": {
                 "defer": true
             }
+        },
+        "com_nxpeasycart.site": {
+            "name": "com_nxpeasycart.site",
+            "type": "script",
+            "js": [
+                "js/site.iife.js"
+            ],
+            "dependencies": [
+                "core"
+            ],
+            "attributes": {
+                "defer": true
+            }
         }
     }
 }

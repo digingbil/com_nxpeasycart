@@ -699,6 +699,139 @@ class OrderService
     }
 
     /**
+     * Record or update a payment transaction for an order.
+     *
+     * @param array<string, mixed> $transaction
+     */
+    public function recordTransaction(int $orderId, array $transaction): array
+    {
+        $order = $this->get($orderId);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        $gateway = (string) ($transaction['gateway'] ?? '');
+
+        if ($gateway === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_TRANSACTION_GATEWAY_REQUIRED'));
+        }
+
+        $idempotencyKey = isset($transaction['idempotency_key']) ? (string) $transaction['idempotency_key'] : '';
+
+        if ($idempotencyKey !== '' && $this->transactionExistsByIdempotency($gateway, $idempotencyKey)) {
+            return $this->get($orderId);
+        }
+
+        $externalId = isset($transaction['external_id']) ? (string) $transaction['external_id'] : null;
+
+        if ($externalId !== null && $this->transactionExistsByExternalId($gateway, $externalId)) {
+            return $this->get($orderId);
+        }
+
+        $object = (object) [
+            'order_id' => $orderId,
+            'gateway' => $gateway,
+            'ext_id' => $externalId,
+            'status' => (string) ($transaction['status'] ?? 'pending'),
+            'amount_cents' => (int) ($transaction['amount_cents'] ?? 0),
+            'payload' => !empty($transaction['payload'])
+                ? json_encode($transaction['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                : null,
+            'event_idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
+        ];
+
+        $this->db->insertObject('#__nxp_easycart_transactions', $object);
+
+        $shouldMarkPaid = strtolower((string) ($object->status ?? '')) === 'paid';
+
+        if ($shouldMarkPaid && $order['state'] !== 'paid' && $order['state'] !== 'fulfilled') {
+            $this->transitionState($orderId, 'paid');
+            $this->decrementInventory($orderId);
+        }
+
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.payment.recorded',
+            [
+                'gateway' => $gateway,
+                'status' => $object->status,
+                'amount_cents' => (int) $object->amount_cents,
+            ]
+        );
+
+        return $this->get($orderId) ?? $order;
+    }
+
+    private function transactionExistsByExternalId(string $gateway, string $externalId): bool
+    {
+        $query = $this->db->getQuery(true)
+            ->select('1')
+            ->from($this->db->quoteName('#__nxp_easycart_transactions'))
+            ->where($this->db->quoteName('gateway') . ' = :gateway')
+            ->where($this->db->quoteName('ext_id') . ' = :extId')
+            ->setLimit(1)
+            ->bind(':gateway', $gateway, ParameterType::STRING)
+            ->bind(':extId', $externalId, ParameterType::STRING);
+
+        $this->db->setQuery($query);
+
+        return (bool) $this->db->loadResult();
+    }
+
+    private function transactionExistsByIdempotency(string $gateway, string $idempotencyKey): bool
+    {
+        $query = $this->db->getQuery(true)
+            ->select('1')
+            ->from($this->db->quoteName('#__nxp_easycart_transactions'))
+            ->where($this->db->quoteName('gateway') . ' = :gateway')
+            ->where($this->db->quoteName('event_idempotency_key') . ' = :key')
+            ->setLimit(1)
+            ->bind(':gateway', $gateway, ParameterType::STRING)
+            ->bind(':key', $idempotencyKey, ParameterType::STRING);
+
+        $this->db->setQuery($query);
+
+        return (bool) $this->db->loadResult();
+    }
+
+    private function decrementInventory(int $orderId): void
+    {
+        $query = $this->db->getQuery(true)
+            ->select([
+                $this->db->quoteName('variant_id'),
+                $this->db->quoteName('qty'),
+            ])
+            ->from($this->db->quoteName('#__nxp_easycart_order_items'))
+            ->where($this->db->quoteName('order_id') . ' = :orderId')
+            ->where($this->db->quoteName('variant_id') . ' IS NOT NULL')
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $rows = $this->db->loadObjectList() ?: [];
+
+        foreach ($rows as $row) {
+            $variantId = (int) $row->variant_id;
+            $qty = max(0, (int) $row->qty);
+
+            if ($variantId <= 0 || $qty <= 0) {
+                continue;
+            }
+
+            $update = $this->db->getQuery(true)
+                ->update($this->db->quoteName('#__nxp_easycart_variants'))
+                ->set($this->db->quoteName('stock') . ' = GREATEST(' . $this->db->quoteName('stock') . ' - :qty, 0)')
+                ->where($this->db->quoteName('id') . ' = :variantId')
+                ->bind(':qty', $qty, ParameterType::INTEGER)
+                ->bind(':variantId', $variantId, ParameterType::INTEGER);
+
+            $this->db->setQuery($update);
+            $this->db->execute();
+        }
+    }
+
+    /**
      * Generate a unique order number candidate.
      */
     private function generateOrderNumber(): string

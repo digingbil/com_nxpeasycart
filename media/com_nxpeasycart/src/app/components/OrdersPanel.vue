@@ -571,6 +571,15 @@ const historyLabel = (entry) => {
         entry.context?.message
         || __('COM_NXPEASYCART_ORDERS_TIMELINE_NOTE', 'Note added', [], 'ordersTimelineNote')
       );
+    case 'order.payment.recorded': {
+      const gateway = entry.context?.gateway || __('COM_NXPEASYCART_ORDERS_TRANSACTION', 'Payment', [], 'ordersTransactionLabel');
+      const amount = formatCurrency(entry.context?.amount_cents ?? 0, state.activeOrder.currency);
+
+      return formatWithPlaceholders(
+        __('COM_NXPEASYCART_ORDERS_TIMELINE_PAYMENT_RECORDED', '%s recorded (%s)', [], 'ordersTimelinePaymentRecorded'),
+        [gateway, amount]
+      );
+    }
     default:
       return entry.action;
   }

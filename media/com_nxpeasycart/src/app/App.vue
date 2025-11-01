@@ -1,12 +1,22 @@
 <template>
   <section class="nxp-admin-app__shell">
     <header class="nxp-admin-app__header">
-      <h1 class="nxp-admin-app__title">
-        {{ __(appTitleKey, props.dataset?.appTitle ?? 'NXP Easy Cart', [], 'appTitle') }}
-      </h1>
-      <p class="nxp-admin-app__lead">
-        {{ __(appLeadKey, props.dataset?.appLead ?? 'Manage your storefront from one place.', [], 'appLead') }}
-      </p>
+      <div>
+        <h1 class="nxp-admin-app__title">
+          {{ __(appTitleKey, props.dataset?.appTitle ?? 'NXP Easy Cart', [], 'appTitle') }}
+        </h1>
+        <p class="nxp-admin-app__lead">
+          {{ __(appLeadKey, props.dataset?.appLead ?? 'Manage your storefront from one place.', [], 'appLead') }}
+        </p>
+      </div>
+      <button
+        v-if="hasIncompleteOnboarding"
+        class="nxp-btn nxp-btn--ghost"
+        type="button"
+        @click="openOnboarding"
+      >
+        {{ __('COM_NXPEASYCART_ONBOARDING_OPEN', 'Open onboarding', [], 'onboardingOpen') }}
+      </button>
     </header>
 
     <nav v-if="navItems.length" class="nxp-admin-nav">
@@ -85,6 +95,7 @@
       :settings-state="settingsState"
       :tax-state="taxState"
       :shipping-state="shippingState"
+      :payments-state="paymentsState"
       :translate="__"
       :base-currency="baseCurrency"
       @refresh-settings="onSettingsRefresh"
@@ -95,6 +106,8 @@
       @refresh-shipping="onShippingRefresh"
       @save-shipping="onShippingSave"
       @delete-shipping="onShippingDelete"
+      @refresh-payments="onPaymentsRefresh"
+      @save-payments="onPaymentsSave"
     />
 
     <LogsPanel
@@ -115,10 +128,17 @@
       </div>
     </div>
   </section>
+  <OnboardingWizard
+    :visible="onboardingVisible"
+    :steps="onboardingSteps"
+    :translate="__"
+    @close="dismissOnboarding"
+    @navigate="navigateOnboarding"
+  />
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import DashboardPanel from './components/DashboardPanel.vue';
 import ProductPanel from './components/ProductPanel.vue';
 import OrdersPanel from './components/OrdersPanel.vue';
@@ -126,6 +146,7 @@ import CustomersPanel from './components/CustomersPanel.vue';
 import CouponsPanel from './components/CouponsPanel.vue';
 import SettingsPanel from './components/SettingsPanel.vue';
 import LogsPanel from './components/LogsPanel.vue';
+import OnboardingWizard from './components/OnboardingWizard.vue';
 import { useTranslations } from './composables/useTranslations.js';
 import { useProducts } from './composables/useProducts.js';
 import { useOrders } from './composables/useOrders.js';
@@ -136,6 +157,7 @@ import { useSettings } from './composables/useSettings.js';
 import { useTaxRates } from './composables/useTaxRates.js';
 import { useShippingRules } from './composables/useShippingRules.js';
 import { useLogs } from './composables/useLogs.js';
+import { usePayments } from './composables/usePayments.js';
 
 const props = defineProps({
   csrfToken: {
@@ -194,6 +216,18 @@ const navItems = computed(() => {
     : [];
 });
 
+const navLinkFor = (id) => {
+  const items = navItems.value;
+
+  if (!Array.isArray(items)) {
+    return '';
+  }
+
+  const match = items.find((item) => item.id === id);
+
+  return match ? match.link : '';
+};
+
 const activeSection = computed(() => props.config?.activeSection || props.dataset?.activeSection || 'dashboard');
 
 const productsEndpoints = props.endpoints?.products ?? {
@@ -244,6 +278,11 @@ const settingsEndpoints = props.endpoints?.settings ?? {
 
 const logsEndpoints = props.endpoints?.logs ?? {
   list: props.dataset?.logsEndpoint ?? '',
+};
+
+const paymentsEndpoints = props.endpoints?.payments ?? {
+  show: props.dataset?.paymentsEndpointShow ?? '',
+  update: props.dataset?.paymentsEndpointUpdate ?? '',
 };
 
 const orderStates = computed(() => parseJSON(props.dataset?.orderStates, []));
@@ -354,6 +393,135 @@ const baseCurrency = computed(() => {
   return currency !== '' ? currency : 'USD';
 });
 
+const onboardingCopy = (label) => {
+  switch (label) {
+    case 'COM_NXPEASYCART_CHECKLIST_SET_CURRENCY':
+      return {
+        id: 'set-currency',
+        titleKey: 'COM_NXPEASYCART_ONBOARDING_STEP_SET_CURRENCY_TITLE',
+        descriptionKey: 'COM_NXPEASYCART_ONBOARDING_STEP_SET_CURRENCY_DESC',
+        titleFallback: 'Set your base currency',
+        descriptionFallback: 'Lock in the store currency so product pricing and orders stay consistent.',
+        link: navLinkFor('settings') || 'index.php?option=com_nxpeasycart&view=settings',
+      };
+    case 'COM_NXPEASYCART_CHECKLIST_ADD_PRODUCT':
+      return {
+        id: 'add-product',
+        titleKey: 'COM_NXPEASYCART_ONBOARDING_STEP_ADD_PRODUCT_TITLE',
+        descriptionKey: 'COM_NXPEASYCART_ONBOARDING_STEP_ADD_PRODUCT_DESC',
+        titleFallback: 'Create your first product',
+        descriptionFallback: 'Add product details, images, and variants to populate your catalogue.',
+        link: navLinkFor('products') || 'index.php?option=com_nxpeasycart&view=products',
+      };
+    case 'COM_NXPEASYCART_CHECKLIST_CONFIGURE_PAYMENTS':
+      return {
+        id: 'configure-payments',
+        titleKey: 'COM_NXPEASYCART_ONBOARDING_STEP_CONFIGURE_PAYMENTS_TITLE',
+        descriptionKey: 'COM_NXPEASYCART_ONBOARDING_STEP_CONFIGURE_PAYMENTS_DESC',
+        titleFallback: 'Configure payment gateways',
+        descriptionFallback: 'Connect Stripe or PayPal so you can capture orders securely.',
+        link: navLinkFor('settings') || 'index.php?option=com_nxpeasycart&view=settings',
+      };
+    case 'COM_NXPEASYCART_CHECKLIST_REVIEW_ORDERS':
+      return {
+        id: 'review-orders',
+        titleKey: 'COM_NXPEASYCART_ONBOARDING_STEP_REVIEW_ORDERS_TITLE',
+        descriptionKey: 'COM_NXPEASYCART_ONBOARDING_STEP_REVIEW_ORDERS_DESC',
+        titleFallback: 'Review the orders workspace',
+        descriptionFallback: 'Verify fulfilment workflows, notes, and state transitions.',
+        link: navLinkFor('orders') || 'index.php?option=com_nxpeasycart&view=orders',
+      };
+    case 'COM_NXPEASYCART_CHECKLIST_INVITE_CUSTOMERS':
+      return {
+        id: 'invite-customers',
+        titleKey: 'COM_NXPEASYCART_ONBOARDING_STEP_INVITE_CUSTOMERS_TITLE',
+        descriptionKey: 'COM_NXPEASYCART_ONBOARDING_STEP_INVITE_CUSTOMERS_DESC',
+        titleFallback: 'Invite customers or teammates',
+        descriptionFallback: 'Send invites or import contacts so customers can access their orders.',
+        link: navLinkFor('customers') || 'index.php?option=com_nxpeasycart&view=customers',
+      };
+    default:
+      return {
+        id: label || 'step',
+        titleKey: label || 'COM_NXPEASYCART_ONBOARDING_STEP_DEFAULT_TITLE',
+        descriptionKey: label || 'COM_NXPEASYCART_ONBOARDING_STEP_DEFAULT_DESC',
+        titleFallback: 'Complete setup',
+        descriptionFallback: 'Work through this step to finish onboarding.',
+        link: navLinkFor('dashboard') || '',
+      };
+  }
+};
+
+const onboardingSteps = computed(() => {
+  const list = Array.isArray(dashboardState.checklist) ? dashboardState.checklist : [];
+
+  return list.map((item) => {
+    const copy = onboardingCopy(item.label);
+    return {
+      id: copy.id,
+      completed: Boolean(item.completed),
+      link: item.link || copy.link || '',
+      label: item.label,
+      titleKey: copy.titleKey,
+      descriptionKey: copy.descriptionKey,
+      titleFallback: copy.titleFallback,
+      descriptionFallback: copy.descriptionFallback,
+    };
+  });
+});
+
+const hasIncompleteOnboarding = computed(() => onboardingSteps.value.some((step) => !step.completed));
+const onboardingVisible = ref(false);
+const onboardingStorageKey = 'nxp:admin:onboarding:dismissed';
+
+const openOnboarding = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(onboardingStorageKey, '0');
+    } catch (error) {
+      // Ignore storage errors (private mode, etc.).
+    }
+  }
+
+  onboardingVisible.value = true;
+};
+
+const dismissOnboarding = () => {
+  onboardingVisible.value = false;
+
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(onboardingStorageKey, '1');
+    } catch (error) {
+      // Ignore storage errors.
+    }
+  }
+};
+
+const navigateOnboarding = (step) => {
+  if (step && typeof step.link === 'string' && step.link !== '') {
+    dismissOnboarding();
+
+    if (typeof window !== 'undefined') {
+      window.location.href = step.link;
+    }
+  }
+};
+
+watch(hasIncompleteOnboarding, (incomplete) => {
+  if (!incomplete) {
+    onboardingVisible.value = false;
+
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(onboardingStorageKey, '1');
+      } catch (error) {
+        // Ignore storage errors.
+      }
+    }
+  }
+});
+
 const taxPreload = props.config?.preload?.tax ?? {
   items: parseJSON(props.dataset?.taxPreload, []),
   pagination: parseJSON(props.dataset?.taxPreloadPagination, {}),
@@ -403,6 +571,15 @@ const {
   preload: logsPreload,
 });
 
+const {
+  state: paymentsState,
+  refresh: refreshPayments,
+  save: savePaymentsConfig,
+} = usePayments({
+  endpoints: paymentsEndpoints,
+  token: props.csrfToken,
+});
+
 onMounted(() => {
   if (typeof window !== 'undefined') {
     window.__NXP_EASYCART__ = {
@@ -410,7 +587,23 @@ onMounted(() => {
       adminMounted: true,
       dataset: props.dataset,
     };
+
+    try {
+      const dismissed = window.localStorage.getItem(onboardingStorageKey);
+
+      if (hasIncompleteOnboarding.value) {
+        if (dismissed !== '1') {
+          onboardingVisible.value = true;
+        }
+      } else {
+        window.localStorage.setItem(onboardingStorageKey, '1');
+      }
+    } catch (error) {
+      // Ignore storage availability issues.
+    }
   }
+
+  refreshPayments();
 
   //console.info('[NXP Easy Cart] Admin App mounted', props.dataset);
 });
@@ -616,5 +809,13 @@ const onLogsFilter = (entity) => {
 
 const onLogsPage = (page) => {
   goToLogsPage(page);
+};
+
+const onPaymentsRefresh = () => {
+  refreshPayments();
+};
+
+const onPaymentsSave = async (config) => {
+  await savePaymentsConfig(config);
 };
 </script>

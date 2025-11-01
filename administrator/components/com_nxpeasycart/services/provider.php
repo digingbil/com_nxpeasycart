@@ -20,7 +20,14 @@ use Nxp\EasyCart\Admin\Administrator\Factory\EasyCartMVCFactory;
 use Nxp\EasyCart\Admin\Administrator\Extension\NxpEasyCartComponent;
 use Nxp\EasyCart\Admin\Administrator\Service\CartService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
+use Nxp\EasyCart\Admin\Administrator\Service\CacheService;
+use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
+use Nxp\EasyCart\Admin\Administrator\Payment\PaymentGatewayManager;
+use Nxp\EasyCart\Admin\Administrator\Service\GdprService;
+use Nxp\EasyCart\Admin\Administrator\Service\MailService;
 use Nxp\EasyCart\Site\Service\CartSessionService;
+use Nxp\EasyCart\Site\Service\CartPresentationService;
 
 return new class implements ServiceProviderInterface {
     /**
@@ -91,10 +98,59 @@ return new class implements ServiceProviderInterface {
         );
 
         $container->set(
+            SettingsService::class,
+            static fn (Container $container): SettingsService => new SettingsService($container->get(DatabaseInterface::class))
+        );
+
+        $container->set(
+            PaymentGatewayService::class,
+            static fn (Container $container): PaymentGatewayService => new PaymentGatewayService(
+                $container->get(SettingsService::class)
+            )
+        );
+
+        $container->set(
+            MailService::class,
+            static fn (Container $container): MailService => new MailService(
+                $container->get(MailerFactoryInterface::class)->createMailer()
+            )
+        );
+
+        $container->set(
+            PaymentGatewayManager::class,
+            static fn (Container $container): PaymentGatewayManager => new PaymentGatewayManager(
+                $container->get(PaymentGatewayService::class),
+                $container->get(OrderService::class),
+                $container->get(MailService::class)
+            )
+        );
+
+        $container->set(
             CartSessionService::class,
             static fn (Container $container): CartSessionService => new CartSessionService(
                 $container->get(CartService::class),
                 $container->get(SessionInterface::class)
+            )
+        );
+
+        $container->set(
+            CartPresentationService::class,
+            static fn (Container $container): CartPresentationService => new CartPresentationService(
+                $container->get(DatabaseInterface::class)
+            )
+        );
+
+        $container->set(
+            CacheService::class,
+            static fn (Container $container): CacheService => new CacheService(
+                $container->get(CacheControllerFactoryInterface::class)
+            )
+        );
+
+        $container->set(
+            GdprService::class,
+            static fn (Container $container): GdprService => new GdprService(
+                $container->get(DatabaseInterface::class)
             )
         );
     }

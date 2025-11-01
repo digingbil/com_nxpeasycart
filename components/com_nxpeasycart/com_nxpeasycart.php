@@ -8,6 +8,7 @@ use Joomla\CMS\Session\SessionInterface;
 use Joomla\Database\DatabaseInterface;
 use Nxp\EasyCart\Admin\Administrator\Service\CartService;
 use Nxp\EasyCart\Site\Service\CartSessionService;
+use Nxp\EasyCart\Site\Service\CartPresentationService;
 
 \JLoader::registerNamespace('Nxp\\EasyCart\\Site', __DIR__ . '/src', false, false, 'psr4');
 \JLoader::registerNamespace('Nxp\\EasyCart\\Admin', JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src', false, false, 'psr4');
@@ -27,6 +28,15 @@ if (!$container->has(CartSessionService::class)) {
         static fn ($container): CartSessionService => new CartSessionService(
             $container->get(CartService::class),
             $container->get(SessionInterface::class)
+        )
+    );
+}
+
+if (!$container->has(CartPresentationService::class)) {
+    $container->set(
+        CartPresentationService::class,
+        static fn ($container): CartPresentationService => new CartPresentationService(
+            $container->get(DatabaseInterface::class)
         )
     );
 }

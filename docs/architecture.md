@@ -118,3 +118,11 @@ Variant payloads accept `price` (major units), `currency`, `stock`, `weight`, `a
 ## Testing reference
 
 - Automated testing strategy lives in `docs/testing.md` and covers PHPUnit suites, API contract runs, Vue unit tests, and Playwright end-to-end coverage.
+
+## Payments & Caching (M2 refresh)
+
+- `PaymentGatewayManager` brokers hosted checkout sessions via dedicated Stripe/PayPal adapters, records webhook events with idempotency keys, decrements variant stock on `paid`, and triggers order confirmation email delivery through `MailService`.
+- `PaymentGatewayService` persists configuration in the component settings table, masking secrets for the Vue admin while retaining raw values for the gateway drivers.
+- `CacheService` wraps Joomla's callback cache controller; storefront checkout reuses it to memoise shipping/tax datasets and reduce repetitive queries.
+- `MailService` renders PHP-based templates (see `templates/email/order_confirmation.php`) and uses Joomla's configured mailer for transactional notifications.
+- GDPR requests are served by `GdprService`, exposing export/anonymise endpoints wired into the admin API controller.

@@ -36,6 +36,14 @@
       >
         {{ __('COM_NXPEASYCART_SETTINGS_TAB_SHIPPING', 'Shipping rules', [], 'settingsTabShipping') }}
       </button>
+      <button
+        type="button"
+        class="nxp-settings-tab"
+        :class="{ 'is-active': activeTab === 'payments' }"
+        @click="activeTab = 'payments'"
+      >
+        {{ __('COM_NXPEASYCART_SETTINGS_TAB_PAYMENTS', 'Payments', [], 'settingsTabPayments') }}
+      </button>
     </nav>
 
     <div v-if="activeTab === 'general'" class="nxp-settings-panel">
@@ -402,7 +410,7 @@
               class="nxp-form-input"
               type="text"
               v-model.trim="shippingDraft.regions"
-              :placeholder="__('COM_NXPEASYCART_SETTINGS_SHIPPING_REGIONS_PLACEHOLDER', 'Use comma-separated ISO codes', [], 'settingsShippingRegionsPlaceholder')"
+              :placeholder="__('COM_NXPEASYCART_SETTINGS_SHIPPING_REGIONS_PLACEHOLDER', 'Use comma-separated ISO codes (two-letter ISO 3166‑1 alpha‑2), e.g. US,GB,FR,DE,DK,MK,BG', [], 'settingsShippingRegionsPlaceholder')"
             />
           </div>
 
@@ -429,6 +437,155 @@
         </form>
       </div>
     </div>
+
+    <div v-else-if="activeTab === 'payments'" class="nxp-settings-panel">
+      <header class="nxp-settings-panel__header">
+        <h3>{{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_TITLE', 'Payment gateways', [], 'settingsPaymentsTitle') }}</h3>
+        <div class="nxp-settings-actions">
+          <button class="nxp-btn" type="button" @click="refreshPayments" :disabled="paymentsState.loading">
+            {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_REFRESH', 'Refresh', [], 'settingsPaymentsRefresh') }}
+          </button>
+        </div>
+      </header>
+
+      <div v-if="paymentsState.error" class="nxp-admin-alert nxp-admin-alert--error">
+        {{ paymentsState.error }}
+      </div>
+
+      <div v-else-if="paymentsState.loading" class="nxp-admin-panel__loading">
+        {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_LOADING', 'Loading payment configuration…', [], 'settingsPaymentsLoading') }}
+      </div>
+
+      <form v-else class="nxp-settings-form nxp-settings-form--payments" @submit.prevent="savePayments">
+        <fieldset>
+          <legend>{{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE', 'Stripe', [], 'settingsPaymentsStripe') }}</legend>
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-stripe-publishable">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_PUBLISHABLE', 'Publishable key', [], 'settingsPaymentsStripePublishable') }}
+            </label>
+            <input
+              id="nxp-stripe-publishable"
+              class="nxp-form-input"
+              type="text"
+              v-model.trim="paymentsDraft.stripe.publishable_key"
+            />
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-stripe-secret">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_SECRET', 'Secret key', [], 'settingsPaymentsStripeSecret') }}
+            </label>
+            <input
+              id="nxp-stripe-secret"
+              class="nxp-form-input"
+              type="password"
+              v-model.trim="paymentsDraft.stripe.secret_key"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-stripe-webhook">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_WEBHOOK', 'Webhook secret', [], 'settingsPaymentsStripeWebhook') }}
+            </label>
+            <input
+              id="nxp-stripe-webhook"
+              class="nxp-form-input"
+              type="password"
+              v-model.trim="paymentsDraft.stripe.webhook_secret"
+              autocomplete="off"
+            />
+            <p class="nxp-form-help">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_HELP', 'Copy the signing secret from your Stripe webhook configuration.', [], 'settingsPaymentsStripeHelp') }}
+            </p>
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-stripe-mode">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE', 'Mode', [], 'settingsPaymentsMode') }}
+            </label>
+            <select id="nxp-stripe-mode" class="nxp-form-input" v-model="paymentsDraft.stripe.mode">
+              <option value="test">
+                {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE_TEST', 'Test', [], 'settingsPaymentsModeTest') }}
+              </option>
+              <option value="live">
+                {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE_LIVE', 'Live', [], 'settingsPaymentsModeLive') }}
+              </option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>{{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL', 'PayPal', [], 'settingsPaymentsPayPal') }}</legend>
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-paypal-client-id">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_CLIENT_ID', 'Client ID', [], 'settingsPaymentsPayPalClientId') }}
+            </label>
+            <input
+              id="nxp-paypal-client-id"
+              class="nxp-form-input"
+              type="text"
+              v-model.trim="paymentsDraft.paypal.client_id"
+            />
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-paypal-client-secret">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_CLIENT_SECRET', 'Client secret', [], 'settingsPaymentsPayPalClientSecret') }}
+            </label>
+            <input
+              id="nxp-paypal-client-secret"
+              class="nxp-form-input"
+              type="password"
+              v-model.trim="paymentsDraft.paypal.client_secret"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-paypal-webhook-id">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_WEBHOOK', 'Webhook ID', [], 'settingsPaymentsPayPalWebhook') }}
+            </label>
+            <input
+              id="nxp-paypal-webhook-id"
+              class="nxp-form-input"
+              type="text"
+              v-model.trim="paymentsDraft.paypal.webhook_id"
+            />
+            <p class="nxp-form-help">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_HELP', 'Use the webhook ID from your PayPal app to verify notifications.', [], 'settingsPaymentsPayPalHelp') }}
+            </p>
+          </div>
+
+          <div class="nxp-form-field">
+            <label class="nxp-form-label" for="nxp-paypal-mode">
+              {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE', 'Mode', [], 'settingsPaymentsMode') }}
+            </label>
+            <select id="nxp-paypal-mode" class="nxp-form-input" v-model="paymentsDraft.paypal.mode">
+              <option value="sandbox">
+                {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE_SANDBOX', 'Sandbox', [], 'settingsPaymentsModeSandbox') }}
+              </option>
+              <option value="live">
+                {{ __('COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE_LIVE', 'Live', [], 'settingsPaymentsModeLive') }}
+              </option>
+            </select>
+          </div>
+        </fieldset>
+
+        <div v-if="paymentsState.message" class="nxp-admin-alert nxp-admin-alert--success">
+          {{ paymentsState.message }}
+        </div>
+
+        <div class="nxp-settings-actions">
+          <button class="nxp-btn" type="button" @click="resetPayments" :disabled="paymentsState.saving">
+            {{ __('COM_NXPEASYCART_SETTINGS_GENERAL_CANCEL', 'Cancel', [], 'settingsPaymentsCancel') }}
+          </button>
+          <button class="nxp-btn nxp-btn--primary" type="submit" :disabled="paymentsState.saving">
+            {{ paymentsState.saving ? __('JPROCESSING_REQUEST', 'Saving…') : __('COM_NXPEASYCART_SETTINGS_PAYMENTS_SAVE', 'Save payments', [], 'settingsPaymentsSave') }}
+          </button>
+        </div>
+      </form>
+    </div>
   </section>
 </template>
 
@@ -447,6 +604,19 @@ const props = defineProps({
   shippingState: {
     type: Object,
     required: true,
+  },
+  paymentsState: {
+    type: Object,
+    default: () => ({
+      loading: false,
+      saving: false,
+      error: '',
+      message: '',
+      config: {
+        stripe: {},
+        paypal: {},
+      },
+    }),
   },
   translate: {
     type: Function,
@@ -467,12 +637,15 @@ const emit = defineEmits([
   'refresh-shipping',
   'save-shipping',
   'delete-shipping',
+  'refresh-payments',
+  'save-payments',
 ]);
 
 const __ = props.translate;
 const settingsState = props.settingsState;
 const taxState = props.taxState;
 const shippingState = props.shippingState;
+const paymentsState = props.paymentsState;
 
 const activeTab = ref('general');
 
@@ -515,6 +688,21 @@ const shippingDraft = reactive({
   active: true,
 });
 
+const paymentsDraft = reactive({
+  stripe: {
+    publishable_key: '',
+    secret_key: '',
+    webhook_secret: '',
+    mode: 'test',
+  },
+  paypal: {
+    client_id: '',
+    client_secret: '',
+    webhook_id: '',
+    mode: 'sandbox',
+  },
+});
+
 const applySettings = (values = {}) => {
   const store = values?.store ?? {};
   const payments = values?.payments ?? {};
@@ -527,6 +715,25 @@ const applySettings = (values = {}) => {
     baseCurrency: typeof values?.base_currency === 'string'
       ? values.base_currency.trim().toUpperCase()
       : (props.baseCurrency || 'USD').toUpperCase(),
+  });
+};
+
+const applyPayments = (config = {}) => {
+  const stripe = config.stripe ?? {};
+  const paypal = config.paypal ?? {};
+
+  Object.assign(paymentsDraft.stripe, {
+    publishable_key: stripe.publishable_key ?? '',
+    secret_key: stripe.secret_key ?? '',
+    webhook_secret: stripe.webhook_secret ?? '',
+    mode: stripe.mode ?? 'test',
+  });
+
+  Object.assign(paymentsDraft.paypal, {
+    client_id: paypal.client_id ?? '',
+    client_secret: paypal.client_secret ?? '',
+    webhook_id: paypal.webhook_id ?? '',
+    mode: paypal.mode ?? 'sandbox',
   });
 };
 
@@ -582,6 +789,32 @@ watch(
     }
   }
 );
+
+watch(
+  () => paymentsState.config,
+  (config) => {
+    applyPayments(config ?? {});
+  },
+  { immediate: true }
+);
+
+watch(
+  () => paymentsState.saving,
+  (saving, wasSaving) => {
+    if (wasSaving && !saving && !paymentsState.error) {
+      applyPayments(paymentsState.config ?? {});
+    }
+  }
+);
+
+const refreshPayments = () => emit('refresh-payments');
+const savePayments = () => {
+  const payload = JSON.parse(JSON.stringify(paymentsDraft));
+  emit('save-payments', payload);
+};
+const resetPayments = () => {
+  applyPayments(paymentsState.config ?? {});
+};
 
 const refreshTax = () => emit('refresh-tax');
 const refreshShipping = () => emit('refresh-shipping');

@@ -157,6 +157,10 @@ $appConfig = [
             'show' => $settingsEndpointGet,
             'update' => $settingsEndpointSave,
         ],
+        'payments' => [
+            'show' => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.show&format=json',
+            'update' => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.update&format=json&' . $tokenQuery,
+        ],
         'logs' => [
             'list' => $logsEndpointList,
         ],
@@ -347,6 +351,8 @@ $dataAttributes = [
     'shipping-endpoint-delete' => $shippingEndpointDelete,
     'settings-endpoint-show' => $settingsEndpointGet,
     'settings-endpoint-update' => $settingsEndpointSave,
+    'payments-endpoint-show' => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.show&format=json',
+    'payments-endpoint-update' => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.update&format=json&' . $tokenQuery,
     'logs-endpoint' => $logsEndpointList,
     'dashboard-title' => Text::_('COM_NXPEASYCART_MENU_DASHBOARD'),
     'dashboard-lead' => Text::_('COM_NXPEASYCART_DASHBOARD_LEAD'),
