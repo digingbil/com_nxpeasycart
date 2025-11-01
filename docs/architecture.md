@@ -63,6 +63,12 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 -   On the storefront, the product view detects missing/invalid slugs and renders the onboarding placeholder copy instead of raising a 404, allowing `/index.php?option=com_nxpeasycart` to remain functional while catalog data is still being seeded.
 -   `administrator/components/com_nxpeasycart/script.php` ensures the base schema is applied for installs, updates, and discover installs so environments never miss the `#__nxp_easycart_*` tables.
 
+### Categories & product editing refresh
+
+-   The admin SPA now ships with a dedicated **Categories** workspace backed by `CategoriesController`. The table renders an indented hierarchy (parent/child depth is shown via padding) plus usage counts, making it obvious which categories feed active products. The parent selector filters out the current node and its descendants, preventing cyclical trees.
+-   Product editing consumes the categories API: existing categories appear in a multi-select, while new names can still be created inline. The form posts normalised `{id, title, slug}` payloads so the backend can reuse existing rows or create new ones without duplicating pivot entries.
+-   All database bindings were refactored to pass concrete variables into Joomla’s query builder. This removed the sporadic `Argument #2 ($value) could not be passed by reference` fatal that previously surfaced when saving products, variants, or categories.
+
 ### Product payload (admin API)
 
 The `/api.products.*` endpoints exchange JSON objects similar to:
@@ -107,7 +113,7 @@ The `/api.products.*` endpoints exchange JSON objects similar to:
 }
 ```
 
-Variant payloads accept `price` (major units), `currency`, `stock`, `weight`, `active`, and optional option arrays. Category strings are auto-created with clean slugs; repeated saves deduplicate by slug. The admin UI enforces at least one variant per product before save.
+Variant payloads accept `price` (major units), `currency`, `stock`, `weight`, `active`, and optional option arrays. Categories now arrive as normalised objects (not free-form strings). If an item carries an `id`, the backend reuses the existing category; otherwise a clean slug is generated and a new record is created. The admin UI still enforces at least one variant per product before save.
 
 ## Next steps
 

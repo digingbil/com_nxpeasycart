@@ -22,6 +22,11 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 -   Admin orders fallback preloads data for the Vue SPA and orders API endpoints are emitted with absolute administrator URLs to prevent accidental front-end routing.
 -   Storefront view now gracefully renders the onboarding placeholder when no product slug is supplied instead of throwing a 404, keeping the landing experience clean during early development.
 
+### Recent Enhancements
+
+-   **Categories workspace (admin)** surfaces a dedicated CRUD panel with slug validation, usage counts, and an indented tree so parent/child relationships are obvious at a glance. The parent selector now prevents loops by removing the current node and its descendants.
+-   **Product editor category selector** consumes the categories API, letting merchants multi-select existing categories and create new ones inline; the payload now posts normalised `{id, title, slug}` entries so product/category mappings stay deduplicated.
+-   **Database binding hardening** replaced every inline `->bind()` cast with real variables, eliminating the “Argument #2 ($value) could not be passed by reference” fatal that previously appeared during saves.
 
 ### Currency decision (MVP)
 
