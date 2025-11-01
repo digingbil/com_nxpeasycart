@@ -42,11 +42,24 @@
       :state="productState"
       :translate="__"
       :base-currency="baseCurrency"
+      :category-options="categoryOptions"
       @create="onProductCreate"
       @update="onProductUpdate"
       @delete="onProductDelete"
       @refresh="onProductRefresh"
       @search="onProductSearch"
+    />
+
+    <CategoryPanel
+      v-else-if="activeSection === 'categories'"
+      :state="categoriesState"
+      :translate="__"
+      :load-options="loadCategoryOptions"
+      @refresh="onCategoriesRefresh"
+      @search="onCategoriesSearch"
+      @page="onCategoriesPage"
+      @save="onCategoriesSave"
+      @delete="onCategoriesDelete"
     />
 
     <OrdersPanel
@@ -141,6 +154,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import DashboardPanel from './components/DashboardPanel.vue';
 import ProductPanel from './components/ProductPanel.vue';
+import CategoryPanel from './components/CategoryPanel.vue';
 import OrdersPanel from './components/OrdersPanel.vue';
 import CustomersPanel from './components/CustomersPanel.vue';
 import CouponsPanel from './components/CouponsPanel.vue';
@@ -149,6 +163,7 @@ import LogsPanel from './components/LogsPanel.vue';
 import OnboardingWizard from './components/OnboardingWizard.vue';
 import { useTranslations } from './composables/useTranslations.js';
 import { useProducts } from './composables/useProducts.js';
+import { useCategories } from './composables/useCategories.js';
 import { useOrders } from './composables/useOrders.js';
 import { useDashboard } from './composables/useDashboard.js';
 import { useCustomers } from './composables/useCustomers.js';
@@ -237,6 +252,13 @@ const productsEndpoints = props.endpoints?.products ?? {
   delete: props.dataset?.productsEndpointDelete ?? '',
 };
 
+const categoriesEndpoints = props.endpoints?.categories ?? {
+  list: props.dataset?.categoriesEndpoint ?? '',
+  create: props.dataset?.categoriesEndpointCreate ?? '',
+  update: props.dataset?.categoriesEndpointUpdate ?? '',
+  delete: props.dataset?.categoriesEndpointDelete ?? '',
+};
+
 const ordersEndpoints = props.endpoints?.orders ?? {
   list: props.dataset?.ordersEndpoint ?? '',
   show: props.dataset?.ordersEndpointShow ?? '',
@@ -309,6 +331,35 @@ const {
 } = useProducts({
   endpoints: productsEndpoints,
   token: props.csrfToken,
+});
+
+const {
+  state: categoriesState,
+  refresh: refreshCategories,
+  search: searchCategories,
+  goToPage: goToCategoriesPage,
+  saveCategory,
+  deleteCategories: removeCategories,
+  loadOptions: loadCategoryOptions,
+} = useCategories({
+  endpoints: categoriesEndpoints,
+  token: props.csrfToken,
+  preload: props.config?.preload?.categories ?? {
+    items: parseJSON(props.dataset?.categoriesPreload, []),
+    pagination: parseJSON(props.dataset?.categoriesPreloadPagination, {}),
+  },
+});
+
+const categoryOptions = computed(() => {
+  const items = Array.isArray(categoriesState.items) ? categoriesState.items : [];
+
+  return items
+    .map((item) => ({
+      id: Number.parseInt(item?.id ?? 0, 10) || 0,
+      title: String(item?.title ?? '').trim(),
+      slug: String(item?.slug ?? '').trim(),
+    }))
+    .filter((item) => item.title !== '');
 });
 
 const {
@@ -620,6 +671,7 @@ const onProductCreate = async (payload) => {
   try {
     await createProduct(payload);
     refreshProducts();
+    refreshCategories();
   } catch (error) {
     // Errors surface via products state; suppress unhandled promise rejections.
   }
@@ -629,6 +681,7 @@ const onProductUpdate = async ({ id, data }) => {
   try {
     await updateProduct(id, data);
     refreshProducts();
+    refreshCategories();
   } catch (error) {
     // Errors surface via products state.
   }
@@ -638,8 +691,39 @@ const onProductDelete = async (ids) => {
   try {
     await deleteProducts(ids);
     refreshProducts();
+    refreshCategories();
   } catch (error) {
     // Errors surface via products state.
+  }
+};
+
+const onCategoriesRefresh = () => {
+  refreshCategories();
+};
+
+const onCategoriesSearch = () => {
+  searchCategories();
+};
+
+const onCategoriesPage = (page) => {
+  goToCategoriesPage(page);
+};
+
+const onCategoriesSave = async (payload) => {
+  try {
+    await saveCategory(payload);
+    refreshCategories();
+  } catch (error) {
+    // Validation errors bubble via categories state.
+  }
+};
+
+const onCategoriesDelete = async (ids) => {
+  try {
+    await removeCategories(ids);
+    refreshCategories();
+  } catch (error) {
+    // Errors surface via categories state.
   }
 };
 

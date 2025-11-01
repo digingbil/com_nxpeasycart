@@ -52,6 +52,7 @@
       :base-currency="baseCurrency"
       :translate="__"
       :errors="state.validationErrors"
+      :category-options="categoryOptions"
       @submit="handleSubmit"
       @cancel="closeEditor"
     />
@@ -75,6 +76,10 @@ const props = defineProps({
   baseCurrency: {
     type: String,
     default: 'USD',
+  },
+  categoryOptions: {
+    type: Array,
+    default: () => [],
   },
 });
 

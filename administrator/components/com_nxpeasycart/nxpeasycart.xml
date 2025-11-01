@@ -46,6 +46,7 @@
         <submenu>
             <menu link="option=com_nxpeasycart&amp;view=app" view="app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
             <menu link="option=com_nxpeasycart&amp;view=products" view="products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=categories" view="categories">COM_NXPEASYCART_MENU_CATEGORIES</menu>
             <menu link="option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_MENU_ORDERS</menu>
             <menu link="option=com_nxpeasycart&amp;view=customers" view="customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
             <menu link="option=com_nxpeasycart&amp;view=coupons" view="coupons">COM_NXPEASYCART_MENU_COUPONS</menu>

@@ -612,7 +612,8 @@ class ProductModel extends AdminModel
             $query->bind(':productId', $productId, ParameterType::INTEGER);
 
             foreach (array_values($idsToDelete) as $index => $variantId) {
-                $query->bind(':variantDelete' . $index, (int) $variantId, ParameterType::INTEGER);
+                $variantDeleteId = (int) $variantId;
+                $query->bind(':variantDelete' . $index, $variantDeleteId, ParameterType::INTEGER);
             }
 
             $db->setQuery($query);
@@ -677,7 +678,8 @@ class ProductModel extends AdminModel
 
             foreach (array_values($toInsert) as $index => $categoryId) {
                 $query->values(':productIdInsert, :categoryInsert' . $index);
-                $query->bind(':categoryInsert' . $index, (int) $categoryId, ParameterType::INTEGER);
+                $categoryInsertId = (int) $categoryId;
+                $query->bind(':categoryInsert' . $index, $categoryInsertId, ParameterType::INTEGER);
             }
 
             $query->bind(':productIdInsert', $productId, ParameterType::INTEGER);
@@ -701,7 +703,8 @@ class ProductModel extends AdminModel
             $query->bind(':productIdDelete', $productId, ParameterType::INTEGER);
 
             foreach (array_values($toDelete) as $index => $categoryId) {
-                $query->bind(':categoryDelete' . $index, (int) $categoryId, ParameterType::INTEGER);
+                $categoryDeleteId = (int) $categoryId;
+                $query->bind(':categoryDelete' . $index, $categoryDeleteId, ParameterType::INTEGER);
             }
 
             $db->setQuery($query);

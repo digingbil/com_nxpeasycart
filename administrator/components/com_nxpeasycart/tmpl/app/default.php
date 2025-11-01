@@ -23,6 +23,10 @@ $productsEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api
 $productsEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json&' . $tokenQuery;
 $productsEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json&' . $tokenQuery;
 $productsEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.delete&format=json&' . $tokenQuery;
+$categoriesEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.list&format=json';
+$categoriesEndpointStore = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.store&format=json&' . $tokenQuery;
+$categoriesEndpointUpdate = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.update&format=json&' . $tokenQuery;
+$categoriesEndpointDelete = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.delete&format=json&' . $tokenQuery;
 $ordersEndpointList = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.list&format=json';
 $ordersEndpointShow = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.show&format=json';
 $ordersEndpointTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json&' . $tokenQuery;
@@ -53,6 +57,7 @@ $ordersPreload = property_exists($this, 'orders') && \is_array($this->orders) ? 
 $dashboardSummary = property_exists($this, 'dashboardSummary') && \is_array($this->dashboardSummary) ? $this->dashboardSummary : [];
 $dashboardChecklist = property_exists($this, 'dashboardChecklist') && \is_array($this->dashboardChecklist) ? $this->dashboardChecklist : [];
 $customersPreload = property_exists($this, 'customers') && \is_array($this->customers) ? $this->customers : ['items' => [], 'pagination' => []];
+$categoriesPreload = property_exists($this, 'categories') && \is_array($this->categories) ? $this->categories : ['items' => [], 'pagination' => []];
 $couponsPreload = property_exists($this, 'coupons') && \is_array($this->coupons) ? $this->coupons : ['items' => [], 'pagination' => []];
 $taxPreload = property_exists($this, 'taxRates') && \is_array($this->taxRates) ? $this->taxRates : ['items' => []];
 $shippingPreload = property_exists($this, 'shippingRules') && \is_array($this->shippingRules) ? $this->shippingRules : ['items' => []];
@@ -68,6 +73,11 @@ $navItems = [
         'id' => 'products',
         'title' => Text::_('COM_NXPEASYCART_MENU_PRODUCTS'),
         'link' => 'index.php?option=com_nxpeasycart&view=products',
+    ],
+    [
+        'id' => 'categories',
+        'title' => Text::_('COM_NXPEASYCART_MENU_CATEGORIES'),
+        'link' => 'index.php?option=com_nxpeasycart&view=categories',
     ],
     [
         'id' => 'orders',
@@ -110,6 +120,7 @@ $appConfig = [
             'checklist' => $dashboardChecklist,
         ],
         'customers' => $customersPreload,
+        'categories' => $categoriesPreload,
         'coupons' => $couponsPreload,
         'tax' => $taxPreload,
         'shipping' => $shippingPreload,
@@ -123,6 +134,12 @@ $appConfig = [
             'create' => $productsEndpointStore,
             'update' => $productsEndpointUpdate,
             'delete' => $productsEndpointDelete,
+        ],
+        'categories' => [
+            'list' => $categoriesEndpointList,
+            'create' => $categoriesEndpointStore,
+            'update' => $categoriesEndpointUpdate,
+            'delete' => $categoriesEndpointDelete,
         ],
         'orders' => [
             'list' => $ordersEndpointList,
@@ -207,6 +224,10 @@ $dataAttributes = [
     'products-endpoint-create' => $productsEndpointStore,
     'products-endpoint-update' => $productsEndpointUpdate,
     'products-endpoint-delete' => $productsEndpointDelete,
+    'categories-endpoint' => $categoriesEndpointList,
+    'categories-endpoint-create' => $categoriesEndpointStore,
+    'categories-endpoint-update' => $categoriesEndpointUpdate,
+    'categories-endpoint-delete' => $categoriesEndpointDelete,
     'orders-endpoint' => $ordersEndpointList,
     'orders-endpoint-show' => $ordersEndpointShow,
     'orders-endpoint-transition' => $ordersEndpointTransition,
@@ -221,6 +242,28 @@ $dataAttributes = [
     'products-search-placeholder' => Text::_('COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER'),
     'products-loading' => Text::_('COM_NXPEASYCART_PRODUCTS_LOADING'),
     'products-empty' => Text::_('COM_NXPEASYCART_PRODUCTS_EMPTY'),
+    'categories-panel-title' => Text::_('COM_NXPEASYCART_MENU_CATEGORIES'),
+    'categories-panel-lead' => Text::_('COM_NXPEASYCART_CATEGORIES_LEAD'),
+    'categories-refresh' => Text::_('COM_NXPEASYCART_CATEGORIES_REFRESH'),
+    'categories-search-placeholder' => Text::_('COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER'),
+    'categories-loading' => Text::_('COM_NXPEASYCART_CATEGORIES_LOADING'),
+    'categories-empty' => Text::_('COM_NXPEASYCART_CATEGORIES_EMPTY'),
+    'categories-add' => Text::_('COM_NXPEASYCART_CATEGORIES_ADD'),
+    'categories-table-title' => Text::_('COM_NXPEASYCART_CATEGORIES_TABLE_TITLE'),
+    'categories-table-slug' => Text::_('COM_NXPEASYCART_CATEGORIES_TABLE_SLUG'),
+    'categories-table-parent' => Text::_('COM_NXPEASYCART_CATEGORIES_TABLE_PARENT'),
+    'categories-table-sort' => Text::_('COM_NXPEASYCART_CATEGORIES_TABLE_SORT'),
+    'categories-table-usage' => Text::_('COM_NXPEASYCART_CATEGORIES_TABLE_USAGE'),
+    'categories-form-title' => Text::_('COM_NXPEASYCART_CATEGORIES_FORM_TITLE'),
+    'categories-form-slug' => Text::_('COM_NXPEASYCART_CATEGORIES_FORM_SLUG'),
+    'categories-form-parent' => Text::_('COM_NXPEASYCART_CATEGORIES_FORM_PARENT'),
+    'categories-form-parent-placeholder' => Text::_('COM_NXPEASYCART_CATEGORIES_FORM_PARENT_PLACEHOLDER'),
+    'categories-form-sort' => Text::_('COM_NXPEASYCART_CATEGORIES_FORM_SORT'),
+    'categories-save' => Text::_('COM_NXPEASYCART_CATEGORIES_SAVE'),
+    'categories-cancel' => Text::_('COM_NXPEASYCART_CATEGORIES_CANCEL'),
+    'categories-delete-confirm' => Text::_('COM_NXPEASYCART_CATEGORIES_DELETE_CONFIRM'),
+    'categories-parent-none' => Text::_('COM_NXPEASYCART_CATEGORIES_PARENT_NONE'),
+    'categories-details-close' => Text::_('COM_NXPEASYCART_CATEGORIES_DETAILS_CLOSE'),
     'status-active' => Text::_('COM_NXPEASYCART_STATUS_ACTIVE'),
     'status-inactive' => Text::_('COM_NXPEASYCART_STATUS_INACTIVE'),
     'base-currency' => $baseCurrency,
@@ -321,6 +364,8 @@ $dataAttributes = [
     'dashboard-checklist' => json_encode($dashboardChecklist, $jsonOptions),
     'customers-preload' => json_encode($customersPreload['items'] ?? [], $jsonOptions),
     'customers-preload-pagination' => json_encode($customersPreload['pagination'] ?? [], $jsonOptions),
+    'categories-preload' => json_encode($categoriesPreload['items'] ?? [], $jsonOptions),
+    'categories-preload-pagination' => json_encode($categoriesPreload['pagination'] ?? [], $jsonOptions),
     'coupons-preload' => json_encode($couponsPreload['items'] ?? [], $jsonOptions),
     'tax-preload' => json_encode($taxPreload['items'] ?? [], $jsonOptions),
     'tax-preload-pagination' => json_encode($taxPreload['pagination'] ?? [], $jsonOptions),

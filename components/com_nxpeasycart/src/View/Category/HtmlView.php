@@ -42,8 +42,20 @@ class HtmlView extends BaseHtmlView
         $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
         $wa = $document->getWebAssetManager();
-        $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
-        $wa->useScript('com_nxpeasycart.site');
+
+        $siteBundleAsset = 'com_nxpeasycart.site.bundle';
+        $siteScriptUri = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+
+        if (!$wa->assetExists('script', $siteBundleAsset)) {
+            $wa->registerScript(
+                $siteBundleAsset,
+                $siteScriptUri,
+                [],
+                ['defer' => true]
+            );
+        }
+
+        $wa->useScript($siteBundleAsset);
 
         if (!$this->category) {
             $document->setTitle(Text::_('COM_NXPEASYCART_CATEGORY_NOT_FOUND'));

@@ -143,16 +143,30 @@
         </div>
 
         <div class="nxp-form-field">
-          <label class="nxp-form-label" for="product-category-input">
-            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORIES', 'Categories') }}
+          <label class="nxp-form-label" for="product-category-select">
+            {{ __('COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL', 'Categories') }}
           </label>
-          <div class="nxp-chip-input">
+          <select
+            id="product-category-select"
+            class="nxp-form-select"
+            multiple
+            v-model="selectedCategoryIds"
+          >
+            <option
+              v-for="option in categoryOptionsList"
+              :key="option.id"
+              :value="option.id"
+            >
+              {{ option.title }}
+            </option>
+          </select>
+          <div class="nxp-chip-input nxp-chip-input--selected">
             <span
               v-for="(category, index) in form.categories"
-              :key="`category-${index}`"
+              :key="`selected-category-${index}`"
               class="nxp-chip"
             >
-              {{ category }}
+              {{ category.title }}
               <button
                 type="button"
                 class="nxp-chip__remove"
@@ -162,17 +176,26 @@
                 &times;
               </button>
             </span>
+          </div>
+          <div class="nxp-chip-input nxp-chip-input--new">
             <input
               id="product-category-input"
               type="text"
               class="nxp-chip-input__field"
-              v-model="categoryDraft"
+              v-model="newCategoryDraft"
               @keydown.enter.prevent="addCategory"
-              :placeholder="__('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORY_PLACEHOLDER', 'Press Enter to add a category')"
+              :placeholder="__('COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD_PLACEHOLDER', 'New category name', [], 'productCategoriesAddPlaceholder')"
             />
+            <button
+              type="button"
+              class="nxp-btn"
+              @click="addCategory"
+            >
+              {{ __('COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD', 'Add category', [], 'productCategoriesAdd') }}
+            </button>
           </div>
           <p class="nxp-form-help">
-            {{ __('COM_NXPEASYCART_FIELD_PRODUCT_CATEGORIES_HELP', 'Categories are created automatically when they do not already exist.') }}
+            {{ __('COM_NXPEASYCART_PRODUCT_CATEGORIES_HELP', 'Select categories or add a new one.', [], 'productCategoriesHelp') }}
           </p>
         </div>
 
@@ -400,6 +423,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  categoryOptions: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(['submit', 'cancel']);
@@ -407,6 +434,45 @@ const emit = defineEmits(['submit', 'cancel']);
 const __ = props.translate;
 
 const baseCurrency = computed(() => (props.baseCurrency || 'USD').toUpperCase());
+
+const normaliseCategoryInput = (input) => {
+  if (input == null) {
+    return null;
+  }
+
+  if (typeof input === 'string') {
+    const title = input.trim();
+
+    if (title === '') {
+      return null;
+    }
+
+    return {
+      id: 0,
+      title,
+      slug: '',
+    };
+  }
+
+  if (typeof input === 'object') {
+    const id = Number.parseInt(input.id ?? input.value ?? 0, 10) || 0;
+    const titleSource = input.title ?? input.name ?? input.text ?? input.label ?? input.slug ?? '';
+    const title = String(titleSource ?? '').trim();
+    const slug = String(input.slug ?? '').trim();
+
+    if (id <= 0 && title === '') {
+      return null;
+    }
+
+    return {
+      id: id > 0 ? id : 0,
+      title: title !== '' ? title : slug,
+      slug,
+    };
+  }
+
+  return null;
+};
 
 const form = reactive({
   title: '',
@@ -418,8 +484,84 @@ const form = reactive({
   categories: [],
   variants: [],
 });
-const categoryDraft = ref('');
+const newCategoryDraft = ref('');
 const slugEdited = ref(false);
+
+const categoryOptionsList = computed(() => {
+  const provided = Array.isArray(props.categoryOptions) ? props.categoryOptions : [];
+  const normalised = provided
+    .map(normaliseCategoryInput)
+    .filter((category) => category && category.id > 0 && category.title !== '');
+
+  const map = new Map();
+
+  normalised.forEach((category) => {
+    map.set(category.id, category);
+  });
+
+  form.categories.forEach((category) => {
+    if (category.id > 0 && category.title && !map.has(category.id)) {
+      map.set(category.id, {
+        id: category.id,
+        title: category.title,
+        slug: category.slug ?? '',
+      });
+    }
+  });
+
+  return Array.from(map.values()).sort((a, b) => a.title.localeCompare(b.title));
+});
+
+const categoryOptionsMap = computed(() => {
+  const map = new Map();
+
+  categoryOptionsList.value.forEach((category) => {
+    map.set(category.id, {
+      title: category.title,
+      slug: category.slug ?? '',
+    });
+  });
+
+  return map;
+});
+
+const selectedCategoryIds = computed({
+  get: () => form.categories.filter((category) => category.id > 0).map((category) => category.id),
+  set: (value) => {
+    const list = Array.isArray(value) ? value : [];
+    const uniqueIds = Array.from(
+      new Set(
+        list
+          .map((entry) => Number.parseInt(entry ?? 0, 10) || 0)
+          .filter((id) => id > 0)
+      )
+    );
+
+    const newCategories = form.categories.filter((category) => !(category.id > 0));
+
+    const existing = uniqueIds
+      .map((id) => {
+        const option = categoryOptionsMap.value.get(id);
+        const current = form.categories.find((category) => category.id === id);
+
+        const title = option?.title || current?.title || '';
+        const slug = option?.slug || current?.slug || '';
+
+        if (title === '') {
+          return null;
+        }
+
+        return {
+          id,
+          title,
+          slug,
+        };
+      })
+      .filter((category) => category !== null);
+
+    form.categories.splice(0, form.categories.length, ...existing, ...newCategories);
+  },
+});
 
 const mode = computed(() => (props.product && props.product.id ? 'edit' : 'create'));
 
@@ -460,7 +602,25 @@ const onSlugInput = () => {
 };
 
 const resetCategories = (categories) => {
-  form.categories.splice(0, form.categories.length, ...categories);
+  const incoming = Array.isArray(categories) ? categories : [];
+
+  const normalised = incoming
+    .map(normaliseCategoryInput)
+    .filter((category) => category && (category.id > 0 || category.title !== ''));
+
+  const seen = new Set();
+  const unique = [];
+
+  normalised.forEach((category) => {
+    const key = category.id > 0 ? `id:${category.id}` : `title:${category.title.toLowerCase()}`;
+
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(category);
+    }
+  });
+
+  form.categories.splice(0, form.categories.length, ...unique);
 };
 
 const resetVariants = (variants) => {
@@ -522,23 +682,11 @@ const applyProduct = (product) => {
   const images = Array.isArray(source.images) ? source.images.map((image) => String(image ?? '').trim()).filter(Boolean) : [];
   resetImages(images);
 
-  const categories = Array.isArray(source.categories)
-    ? source.categories
-      .map((category) => {
-        if (typeof category === 'string') {
-          return category.trim();
-        }
-
-        if (category && typeof category === 'object') {
-          return String(category.title ?? category.slug ?? '').trim();
-        }
-
-        return '';
-      })
-      .filter((value) => value !== '')
-    : [];
-
+  const categories = Array.isArray(source.categories) ? source.categories : [];
   resetCategories(categories);
+
+  newCategoryDraft.value = '';
+
   resetVariants(normaliseVariants(source.variants));
   slugEdited.value = Boolean(form.slug);
 };
@@ -567,23 +715,38 @@ watch(baseCurrency, (currency) => {
 });
 
 const addCategory = () => {
-  const value = categoryDraft.value.trim();
+  const value = newCategoryDraft.value.trim();
 
   if (!value) {
     return;
   }
 
-  const exists = form.categories.some((category) => category.toLowerCase() === value.toLowerCase());
+  const lowerValue = value.toLowerCase();
+  const categories = form.categories.slice();
+
+  const exists = categories.some((category) => category.title.toLowerCase() === lowerValue);
 
   if (!exists) {
-    form.categories.push(value);
+    categories.push({
+      id: 0,
+      title: value,
+      slug: '',
+    });
+
+    form.categories.splice(0, form.categories.length, ...categories);
   }
 
-  categoryDraft.value = '';
+  newCategoryDraft.value = '';
 };
 
 const removeCategory = (index) => {
-  form.categories.splice(index, 1);
+  if (index < 0 || index >= form.categories.length) {
+    return;
+  }
+
+  const categories = form.categories.slice();
+  categories.splice(index, 1);
+  form.categories.splice(0, form.categories.length, ...categories);
 };
 
 const addVariant = () => {
@@ -717,7 +880,31 @@ const submit = () => {
     )
   );
 
-  const payloadCategories = form.categories.map((category) => category.trim()).filter((category) => category !== '');
+  const payloadCategories = form.categories
+    .map((category) => {
+      const id = Number.parseInt(category?.id ?? 0, 10) || 0;
+      const title = String(category?.title ?? '').trim();
+      const slug = String(category?.slug ?? '').trim();
+
+      if (id > 0) {
+        return {
+          id,
+          title,
+          slug,
+        };
+      }
+
+      if (title === '') {
+        return null;
+      }
+
+      return {
+        id: 0,
+        title,
+        slug: '',
+      };
+    })
+    .filter((category) => category !== null);
 
   const payloadVariants = form.variants.map((variant) => {
     const options = Array.isArray(variant.options)
@@ -772,7 +959,7 @@ watch(
       // When save completes successfully, reset to fresh state
       if (mode.value === 'create') {
         applyProduct(null);
-        categoryDraft.value = '';
+        newCategoryDraft.value = '';
         slugEdited.value = false;
       }
     }

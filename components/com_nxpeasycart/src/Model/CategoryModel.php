@@ -122,12 +122,13 @@ class CategoryModel extends BaseDatabaseModel
             ->order($db->quoteName('p.title') . ' ASC');
 
         if (!empty($category['id'])) {
+            $categoryIdFilter = (int) $category['id'];
             $query->innerJoin(
                 $db->quoteName('#__nxp_easycart_product_categories', 'pc')
                 . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('p.id')
             )
                 ->where($db->quoteName('pc.category_id') . ' = :categoryId')
-                ->bind(':categoryId', (int) $category['id'], ParameterType::INTEGER);
+                ->bind(':categoryId', $categoryIdFilter, ParameterType::INTEGER);
         }
 
         $db->setQuery($query);

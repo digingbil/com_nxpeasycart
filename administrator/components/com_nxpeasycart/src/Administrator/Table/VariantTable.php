@@ -77,15 +77,18 @@ class VariantTable extends Table
 
         // Enforce unique SKU
         $db = $this->getDbo();
+        $sku = (string) $this->sku;
+
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
             ->from($db->quoteName($this->_tbl))
             ->where($db->quoteName('sku') . ' = :sku')
-            ->bind(':sku', $this->sku, ParameterType::STRING);
+            ->bind(':sku', $sku, ParameterType::STRING);
 
         if (!empty($this->id)) {
+            $currentId = (int) $this->id;
             $query->where($db->quoteName('id') . ' != :currentId')
-                ->bind(':currentId', (int) $this->id, ParameterType::INTEGER);
+                ->bind(':currentId', $currentId, ParameterType::INTEGER);
         }
 
         $db->setQuery($query);

@@ -50,15 +50,18 @@ class ProductTable extends Table
         }
 
         $db = $this->getDbo();
+        $slug = $this->slug;
+
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
             ->from($db->quoteName($this->_tbl))
             ->where($db->quoteName('slug') . ' = :slug')
-            ->bind(':slug', $this->slug, ParameterType::STRING);
+            ->bind(':slug', $slug, ParameterType::STRING);
 
         if (!empty($this->id)) {
+            $currentId = (int) $this->id;
             $query->where($db->quoteName('id') . ' != :currentId')
-                ->bind(':currentId', (int) $this->id, ParameterType::INTEGER);
+                ->bind(':currentId', $currentId, ParameterType::INTEGER);
         }
 
         $db->setQuery($query);

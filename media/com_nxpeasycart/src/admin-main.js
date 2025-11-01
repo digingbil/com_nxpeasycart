@@ -26,6 +26,13 @@ if (!mount) {
         delete: dataset.productsEndpointDelete ?? "",
     };
 
+    const categoriesEndpoints = config?.endpoints?.categories ?? {
+        list: dataset.categoriesEndpoint ?? "",
+        create: dataset.categoriesEndpointCreate ?? "",
+        update: dataset.categoriesEndpointUpdate ?? "",
+        delete: dataset.categoriesEndpointDelete ?? "",
+    };
+
     const ordersEndpoints = config?.endpoints?.orders ?? {
         list: dataset.ordersEndpoint ?? "",
         show: dataset.ordersEndpointShow ?? "",
@@ -75,6 +82,7 @@ if (!mount) {
         config,
         endpoints: {
             products: productsEndpoints,
+            categories: categoriesEndpoints,
             orders: ordersEndpoints,
             customers: customersEndpoints,
             coupons: couponsEndpoints,

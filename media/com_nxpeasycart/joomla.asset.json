@@ -1,16 +1,12 @@
 {
-    "$schema": "https://developer.joomla.org/assets/joomla.asset.schema.json",
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
     "name": "com_nxpeasycart",
-    "assets": {
-        "com_nxpeasycart.admin": {
+    "version": "0.1.1",
+    "assets": [
+        {
             "name": "com_nxpeasycart.admin",
             "type": "script",
-            "js": [
-                "js/admin.iife.js"
-            ],
-            "css": [
-                "css/admin.css"
-            ],
+            "uri": "com_nxpeasycart/js/admin.iife.js",
             "dependencies": [
                 "core"
             ],
@@ -18,12 +14,10 @@
                 "defer": true
             }
         },
-        "com_nxpeasycart.site": {
+        {
             "name": "com_nxpeasycart.site",
             "type": "script",
-            "js": [
-                "js/site.iife.js"
-            ],
+            "uri": "com_nxpeasycart/js/site.iife.js",
             "dependencies": [
                 "core"
             ],
@@ -31,5 +25,5 @@
                 "defer": true
             }
         }
-    }
+    ]
 }

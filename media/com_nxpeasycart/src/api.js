@@ -177,6 +177,22 @@ class ApiClient {
         };
     }
 
+    async fetchCategories({ endpoint, limit = 20, start = 0, search = '', signal }) {
+        const url = this.mergeParams(endpoint, {
+            limit,
+            start,
+            search: search || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+        const body = payload.data ?? {};
+
+        return {
+            items: body.items ?? [],
+            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+        };
+    }
+
     /**
      * Fetch orders with pagination and filters.
      */
@@ -468,6 +484,30 @@ class ApiClient {
         });
 
         return payload.data?.deleted ?? [];
+    }
+
+    async createCategory({ endpoint, data }) {
+        const payload = await this.post(endpoint, data);
+
+        return payload.data?.item ?? null;
+    }
+
+    async updateCategory({ endpoint, id, data }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.put(url, data);
+
+        return payload.data?.item ?? null;
+    }
+
+    async deleteCategories({ endpoint, ids }) {
+        const payload = await this.delete(endpoint, {
+            body: JSON.stringify({ ids }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        return payload.data?.deleted ?? 0;
     }
 
     /**
