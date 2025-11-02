@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `short_desc` TEXT NULL,
   `long_desc` MEDIUMTEXT NULL,
   `images` JSON NULL,
+  `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` INT UNSIGNED NULL,

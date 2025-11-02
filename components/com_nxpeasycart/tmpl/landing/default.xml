@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_NXPEASYCART_SITE_MENU_LANDING">
+        <message>COM_NXPEASYCART_MENU_LANDING_DESC</message>
+    </layout>
+
+    <fields name="params">
+        <fieldset name="hero" label="COM_NXPEASYCART_LANDING_FIELDSET_HERO">
+            <field
+                name="hero_headline"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_HERO_HEADLINE"
+                description="COM_NXPEASYCART_LANDING_FIELD_HERO_HEADLINE_DESC"
+                filter="string"
+            />
+            <field
+                name="hero_subheadline"
+                type="textarea"
+                label="COM_NXPEASYCART_LANDING_FIELD_HERO_SUBHEAD"
+                description="COM_NXPEASYCART_LANDING_FIELD_HERO_SUBHEAD_DESC"
+                filter="safehtml"
+                rows="3"
+            />
+            <field
+                name="hero_cta_label"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_LABEL"
+                description="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_LABEL_DESC"
+                filter="string"
+            />
+            <field
+                name="hero_cta_link"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_LINK"
+                description="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_LINK_DESC"
+                filter="string"
+            />
+        </fieldset>
+
+        <fieldset name="search" label="COM_NXPEASYCART_LANDING_FIELDSET_SEARCH">
+            <field
+                name="search_placeholder"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_SEARCH_PLACEHOLDER"
+                description="COM_NXPEASYCART_LANDING_FIELD_SEARCH_PLACEHOLDER_DESC"
+                filter="string"
+            />
+        </fieldset>
+
+        <fieldset name="categories" label="COM_NXPEASYCART_LANDING_FIELDSET_CATEGORIES">
+            <field
+                name="category_root_ids"
+                type="RootCategories"
+                multiple="true"
+                label="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_ROOTS"
+                description="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_ROOTS_DESC"
+                filter="array"
+            />
+            <field
+                name="category_tile_limit"
+                type="number"
+                label="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT"
+                description="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT_DESC"
+                default="6"
+                min="1"
+                max="12"
+                filter="integer"
+            />
+        </fieldset>
+
+        <fieldset name="sections" label="COM_NXPEASYCART_LANDING_FIELDSET_SECTIONS">
+            <field
+                name="featured_title"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_FEATURED_TITLE"
+                description="COM_NXPEASYCART_LANDING_FIELD_FEATURED_TITLE_DESC"
+                filter="string"
+            />
+            <field
+                name="featured_limit"
+                type="number"
+                label="COM_NXPEASYCART_LANDING_FIELD_FEATURED_LIMIT"
+                description="COM_NXPEASYCART_LANDING_FIELD_FEATURED_LIMIT_DESC"
+                default="6"
+                min="1"
+                max="12"
+                filter="integer"
+            />
+            <field
+                name="new_arrivals_title"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_ARRIVALS_TITLE"
+                description="COM_NXPEASYCART_LANDING_FIELD_ARRIVALS_TITLE_DESC"
+                filter="string"
+            />
+            <field
+                name="new_arrivals_limit"
+                type="number"
+                label="COM_NXPEASYCART_LANDING_FIELD_ARRIVALS_LIMIT"
+                description="COM_NXPEASYCART_LANDING_FIELD_ARRIVALS_LIMIT_DESC"
+                default="4"
+                min="1"
+                max="12"
+                filter="integer"
+            />
+            <field
+                name="deals_title"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_DEALS_TITLE"
+                description="COM_NXPEASYCART_LANDING_FIELD_DEALS_TITLE_DESC"
+                filter="string"
+            />
+            <field
+                name="deals_limit"
+                type="number"
+                label="COM_NXPEASYCART_LANDING_FIELD_DEALS_LIMIT"
+                description="COM_NXPEASYCART_LANDING_FIELD_DEALS_LIMIT_DESC"
+                default="4"
+                min="1"
+                max="12"
+                filter="integer"
+            />
+        </fieldset>
+
+        <fieldset name="trust" label="COM_NXPEASYCART_LANDING_FIELDSET_TRUST">
+            <field
+                name="trust_badge_text"
+                type="text"
+                label="COM_NXPEASYCART_LANDING_FIELD_TRUST_BADGE"
+                description="COM_NXPEASYCART_LANDING_FIELD_TRUST_BADGE_DESC"
+                filter="string"
+            />
+        </fieldset>
+    </fields>
+</metadata>

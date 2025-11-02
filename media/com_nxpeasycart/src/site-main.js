@@ -28,9 +28,206 @@ const parsePayload = (value, fallback = {}) => {
     }
 };
 
+const mountLandingIsland = (el) => {
+    const payload = parsePayload(el.dataset.nxpLanding, {});
+    const hero = payload.hero || {};
+    const search = payload.search || {};
+    const categoryTiles = Array.isArray(payload.categories)
+        ? payload.categories
+        : [];
+    const sections = Array.isArray(payload.sections) ? payload.sections : [];
+    const labelsPayload = payload.labels || {};
+    const trust = payload.trust || {};
+
+    const defaultSearchAction =
+        search.action || "index.php?option=com_nxpeasycart&view=category";
+    const defaultPlaceholder =
+        search.placeholder || "Search for shoes, laptops, gifts…";
+    const defaultCtaLabel = hero?.cta?.label || "Shop Best Sellers";
+    const defaultCtaLink = hero?.cta?.link || defaultSearchAction;
+
+    const labels = {
+        search_label:
+            labelsPayload.search_label || "Search the catalogue",
+        search_button: labelsPayload.search_button || "Search",
+        view_all: labelsPayload.view_all || "View all",
+        view_product: labelsPayload.view_product || "View product",
+        categories_aria:
+            labelsPayload.categories_aria || "Browse categories",
+    };
+
+    el.innerHTML = "";
+
+    const app = createApp({
+        template: `
+      <div class="nxp-landing__inner" v-cloak>
+        <header class="nxp-landing__hero">
+          <div class="nxp-landing__hero-copy">
+            <p v-if="hero.eyebrow" class="nxp-landing__eyebrow">{{ hero.eyebrow }}</p>
+            <h1 class="nxp-landing__title">{{ hero.title }}</h1>
+            <p v-if="hero.subtitle" class="nxp-landing__subtitle">{{ hero.subtitle }}</p>
+            <div class="nxp-landing__actions">
+              <a class="nxp-btn nxp-btn--primary" :href="cta.link">
+                {{ cta.label }}
+              </a>
+            </div>
+          </div>
+          <form class="nxp-landing__search" @submit.prevent="submitSearch">
+            <label class="sr-only" for="nxp-landing-search-input">
+              {{ labels.search_label }}
+            </label>
+            <input
+              id="nxp-landing-search-input"
+              type="search"
+              v-model="term"
+              :placeholder="searchPlaceholder"
+            />
+            <button type="submit" class="nxp-btn nxp-btn--ghost">
+              {{ labels.search_button }}
+            </button>
+          </form>
+        </header>
+
+        <section
+          v-if="categoryTiles.length"
+          class="nxp-landing__categories"
+          :aria-label="labels.categories_aria"
+        >
+          <a
+            v-for="category in categoryTiles"
+            :key="category.id || category.slug || category.title"
+            class="nxp-landing__category"
+            :href="category.link"
+          >
+            <span class="nxp-landing__category-title">{{ category.title }}</span>
+          </a>
+        </section>
+
+        <section
+          v-for="section in visibleSections"
+          :key="section.key"
+          class="nxp-landing__section"
+        >
+          <header class="nxp-landing__section-header">
+            <h2 class="nxp-landing__section-title">{{ section.title }}</h2>
+            <a class="nxp-landing__section-link" :href="searchAction">
+              {{ labels.view_all }}
+            </a>
+          </header>
+          <div class="nxp-landing__grid">
+            <article
+              v-for="item in section.items"
+              :key="item.id || item.slug || item.title"
+              class="nxp-landing__card"
+            >
+              <figure v-if="item.images && item.images.length" class="nxp-landing__card-media">
+                <img :src="item.images[0]" :alt="item.title" loading="lazy" />
+              </figure>
+              <div class="nxp-landing__card-body">
+                <h3 class="nxp-landing__card-title">
+                  <a :href="item.link">{{ item.title }}</a>
+                </h3>
+                <p v-if="item.short_desc" class="nxp-landing__card-intro">
+                  {{ item.short_desc }}
+                </p>
+                <p v-if="item.price_label" class="nxp-landing__card-price">
+                  {{ item.price_label }}
+                </p>
+                <a class="nxp-btn nxp-btn--ghost" :href="item.link">
+                  {{ labels.view_product }}
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <aside v-if="trust.text" class="nxp-landing__trust">
+          <p class="nxp-landing__trust-text">{{ trust.text }}</p>
+        </aside>
+      </div>
+    `,
+        setup() {
+            const heroData = {
+                eyebrow: hero.eyebrow || "",
+                title: hero.title || "Shop",
+                subtitle: hero.subtitle || "",
+            };
+
+            const cta = {
+                label: hero?.cta?.label || defaultCtaLabel,
+                link: hero?.cta?.link || defaultCtaLink,
+            };
+
+            const searchAction = search.action || defaultSearchAction;
+            const searchPlaceholder =
+                search.placeholder || defaultPlaceholder;
+
+            const sectionsWithItems = sections.filter(
+                (section) => Array.isArray(section.items) && section.items.length
+            );
+
+            const visibleSections = computed(() =>
+                sectionsWithItems.map((section) => ({
+                    key: section.key || section.title,
+                    title: section.title || "",
+                    items: section.items.slice(0, 12),
+                }))
+            );
+
+            const term = ref("");
+
+            const submitSearch = () => {
+                const action = search.action || defaultSearchAction;
+                const value = term.value.trim();
+
+                try {
+                    const target = new URL(action, window.location.origin);
+
+                    if (value) {
+                        target.searchParams.set("q", value);
+                    } else {
+                        target.searchParams.delete("q");
+                    }
+
+                    window.location.href = target.toString();
+                } catch (error) {
+                    if (value) {
+                        const separator = action.includes("?") ? "&" : "?";
+                        window.location.href = `${action}${separator}q=${encodeURIComponent(
+                            value
+                        )}`;
+                        return;
+                    }
+
+                    window.location.href = action;
+                }
+            };
+
+            return {
+                hero: heroData,
+                cta,
+                term,
+                submitSearch,
+                searchPlaceholder,
+                searchAction,
+                labels,
+                categoryTiles,
+                visibleSections,
+                trust:
+                    typeof trust.text === "string"
+                        ? { text: trust.text }
+                        : { text: "" },
+            };
+        },
+    });
+
+    app.mount(el);
+};
+
 const mountCategoryIsland = (el) => {
     const category = parsePayload(el.dataset.nxpCategory, {});
     const products = parsePayload(el.dataset.nxpProducts, []);
+    const initialSearch = el.dataset.nxpSearch || "";
 
     el.innerHTML = "";
 
@@ -79,7 +276,7 @@ const mountCategoryIsland = (el) => {
     `,
         setup() {
             const title = category?.title || "Products";
-            const search = ref("");
+            const search = ref(initialSearch);
 
             const filteredProducts = computed(() => {
                 if (!search.value) {
@@ -609,6 +806,7 @@ const mountCheckoutIsland = (el) => {
 
 const islandRegistry = {
     category: mountCategoryIsland,
+    landing: mountLandingIsland,
     cart: mountCartIsland,
     checkout: mountCheckoutIsland,
 };

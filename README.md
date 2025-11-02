@@ -73,7 +73,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 -   Do **not** run Composer inside the live Joomla tree; copy or mirror the prepared `vendor/` folder alongside the component when deploying.
 -   The manifest living at `administrator/components/com_nxpeasycart/nxpeasycart.xml` follows Joomla’s discovery convention (no `com_` prefix in the filename). After copying the component into a site, use **System → Discover** or `php cli/joomla.php extension:discover` to register it, then complete the install from that screen. Joomla 5’s DI bootstrapping means no administrator entry script is required.
 -   A lightweight installer script (`administrator/components/com_nxpeasycart/script.php`) replays the base schema during install/update/discover so the `#__nxp_easycart_*` tables are always provisioned.
--   When developing via symlinks, also symlink the language files into Joomla (`administrator/language/en-GB/com_nxpeasycart*.ini` and `language/en-GB/com_nxpeasycart*.ini`) so admin menu strings resolve.
+-   Language strings are split by client: administrator strings live in `administrator/language/en-GB/com_nxpeasycart*.ini`, storefront strings live in `language/en-GB/com_nxpeasycart.ini`. Add new backend strings to the admin file (use `.sys.ini` only for install/discover labels) and keep storefront copy in the site file. When developing via symlinks, point Joomla to these paths (e.g. `/var/www/html/j5.loc/administrator/language/en-GB/com_nxpeasycart*.ini` and `/var/www/html/j5.loc/language/en-GB/com_nxpeasycart.ini`) so translations resolve.
 
 ## Admin SPA build
 
@@ -92,6 +92,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 -   Frontend requests resolve the active cart through `CartSessionService`, which ties the Joomla session to the `#__nxp_easycart_carts` table and guarantees the payload uses the configured base currency.
 -   The session helper exposes the hydrated cart on the application input (`com_nxpeasycart.cart`) so upcoming cart/checkout views can consume a consistent structure.
 -   The default storefront view is now the catalogue grid: `DisplayController` targets the category view, showing “All products” with category filters and progressive enhancement via the site bundle.
+-   Product editor exposes a “Featured” toggle; any flagged products surface in the landing page spotlight row, with recent additions filling the remaining sections automatically.
 -   Category menu chips allow quick filtering between taxonomy slugs, while fallbacks keep navigation and product tiles rendering without JavaScript.
 -   Checkout integrates Stripe/PayPal hosted sessions when configured; fallback direct order creation remains for offline capture. Webhooks hydrate transactions, decrement inventory on `paid`, and trigger confirmation email templates.
 -   Payment webhook endpoints are exposed at `index.php?option=com_nxpeasycart&task=webhook.stripe` and `…task=webhook.paypal`, each funneled through `PaymentGatewayManager` with idempotency safeguards and audit logging.

@@ -80,6 +80,7 @@ class ProductModel extends BaseDatabaseModel
             'short_desc' => (string) ($product->short_desc ?? ''),
             'long_desc'  => (string) ($product->long_desc ?? ''),
             'active'     => (bool) $product->active,
+            'featured'   => (bool) ($product->featured ?? 0),
             'images'     => $images,
             'variants'   => $variants,
             'categories' => $categories,

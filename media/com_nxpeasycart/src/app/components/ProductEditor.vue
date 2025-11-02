@@ -116,6 +116,31 @@
                     />
                 </div>
 
+                <div class="nxp-form-field nxp-form-field--inline">
+                    <label class="nxp-form-label" for="product-featured">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_FIELD_PRODUCT_FEATURED",
+                                "Featured"
+                            )
+                        }}
+                    </label>
+                    <input
+                        id="product-featured"
+                        type="checkbox"
+                        class="nxp-form-checkbox"
+                        v-model="form.featured"
+                    />
+                    <p class="nxp-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_FIELD_PRODUCT_FEATURED_DESC",
+                                "Surface this product on the shop landing page."
+                            )
+                        }}
+                    </p>
+                </div>
+
                 <div class="nxp-form-field">
                     <label class="nxp-form-label" for="product-images">
                         {{
@@ -732,6 +757,7 @@ const form = reactive({
     short_desc: "",
     long_desc: "",
     active: true,
+    featured: false,
     images: [],
     categories: [],
     variants: [],
@@ -956,6 +982,7 @@ const applyProduct = (product) => {
     form.short_desc = source.short_desc ?? "";
     form.long_desc = source.long_desc ?? "";
     form.active = source.active !== undefined ? Boolean(source.active) : true;
+    form.featured = source.featured !== undefined ? Boolean(source.featured) : false;
 
     const images = Array.isArray(source.images)
         ? source.images
@@ -1237,6 +1264,7 @@ const submit = () => {
         short_desc: form.short_desc ?? "",
         long_desc: form.long_desc ?? "",
         active: Boolean(form.active),
+        featured: Boolean(form.featured),
         images: payloadImages,
         categories: payloadCategories,
         variants: payloadVariants,

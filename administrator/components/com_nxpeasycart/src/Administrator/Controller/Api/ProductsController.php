@@ -281,6 +281,7 @@ class ProductsController extends AbstractJsonController
             'short_desc' => $item->short_desc,
             'long_desc'  => $item->long_desc,
             'active'     => (bool) $item->active,
+            'featured'   => (bool) $item->featured,
             'images'     => $images,
             'variants'   => $variants,
             'categories' => $categories,

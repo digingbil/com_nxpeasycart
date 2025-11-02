@@ -97,6 +97,7 @@ class ProductModel extends AdminModel
         $validated['images']     = $this->filterImages($data['images'] ?? []);
         $validated['variants']   = $this->filterVariants($data['variants'] ?? []);
         $validated['categories'] = $this->filterCategories($data['categories'] ?? []);
+        $validated['featured']   = isset($validated['featured']) ? (int) (bool) $validated['featured'] : 0;
 
         if (empty($validated['variants'])) {
             $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_VARIANT_REQUIRED'));
@@ -170,7 +171,8 @@ class ProductModel extends AdminModel
             $table->slug = ApplicationHelper::stringURLSafe($table->slug);
         }
 
-        $table->active = (int) (bool) $table->active;
+        $table->active   = (int) (bool) $table->active;
+        $table->featured = (int) (bool) $table->featured;
 
         if (\is_array($table->images)) {
             try {
@@ -224,6 +226,7 @@ class ProductModel extends AdminModel
     public function hydrateItem(object $item): object
     {
         $item->active     = (bool) $item->active;
+        $item->featured   = (bool) $item->featured;
         $item->images     = $this->decodeImages($item->images ?? null);
         $item->variants   = $this->loadVariants((int) $item->id);
         $item->categories = $this->loadCategories((int) $item->id);

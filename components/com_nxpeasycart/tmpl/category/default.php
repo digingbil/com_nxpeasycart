@@ -24,6 +24,8 @@ $productsJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$searchTerm  = $this->searchTerm ?? '';
+$searchValue = htmlspecialchars($searchTerm, ENT_QUOTES, 'UTF-8');
 ?>
 
 <section
@@ -31,6 +33,7 @@ $productsJson = htmlspecialchars(
     data-nxp-island="category"
     data-nxp-category="<?php echo $categoryJson; ?>"
     data-nxp-products="<?php echo $productsJson; ?>"
+    data-nxp-search="<?php echo $searchValue; ?>"
 >
     <noscript>
     <header class="nxp-category__header">
@@ -39,6 +42,14 @@ $productsJson = htmlspecialchars(
                 <?php echo htmlspecialchars($categoryTitle, ENT_QUOTES, 'UTF-8'); ?>
             </h1>
         </div>
+        <form class="nxp-category__search" action="<?php echo htmlspecialchars(Route::_('index.php?option=com_nxpeasycart&view=category'), ENT_QUOTES, 'UTF-8'); ?>" method="get">
+            <input
+                type="search"
+                name="q"
+                value="<?php echo $searchValue; ?>"
+                placeholder="<?php echo Text::_('COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER'); ?>"
+            />
+        </form>
         <nav class="nxp-category__filters" aria-label="<?php echo Text::_('COM_NXPEASYCART_CATEGORY_FILTERS'); ?>">
             <a
                 class="nxp-category__filter<?php echo $activeSlug === '' ? ' is-active' : ''; ?>"

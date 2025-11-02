@@ -448,6 +448,15 @@
     font-size: 0.85rem;
 }
 
+.nxp-products-table__badge {
+    margin-top: 0.35rem;
+}
+
+.nxp-status--featured {
+    background: rgba(13, 110, 253, 0.12);
+    color: #0d6efd;
+}
+
 .nxp-admin-select {
     border: 1px solid #ced4da;
     border-radius: 6px;

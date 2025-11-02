@@ -29,6 +29,11 @@ class HtmlView extends BaseHtmlView
      */
     protected array $categories = [];
 
+    /**
+     * @var string
+     */
+    protected string $searchTerm = '';
+
     public function display($tpl = null): void
     {
         $app      = Factory::getApplication();
@@ -60,6 +65,7 @@ class HtmlView extends BaseHtmlView
         if (!$this->category) {
             $document->setTitle(Text::_('COM_NXPEASYCART_CATEGORY_NOT_FOUND'));
             $this->products = [];
+            $this->searchTerm = trim($app->input->getString('q', ''));
 
             parent::display($tpl);
 
@@ -70,6 +76,8 @@ class HtmlView extends BaseHtmlView
         $title     = (string) $this->category['title'];
         $fullTitle = $sitename !== '' ? trim($title . ' | ' . $sitename, ' |') : $title;
         $document->setTitle($fullTitle);
+
+        $this->searchTerm = trim($app->input->getString('q', ''));
 
         $uri       = Uri::getInstance();
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);

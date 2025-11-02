@@ -45,4 +45,17 @@
         <option value="1">JYES</option>
         <option value="0">JNO</option>
     </field>
+
+    <field
+        name="featured"
+        type="radio"
+        label="COM_NXPEASYCART_FIELD_PRODUCT_FEATURED"
+        description="COM_NXPEASYCART_FIELD_PRODUCT_FEATURED_DESC"
+        default="0"
+        class="btn-group"
+        filter="boolean"
+    >
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+    </field>
 </form>

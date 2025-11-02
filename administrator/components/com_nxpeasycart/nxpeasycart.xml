@@ -6,7 +6,7 @@
     <authorEmail>hello@nexusplugins.com</authorEmail>
     <authorUrl>https://nexusplugins.com</authorUrl>
     <copyright>Copyright (C) 2024 NXP Commerce - 2025 nexusplugins.com. All rights reserved.</copyright>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <description>COM_NXPEASYCART_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
@@ -81,6 +81,7 @@
             <filename>com_nxpeasycart.php</filename>
         </files>
 
+        <menu link="index.php?option=com_nxpeasycart&amp;view=landing" view="landing">COM_NXPEASYCART_SITE_MENU_LANDING</menu>
         <menu link="index.php?option=com_nxpeasycart&amp;view=category" view="category">COM_NXPEASYCART_SITE_MENU_CATEGORY</menu>
         <menu link="index.php?option=com_nxpeasycart&amp;view=product" view="product">COM_NXPEASYCART_SITE_MENU_PRODUCT</menu>
         <menu link="index.php?option=com_nxpeasycart&amp;view=cart" view="cart">COM_NXPEASYCART_SITE_MENU_CART</menu>

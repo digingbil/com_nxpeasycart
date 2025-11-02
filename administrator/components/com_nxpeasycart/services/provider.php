@@ -2,6 +2,8 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Application\CMSApplicationInterface;
+use Joomla\CMS\Factory as JoomlaFactory;
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
@@ -26,6 +28,7 @@ use Nxp\EasyCart\Admin\Administrator\Service\MailService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
 use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
 use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
+use Nxp\EasyCart\Site\Router\Router as EasyCartRouter;
 use Nxp\EasyCart\Site\Service\CartPresentationService;
 use Nxp\EasyCart\Site\Service\CartSessionService;
 
@@ -139,6 +142,23 @@ return new class () implements ServiceProviderInterface {
                 $container->get(DatabaseInterface::class)
             )
         );
+
+        if (!$container->has(SiteRouter::class)) {
+            $container->set(
+                SiteRouter::class,
+                static function (Container $container): EasyCartRouter {
+                    $app = $container->has(CMSApplicationInterface::class)
+                        ? $container->get(CMSApplicationInterface::class)
+                        : JoomlaFactory::getApplication();
+
+                    if (method_exists($app, 'isClient') && !$app->isClient('site')) {
+                        $app = JoomlaFactory::getApplication('site');
+                    }
+
+                    return new EasyCartRouter($app, $app->getMenu());
+                }
+            );
+        }
 
         $container->set(
             CacheService::class,

@@ -66,6 +66,16 @@
                         {{ item.title }}
                     </div>
                     <div class="nxp-products-table__slug">{{ item.slug }}</div>
+                    <div v-if="item.featured" class="nxp-products-table__badge">
+                        <span class="nxp-status nxp-status--featured">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_PRODUCTS_BADGE_FEATURED",
+                                    "Featured"
+                                )
+                            }}
+                        </span>
+                    </div>
                 </td>
                 <td>
                     <span v-if="variantPrice(item)">

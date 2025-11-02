@@ -145,6 +145,7 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.slug'),
                 $db->quoteName('p.title'),
                 $db->quoteName('p.short_desc'),
+                $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
             ])
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
@@ -211,6 +212,7 @@ class CategoryModel extends BaseDatabaseModel
                 'slug'       => (string) $row->slug,
                 'short_desc' => (string) ($row->short_desc ?? ''),
                 'images'     => $images,
+                'featured'   => (bool) ($row->featured ?? 0),
                 'link'       => Route::_(
                     'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
                 ),

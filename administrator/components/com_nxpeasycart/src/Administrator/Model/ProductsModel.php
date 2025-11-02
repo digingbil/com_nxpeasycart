@@ -26,6 +26,7 @@ class ProductsModel extends ListModel
                 'title',
                 'slug',
                 'active',
+                'featured',
                 'created',
             ];
         }
@@ -74,6 +75,7 @@ class ProductsModel extends ListModel
                     $db->quoteName('a.short_desc'),
                     $db->quoteName('a.long_desc'),
                     $db->quoteName('a.active'),
+                    $db->quoteName('a.featured'),
                     $db->quoteName('a.created'),
                     $db->quoteName('a.created_by'),
                     $db->quoteName('a.modified'),

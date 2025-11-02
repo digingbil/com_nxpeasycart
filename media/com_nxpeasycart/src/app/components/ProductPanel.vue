@@ -161,6 +161,7 @@ const openCreate = () => {
         short_desc: "",
         long_desc: "",
         active: true,
+        featured: false,
         images: [],
         categories: [],
         variants: [],
@@ -185,6 +186,7 @@ const handleSubmit = async (payload) => {
     const data = {
         ...payload,
         active: payload.active ? 1 : 0,
+        featured: payload.featured ? 1 : 0,
     };
 
     if (editorState.mode === "edit" && editorState.product?.id) {
