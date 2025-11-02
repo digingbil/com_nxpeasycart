@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_NXPEASYCART_SITE_MENU_PRODUCT">
+        <message>COM_NXPEASYCART_MENU_PRODUCT_DESC</message>
+    </layout>
+    <fields name="request">
+        <fieldset name="basic">
+            <field
+                name="slug"
+                type="text"
+                default=""
+                label="COM_NXPEASYCART_FIELD_PRODUCT_SLUG"
+                description="COM_NXPEASYCART_FIELD_PRODUCT_SLUG_DESC"
+            />
+        </fieldset>
+    </fields>
+</metadata>

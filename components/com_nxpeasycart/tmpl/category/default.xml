@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_NXPEASYCART_SITE_MENU_CATEGORY">
+        <message>COM_NXPEASYCART_MENU_CATEGORY_DESC</message>
+    </layout>
+    <fields name="request">
+        <fieldset name="basic">
+            <field
+                name="id"
+                type="number"
+                default=""
+                label="COM_NXPEASYCART_FIELD_CATEGORY_ID"
+                description="COM_NXPEASYCART_FIELD_CATEGORY_ID_DESC"
+            />
+            <field
+                name="slug"
+                type="text"
+                default=""
+                label="COM_NXPEASYCART_FIELD_CATEGORY_SLUG"
+                description="COM_NXPEASYCART_FIELD_CATEGORY_SLUG_DESC"
+            />
+        </fieldset>
+    </fields>
+
+    <fields name="params">
+        <fieldset name="basic">
+            <field
+                name="root_categories"
+                type="RootCategories"
+                multiple="true"
+                label="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES"
+                description="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES_DESC"
+            />
+        </fieldset>
+    </fields>
+</metadata>

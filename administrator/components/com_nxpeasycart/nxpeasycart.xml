@@ -81,6 +81,12 @@
             <filename>com_nxpeasycart.php</filename>
         </files>
 
+        <menu link="index.php?option=com_nxpeasycart&amp;view=category" view="category">COM_NXPEASYCART_SITE_MENU_CATEGORY</menu>
+        <menu link="index.php?option=com_nxpeasycart&amp;view=product" view="product">COM_NXPEASYCART_SITE_MENU_PRODUCT</menu>
+        <menu link="index.php?option=com_nxpeasycart&amp;view=cart" view="cart">COM_NXPEASYCART_SITE_MENU_CART</menu>
+        <menu link="index.php?option=com_nxpeasycart&amp;view=checkout" view="checkout">COM_NXPEASYCART_SITE_MENU_CHECKOUT</menu>
+        <menu link="index.php?option=com_nxpeasycart&amp;view=order" view="order">COM_NXPEASYCART_SITE_MENU_ORDER</menu>
+
         <languages folder="../../language">
             <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
             <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>

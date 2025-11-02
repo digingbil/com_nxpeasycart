@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+    <layout title="COM_NXPEASYCART_SITE_MENU_ORDER">
+        <message>COM_NXPEASYCART_MENU_ORDER_DESC</message>
+    </layout>
+    <fields name="request">
+        <fieldset name="basic">
+            <field
+                name="order_no"
+                type="text"
+                default=""
+                label="COM_NXPEASYCART_FIELD_ORDER_NUMBER"
+                description="COM_NXPEASYCART_FIELD_ORDER_NUMBER_DESC"
+            />
+        </fieldset>
+    </fields>
+</metadata>

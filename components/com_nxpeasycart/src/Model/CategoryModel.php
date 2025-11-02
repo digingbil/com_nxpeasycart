@@ -39,6 +39,36 @@ class CategoryModel extends BaseDatabaseModel
 
         $this->setState('category.id', $input->getInt('id'));
         $this->setState('category.slug', $input->getCmd('slug', ''));
+
+        $rootSelection = [];
+
+        $menu = $app->getMenu()->getActive();
+
+        if ($menu) {
+            $params = $menu->getParams();
+            $raw = $params->get('root_categories', []);
+
+            if (is_string($raw) && str_starts_with(trim($raw), '[')) {
+                $decoded = json_decode($raw, true);
+
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $raw = $decoded;
+                }
+            }
+
+            $rootSelection = array_values(
+                array_unique(
+                    array_filter(
+                        array_map('intval', (array) $raw)
+                    )
+                )
+            );
+        }
+
+        $this->setState('category.root_ids', $rootSelection);
+
+        // When no explicit category is requested we keep the state empty so the
+        // view can render an 'all products' overview scoped to the selected roots.
     }
 
     /**
@@ -119,7 +149,8 @@ class CategoryModel extends BaseDatabaseModel
             ])
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
             ->where($db->quoteName('p.active') . ' = 1')
-            ->order($db->quoteName('p.title') . ' ASC');
+            ->order($db->quoteName('p.title') . ' ASC')
+            ->group($db->quoteName('p.id'));
 
         if (!empty($category['id'])) {
             $categoryIdFilter = (int) $category['id'];
@@ -129,6 +160,26 @@ class CategoryModel extends BaseDatabaseModel
             )
                 ->where($db->quoteName('pc.category_id') . ' = :categoryId')
                 ->bind(':categoryId', $categoryIdFilter, ParameterType::INTEGER);
+        } else {
+            $rootIds = (array) $this->getState('category.root_ids', []);
+
+            if (!empty($rootIds)) {
+                $placeholders = [];
+
+                foreach ($rootIds as $index => $rootId) {
+                    $placeholder = ':rootCat' . $index;
+                    $placeholders[] = $placeholder;
+                    $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
+                }
+
+                $query->innerJoin(
+                    $db->quoteName('#__nxp_easycart_product_categories', 'pc')
+                    . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('p.id')
+                )
+                    ->where(
+                        $db->quoteName('pc.category_id') . ' IN (' . implode(',', $placeholders) . ')'
+                    );
+            }
         }
 
         $db->setQuery($query);
@@ -178,6 +229,8 @@ class CategoryModel extends BaseDatabaseModel
      */
     public function getCategories(): array
     {
+        $rootIds = (array) $this->getState('category.root_ids', []);
+
         $db = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
@@ -186,20 +239,46 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('slug'),
             ])
             ->from($db->quoteName('#__nxp_easycart_categories'))
+            ->order($db->quoteName('sort') . ' ASC')
             ->order($db->quoteName('title') . ' ASC');
+
+        if (!empty($rootIds)) {
+            $placeholders = [];
+
+            foreach ($rootIds as $index => $rootId) {
+                $placeholder = ':navRoot' . $index;
+                $placeholders[] = $placeholder;
+                $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
+            }
+
+            $query->where(
+                $db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')'
+            );
+        } else {
+            $query->where($db->quoteName('parent_id') . ' IS NULL');
+            $query->orWhere($db->quoteName('parent_id') . ' = 0');
+        }
 
         $db->setQuery($query);
 
         $rows = $db->loadObjectList() ?: [];
 
-        return array_map(
-            static fn ($row) => [
+        $categories = [[
+            'id' => null,
+            'title' => Text::_('COM_NXPEASYCART_CATEGORY_FILTER_ALL'),
+            'slug' => '',
+            'link' => Route::_('index.php?option=com_nxpeasycart&view=category'),
+        ]];
+
+        foreach ($rows as $row) {
+            $categories[] = [
                 'id' => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug' => (string) $row->slug,
                 'link' => Route::_('index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug)),
-            ],
-            $rows
-        );
+            ];
+        }
+
+        return $categories;
     }
 }

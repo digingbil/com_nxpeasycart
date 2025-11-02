@@ -958,6 +958,7 @@ const shippingTypeLabel = (type) => {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  padding: 1.5rem 1.5rem 0;
 }
 
 .nxp-settings-tab {
@@ -983,6 +984,7 @@ const shippingTypeLabel = (type) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+    padding: 1.5rem 1.5rem 0;
 }
 
 .nxp-settings-grid {
