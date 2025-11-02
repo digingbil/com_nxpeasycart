@@ -31,8 +31,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
     data-nxp-island="landing"
     data-nxp-landing="<?php echo $payloadJson; ?>"
 >
-    <noscript>
-        <div class="nxp-landing__inner">
+    <div class="nxp-landing__inner">
             <header class="nxp-landing__hero">
                 <div class="nxp-landing__hero-copy">
                     <?php if (!empty($hero['eyebrow'])) : ?>
@@ -141,6 +140,5 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                     </p>
                 </aside>
             <?php endif; ?>
-        </div>
-    </noscript>
+    </div>
 </section>

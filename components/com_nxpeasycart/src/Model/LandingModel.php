@@ -466,7 +466,38 @@ class LandingModel extends BaseDatabaseModel
 
         if (class_exists(\NumberFormatter::class, false)) {
             try {
-                $formatter = new \NumberFormatter(null, \NumberFormatter::CURRENCY);
+                $locale = null;
+
+                try {
+                    $language = null;
+                    $app      = Factory::getApplication();
+
+                    if ($app && method_exists($app, 'getLanguage')) {
+                        $language = $app->getLanguage();
+                    } elseif (method_exists(Factory::class, 'getLanguage')) {
+                        $language = Factory::getLanguage();
+                    }
+
+                    $tag = $language && method_exists($language, 'getTag')
+                        ? (string) $language->getTag()
+                        : '';
+
+                    if ($tag !== '') {
+                        $locale = str_replace('-', '_', $tag);
+                    }
+                } catch (\Throwable $exception) {
+                    // Use default fallback below.
+                }
+
+                if ($locale === null || $locale === '') {
+                    if (function_exists('locale_get_default')) {
+                        $locale = locale_get_default() ?: 'en_US';
+                    } else {
+                        $locale = 'en_US';
+                    }
+                }
+
+                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
 
                 $formatted = $formatter->formatCurrency($amount, $currency);
 
