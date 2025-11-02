@@ -36,7 +36,7 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null): void
     {
-        $app = Factory::getApplication();
+        $app      = Factory::getApplication();
         $document = $this->document;
         $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
@@ -44,11 +44,11 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 
-        $model = $this->getModel();
+        $model   = $this->getModel();
         $product = $model ? $model->getItem() : null;
 
         if (!$product) {
-            $this->product = [];
+            $this->product       = [];
             $this->isPlaceholder = true;
 
             $document->setTitle(Text::_('COM_NXPEASYCART_PRODUCT_PLACEHOLDER'));
@@ -58,21 +58,21 @@ class HtmlView extends BaseHtmlView
             return;
         }
 
-        $this->product = $product;
+        $this->product       = $product;
         $this->isPlaceholder = false;
-        $sitename = (string) $app->get('sitename');
-        $title = (string) ($product['title'] ?? '');
-        $fullTitle = $sitename !== '' ? trim($title . ' | ' . $sitename, ' |') : $title;
+        $sitename            = (string) $app->get('sitename');
+        $title               = (string) ($product['title'] ?? '');
+        $fullTitle           = $sitename !== '' ? trim($title . ' | ' . $sitename, ' |') : $title;
         $document->setTitle($fullTitle);
 
         $descriptionSource = $product['short_desc'] ?: $product['long_desc'] ?? '';
-        $description = $this->truncateText(strip_tags((string) $descriptionSource), 160);
+        $description       = $this->truncateText(strip_tags((string) $descriptionSource), 160);
 
         if ($description !== '') {
             $document->setDescription($description);
         }
 
-        $uri = Uri::getInstance();
+        $uri       = Uri::getInstance();
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);
         $document->addHeadLink($canonical, 'canonical');
 
@@ -105,24 +105,24 @@ class HtmlView extends BaseHtmlView
                     : 'https://schema.org/OutOfStock';
 
                 return [
-                    '@type' => 'Offer',
-                    'sku' => $variant['sku'],
+                    '@type'         => 'Offer',
+                    'sku'           => $variant['sku'],
                     'priceCurrency' => $variant['currency'],
-                    'price' => number_format(((int) $variant['price_cents']) / 100, 2, '.', ''),
-                    'availability' => $availability,
-                    'url' => $canonical,
+                    'price'         => number_format(((int) $variant['price_cents']) / 100, 2, '.', ''),
+                    'availability'  => $availability,
+                    'url'           => $canonical,
                 ];
             },
             $product['variants'] ?? []
         );
 
         $schema = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Product',
-            'name' => $title,
+            '@context'    => 'https://schema.org',
+            '@type'       => 'Product',
+            'name'        => $title,
             'description' => $description,
-            'image' => $image ?: null,
-            'sku' => $product['variants'][0]['sku'] ?? null,
+            'image'       => $image ?: null,
+            'sku'         => $product['variants'][0]['sku'] ?? null,
         ];
 
         if (!empty($schemaOffers)) {

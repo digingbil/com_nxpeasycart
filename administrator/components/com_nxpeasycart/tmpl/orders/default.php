@@ -46,9 +46,9 @@ if (!empty($orders)) : ?>
                             <td>
                                 <?php
                                 $total = (int) ($order['total_cents'] ?? 0);
-                                $currency = strtoupper((string) ($order['currency'] ?? 'USD'));
-                                echo htmlspecialchars(sprintf('%s %.2f', $currency, $total / 100), ENT_QUOTES, 'UTF-8');
-                                ?>
+                        $currency      = strtoupper((string) ($order['currency'] ?? 'USD'));
+                        echo htmlspecialchars(sprintf('%s %.2f', $currency, $total / 100), ENT_QUOTES, 'UTF-8');
+                        ?>
                             </td>
                             <td>
                                 <?php echo htmlspecialchars(ucfirst((string) ($order['state'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>

@@ -31,11 +31,11 @@ class CategoriesController extends AbstractJsonController
         $task = strtolower((string) $task ?: 'list');
 
         return match ($task) {
-            'list', 'browse'    => $this->list(),
-            'store', 'create'   => $this->store(),
-            'update', 'patch'   => $this->update(),
+            'list', 'browse' => $this->list(),
+            'store', 'create' => $this->store(),
+            'update', 'patch' => $this->update(),
             'delete', 'destroy' => $this->destroy(),
-            default             => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -56,24 +56,24 @@ class CategoriesController extends AbstractJsonController
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
 
-        $items = $model->getItems();
-        $ids   = array_map(static fn ($item) => (int) $item->id, $items);
-        $usage = $this->getUsageCounts($ids);
+        $items   = $model->getItems();
+        $ids     = array_map(static fn ($item) => (int) $item->id, $items);
+        $usage   = $this->getUsageCounts($ids);
         $parents = $this->getParentTitles($items);
 
         $transformed = array_map(
             function ($item) use ($usage, $parents) {
-                $id = (int) $item->id;
+                $id       = (int) $item->id;
                 $parentId = $item->parent_id !== null ? (int) $item->parent_id : null;
 
                 return [
-                    'id' => $id,
-                    'title' => (string) $item->title,
-                    'slug' => (string) $item->slug,
-                    'parent_id' => $parentId,
+                    'id'           => $id,
+                    'title'        => (string) $item->title,
+                    'slug'         => (string) $item->slug,
+                    'parent_id'    => $parentId,
                     'parent_title' => $parentId ? ($parents[$parentId] ?? null) : null,
-                    'sort' => (int) $item->sort,
-                    'usage' => $usage[$id] ?? 0,
+                    'sort'         => (int) $item->sort,
+                    'usage'        => $usage[$id] ?? 0,
                 ];
             },
             $items
@@ -128,7 +128,7 @@ class CategoriesController extends AbstractJsonController
 
         if ($id <= 0) {
             $table = $model->getTable();
-            $id = (int) $table->id;
+            $id    = (int) $table->id;
         }
 
         $item = $model->getItem($id);
@@ -144,8 +144,8 @@ class CategoriesController extends AbstractJsonController
         $this->assertCan('core.edit');
         $this->assertToken();
 
-        $id = $this->requireId();
-        $data = $this->decodePayload();
+        $id         = $this->requireId();
+        $data       = $this->decodePayload();
         $data['id'] = $id;
 
         $model = $this->getCategoryModel();
@@ -283,21 +283,21 @@ class CategoriesController extends AbstractJsonController
         }
 
         $payload = [
-            'id' => (int) $item->id,
-            'title' => (string) $item->title,
-            'slug' => (string) $item->slug,
+            'id'        => (int) $item->id,
+            'title'     => (string) $item->title,
+            'slug'      => (string) $item->slug,
             'parent_id' => $item->parent_id !== null ? (int) $item->parent_id : null,
-            'sort' => isset($item->sort) ? (int) $item->sort : 0,
+            'sort'      => isset($item->sort) ? (int) $item->sort : 0,
         ];
 
         if ($payload['parent_id']) {
-            $parents = $this->getParentTitles([(object) ['parent_id' => $payload['parent_id']]]);
+            $parents                 = $this->getParentTitles([(object) ['parent_id' => $payload['parent_id']]]);
             $payload['parent_title'] = $parents[$payload['parent_id']] ?? null;
         } else {
             $payload['parent_title'] = null;
         }
 
-        $usage = $this->getUsageCounts([$payload['id']]);
+        $usage            = $this->getUsageCounts([$payload['id']]);
         $payload['usage'] = $usage[$payload['id']] ?? 0;
 
         return $payload;
@@ -334,7 +334,7 @@ class CategoriesController extends AbstractJsonController
             return [];
         }
 
-        $db = $this->getDatabase();
+        $db           = $this->getDatabase();
         $placeholders = [];
 
         foreach ($ids as $index => $id) {
@@ -357,7 +357,7 @@ class CategoriesController extends AbstractJsonController
 
         $db->setQuery($query);
 
-        $rows = (array) $db->loadAssocList();
+        $rows   = (array) $db->loadAssocList();
         $result = [];
 
         foreach ($rows as $row) {
@@ -390,7 +390,7 @@ class CategoriesController extends AbstractJsonController
             return [];
         }
 
-        $db = $this->getDatabase();
+        $db           = $this->getDatabase();
         $placeholders = [];
 
         foreach ($parentIds as $index => $parentId) {
@@ -412,7 +412,7 @@ class CategoriesController extends AbstractJsonController
 
         $db->setQuery($query);
 
-        $rows = (array) $db->loadObjectList();
+        $rows   = (array) $db->loadObjectList();
         $titles = [];
 
         foreach ($rows as $row) {

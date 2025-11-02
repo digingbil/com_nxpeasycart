@@ -10,9 +10,9 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
-use RuntimeException;
 use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use RuntimeException;
 
 /**
  * Orders API controller.
@@ -39,13 +39,13 @@ class OrdersController extends AbstractJsonController
         $task = strtolower((string) $task ?: 'list');
 
         return match ($task) {
-            'list', 'browse'          => $this->list(),
-            'store', 'create'         => $this->store(),
-            'show', 'detail'          => $this->show(),
-            'transition', 'state'     => $this->transition(),
-            'bulktransition', 'bulk'  => $this->bulkTransition(),
-            'note'                    => $this->note(),
-            default                   => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            'list', 'browse' => $this->list(),
+            'store', 'create' => $this->store(),
+            'show', 'detail' => $this->show(),
+            'transition', 'state' => $this->transition(),
+            'bulktransition', 'bulk' => $this->bulkTransition(),
+            'note'  => $this->note(),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -56,16 +56,16 @@ class OrdersController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $limit = $this->input->getInt('limit', 20);
-        $start = $this->input->getInt('start', 0);
+        $limit  = $this->input->getInt('limit', 20);
+        $start  = $this->input->getInt('start', 0);
         $search = $this->input->getString('search', '');
-        $state = $this->input->getCmd('state', '');
+        $state  = $this->input->getCmd('state', '');
 
         $service = $this->getOrderService();
-        $result = $service->paginate(
+        $result  = $service->paginate(
             [
                 'search' => $search,
-                'state' => $state,
+                'state'  => $state,
             ],
             $limit,
             $start
@@ -86,7 +86,7 @@ class OrdersController extends AbstractJsonController
         $actorId = $this->app?->getIdentity()?->id ?? null;
 
         $service = $this->getOrderService();
-        $order = $service->create($payload, $actorId);
+        $order   = $service->create($payload, $actorId);
 
         return $this->respond(['order' => $order], 201);
     }
@@ -98,11 +98,11 @@ class OrdersController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $id = $this->input->getInt('id');
+        $id      = $this->input->getInt('id');
         $orderNo = $this->input->getString('order_no', '');
 
         $service = $this->getOrderService();
-        $order = null;
+        $order   = null;
 
         if ($id > 0) {
             $order = $service->get($id);
@@ -125,7 +125,7 @@ class OrdersController extends AbstractJsonController
         $this->assertCan('core.edit');
         $this->assertToken();
 
-        $id = $this->requireId();
+        $id      = $this->requireId();
         $payload = $this->decodePayload();
 
         $state = isset($payload['state']) ? (string) $payload['state'] : '';
@@ -136,7 +136,7 @@ class OrdersController extends AbstractJsonController
 
         $service = $this->getOrderService();
         $actorId = $this->app?->getIdentity()?->id ?? null;
-        $order = $service->transitionState($id, $state, $actorId);
+        $order   = $service->transitionState($id, $state, $actorId);
 
         return $this->respond(['order' => $order]);
     }
@@ -167,11 +167,11 @@ class OrdersController extends AbstractJsonController
 
         $service = $this->getOrderService();
         $actorId = $this->app?->getIdentity()?->id ?? null;
-        $result = $service->bulkTransition($ids, $state, $actorId);
+        $result  = $service->bulkTransition($ids, $state, $actorId);
 
         return $this->respond([
             'updated' => $result['updated'],
-            'failed' => $result['failed'],
+            'failed'  => $result['failed'],
         ]);
     }
 
@@ -199,7 +199,7 @@ class OrdersController extends AbstractJsonController
 
         $actorId = $this->app?->getIdentity()?->id ?? null;
         $service = $this->getOrderService();
-        $order = $service->addNote($id, $message, $actorId);
+        $order   = $service->addNote($id, $message, $actorId);
 
         return $this->respond(['order' => $order]);
     }

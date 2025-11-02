@@ -6,9 +6,9 @@ namespace Nxp\EasyCart\Admin\Administrator\Payment;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use Nxp\EasyCart\Admin\Administrator\Service\MailService;
 use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
 use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
-use Nxp\EasyCart\Admin\Administrator\Service\MailService;
 use RuntimeException;
 
 /**
@@ -32,7 +32,7 @@ class PaymentGatewayManager
     ) {
         $this->config = $config;
         $this->orders = $orders;
-        $this->http = $http ?? new Client();
+        $this->http   = $http ?? new Client();
         $this->mailer = $mailer;
     }
 
@@ -57,10 +57,10 @@ class PaymentGatewayManager
     public function handleWebhook(string $gateway, string $payload, array $context = []): array
     {
         $driver = $this->resolveGateway($gateway);
-        $event = $driver->handleWebhook($payload, $context);
+        $event  = $driver->handleWebhook($payload, $context);
 
         $orderId = isset($event['order_id']) ? (int) $event['order_id'] : 0;
-        $order = null;
+        $order   = null;
 
         if ($orderId > 0 && isset($event['transaction'])) {
             $transaction = $event['transaction'];
@@ -68,13 +68,13 @@ class PaymentGatewayManager
             $order = $this->orders->recordTransaction(
                 $orderId,
                 [
-                    'gateway' => $gateway,
-                    'external_id' => $transaction['external_id'] ?? null,
-                    'status' => $transaction['status'] ?? 'pending',
-                    'amount_cents' => (int) ($transaction['amount_cents'] ?? 0),
-                    'currency' => $transaction['currency'] ?? ($event['currency'] ?? 'USD'),
-                    'payload' => $event['payload'] ?? [],
-                    'idempotency_key' => $event['id'] ?? null,
+                    'gateway'         => $gateway,
+                    'external_id'     => $transaction['external_id'] ?? null,
+                    'status'          => $transaction['status']      ?? 'pending',
+                    'amount_cents'    => (int) ($transaction['amount_cents'] ?? 0),
+                    'currency'        => $transaction['currency'] ?? ($event['currency'] ?? 'USD'),
+                    'payload'         => $event['payload']        ?? [],
+                    'idempotency_key' => $event['id']             ?? null,
                 ]
             );
         }
@@ -88,7 +88,7 @@ class PaymentGatewayManager
 
     private function resolveGateway(string $gateway): PaymentGatewayInterface
     {
-        $key = strtolower($gateway);
+        $key    = strtolower($gateway);
         $config = $this->config->getGatewayConfig($key);
 
         return match ($key) {

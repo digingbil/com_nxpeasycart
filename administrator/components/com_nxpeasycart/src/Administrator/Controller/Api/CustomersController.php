@@ -48,12 +48,12 @@ class CustomersController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $limit = $this->input->getInt('limit', 20);
-        $start = $this->input->getInt('start', 0);
+        $limit  = $this->input->getInt('limit', 20);
+        $start  = $this->input->getInt('start', 0);
         $search = $this->input->getString('search', '');
 
         $service = $this->getCustomerService();
-        $result = $service->paginate([
+        $result  = $service->paginate([
             'search' => $search,
         ], $limit, $start);
 
@@ -70,7 +70,7 @@ class CustomersController extends AbstractJsonController
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CUSTOMER_EMAIL_REQUIRED'), 400);
         }
 
-        $service = $this->getCustomerService();
+        $service  = $this->getCustomerService();
         $customer = $service->get($email);
 
         if (!$customer) {

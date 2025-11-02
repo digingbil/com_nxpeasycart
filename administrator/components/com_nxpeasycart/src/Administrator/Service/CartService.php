@@ -4,10 +4,10 @@ namespace Nxp\EasyCart\Admin\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
-use JsonException;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
+use JsonException;
 use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -97,7 +97,7 @@ class CartService
         $data = $this->normaliseCartData((array) ($cart['data'] ?? []));
         $json = $this->encodeJson($data);
 
-        $userId = $this->toNullableInt($cart['user_id'] ?? null);
+        $userId    = $this->toNullableInt($cart['user_id'] ?? null);
         $sessionId = $this->prepareSessionId($cart['session_id'] ?? null);
 
         if ($sessionId !== null) {
@@ -105,10 +105,10 @@ class CartService
         }
 
         $object = (object) [
-            'id' => $id,
-            'user_id' => $userId,
+            'id'         => $id,
+            'user_id'    => $userId,
             'session_id' => $sessionId,
-            'data' => $json,
+            'data'       => $json,
         ];
 
         if ($this->exists($id)) {
@@ -162,7 +162,7 @@ class CartService
     private function normaliseCartData(array $data): array
     {
         $baseCurrency = ConfigHelper::getBaseCurrency();
-        $currency = strtoupper((string) ($data['currency'] ?? ''));
+        $currency     = strtoupper((string) ($data['currency'] ?? ''));
 
         if ($currency === '') {
             $data['currency'] = $baseCurrency;
@@ -187,7 +187,7 @@ class CartService
                 }
 
                 $data['items'][$index]['currency'] = $itemCurrency ?: $baseCurrency;
-                $data['items'][$index]['qty'] = $this->toPositiveInt($item['qty'] ?? 1);
+                $data['items'][$index]['qty']      = $this->toPositiveInt($item['qty'] ?? 1);
             }
         }
 
@@ -203,11 +203,11 @@ class CartService
         $data['currency'] ??= ConfigHelper::getBaseCurrency();
 
         return [
-            'id' => (string) $row->id,
-            'user_id' => $row->user_id !== null ? (int) $row->user_id : null,
+            'id'         => (string) $row->id,
+            'user_id'    => $row->user_id       !== null ? (int) $row->user_id : null,
             'session_id' => $row->session_id !== null ? (string) $row->session_id : null,
-            'data' => $data,
-            'updated' => (string) $row->updated,
+            'data'       => $data,
+            'updated'    => (string) $row->updated,
         ];
     }
 

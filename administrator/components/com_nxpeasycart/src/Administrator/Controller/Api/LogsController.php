@@ -25,7 +25,7 @@ class LogsController extends AbstractJsonController
 
         return match ($task) {
             'list', 'browse' => $this->list(),
-            default          => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -33,8 +33,8 @@ class LogsController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $limit = $this->input->getInt('limit', 20);
-        $start = $this->input->getInt('start', 0);
+        $limit  = $this->input->getInt('limit', 20);
+        $start  = $this->input->getInt('start', 0);
         $entity = $this->input->getCmd('entity', '');
         $search = $this->input->getString('search', '');
 

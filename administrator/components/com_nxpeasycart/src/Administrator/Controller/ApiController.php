@@ -30,7 +30,7 @@ class ApiController extends BaseController
         }
 
         $rawTaskParam = preg_replace('/[^A-Za-z0-9._-]/', '', $rawTaskParam);
-        $task = trim($rawTaskParam !== '' ? $rawTaskParam : (string) $task);
+        $task         = trim($rawTaskParam !== '' ? $rawTaskParam : (string) $task);
 
         if ($task === '') {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_API_TASK_REQUIRED'));
@@ -38,11 +38,11 @@ class ApiController extends BaseController
 
         $segments = explode('.', $task);
         $resource = array_shift($segments);
-        $action = $segments ? implode('.', $segments) : 'browse';
+        $action   = $segments ? implode('.', $segments) : 'browse';
 
         if (strcasecmp($resource, 'api') === 0 && !empty($segments)) {
             $resource = array_shift($segments);
-            $action = $segments ? implode('.', $segments) : 'browse';
+            $action   = $segments ? implode('.', $segments) : 'browse';
         }
 
         $this->debug(sprintf('Dispatch request task=%s => resource=%s action=%s', $task, $resource, $action));
@@ -64,7 +64,7 @@ class ApiController extends BaseController
     private function loadResourceController(string $resource): AbstractJsonController
     {
         $resource = ucfirst($resource);
-        $class = __NAMESPACE__ . '\\Api\\' . $resource . 'Controller';
+        $class    = __NAMESPACE__ . '\\Api\\' . $resource . 'Controller';
 
         if (!class_exists($class)) {
             $path = __DIR__ . '/Api/' . $resource . 'Controller.php';

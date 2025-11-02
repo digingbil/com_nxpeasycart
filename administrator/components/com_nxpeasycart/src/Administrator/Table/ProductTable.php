@@ -49,7 +49,7 @@ class ProductTable extends Table
             return false;
         }
 
-        $db = $this->getDbo();
+        $db   = $this->getDbo();
         $slug = $this->slug;
 
         $query = $db->getQuery(true)

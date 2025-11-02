@@ -30,7 +30,7 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 
-        $model = $this->getModel();
+        $model          = $this->getModel();
         $this->checkout = $model ? $model->getCheckout() : [];
 
         $document->setTitle(Text::_('COM_NXPEASYCART_CHECKOUT_TITLE'));

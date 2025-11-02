@@ -15,5 +15,8 @@ return (new PhpCsFixer\Config())
         'ordered_imports' => ['sort_algorithm' => 'alpha'],
         'phpdoc_align' => false,
         'phpdoc_to_comment' => false,
+        'indentation_type' => true,
     ])
+    ->setIndent('    ')
+    ->setLineEnding("\n")
     ->setFinder($finder);

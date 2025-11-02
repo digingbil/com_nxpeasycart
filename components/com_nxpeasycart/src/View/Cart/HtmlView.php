@@ -18,7 +18,7 @@ class HtmlView extends BaseHtmlView
      * @var array<string, mixed>
      */
     protected array $cart = [
-        'items' => [],
+        'items'   => [],
         'summary' => [],
     ];
 
@@ -31,7 +31,7 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 
-        $model = $this->getModel();
+        $model      = $this->getModel();
         $this->cart = $model ? $model->getCart() : ['items' => [], 'summary' => []];
 
         $document->setTitle(Text::_('COM_NXPEASYCART_CART_TITLE'));

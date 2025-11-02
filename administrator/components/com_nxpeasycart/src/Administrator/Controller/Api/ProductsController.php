@@ -17,7 +17,6 @@ use RuntimeException;
  */
 class ProductsController extends AbstractJsonController
 {
-
     /**
      * Constructor.
      *
@@ -44,11 +43,11 @@ class ProductsController extends AbstractJsonController
         $task = strtolower((string) $task ?: 'list');
 
         return match ($task) {
-            'list', 'browse'   => $this->list(),
-            'store', 'create'  => $this->store(),
-            'update', 'edit'   => $this->update(),
+            'list', 'browse' => $this->list(),
+            'store', 'create' => $this->store(),
+            'update', 'edit' => $this->update(),
             'delete', 'remove' => $this->delete(),
-            default            => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -69,7 +68,7 @@ class ProductsController extends AbstractJsonController
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
 
-        $items = [];
+        $items        = [];
         $productModel = $this->getProductModel();
 
         foreach ($model->getItems() as $item) {
@@ -80,8 +79,8 @@ class ProductsController extends AbstractJsonController
 
         return $this->respond(
             [
-                'items'       => $items,
-                'pagination'  => [
+                'items'      => $items,
+                'pagination' => [
                     'total'   => (int) $pagination->total,
                     'limit'   => (int) $pagination->limit,
                     'pages'   => $pagination->pagesTotal,
@@ -149,7 +148,7 @@ class ProductsController extends AbstractJsonController
 
         $id = $this->requireId();
 
-        $data = $this->decodePayload();
+        $data       = $this->decodePayload();
         $data['id'] = $id;
 
         $model = $this->getProductModel();
@@ -184,7 +183,7 @@ class ProductsController extends AbstractJsonController
         $this->assertToken();
 
         $payload = $this->decodePayload();
-        $ids = $payload['ids'] ?? [];
+        $ids     = $payload['ids'] ?? [];
 
         if (!\is_array($ids) || empty($ids)) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_ID_REQUIRED'), 400);
@@ -252,40 +251,40 @@ class ProductsController extends AbstractJsonController
             $priceCents = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
 
             $variants[] = [
-                'id' => isset($variant['id']) ? (int) $variant['id'] : 0,
-                'sku' => (string) ($variant['sku'] ?? ''),
+                'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
+                'sku'         => (string) ($variant['sku'] ?? ''),
                 'price_cents' => $priceCents,
-                'price' => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
-                'currency' => (string) ($variant['currency'] ?? ''),
-                'stock' => isset($variant['stock']) ? (int) $variant['stock'] : 0,
-                'options' => $variant['options'] ?? null,
-                'weight' => $variant['weight'] ?? null,
-                'active' => isset($variant['active']) ? (bool) $variant['active'] : false,
+                'price'       => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
+                'currency'    => (string) ($variant['currency'] ?? ''),
+                'stock'       => isset($variant['stock']) ? (int) $variant['stock'] : 0,
+                'options'     => $variant['options'] ?? null,
+                'weight'      => $variant['weight']  ?? null,
+                'active'      => isset($variant['active']) ? (bool) $variant['active'] : false,
             ];
         }
 
         $categories = [];
 
         foreach ($item->categories ?? [] as $category) {
-            $category = (array) $category;
+            $category     = (array) $category;
             $categories[] = [
-                'id' => isset($category['id']) ? (int) $category['id'] : 0,
+                'id'    => isset($category['id']) ? (int) $category['id'] : 0,
                 'title' => (string) ($category['title'] ?? ''),
-                'slug' => (string) ($category['slug'] ?? ''),
+                'slug'  => (string) ($category['slug'] ?? ''),
             ];
         }
 
         return [
-            'id'          => (int) $item->id,
-            'title'       => (string) $item->title,
-            'slug'        => (string) $item->slug,
-            'short_desc'  => $item->short_desc,
-            'long_desc'   => $item->long_desc,
-            'active'      => (bool) $item->active,
-            'images'      => $images,
-            'variants'    => $variants,
-            'categories'  => $categories,
-            'summary'     => [
+            'id'         => (int) $item->id,
+            'title'      => (string) $item->title,
+            'slug'       => (string) $item->slug,
+            'short_desc' => $item->short_desc,
+            'long_desc'  => $item->long_desc,
+            'active'     => (bool) $item->active,
+            'images'     => $images,
+            'variants'   => $variants,
+            'categories' => $categories,
+            'summary'    => [
                 'variants' => $this->buildVariantSummary($variants),
             ],
             'created'     => (string) $item->created,
@@ -304,23 +303,23 @@ class ProductsController extends AbstractJsonController
     {
         if (empty($variants)) {
             return [
-                'count' => 0,
-                'currency' => null,
+                'count'               => 0,
+                'currency'            => null,
                 'multiple_currencies' => false,
-                'price_min_cents' => null,
-                'price_max_cents' => null,
-                'price_min' => null,
-                'price_max' => null,
+                'price_min_cents'     => null,
+                'price_max_cents'     => null,
+                'price_min'           => null,
+                'price_max'           => null,
             ];
         }
 
-        $count = \count($variants);
+        $count      = \count($variants);
         $currencies = [];
-        $min = null;
-        $max = null;
+        $min        = null;
+        $max        = null;
 
         foreach ($variants as $variant) {
-            $currency = (string) ($variant['currency'] ?? '');
+            $currency              = (string) ($variant['currency'] ?? '');
             $currencies[$currency] = true;
 
             $price = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
@@ -329,18 +328,18 @@ class ProductsController extends AbstractJsonController
             $max = $max === null ? $price : max($max, $price);
         }
 
-        $currencyKeys = array_keys(array_filter($currencies));
+        $currencyKeys       = array_keys(array_filter($currencies));
         $multipleCurrencies = \count($currencyKeys) > 1;
-        $resolvedCurrency = $multipleCurrencies ? null : ($currencyKeys[0] ?? null);
+        $resolvedCurrency   = $multipleCurrencies ? null : ($currencyKeys[0] ?? null);
 
         return [
-            'count' => $count,
-            'currency' => $resolvedCurrency,
+            'count'               => $count,
+            'currency'            => $resolvedCurrency,
             'multiple_currencies' => $multipleCurrencies,
-            'price_min_cents' => $min,
-            'price_max_cents' => $max,
-            'price_min' => $min !== null ? $this->formatPrice($min) : null,
-            'price_max' => $max !== null ? $this->formatPrice($max) : null,
+            'price_min_cents'     => $min,
+            'price_max_cents'     => $max,
+            'price_min'           => $min !== null ? $this->formatPrice($min) : null,
+            'price_max'           => $max !== null ? $this->formatPrice($max) : null,
         ];
     }
 

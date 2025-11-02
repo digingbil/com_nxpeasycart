@@ -28,7 +28,7 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 
-        $model = $this->getModel();
+        $model       = $this->getModel();
         $this->order = $model ? $model->getItem() : null;
 
         if ($this->order) {

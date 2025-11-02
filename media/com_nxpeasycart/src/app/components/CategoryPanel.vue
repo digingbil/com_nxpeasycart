@@ -1,246 +1,462 @@
 <template>
-  <section class="nxp-admin-panel nxp-admin-panel--categories">
-    <header class="nxp-admin-panel__header">
-      <div>
-        <h2 class="nxp-admin-panel__title">
-          {{ __('COM_NXPEASYCART_MENU_CATEGORIES', 'Categories', [], 'categoriesPanelTitle') }}
-        </h2>
-        <p class="nxp-admin-panel__lead">
-          {{ __('COM_NXPEASYCART_CATEGORIES_LEAD', 'Organise products with reusable categories.', [], 'categoriesPanelLead') }}
-        </p>
-      </div>
-      <div class="nxp-admin-panel__actions">
-        <input
-          type="search"
-          class="nxp-admin-search"
-          :placeholder="__('COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER', 'Search categories', [], 'categoriesSearchPlaceholder')"
-          v-model="state.search"
-          @keyup.enter="emitSearch"
-          :aria-label="__('COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER', 'Search categories', [], 'categoriesSearchPlaceholder')"
-        />
-        <button class="nxp-btn" type="button" @click="emitRefresh" :disabled="state.loading">
-          {{ __('COM_NXPEASYCART_CATEGORIES_REFRESH', 'Refresh', [], 'categoriesRefresh') }}
-        </button>
-        <button class="nxp-btn nxp-btn--primary" type="button" @click="startCreate">
-          {{ __('COM_NXPEASYCART_CATEGORIES_ADD', 'Add category', [], 'categoriesAdd') }}
-        </button>
-      </div>
-    </header>
-
-    <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
-      {{ state.error }}
-    </div>
-
-    <div v-else-if="state.loading" class="nxp-admin-panel__loading">
-      {{ __('COM_NXPEASYCART_CATEGORIES_LOADING', 'Loading categories...', [], 'categoriesLoading') }}
-    </div>
-
-    <div v-else class="nxp-admin-panel__body">
-      <div class="nxp-admin-panel__table">
-        <table class="nxp-admin-table">
-          <thead>
-            <tr>
-              <th scope="col">
-                {{ __('COM_NXPEASYCART_CATEGORIES_TABLE_TITLE', 'Title', [], 'categoriesTableTitle') }}
-              </th>
-              <th scope="col">
-                {{ __('COM_NXPEASYCART_CATEGORIES_TABLE_SLUG', 'Slug', [], 'categoriesTableSlug') }}
-              </th>
-              <th scope="col">
-                {{ __('COM_NXPEASYCART_CATEGORIES_TABLE_PARENT', 'Parent', [], 'categoriesTableParent') }}
-              </th>
-              <th scope="col">
-                {{ __('COM_NXPEASYCART_CATEGORIES_TABLE_SORT', 'Sort', [], 'categoriesTableSort') }}
-              </th>
-              <th scope="col">
-                {{ __('COM_NXPEASYCART_CATEGORIES_TABLE_USAGE', 'Products', [], 'categoriesTableUsage') }}
-              </th>
-              <th scope="col" class="nxp-admin-table__actions"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="!state.items.length">
-              <td colspan="6">
-                {{ __('COM_NXPEASYCART_CATEGORIES_EMPTY', 'No categories created yet.', [], 'categoriesEmpty') }}
-              </td>
-            </tr>
-            <tr
-              v-for="category in hierarchicalItems"
-              :key="category.id"
-              :class="{ 'is-active': draft.id === category.id }"
-            >
-              <th scope="row">
-                <span :style="{ paddingLeft: `${category.depth * 1.5}rem` }">
-                  {{ category.indentedTitle }}
-                </span>
-              </th>
-              <td>{{ category.slug || '—' }}</td>
-              <td>{{ category.path || __('COM_NXPEASYCART_CATEGORIES_PARENT_NONE', 'None', [], 'categoriesParentNone') }}</td>
-              <td>{{ category.sort }}</td>
-              <td>{{ category.usage ?? 0 }}</td>
-              <td class="nxp-admin-table__actions">
-                <button class="nxp-btn nxp-btn--link" type="button" @click="startEdit(category)">
-                  {{ __('JEDIT', 'Edit') }}
+    <section class="nxp-admin-panel nxp-admin-panel--categories">
+        <header class="nxp-admin-panel__header">
+            <div>
+                <h2 class="nxp-admin-panel__title">
+                    {{
+                        __(
+                            "COM_NXPEASYCART_MENU_CATEGORIES",
+                            "Categories",
+                            [],
+                            "categoriesPanelTitle"
+                        )
+                    }}
+                </h2>
+                <p class="nxp-admin-panel__lead">
+                    {{
+                        __(
+                            "COM_NXPEASYCART_CATEGORIES_LEAD",
+                            "Organise products with reusable categories.",
+                            [],
+                            "categoriesPanelLead"
+                        )
+                    }}
+                </p>
+            </div>
+            <div class="nxp-admin-panel__actions">
+                <input
+                    type="search"
+                    class="nxp-admin-search"
+                    :placeholder="
+                        __(
+                            'COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER',
+                            'Search categories',
+                            [],
+                            'categoriesSearchPlaceholder'
+                        )
+                    "
+                    v-model="state.search"
+                    @keyup.enter="emitSearch"
+                    :aria-label="
+                        __(
+                            'COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER',
+                            'Search categories',
+                            [],
+                            'categoriesSearchPlaceholder'
+                        )
+                    "
+                />
+                <button
+                    class="nxp-btn"
+                    type="button"
+                    @click="emitRefresh"
+                    :disabled="state.loading"
+                >
+                    {{
+                        __(
+                            "COM_NXPEASYCART_CATEGORIES_REFRESH",
+                            "Refresh",
+                            [],
+                            "categoriesRefresh"
+                        )
+                    }}
                 </button>
                 <button
-                  class="nxp-btn nxp-btn--link nxp-btn--danger"
-                  type="button"
-                  :disabled="state.deleting"
-                  @click="confirmDelete(category)"
+                    class="nxp-btn nxp-btn--primary"
+                    type="button"
+                    @click="startCreate"
                 >
-                  {{ __('COM_NXPEASYCART_REMOVE', 'Remove') }}
+                    {{
+                        __(
+                            "COM_NXPEASYCART_CATEGORIES_ADD",
+                            "Add category",
+                            [],
+                            "categoriesAdd"
+                        )
+                    }}
                 </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="nxp-admin-pagination" v-if="state.pagination.pages > 1">
-          <button
-            class="nxp-btn"
-            type="button"
-            :disabled="state.pagination.current <= 1"
-            @click="emitPage(state.pagination.current - 1)"
-          >
-            ‹
-          </button>
-          <span class="nxp-admin-pagination__status">
-            {{ state.pagination.current }} / {{ state.pagination.pages }}
-          </span>
-          <button
-            class="nxp-btn"
-            type="button"
-            :disabled="state.pagination.current >= state.pagination.pages"
-            @click="emitPage(state.pagination.current + 1)"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-
-      <aside v-if="formOpen" class="nxp-admin-panel__sidebar" aria-live="polite">
-        <header class="nxp-admin-panel__sidebar-header">
-          <h3>
-            {{ draft.id ? __('JEDIT', 'Edit') : __('COM_NXPEASYCART_CATEGORIES_ADD', 'Add category', [], 'categoriesAdd') }}
-          </h3>
-          <button class="nxp-link-button" type="button" @click="cancelEdit">
-            {{ __('COM_NXPEASYCART_CATEGORIES_DETAILS_CLOSE', 'Close', [], 'categoriesDetailsClose') }}
-          </button>
+            </div>
         </header>
 
-        <form class="nxp-form" @submit.prevent="submitForm" autocomplete="off">
-          <div
-            v-if="Array.isArray(state.validationErrors) && state.validationErrors.length"
-            class="nxp-admin-alert nxp-admin-alert--error"
-          >
-            <ul>
-              <li v-for="(message, index) in state.validationErrors" :key="index">
-                {{ message }}
-              </li>
-            </ul>
-          </div>
+        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+            {{ state.error }}
+        </div>
 
-          <div class="nxp-form-field">
-            <label class="nxp-form-label" for="category-title">
-              {{ __('COM_NXPEASYCART_CATEGORIES_FORM_TITLE', 'Name', [], 'categoriesFormTitle') }}
-            </label>
-            <input
-              id="category-title"
-              class="nxp-form-input"
-              type="text"
-              v-model.trim="draft.title"
-              required
-              maxlength="255"
-            />
-          </div>
+        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+            {{
+                __(
+                    "COM_NXPEASYCART_CATEGORIES_LOADING",
+                    "Loading categories...",
+                    [],
+                    "categoriesLoading"
+                )
+            }}
+        </div>
 
-          <div class="nxp-form-field">
-            <label class="nxp-form-label" for="category-slug">
-              {{ __('COM_NXPEASYCART_CATEGORIES_FORM_SLUG', 'Slug', [], 'categoriesFormSlug') }}
-            </label>
-            <input
-              id="category-slug"
-              class="nxp-form-input"
-              type="text"
-              v-model.trim="draft.slug"
-              maxlength="190"
-              @input="onSlugInput"
-            />
-          </div>
+        <div v-else class="nxp-admin-panel__body">
+            <div class="nxp-admin-panel__table">
+                <table class="nxp-admin-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_TABLE_TITLE",
+                                        "Title",
+                                        [],
+                                        "categoriesTableTitle"
+                                    )
+                                }}
+                            </th>
+                            <th scope="col">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_TABLE_SLUG",
+                                        "Slug",
+                                        [],
+                                        "categoriesTableSlug"
+                                    )
+                                }}
+                            </th>
+                            <th scope="col">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_TABLE_PARENT",
+                                        "Parent",
+                                        [],
+                                        "categoriesTableParent"
+                                    )
+                                }}
+                            </th>
+                            <th scope="col">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_TABLE_SORT",
+                                        "Sort",
+                                        [],
+                                        "categoriesTableSort"
+                                    )
+                                }}
+                            </th>
+                            <th scope="col">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_TABLE_USAGE",
+                                        "Products",
+                                        [],
+                                        "categoriesTableUsage"
+                                    )
+                                }}
+                            </th>
+                            <th
+                                scope="col"
+                                class="nxp-admin-table__actions"
+                            ></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="!state.items.length">
+                            <td colspan="6">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_EMPTY",
+                                        "No categories created yet.",
+                                        [],
+                                        "categoriesEmpty"
+                                    )
+                                }}
+                            </td>
+                        </tr>
+                        <tr
+                            v-for="category in hierarchicalItems"
+                            :key="category.id"
+                            :class="{ 'is-active': draft.id === category.id }"
+                        >
+                            <th scope="row">
+                                <span
+                                    :style="{
+                                        paddingLeft: `${category.depth * 1.5}rem`,
+                                    }"
+                                >
+                                    {{ category.indentedTitle }}
+                                </span>
+                            </th>
+                            <td>{{ category.slug || "—" }}</td>
+                            <td>
+                                {{
+                                    category.path ||
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_PARENT_NONE",
+                                        "None",
+                                        [],
+                                        "categoriesParentNone"
+                                    )
+                                }}
+                            </td>
+                            <td>{{ category.sort }}</td>
+                            <td>{{ category.usage ?? 0 }}</td>
+                            <td class="nxp-admin-table__actions">
+                                <button
+                                    class="nxp-btn nxp-btn--link"
+                                    type="button"
+                                    @click="startEdit(category)"
+                                >
+                                    {{ __("JEDIT", "Edit") }}
+                                </button>
+                                <button
+                                    class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                    type="button"
+                                    :disabled="state.deleting"
+                                    @click="confirmDelete(category)"
+                                >
+                                    {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
 
-          <div class="nxp-form-field">
-            <label class="nxp-form-label" for="category-parent">
-              {{ __('COM_NXPEASYCART_CATEGORIES_FORM_PARENT', 'Parent category', [], 'categoriesFormParent') }}
-            </label>
-            <select
-              id="category-parent"
-              class="nxp-form-select"
-              v-model.number="draft.parent_id"
+                <div
+                    class="nxp-admin-pagination"
+                    v-if="state.pagination.pages > 1"
+                >
+                    <button
+                        class="nxp-btn"
+                        type="button"
+                        :disabled="state.pagination.current <= 1"
+                        @click="emitPage(state.pagination.current - 1)"
+                    >
+                        ‹
+                    </button>
+                    <span class="nxp-admin-pagination__status">
+                        {{ state.pagination.current }} /
+                        {{ state.pagination.pages }}
+                    </span>
+                    <button
+                        class="nxp-btn"
+                        type="button"
+                        :disabled="
+                            state.pagination.current >= state.pagination.pages
+                        "
+                        @click="emitPage(state.pagination.current + 1)"
+                    >
+                        ›
+                    </button>
+                </div>
+            </div>
+
+            <aside
+                v-if="formOpen"
+                class="nxp-admin-panel__sidebar"
+                aria-live="polite"
             >
-              <option value="">
-                {{ __('COM_NXPEASYCART_CATEGORIES_PARENT_NONE', 'None', [], 'categoriesParentNone') }}
-              </option>
-              <option
-                v-for="option in parentOptionList"
-                :key="option.id"
-                :value="option.id"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </div>
+                <header class="nxp-admin-panel__sidebar-header">
+                    <h3>
+                        {{
+                            draft.id
+                                ? __("JEDIT", "Edit")
+                                : __(
+                                      "COM_NXPEASYCART_CATEGORIES_ADD",
+                                      "Add category",
+                                      [],
+                                      "categoriesAdd"
+                                  )
+                        }}
+                    </h3>
+                    <button
+                        class="nxp-link-button"
+                        type="button"
+                        @click="cancelEdit"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_CATEGORIES_DETAILS_CLOSE",
+                                "Close",
+                                [],
+                                "categoriesDetailsClose"
+                            )
+                        }}
+                    </button>
+                </header>
 
-          <div class="nxp-form-field">
-            <label class="nxp-form-label" for="category-sort">
-              {{ __('COM_NXPEASYCART_CATEGORIES_FORM_SORT', 'Sort order', [], 'categoriesFormSort') }}
-            </label>
-            <input
-              id="category-sort"
-              class="nxp-form-input"
-              type="number"
-              v-model.number="draft.sort"
-              min="0"
-              step="1"
-            />
-          </div>
+                <form
+                    class="nxp-form"
+                    @submit.prevent="submitForm"
+                    autocomplete="off"
+                >
+                    <div
+                        v-if="
+                            Array.isArray(state.validationErrors) &&
+                            state.validationErrors.length
+                        "
+                        class="nxp-admin-alert nxp-admin-alert--error"
+                    >
+                        <ul>
+                            <li
+                                v-for="(
+                                    message, index
+                                ) in state.validationErrors"
+                                :key="index"
+                            >
+                                {{ message }}
+                            </li>
+                        </ul>
+                    </div>
 
-          <footer class="nxp-form-actions">
-            <button
-              class="nxp-btn nxp-btn--primary"
-              type="submit"
-              :disabled="state.saving"
-            >
-              {{ __('COM_NXPEASYCART_CATEGORIES_SAVE', 'Save category', [], 'categoriesSave') }}
-            </button>
-            <button class="nxp-btn nxp-btn--ghost" type="button" @click="cancelEdit">
-              {{ __('COM_NXPEASYCART_CATEGORIES_CANCEL', 'Cancel', [], 'categoriesCancel') }}
-            </button>
-          </footer>
-        </form>
-      </aside>
-    </div>
-  </section>
+                    <div class="nxp-form-field">
+                        <label class="nxp-form-label" for="category-title">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_FORM_TITLE",
+                                    "Name",
+                                    [],
+                                    "categoriesFormTitle"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="category-title"
+                            class="nxp-form-input"
+                            type="text"
+                            v-model.trim="draft.title"
+                            required
+                            maxlength="255"
+                        />
+                    </div>
+
+                    <div class="nxp-form-field">
+                        <label class="nxp-form-label" for="category-slug">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_FORM_SLUG",
+                                    "Slug",
+                                    [],
+                                    "categoriesFormSlug"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="category-slug"
+                            class="nxp-form-input"
+                            type="text"
+                            v-model.trim="draft.slug"
+                            maxlength="190"
+                            @input="onSlugInput"
+                        />
+                    </div>
+
+                    <div class="nxp-form-field">
+                        <label class="nxp-form-label" for="category-parent">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_FORM_PARENT",
+                                    "Parent category",
+                                    [],
+                                    "categoriesFormParent"
+                                )
+                            }}
+                        </label>
+                        <select
+                            id="category-parent"
+                            class="nxp-form-select"
+                            v-model.number="draft.parent_id"
+                        >
+                            <option value="">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CATEGORIES_PARENT_NONE",
+                                        "None",
+                                        [],
+                                        "categoriesParentNone"
+                                    )
+                                }}
+                            </option>
+                            <option
+                                v-for="option in parentOptionList"
+                                :key="option.id"
+                                :value="option.id"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="nxp-form-field">
+                        <label class="nxp-form-label" for="category-sort">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_FORM_SORT",
+                                    "Sort order",
+                                    [],
+                                    "categoriesFormSort"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="category-sort"
+                            class="nxp-form-input"
+                            type="number"
+                            v-model.number="draft.sort"
+                            min="0"
+                            step="1"
+                        />
+                    </div>
+
+                    <footer class="nxp-form-actions">
+                        <button
+                            class="nxp-btn nxp-btn--primary"
+                            type="submit"
+                            :disabled="state.saving"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_SAVE",
+                                    "Save category",
+                                    [],
+                                    "categoriesSave"
+                                )
+                            }}
+                        </button>
+                        <button
+                            class="nxp-btn nxp-btn--ghost"
+                            type="button"
+                            @click="cancelEdit"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CATEGORIES_CANCEL",
+                                    "Cancel",
+                                    [],
+                                    "categoriesCancel"
+                                )
+                            }}
+                        </button>
+                    </footer>
+                </form>
+            </aside>
+        </div>
+    </section>
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from "vue";
 
 const props = defineProps({
-  state: {
-    type: Object,
-    required: true,
-  },
-  translate: {
-    type: Function,
-    required: true,
-  },
-  loadOptions: {
-    type: Function,
-    default: null,
-  },
+    state: {
+        type: Object,
+        required: true,
+    },
+    translate: {
+        type: Function,
+        required: true,
+    },
+    loadOptions: {
+        type: Function,
+        default: null,
+    },
 });
 
-const emit = defineEmits(['refresh', 'search', 'page', 'save', 'delete']);
+const emit = defineEmits(["refresh", "search", "page", "save", "delete"]);
 
 const __ = props.translate;
 
@@ -249,269 +465,295 @@ const slugEdited = ref(false);
 const parentOptions = ref([]);
 
 const buildHierarchy = (sourceItems) => {
-  const itemsArray = Array.isArray(sourceItems) ? sourceItems : [];
+    const itemsArray = Array.isArray(sourceItems) ? sourceItems : [];
 
-  const normalized = itemsArray
-    .map((item) => ({
-      ...item,
-      id: Number.parseInt(item?.id ?? 0, 10) || 0,
-      parent_id: item?.parent_id != null ? Number.parseInt(item.parent_id, 10) || 0 : 0,
-      sort: Number.parseInt(item?.sort ?? 0, 10) || 0,
-      title: String(item?.title ?? '').trim(),
-      slug: String(item?.slug ?? '').trim(),
-      usage: item?.usage ?? 0,
-    }))
-    .filter((item) => item.id > 0 || item.title !== '');
+    const normalized = itemsArray
+        .map((item) => ({
+            ...item,
+            id: Number.parseInt(item?.id ?? 0, 10) || 0,
+            parent_id:
+                item?.parent_id != null
+                    ? Number.parseInt(item.parent_id, 10) || 0
+                    : 0,
+            sort: Number.parseInt(item?.sort ?? 0, 10) || 0,
+            title: String(item?.title ?? "").trim(),
+            slug: String(item?.slug ?? "").trim(),
+            usage: item?.usage ?? 0,
+        }))
+        .filter((item) => item.id > 0 || item.title !== "");
 
-  const idSet = new Set(normalized.map((item) => item.id));
+    const idSet = new Set(normalized.map((item) => item.id));
 
-  normalized.forEach((item) => {
-    if (!idSet.has(item.parent_id)) {
-      item.parent_id = 0;
-    }
-  });
+    normalized.forEach((item) => {
+        if (!idSet.has(item.parent_id)) {
+            item.parent_id = 0;
+        }
+    });
 
-  const byParent = new Map();
-  const index = new Map();
+    const byParent = new Map();
+    const index = new Map();
 
-  normalized.forEach((item) => {
-    index.set(item.id, item);
-    const parent = item.parent_id || 0;
+    normalized.forEach((item) => {
+        index.set(item.id, item);
+        const parent = item.parent_id || 0;
 
-    if (!byParent.has(parent)) {
-      byParent.set(parent, []);
-    }
+        if (!byParent.has(parent)) {
+            byParent.set(parent, []);
+        }
 
-    byParent.get(parent).push(item);
-  });
+        byParent.get(parent).push(item);
+    });
 
-  const sortChildren = (children) =>
-    children.sort(
-      (a, b) =>
-        (a.sort ?? 0) - (b.sort ?? 0) ||
-        a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
-    );
+    const sortChildren = (children) =>
+        children.sort(
+            (a, b) =>
+                (a.sort ?? 0) - (b.sort ?? 0) ||
+                a.title.localeCompare(b.title, undefined, {
+                    sensitivity: "base",
+                })
+        );
 
-  byParent.forEach(sortChildren);
+    byParent.forEach(sortChildren);
 
-  const visited = new Set();
-  const result = [];
+    const visited = new Set();
+    const result = [];
 
-  const visitItem = (item, depth, chain) => {
-    if (!item) {
-      return;
-    }
+    const visitItem = (item, depth, chain) => {
+        if (!item) {
+            return;
+        }
 
-    if (visited.has(item.id)) {
-      return;
-    }
+        if (visited.has(item.id)) {
+            return;
+        }
 
-    if (chain.includes(item.id)) {
-      return;
-    }
+        if (chain.includes(item.id)) {
+            return;
+        }
 
-    const ancestors = [...chain];
+        const ancestors = [...chain];
 
-    const parentTitles = ancestors
-      .map((id) => index.get(id)?.title)
-      .filter(Boolean);
+        const parentTitles = ancestors
+            .map((id) => index.get(id)?.title)
+            .filter(Boolean);
 
-    const node = {
-      ...item,
-      depth,
-      path: parentTitles.join(' / '),
-      ancestors,
-      indentedTitle: depth > 0 ? `${'— '.repeat(depth)}${item.title}` : item.title,
+        const node = {
+            ...item,
+            depth,
+            path: parentTitles.join(" / "),
+            ancestors,
+            indentedTitle:
+                depth > 0 ? `${"— ".repeat(depth)}${item.title}` : item.title,
+        };
+
+        result.push(node);
+        visited.add(item.id);
+
+        const children = byParent.get(item.id) || [];
+        children.forEach((child) =>
+            visitItem(child, depth + 1, [...chain, item.id])
+        );
     };
 
-    result.push(node);
-    visited.add(item.id);
+    const roots = normalized.filter(
+        (item) => item.parent_id === 0 || !idSet.has(item.parent_id)
+    );
 
-    const children = byParent.get(item.id) || [];
-    children.forEach((child) => visitItem(child, depth + 1, [...chain, item.id]));
-  };
+    sortChildren(roots);
 
-  const roots = normalized.filter(
-    (item) => item.parent_id === 0 || !idSet.has(item.parent_id)
-  );
+    roots.forEach((root) => visitItem(root, 0, []));
 
-  sortChildren(roots);
+    normalized.forEach((item) => {
+        if (!visited.has(item.id)) {
+            visitItem(item, 0, []);
+        }
+    });
 
-  roots.forEach((root) => visitItem(root, 0, []));
-
-  normalized.forEach((item) => {
-    if (!visited.has(item.id)) {
-      visitItem(item, 0, []);
-    }
-  });
-
-  return result;
+    return result;
 };
 
-const hierarchicalItems = computed(() => buildHierarchy(props.state?.items ?? []));
+const hierarchicalItems = computed(() =>
+    buildHierarchy(props.state?.items ?? [])
+);
 
 const defaultDraft = () => ({
-  id: 0,
-  title: '',
-  slug: '',
-  parent_id: null,
-  sort: 0,
+    id: 0,
+    title: "",
+    slug: "",
+    parent_id: null,
+    sort: 0,
 });
 
 const draft = reactive(defaultDraft());
 
 const parentOptionList = computed(() => {
-  const baseOptions =
-    (Array.isArray(parentOptions.value) && parentOptions.value.length
-      ? parentOptions.value
-      : props.state?.items) ?? [];
+    const baseOptions =
+        (Array.isArray(parentOptions.value) && parentOptions.value.length
+            ? parentOptions.value
+            : props.state?.items) ?? [];
 
-  return buildHierarchy(baseOptions)
-    .filter(
-      (option) =>
-        option.id > 0 &&
-        option.id !== draft.id &&
-        !(Array.isArray(option.ancestors) && option.ancestors.includes(draft.id))
-    )
-    .map((option) => ({
-      id: option.id,
-      title: option.title,
-      label: option.depth > 0 ? `${'— '.repeat(option.depth)}${option.title}` : option.title,
-    }));
+    return buildHierarchy(baseOptions)
+        .filter(
+            (option) =>
+                option.id > 0 &&
+                option.id !== draft.id &&
+                !(
+                    Array.isArray(option.ancestors) &&
+                    option.ancestors.includes(draft.id)
+                )
+        )
+        .map((option) => ({
+            id: option.id,
+            title: option.title,
+            label:
+                option.depth > 0
+                    ? `${"— ".repeat(option.depth)}${option.title}`
+                    : option.title,
+        }));
 });
 
 const resetDraft = () => {
-  Object.assign(draft, defaultDraft());
-  slugEdited.value = false;
+    Object.assign(draft, defaultDraft());
+    slugEdited.value = false;
 };
 
 const slugify = (value) => {
-  if (!value) {
-    return '';
-  }
+    if (!value) {
+        return "";
+    }
 
-  return value
-    .toString()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .substring(0, 190);
+    return value
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .substring(0, 190);
 };
 
 const onSlugInput = () => {
-  slugEdited.value = true;
-  draft.slug = slugify(draft.slug);
+    slugEdited.value = true;
+    draft.slug = slugify(draft.slug);
 };
 
 watch(
-  () => draft.title,
-  (title) => {
-    if (!slugEdited.value) {
-      draft.slug = slugify(title);
+    () => draft.title,
+    (title) => {
+        if (!slugEdited.value) {
+            draft.slug = slugify(title);
+        }
     }
-  }
 );
 
 const fetchParentOptions = async (excludeId = 0) => {
-  if (typeof props.loadOptions !== 'function') {
-    parentOptions.value = Array.isArray(props.state.items)
-      ? [...props.state.items]
-      : [];
-    return;
-  }
+    if (typeof props.loadOptions !== "function") {
+        parentOptions.value = Array.isArray(props.state.items)
+            ? [...props.state.items]
+            : [];
+        return;
+    }
 
-  try {
-    const options = await props.loadOptions();
-    parentOptions.value = Array.isArray(options) ? [...options] : [];
-  } catch (error) {
-    parentOptions.value = [];
-  }
+    try {
+        const options = await props.loadOptions();
+        parentOptions.value = Array.isArray(options) ? [...options] : [];
+    } catch (error) {
+        parentOptions.value = [];
+    }
 
-  parentOptions.value = parentOptions.value.filter((option) => {
-    const id = Number.parseInt(option?.id ?? option?.value ?? 0, 10) || 0;
-    return id !== excludeId;
-  });
+    parentOptions.value = parentOptions.value.filter((option) => {
+        const id = Number.parseInt(option?.id ?? option?.value ?? 0, 10) || 0;
+        return id !== excludeId;
+    });
 };
 
 const startCreate = async () => {
-  resetDraft();
-  await fetchParentOptions();
-  formOpen.value = true;
+    resetDraft();
+    await fetchParentOptions();
+    formOpen.value = true;
 };
 
 const startEdit = async (category) => {
-  if (!category) {
-    return;
-  }
+    if (!category) {
+        return;
+    }
 
-  draft.id = Number.parseInt(category.id ?? 0, 10) || 0;
-  draft.title = String(category.title ?? '').trim();
-  draft.slug = String(category.slug ?? '').trim();
-  draft.parent_id = category.parent_id != null ? Number.parseInt(category.parent_id, 10) || null : null;
-  draft.sort = Number.parseInt(category.sort ?? 0, 10) || 0;
-  slugEdited.value = Boolean(draft.slug);
+    draft.id = Number.parseInt(category.id ?? 0, 10) || 0;
+    draft.title = String(category.title ?? "").trim();
+    draft.slug = String(category.slug ?? "").trim();
+    draft.parent_id =
+        category.parent_id != null
+            ? Number.parseInt(category.parent_id, 10) || null
+            : null;
+    draft.sort = Number.parseInt(category.sort ?? 0, 10) || 0;
+    slugEdited.value = Boolean(draft.slug);
 
-  await fetchParentOptions(draft.id);
+    await fetchParentOptions(draft.id);
 
-  formOpen.value = true;
+    formOpen.value = true;
 };
 
 const cancelEdit = () => {
-  formOpen.value = false;
-  resetDraft();
+    formOpen.value = false;
+    resetDraft();
 };
 
 const emitRefresh = () => {
-  emit('refresh');
+    emit("refresh");
 };
 
 const emitSearch = () => {
-  emit('search');
+    emit("search");
 };
 
 const emitPage = (page) => {
-  emit('page', page);
+    emit("page", page);
 };
 
 const submitForm = () => {
-  const payload = {
-    id: draft.id || undefined,
-    title: draft.title.trim(),
-    slug: draft.slug.trim(),
-    parent_id: draft.parent_id || null,
-    sort: Number.isFinite(draft.sort) ? draft.sort : 0,
-  };
+    const payload = {
+        id: draft.id || undefined,
+        title: draft.title.trim(),
+        slug: draft.slug.trim(),
+        parent_id: draft.parent_id || null,
+        sort: Number.isFinite(draft.sort) ? draft.sort : 0,
+    };
 
-  emit('save', payload);
+    emit("save", payload);
 };
 
 const confirmDelete = (category) => {
-  if (!category || !category.id) {
-    return;
-  }
+    if (!category || !category.id) {
+        return;
+    }
 
-  const message = __('COM_NXPEASYCART_CATEGORIES_DELETE_CONFIRM', 'Remove selected categories?', [], 'categoriesDeleteConfirm');
+    const message = __(
+        "COM_NXPEASYCART_CATEGORIES_DELETE_CONFIRM",
+        "Remove selected categories?",
+        [],
+        "categoriesDeleteConfirm"
+    );
 
-  if (typeof window !== 'undefined' && !window.confirm(message)) {
-    return;
-  }
+    if (typeof window !== "undefined" && !window.confirm(message)) {
+        return;
+    }
 
-  emit('delete', [category.id]);
+    emit("delete", [category.id]);
 };
 
 watch(
-  () => props.state?.saving,
-  (saving, previous) => {
-    if (previous && !saving) {
-      const hasErrors = (props.state?.validationErrors ?? []).length > 0 || props.state?.error;
+    () => props.state?.saving,
+    (saving, previous) => {
+        if (previous && !saving) {
+            const hasErrors =
+                (props.state?.validationErrors ?? []).length > 0 ||
+                props.state?.error;
 
-      if (!hasErrors) {
-        formOpen.value = false;
-        resetDraft();
-      }
+            if (!hasErrors) {
+                formOpen.value = false;
+                resetDraft();
+            }
+        }
     }
-  }
 );
 </script>

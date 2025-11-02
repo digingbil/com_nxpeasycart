@@ -27,7 +27,7 @@ class SettingsController extends AbstractJsonController
 
         if (str_contains($task, '.')) {
             $segments = array_filter(explode('.', $task));
-            $task = trim((string) array_pop($segments));
+            $task     = trim((string) array_pop($segments));
         }
 
         $task = $task !== '' ? $task : 'show';
@@ -37,7 +37,7 @@ class SettingsController extends AbstractJsonController
         return match ($task) {
             'show', 'browse' => $this->show(),
             'update' => $this->update(),
-            default => $this->respond([
+            default  => $this->respond([
                 'message' => Text::sprintf('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND', $task),
             ], 404),
         };
@@ -51,7 +51,7 @@ class SettingsController extends AbstractJsonController
 
         $settings = [
             'store' => [
-                'name' => (string) $service->get('store.name', ''),
+                'name'  => (string) $service->get('store.name', ''),
                 'email' => (string) $service->get('store.email', ''),
                 'phone' => (string) $service->get('store.phone', ''),
             ],
@@ -71,8 +71,8 @@ class SettingsController extends AbstractJsonController
 
         $payload = $this->decodePayload();
 
-        $store = isset($payload['store']) && \is_array($payload['store']) ? $payload['store'] : [];
-        $payments = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
+        $store             = isset($payload['store'])    && \is_array($payload['store']) ? $payload['store'] : [];
+        $payments          = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
         $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
         unset($store['base_currency']);
 
@@ -116,7 +116,7 @@ class SettingsController extends AbstractJsonController
         return $this->respond([
             'settings' => [
                 'store' => [
-                    'name' => $name,
+                    'name'  => $name,
                     'email' => $email,
                     'phone' => $phone,
                 ],

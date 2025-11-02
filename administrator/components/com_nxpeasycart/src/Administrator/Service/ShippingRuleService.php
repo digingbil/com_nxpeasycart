@@ -25,8 +25,8 @@ class ShippingRuleService
 
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
-        $limit = $limit > 0 ? $limit : 20;
-        $start = $start >= 0 ? $start : 0;
+        $limit  = $limit > 0 ? $limit : 20;
+        $start  = $start >= 0 ? $start : 0;
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
         $query = $this->db->getQuery(true)
@@ -51,17 +51,17 @@ class ShippingRuleService
 
         $items = array_map([$this, 'mapRow'], $rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
-                'start' => $start,
+                'start'   => $start,
             ],
         ];
     }
@@ -69,7 +69,7 @@ class ShippingRuleService
     public function create(array $data): array
     {
         $payload = $this->normalise($data);
-        $rule = (object) $payload;
+        $rule    = (object) $payload;
         $this->db->insertObject('#__nxp_easycart_shipping_rules', $rule);
         $id = (int) $this->db->insertid();
 
@@ -83,7 +83,7 @@ class ShippingRuleService
         }
 
         $payload = $this->normalise($data);
-        $rule = (object) array_merge(['id' => $id], $payload);
+        $rule    = (object) array_merge(['id' => $id], $payload);
         $this->db->updateObject('#__nxp_easycart_shipping_rules', $rule, 'id');
 
         return $this->get($id) ?? [];
@@ -153,7 +153,7 @@ class ShippingRuleService
             if (is_string($data['regions'])) {
                 $regions = array_map('trim', explode(',', $data['regions']));
             } elseif (is_array($data['regions'])) {
-                $regions = array_map(static fn($region) => trim((string) $region), $data['regions']);
+                $regions = array_map(static fn ($region) => trim((string) $region), $data['regions']);
             }
 
             $regions = array_values(array_filter($regions));
@@ -162,12 +162,12 @@ class ShippingRuleService
         $active = isset($data['active']) ? (bool) $data['active'] : true;
 
         return [
-            'name' => $name,
-            'type' => $type,
-            'price_cents' => (int) round($price * 100),
+            'name'            => $name,
+            'type'            => $type,
+            'price_cents'     => (int) round($price * 100),
             'threshold_cents' => $type === 'free_over' ? (int) round($threshold * 100) : null,
-            'regions' => $regions ? json_encode($regions) : null,
-            'active' => $active ? 1 : 0,
+            'regions'         => $regions ? json_encode($regions) : null,
+            'active'          => $active ? 1 : 0,
         ];
     }
 
@@ -184,15 +184,15 @@ class ShippingRuleService
         }
 
         return [
-            'id' => (int) $row->id,
-            'name' => (string) $row->name,
-            'type' => (string) $row->type,
-            'price_cents' => (int) $row->price_cents,
-            'price' => ((int) $row->price_cents) / 100,
+            'id'              => (int) $row->id,
+            'name'            => (string) $row->name,
+            'type'            => (string) $row->type,
+            'price_cents'     => (int) $row->price_cents,
+            'price'           => ((int) $row->price_cents) / 100,
             'threshold_cents' => $row->threshold_cents !== null ? (int) $row->threshold_cents : null,
-            'threshold' => $row->threshold_cents !== null ? ((int) $row->threshold_cents) / 100 : null,
-            'regions' => $regions,
-            'active' => (bool) $row->active,
+            'threshold'       => $row->threshold_cents       !== null ? ((int) $row->threshold_cents) / 100 : null,
+            'regions'         => $regions,
+            'active'          => (bool) $row->active,
         ];
     }
 }

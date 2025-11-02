@@ -7,12 +7,12 @@ namespace Nxp\EasyCart\Admin\Administrator\Model;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 use Brick\Math\RoundingMode;
-use JsonException;
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
+use JsonException;
 use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
 use Nxp\EasyCart\Admin\Administrator\Table\CategoryTable;
 use Nxp\EasyCart\Admin\Administrator\Table\ProductTable;
@@ -94,8 +94,8 @@ class ProductModel extends AdminModel
             return false;
         }
 
-        $validated['images'] = $this->filterImages($data['images'] ?? []);
-        $validated['variants'] = $this->filterVariants($data['variants'] ?? []);
+        $validated['images']     = $this->filterImages($data['images'] ?? []);
+        $validated['variants']   = $this->filterVariants($data['variants'] ?? []);
         $validated['categories'] = $this->filterCategories($data['categories'] ?? []);
 
         if (empty($validated['variants'])) {
@@ -114,8 +114,8 @@ class ProductModel extends AdminModel
     {
         $db = $this->getDbo();
 
-        $images = (array) ($data['images'] ?? []);
-        $variants = (array) ($data['variants'] ?? []);
+        $images     = (array) ($data['images'] ?? []);
+        $variants   = (array) ($data['variants'] ?? []);
         $categories = (array) ($data['categories'] ?? []);
 
         try {
@@ -140,7 +140,7 @@ class ProductModel extends AdminModel
             if ($id <= 0) {
                 /** @var ProductTable $table */
                 $table = $this->getTable();
-                $id = (int) $table->id;
+                $id    = (int) $table->id;
             }
 
             $this->syncVariants($id, $variants);
@@ -186,10 +186,10 @@ class ProductModel extends AdminModel
         $user = Factory::getApplication()->getIdentity();
 
         if (empty($table->id)) {
-            $table->created = $date->toSql();
+            $table->created    = $date->toSql();
             $table->created_by = (int) $user->id;
         } else {
-            $table->modified = $date->toSql();
+            $table->modified    = $date->toSql();
             $table->modified_by = (int) $user->id;
         }
     }
@@ -223,9 +223,9 @@ class ProductModel extends AdminModel
      */
     public function hydrateItem(object $item): object
     {
-        $item->active = (bool) $item->active;
-        $item->images = $this->decodeImages($item->images ?? null);
-        $item->variants = $this->loadVariants((int) $item->id);
+        $item->active     = (bool) $item->active;
+        $item->images     = $this->decodeImages($item->images ?? null);
+        $item->variants   = $this->loadVariants((int) $item->id);
         $item->categories = $this->loadCategories((int) $item->id);
 
         return $item;
@@ -346,8 +346,8 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $variants = [];
-        $seenSkus = [];
+        $variants     = [];
+        $seenSkus     = [];
         $baseCurrency = ConfigHelper::getBaseCurrency();
 
         foreach ($input as $variant) {
@@ -400,7 +400,7 @@ class ProductModel extends AdminModel
             if (\is_string($options) && $options !== '') {
                 try {
                     $decodedOptions = json_decode($options, true, 512, JSON_THROW_ON_ERROR);
-                    $options = \is_array($decodedOptions) ? $decodedOptions : null;
+                    $options        = \is_array($decodedOptions) ? $decodedOptions : null;
                 } catch (JsonException $exception) {
                     $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_OPTIONS_INVALID'));
 
@@ -429,14 +429,14 @@ class ProductModel extends AdminModel
             }
 
             $variants[] = [
-                'id' => isset($variant['id']) ? (int) $variant['id'] : 0,
-                'sku' => $sku,
+                'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
+                'sku'         => $sku,
                 'price_cents' => $priceCents,
-                'currency' => $currency,
-                'stock' => max(0, (int) ($variant['stock'] ?? 0)),
-                'options' => $options,
-                'weight' => $weight,
-                'active' => isset($variant['active']) ? (bool) $variant['active'] : true,
+                'currency'    => $currency,
+                'stock'       => max(0, (int) ($variant['stock'] ?? 0)),
+                'options'     => $options,
+                'weight'      => $weight,
+                'active'      => isset($variant['active']) ? (bool) $variant['active'] : true,
             ];
         }
 
@@ -469,9 +469,9 @@ class ProductModel extends AdminModel
         foreach ($input as $category) {
             if (\is_int($category) || (\is_numeric($category) && (int) $category > 0)) {
                 $categories[] = [
-                    'id' => (int) $category,
+                    'id'    => (int) $category,
                     'title' => null,
-                    'slug' => null,
+                    'slug'  => null,
                 ];
 
                 continue;
@@ -479,9 +479,9 @@ class ProductModel extends AdminModel
 
             if (\is_array($category)) {
                 $categories[] = [
-                    'id' => isset($category['id']) ? (int) $category['id'] : 0,
+                    'id'    => isset($category['id']) ? (int) $category['id'] : 0,
                     'title' => isset($category['title']) ? trim((string) $category['title']) : '',
-                    'slug' => isset($category['slug']) ? trim((string) $category['slug']) : '',
+                    'slug'  => isset($category['slug']) ? trim((string) $category['slug']) : '',
                 ];
 
                 continue;
@@ -494,9 +494,9 @@ class ProductModel extends AdminModel
             }
 
             $categories[] = [
-                'id' => 0,
+                'id'    => 0,
                 'title' => $title,
-                'slug' => '',
+                'slug'  => '',
             ];
         }
 
@@ -573,15 +573,15 @@ class ProductModel extends AdminModel
             }
 
             $payload = [
-                'id' => $variant['id'] ?? 0,
-                'product_id' => $productId,
-                'sku' => $variant['sku'],
+                'id'          => $variant['id'] ?? 0,
+                'product_id'  => $productId,
+                'sku'         => $variant['sku'],
                 'price_cents' => (int) $variant['price_cents'],
-                'currency' => $variant['currency'],
-                'stock' => (int) $variant['stock'],
-                'options' => $this->encodeOptions($variant['options'] ?? null),
-                'weight' => $variant['weight'],
-                'active' => (int) (bool) $variant['active'],
+                'currency'    => $variant['currency'],
+                'stock'       => (int) $variant['stock'],
+                'options'     => $this->encodeOptions($variant['options'] ?? null),
+                'weight'      => $variant['weight'],
+                'active'      => (int) (bool) $variant['active'],
             ];
 
             if (!$table->bind($payload)) {
@@ -652,7 +652,7 @@ class ProductModel extends AdminModel
                 continue;
             }
 
-            $slug = trim((string) ($category['slug'] ?? ''));
+            $slug          = trim((string) ($category['slug'] ?? ''));
             $categoryIds[] = $this->findOrCreateCategory($title, $slug);
         }
 
@@ -672,7 +672,7 @@ class ProductModel extends AdminModel
 
         if (!empty($toInsert)) {
             $columns = [$db->quoteName('product_id'), $db->quoteName('category_id')];
-            $query = $db->getQuery(true)
+            $query   = $db->getQuery(true)
                 ->insert($db->quoteName('#__nxp_easycart_product_categories'))
                 ->columns($columns);
 
@@ -717,7 +717,7 @@ class ProductModel extends AdminModel
      */
     private function categoryExists(int $categoryId): bool
     {
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select('1')
             ->from($db->quoteName('#__nxp_easycart_categories'))
@@ -757,11 +757,11 @@ class ProductModel extends AdminModel
         }
 
         /** @var CategoryTable $table */
-        $table = new CategoryTable($db);
+        $table   = new CategoryTable($db);
         $payload = [
             'title' => $title,
-            'slug' => $slug,
-            'sort' => 0,
+            'slug'  => $slug,
+            'sort'  => 0,
         ];
 
         if (!$table->bind($payload)) {
@@ -808,7 +808,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('id'),
@@ -826,20 +826,20 @@ class ProductModel extends AdminModel
             ->order($db->quoteName('id') . ' ASC');
 
         $db->setQuery($query);
-        $rows = (array) $db->loadObjectList();
+        $rows     = (array) $db->loadObjectList();
         $variants = [];
 
         foreach ($rows as $row) {
             $variants[] = [
-                'id' => (int) $row->id,
-                'sku' => (string) $row->sku,
+                'id'          => (int) $row->id,
+                'sku'         => (string) $row->sku,
                 'price_cents' => (int) $row->price_cents,
-                'price' => $this->formatPriceCents((int) $row->price_cents),
-                'currency' => (string) $row->currency,
-                'stock' => (int) $row->stock,
-                'options' => $this->decodeOptions($row->options ?? null),
-                'weight' => $row->weight !== null ? (string) $row->weight : null,
-                'active' => (bool) $row->active,
+                'price'       => $this->formatPriceCents((int) $row->price_cents),
+                'currency'    => (string) $row->currency,
+                'stock'       => (int) $row->stock,
+                'options'     => $this->decodeOptions($row->options ?? null),
+                'weight'      => $row->weight !== null ? (string) $row->weight : null,
+                'active'      => (bool) $row->active,
             ];
         }
 
@@ -857,7 +857,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('c.id'),
@@ -874,14 +874,14 @@ class ProductModel extends AdminModel
             ->order($db->quoteName('c.sort') . ' ASC, ' . $db->quoteName('c.title') . ' ASC');
 
         $db->setQuery($query);
-        $rows = (array) $db->loadObjectList();
+        $rows       = (array) $db->loadObjectList();
         $categories = [];
 
         foreach ($rows as $row) {
             $categories[] = [
-                'id' => (int) $row->id,
+                'id'    => (int) $row->id,
                 'title' => (string) $row->title,
-                'slug' => (string) $row->slug,
+                'slug'  => (string) $row->slug,
             ];
         }
 

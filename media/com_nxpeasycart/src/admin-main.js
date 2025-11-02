@@ -15,7 +15,10 @@ if (!mount) {
         try {
             config = JSON.parse(dataset.config);
         } catch (error) {
-            console.warn("[NXP Easy Cart] Failed to parse admin config payload", error);
+            console.warn(
+                "[NXP Easy Cart] Failed to parse admin config payload",
+                error
+            );
         }
     }
 
@@ -90,7 +93,8 @@ if (!mount) {
             shipping: shippingEndpoints,
             settings: settingsEndpoints,
             logs: logsEndpoints,
-            dashboard: config?.endpoints?.dashboard ?? dataset.dashboardEndpoint ?? "",
+            dashboard:
+                config?.endpoints?.dashboard ?? dataset.dashboardEndpoint ?? "",
         },
     }).mount(mount);
 }

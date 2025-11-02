@@ -22,12 +22,12 @@ class PayPalGateway implements PaymentGatewayInterface
     public function __construct(array $config, ClientInterface $http)
     {
         $this->config = $config;
-        $this->http = $http;
+        $this->http   = $http;
     }
 
     public function createHostedCheckout(array $order, array $preferences = []): array
     {
-        $clientId = trim((string) ($this->config['client_id'] ?? ''));
+        $clientId     = trim((string) ($this->config['client_id'] ?? ''));
         $clientSecret = trim((string) ($this->config['client_secret'] ?? ''));
 
         if ($clientId === '' || $clientSecret === '') {
@@ -35,24 +35,24 @@ class PayPalGateway implements PaymentGatewayInterface
         }
 
         $accessToken = $this->fetchAccessToken($clientId, $clientSecret);
-        $currency = strtoupper((string) ($order['currency'] ?? 'USD'));
+        $currency    = strtoupper((string) ($order['currency'] ?? 'USD'));
         $amountCents = (int) ($order['summary']['total_cents'] ?? 0);
-        $value = number_format($amountCents / 100, 2, '.', '');
+        $value       = number_format($amountCents / 100, 2, '.', '');
 
         $body = [
-            'intent' => 'CAPTURE',
+            'intent'         => 'CAPTURE',
             'purchase_units' => [
                 [
                     'reference_id' => (string) ($order['order_no'] ?? $order['id'] ?? ''),
-                    'amount' => [
+                    'amount'       => [
                         'currency_code' => $currency,
-                        'value' => $value,
+                        'value'         => $value,
                     ],
                 ],
             ],
             'application_context' => [
-                'return_url' => $preferences['success_url'] ?? '',
-                'cancel_url' => $preferences['cancel_url'] ?? '',
+                'return_url'          => $preferences['success_url'] ?? '',
+                'cancel_url'          => $preferences['cancel_url']  ?? '',
                 'shipping_preference' => 'NO_SHIPPING',
             ],
         ];
@@ -64,7 +64,7 @@ class PayPalGateway implements PaymentGatewayInterface
         try {
             $response = $this->http->request('POST', $this->apiBase() . '/v2/checkout/orders', [
                 'headers' => [
-                    'Content-Type' => 'application/json',
+                    'Content-Type'  => 'application/json',
                     'Authorization' => 'Bearer ' . $accessToken,
                 ],
                 'json' => $body,
@@ -94,8 +94,8 @@ class PayPalGateway implements PaymentGatewayInterface
 
         return [
             'order_id' => $payload['id'] ?? null,
-            'url' => $approveLink,
-            'gateway' => 'paypal',
+            'url'      => $approveLink,
+            'gateway'  => 'paypal',
         ];
     }
 
@@ -107,22 +107,22 @@ class PayPalGateway implements PaymentGatewayInterface
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_PAYLOAD_INVALID'));
         }
 
-        $resource = $event['resource'] ?? [];
+        $resource     = $event['resource']             ?? [];
         $purchaseUnit = $resource['purchase_units'][0] ?? [];
-        $amount = $purchaseUnit['amount'] ?? [];
-        $value = isset($amount['value']) ? (float) $amount['value'] : 0.0;
-        $currency = $amount['currency_code'] ?? 'USD';
+        $amount       = $purchaseUnit['amount']        ?? [];
+        $value        = isset($amount['value']) ? (float) $amount['value'] : 0.0;
+        $currency     = $amount['currency_code'] ?? 'USD';
 
         return [
-            'id' => $event['id'] ?? null,
-            'type' => $event['event_type'] ?? null,
-            'payload' => $event,
-            'order_id' => isset($purchaseUnit['custom_id']) ? (int) $purchaseUnit['custom_id'] : null,
+            'id'          => $event['id']         ?? null,
+            'type'        => $event['event_type'] ?? null,
+            'payload'     => $event,
+            'order_id'    => isset($purchaseUnit['custom_id']) ? (int) $purchaseUnit['custom_id'] : null,
             'transaction' => [
-                'external_id' => $resource['id'] ?? null,
-                'status' => strtoupper((string) ($resource['status'] ?? '')) === 'COMPLETED' ? 'paid' : ($resource['status'] ?? 'PENDING'),
+                'external_id'  => $resource['id'] ?? null,
+                'status'       => strtoupper((string) ($resource['status'] ?? '')) === 'COMPLETED' ? 'paid' : ($resource['status'] ?? 'PENDING'),
                 'amount_cents' => (int) round($value * 100),
-                'currency' => $currency,
+                'currency'     => $currency,
             ],
             'currency' => $currency,
         ];
@@ -132,7 +132,7 @@ class PayPalGateway implements PaymentGatewayInterface
     {
         try {
             $response = $this->http->request('POST', $this->apiBase() . '/v1/oauth2/token', [
-                'auth' => [$clientId, $clientSecret],
+                'auth'        => [$clientId, $clientSecret],
                 'form_params' => [
                     'grant_type' => 'client_credentials',
                 ],

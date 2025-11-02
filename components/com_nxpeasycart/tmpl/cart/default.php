@@ -7,12 +7,12 @@ use Joomla\CMS\Language\Text;
 /** @var array<string, mixed> $this->cart */
 $cart = $this->cart ?? ['items' => [], 'summary' => []];
 
-$items = $cart['items'] ?? [];
+$items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
 
 $cartJson = htmlspecialchars(
     json_encode([
-        'items' => $items,
+        'items'   => $items,
         'summary' => $summary,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,

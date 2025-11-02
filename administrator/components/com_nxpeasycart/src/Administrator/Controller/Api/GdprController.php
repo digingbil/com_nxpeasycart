@@ -7,8 +7,8 @@ namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Response\JsonResponse;
-use RuntimeException;
 use Nxp\EasyCart\Admin\Administrator\Service\GdprService;
+use RuntimeException;
 
 /**
  * GDPR utilities (export/anonymise) for administrators.
@@ -30,7 +30,7 @@ class GdprController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $email = (string) $this->input->get('email', '', 'STRING');
+        $email   = (string) $this->input->get('email', '', 'STRING');
         $service = $this->getService();
 
         $data = $service->exportByEmail($email);
@@ -44,14 +44,14 @@ class GdprController extends AbstractJsonController
         $this->assertToken();
 
         $payload = $this->decodePayload();
-        $email = (string) ($payload['email'] ?? '');
+        $email   = (string) ($payload['email'] ?? '');
 
-        $service = $this->getService();
+        $service  = $this->getService();
         $affected = $service->anonymiseByEmail($email);
 
         return $this->respond([
             'affected' => $affected,
-            'message' => Text::_('COM_NXPEASYCART_GDPR_ANONYMISED'),
+            'message'  => Text::_('COM_NXPEASYCART_GDPR_ANONYMISED'),
         ]);
     }
 

@@ -5,7 +5,7 @@ const applyReplacements = (message, replacements = []) => {
 
     const sprintf = window?.Joomla?.sprintf;
 
-    if (typeof sprintf === 'function') {
+    if (typeof sprintf === "function") {
         try {
             return sprintf.call(window.Joomla, message, ...replacements);
         } catch (error) {
@@ -16,18 +16,18 @@ const applyReplacements = (message, replacements = []) => {
     let output = String(message);
 
     replacements.forEach((replacement) => {
-        const value = replacement ?? '';
-        output = output.replace('%s', String(value));
+        const value = replacement ?? "";
+        output = output.replace("%s", String(value));
     });
 
     return output;
 };
 
-export const __ = (key, fallback = '', replacements = []) => {
+export const __ = (key, fallback = "", replacements = []) => {
     const text = window?.Joomla?.Text;
     let message = fallback || key;
 
-    if (text && typeof text._ === 'function') {
+    if (text && typeof text._ === "function") {
         const translated = text._(key);
 
         if (translated && translated !== key) {
@@ -48,10 +48,15 @@ export function useTranslations(dataset = {}) {
 
         const value = source[datasetKey];
 
-        return value != null && value !== '' ? value : fallback;
+        return value != null && value !== "" ? value : fallback;
     };
 
-    const translate = (languageKey, fallback = '', replacements = [], datasetKey = '') => {
+    const translate = (
+        languageKey,
+        fallback = "",
+        replacements = [],
+        datasetKey = ""
+    ) => {
         const resolvedFallback = fromDataset(datasetKey, fallback);
 
         return __(languageKey, resolvedFallback, replacements);

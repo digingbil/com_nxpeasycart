@@ -26,7 +26,7 @@ class ProductModel extends BaseDatabaseModel
      */
     protected function populateState($ordering = null, $direction = null)
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $this->setState('product.id', $input->getInt('id'));
@@ -42,13 +42,13 @@ class ProductModel extends BaseDatabaseModel
             return $this->item;
         }
 
-        $db = $this->getDatabase();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select('p.*')
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
             ->where($db->quoteName('p.active') . ' = 1');
 
-        $id = (int) $this->getState('product.id');
+        $id   = (int) $this->getState('product.id');
         $slug = (string) $this->getState('product.slug');
 
         if ($id > 0) {
@@ -68,24 +68,24 @@ class ProductModel extends BaseDatabaseModel
             return null;
         }
 
-        $images = $this->decodeImages($product->images ?? '');
-        $variants = $this->fetchVariants((int) $product->id);
-        $categories = $this->fetchCategories((int) $product->id);
+        $images       = $this->decodeImages($product->images ?? '');
+        $variants     = $this->fetchVariants((int) $product->id);
+        $categories   = $this->fetchCategories((int) $product->id);
         $priceSummary = $this->summarisePrices($variants);
 
         $this->item = [
-            'id' => (int) $product->id,
-            'slug' => (string) $product->slug,
-            'title' => (string) $product->title,
+            'id'         => (int) $product->id,
+            'slug'       => (string) $product->slug,
+            'title'      => (string) $product->title,
             'short_desc' => (string) ($product->short_desc ?? ''),
-            'long_desc' => (string) ($product->long_desc ?? ''),
-            'active' => (bool) $product->active,
-            'images' => $images,
-            'variants' => $variants,
+            'long_desc'  => (string) ($product->long_desc ?? ''),
+            'active'     => (bool) $product->active,
+            'images'     => $images,
+            'variants'   => $variants,
             'categories' => $categories,
-            'price' => $priceSummary,
-            'created' => (string) ($product->created ?? ''),
-            'modified' => $product->modified !== null ? (string) $product->modified : null,
+            'price'      => $priceSummary,
+            'created'    => (string) ($product->created ?? ''),
+            'modified'   => $product->modified !== null ? (string) $product->modified : null,
         ];
 
         return $this->item;
@@ -133,7 +133,7 @@ class ProductModel extends BaseDatabaseModel
      */
     private function fetchVariants(int $productId): array
     {
-        $db = $this->getDatabase();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select('*')
             ->from($db->quoteName('#__nxp_easycart_variants'))
@@ -144,7 +144,7 @@ class ProductModel extends BaseDatabaseModel
 
         $db->setQuery($query);
 
-        $rows = $db->loadObjectList() ?: [];
+        $rows         = $db->loadObjectList() ?: [];
         $baseCurrency = ConfigHelper::getBaseCurrency();
 
         $variants = [];
@@ -163,14 +163,14 @@ class ProductModel extends BaseDatabaseModel
             $currency = strtoupper((string) ($row->currency ?? $baseCurrency));
 
             $variants[] = [
-                'id' => (int) $row->id,
-                'sku' => (string) $row->sku,
+                'id'          => (int) $row->id,
+                'sku'         => (string) $row->sku,
                 'price_cents' => (int) $row->price_cents,
-                'price' => $this->formatMoney((int) $row->price_cents, $currency),
-                'currency' => $currency,
-                'stock' => (int) $row->stock,
-                'weight' => $row->weight !== null ? (float) $row->weight : null,
-                'options' => $options,
+                'price'       => $this->formatMoney((int) $row->price_cents, $currency),
+                'currency'    => $currency,
+                'stock'       => (int) $row->stock,
+                'weight'      => $row->weight !== null ? (float) $row->weight : null,
+                'options'     => $options,
             ];
         }
 
@@ -184,7 +184,7 @@ class ProductModel extends BaseDatabaseModel
      */
     private function fetchCategories(int $productId): array
     {
-        $db = $this->getDatabase();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('c.id'),
@@ -206,9 +206,9 @@ class ProductModel extends BaseDatabaseModel
 
         return array_map(
             static fn ($row) => [
-                'id' => (int) $row->id,
+                'id'    => (int) $row->id,
                 'title' => (string) $row->title,
-                'slug' => (string) $row->slug,
+                'slug'  => (string) $row->slug,
             ],
             $rows
         );
@@ -227,14 +227,14 @@ class ProductModel extends BaseDatabaseModel
             $currency = ConfigHelper::getBaseCurrency();
 
             return [
-                'currency' => $currency,
+                'currency'  => $currency,
                 'min_cents' => 0,
                 'max_cents' => 0,
             ];
         }
 
-        $min = null;
-        $max = null;
+        $min      = null;
+        $max      = null;
         $currency = $variants[0]['currency'] ?? ConfigHelper::getBaseCurrency();
 
         foreach ($variants as $variant) {
@@ -250,7 +250,7 @@ class ProductModel extends BaseDatabaseModel
         }
 
         return [
-            'currency' => $currency,
+            'currency'  => $currency,
             'min_cents' => (int) $min,
             'max_cents' => (int) $max,
         ];

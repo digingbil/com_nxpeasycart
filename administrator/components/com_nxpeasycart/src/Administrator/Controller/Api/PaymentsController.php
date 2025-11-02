@@ -7,9 +7,9 @@ namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Response\JsonResponse;
-use RuntimeException;
 use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
 use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
+use RuntimeException;
 
 /**
  * Admin API controller for payment configuration.
@@ -21,9 +21,9 @@ class PaymentsController extends AbstractJsonController
         $task = strtolower((string) $task ?: 'show');
 
         return match ($task) {
-            'show', 'list'   => $this->show(),
+            'show', 'list' => $this->show(),
             'update', 'save' => $this->update(),
-            default          => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -46,10 +46,10 @@ class PaymentsController extends AbstractJsonController
         $payload = $this->decodePayload();
 
         $service = $this->getService();
-        $config = $service->saveConfig($payload['config'] ?? []);
+        $config  = $service->saveConfig($payload['config'] ?? []);
 
         return $this->respond([
-            'config' => $config,
+            'config'  => $config,
             'message' => Text::_('COM_NXPEASYCART_PAYMENTS_SAVED'),
         ]);
     }

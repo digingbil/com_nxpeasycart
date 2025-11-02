@@ -20,7 +20,7 @@ class HtmlView extends BaseHtmlView
      * @var array<string, mixed>
      */
     protected array $orders = [
-        'items' => [],
+        'items'      => [],
         'pagination' => [],
     ];
 

@@ -25,11 +25,11 @@ class TaxController extends AbstractJsonController
         $task = strtolower((string) $task ?: 'list');
 
         return match ($task) {
-            'list', 'browse'    => $this->list(),
-            'store', 'create'   => $this->store(),
-            'update', 'patch'   => $this->update(),
+            'list', 'browse' => $this->list(),
+            'store', 'create' => $this->store(),
+            'update', 'patch' => $this->update(),
             'delete', 'destroy' => $this->destroy(),
-            default             => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
+            default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
 
@@ -37,12 +37,12 @@ class TaxController extends AbstractJsonController
     {
         $this->assertCan('core.manage');
 
-        $limit = $this->input->getInt('limit', 20);
-        $start = $this->input->getInt('start', 0);
+        $limit  = $this->input->getInt('limit', 20);
+        $start  = $this->input->getInt('start', 0);
         $search = $this->input->getString('search', '');
 
         $service = $this->getService();
-        $result = $service->paginate(['search' => $search], $limit, $start);
+        $result  = $service->paginate(['search' => $search], $limit, $start);
 
         return $this->respond($result);
     }
@@ -54,7 +54,7 @@ class TaxController extends AbstractJsonController
 
         $payload = $this->decodePayload();
         $service = $this->getService();
-        $rate = $service->create($payload);
+        $rate    = $service->create($payload);
 
         return $this->respond(['rate' => $rate], 201);
     }
@@ -64,10 +64,10 @@ class TaxController extends AbstractJsonController
         $this->assertCan('core.edit');
         $this->assertToken();
 
-        $id = $this->requireId();
+        $id      = $this->requireId();
         $payload = $this->decodePayload();
         $service = $this->getService();
-        $rate = $service->update($id, $payload);
+        $rate    = $service->update($id, $payload);
 
         return $this->respond(['rate' => $rate]);
     }
@@ -78,7 +78,7 @@ class TaxController extends AbstractJsonController
         $this->assertToken();
 
         $payload = $this->decodePayload();
-        $ids = isset($payload['ids']) && is_array($payload['ids'])
+        $ids     = isset($payload['ids']) && is_array($payload['ids'])
             ? array_map('intval', $payload['ids'])
             : [];
 

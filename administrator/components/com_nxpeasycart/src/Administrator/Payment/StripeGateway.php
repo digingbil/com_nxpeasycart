@@ -22,7 +22,7 @@ class StripeGateway implements PaymentGatewayInterface
     public function __construct(array $config, ClientInterface $http)
     {
         $this->config = $config;
-        $this->http = $http;
+        $this->http   = $http;
     }
 
     public function createHostedCheckout(array $order, array $preferences = []): array
@@ -33,15 +33,15 @@ class StripeGateway implements PaymentGatewayInterface
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_SECRET_MISSING'));
         }
 
-        $currency = strtolower((string) ($order['currency'] ?? 'usd'));
+        $currency  = strtolower((string) ($order['currency'] ?? 'usd'));
         $lineItems = $this->buildLineItems($order['items'] ?? [], $currency);
-        $metadata = $this->buildMetadata($order);
+        $metadata  = $this->buildMetadata($order);
 
         $body = array_merge(
             [
-                'mode' => 'payment',
-                'success_url' => $preferences['success_url'] ?? '',
-                'cancel_url' => $preferences['cancel_url'] ?? '',
+                'mode'                    => 'payment',
+                'success_url'             => $preferences['success_url'] ?? '',
+                'cancel_url'              => $preferences['cancel_url']  ?? '',
                 'payment_method_types[0]' => 'card',
             ],
             $lineItems,
@@ -54,7 +54,7 @@ class StripeGateway implements PaymentGatewayInterface
 
         try {
             $response = $this->http->request('POST', 'https://api.stripe.com/v1/checkout/sessions', [
-                'auth' => [$secret, ''],
+                'auth'    => [$secret, ''],
                 'headers' => [
                     'Stripe-Version' => '2023-10-16',
                 ],
@@ -72,8 +72,8 @@ class StripeGateway implements PaymentGatewayInterface
 
         return [
             'session_id' => (string) $payload['id'],
-            'url' => (string) $payload['url'],
-            'gateway' => 'stripe',
+            'url'        => (string) $payload['url'],
+            'gateway'    => 'stripe',
         ];
     }
 
@@ -95,16 +95,16 @@ class StripeGateway implements PaymentGatewayInterface
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_PAYLOAD_INVALID'));
         }
 
-        $object = $event['data']['object'] ?? [];
-        $metadata = $object['metadata'] ?? [];
+        $object   = $event['data']['object'] ?? [];
+        $metadata = $object['metadata']      ?? [];
 
         return [
-            'id' => $event['id'] ?? null,
-            'type' => $event['type'] ?? null,
-            'payload' => $event,
-            'order_id' => isset($metadata['order_id']) ? (int) $metadata['order_id'] : null,
+            'id'          => $event['id']   ?? null,
+            'type'        => $event['type'] ?? null,
+            'payload'     => $event,
+            'order_id'    => isset($metadata['order_id']) ? (int) $metadata['order_id'] : null,
             'transaction' => $this->normaliseTransaction($event),
-            'currency' => isset($object['currency']) ? strtoupper((string) $object['currency']) : null,
+            'currency'    => isset($object['currency']) ? strtoupper((string) $object['currency']) : null,
         ];
     }
 
@@ -121,11 +121,11 @@ class StripeGateway implements PaymentGatewayInterface
         $params = [];
 
         foreach ($items as $index => $item) {
-            $position = "line_items[$index]";
-            $params[sprintf('%s[price_data][currency]', $position)] = $currency;
-            $params[sprintf('%s[price_data][unit_amount]', $position)] = (int) ($item['unit_price_cents'] ?? 0);
+            $position                                                         = "line_items[$index]";
+            $params[sprintf('%s[price_data][currency]', $position)]           = $currency;
+            $params[sprintf('%s[price_data][unit_amount]', $position)]        = (int) ($item['unit_price_cents'] ?? 0);
             $params[sprintf('%s[price_data][product_data][name]', $position)] = (string) ($item['title'] ?? 'Item');
-            $params[sprintf('%s[quantity]', $position)] = (int) ($item['qty'] ?? 1);
+            $params[sprintf('%s[quantity]', $position)]                       = (int) ($item['qty'] ?? 1);
         }
 
         return $params;
@@ -159,7 +159,7 @@ class StripeGateway implements PaymentGatewayInterface
 
         foreach (explode(',', $signatureHeader) as $segment) {
             [$key, $value] = array_pad(explode('=', $segment, 2), 2, '');
-            $parts[$key] = $value;
+            $parts[$key]   = $value;
         }
 
         if (empty($parts['t']) || empty($parts['v1'])) {
@@ -167,7 +167,7 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         $signedPayload = $parts['t'] . '.' . $payload;
-        $expected = hash_hmac('sha256', $signedPayload, $secret);
+        $expected      = hash_hmac('sha256', $signedPayload, $secret);
 
         return hash_equals($expected, $parts['v1']);
     }
@@ -181,10 +181,10 @@ class StripeGateway implements PaymentGatewayInterface
         $amount = isset($object['amount_total']) ? (int) $object['amount_total'] : 0;
 
         return [
-            'external_id' => $object['payment_intent'] ?? $object['id'] ?? null,
-            'status' => $event['type'] === 'checkout.session.completed' ? 'paid' : ($object['status'] ?? 'pending'),
+            'external_id'  => $object['payment_intent'] ?? $object['id'] ?? null,
+            'status'       => $event['type'] === 'checkout.session.completed' ? 'paid' : ($object['status'] ?? 'pending'),
             'amount_cents' => $amount,
-            'currency' => isset($object['currency']) ? strtoupper((string) $object['currency']) : null,
+            'currency'     => isset($object['currency']) ? strtoupper((string) $object['currency']) : null,
         ];
     }
 }

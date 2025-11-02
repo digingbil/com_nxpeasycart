@@ -34,7 +34,7 @@ class CartSessionService
      */
     public function __construct(CartService $carts, SessionInterface $session)
     {
-        $this->carts = $carts;
+        $this->carts   = $carts;
         $this->session = $session;
     }
 
@@ -46,25 +46,25 @@ class CartSessionService
     public function current(): array
     {
         $cartId = (string) $this->session->get(self::SESSION_KEY, '');
-        $cart = $cartId !== '' ? $this->carts->load($cartId) : null;
+        $cart   = $cartId !== '' ? $this->carts->load($cartId) : null;
 
         $sessionId = $this->session->getId();
 
         if (!$cart) {
             $cart = $this->carts->persist([
-                'id' => $cartId !== '' ? $cartId : null,
+                'id'         => $cartId !== '' ? $cartId : null,
                 'session_id' => $sessionId,
-                'data' => [
+                'data'       => [
                     'currency' => ConfigHelper::getBaseCurrency(),
-                    'items' => [],
+                    'items'    => [],
                 ],
             ]);
         } elseif (($cart['session_id'] ?? null) !== $sessionId) {
             $cart = $this->carts->persist([
-                'id' => $cart['id'],
+                'id'         => $cart['id'],
                 'session_id' => $sessionId,
-                'user_id' => $cart['user_id'] ?? null,
-                'data' => $cart['data'] ?? [],
+                'user_id'    => $cart['user_id'] ?? null,
+                'data'       => $cart['data']    ?? [],
             ]);
         }
 
@@ -86,4 +86,3 @@ class CartSessionService
         return $cart;
     }
 }
-

@@ -53,8 +53,8 @@ class RootCategoriesField extends ListField
 
         if (empty($rows)) {
             $options[] = (object) [
-                'value' => '',
-                'text'  => Text::_('COM_NXPEASYCART_FIELD_ROOT_CATEGORIES_EMPTY'),
+                'value'    => '',
+                'text'     => Text::_('COM_NXPEASYCART_FIELD_ROOT_CATEGORIES_EMPTY'),
                 'disabled' => true,
             ];
 

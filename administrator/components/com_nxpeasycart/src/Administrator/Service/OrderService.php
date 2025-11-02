@@ -4,11 +4,11 @@ namespace Nxp\EasyCart\Admin\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
-use JsonException;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
+use JsonException;
 use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
 use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
 use Ramsey\Uuid\Uuid;
@@ -54,7 +54,7 @@ class OrderService
      */
     public function __construct(DatabaseInterface $db, ?AuditService $audit = null)
     {
-        $this->db = $db;
+        $this->db    = $db;
         $this->audit = $audit;
     }
 
@@ -82,7 +82,7 @@ class OrderService
     public function create(array $payload, ?int $actorId = null): array
     {
         $normalised = $this->normaliseOrderPayload($payload);
-        $items = $this->normaliseOrderItems($payload['items'] ?? []);
+        $items      = $this->normaliseOrderItems($payload['items'] ?? []);
 
         if (empty($items)) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_ITEMS_REQUIRED'));
@@ -94,19 +94,19 @@ class OrderService
 
         try {
             $order = (object) [
-                'order_no' => $normalised['order_no'],
-                'user_id' => $normalised['user_id'],
-                'email' => $normalised['email'],
-                'billing' => $this->encodeJson($normalised['billing']),
-                'shipping' => $normalised['shipping'] === null ? null : $this->encodeJson($normalised['shipping']),
+                'order_no'       => $normalised['order_no'],
+                'user_id'        => $normalised['user_id'],
+                'email'          => $normalised['email'],
+                'billing'        => $this->encodeJson($normalised['billing']),
+                'shipping'       => $normalised['shipping'] === null ? null : $this->encodeJson($normalised['shipping']),
                 'subtotal_cents' => $totals['subtotal_cents'],
-                'tax_cents' => $totals['tax_cents'],
+                'tax_cents'      => $totals['tax_cents'],
                 'shipping_cents' => $totals['shipping_cents'],
                 'discount_cents' => $totals['discount_cents'],
-                'total_cents' => $totals['total_cents'],
-                'currency' => $normalised['currency'],
-                'state' => $normalised['state'],
-                'locale' => $normalised['locale'],
+                'total_cents'    => $totals['total_cents'],
+                'currency'       => $normalised['currency'],
+                'state'          => $normalised['state'],
+                'locale'         => $normalised['locale'],
             ];
 
             $this->db->insertObject('#__nxp_easycart_orders', $order);
@@ -115,15 +115,15 @@ class OrderService
 
             foreach ($items as $item) {
                 $itemObject = (object) [
-                    'order_id' => $orderId,
-                    'product_id' => $item['product_id'],
-                    'variant_id' => $item['variant_id'],
-                    'sku' => $item['sku'],
-                    'title' => $item['title'],
-                    'qty' => $item['qty'],
+                    'order_id'         => $orderId,
+                    'product_id'       => $item['product_id'],
+                    'variant_id'       => $item['variant_id'],
+                    'sku'              => $item['sku'],
+                    'title'            => $item['title'],
+                    'qty'              => $item['qty'],
                     'unit_price_cents' => $item['unit_price_cents'],
-                    'tax_rate' => $item['tax_rate'],
-                    'total_cents' => $item['total_cents'],
+                    'tax_rate'         => $item['tax_rate'],
+                    'total_cents'      => $item['total_cents'],
                 ];
 
                 $this->db->insertObject('#__nxp_easycart_order_items', $itemObject);
@@ -140,8 +140,8 @@ class OrderService
             $orderId,
             'order.created',
             [
-                'order_no' => $normalised['order_no'],
-                'state' => $normalised['state'],
+                'order_no'    => $normalised['order_no'],
+                'state'       => $normalised['state'],
                 'total_cents' => $totals['total_cents'],
             ],
             $actorId
@@ -243,7 +243,7 @@ class OrderService
             'order.state.transitioned',
             [
                 'from' => $current['state'],
-                'to' => $state,
+                'to'   => $state,
             ],
             $actorId
         );
@@ -264,9 +264,9 @@ class OrderService
      */
     public function bulkTransition(array $orderIds, string $state, ?int $actorId = null): array
     {
-        $unique = array_unique(array_map('intval', $orderIds));
+        $unique  = array_unique(array_map('intval', $orderIds));
         $updated = [];
-        $failed = [];
+        $failed  = [];
 
         foreach ($unique as $orderId) {
             if ($orderId <= 0) {
@@ -277,7 +277,7 @@ class OrderService
                 $updated[] = $this->transitionState($orderId, $state, $actorId);
             } catch (RuntimeException $exception) {
                 $failed[] = [
-                    'id' => $orderId,
+                    'id'      => $orderId,
                     'message' => $exception->getMessage(),
                 ];
             }
@@ -285,7 +285,7 @@ class OrderService
 
         return [
             'updated' => $updated,
-            'failed' => $failed,
+            'failed'  => $failed,
         ];
     }
 
@@ -361,19 +361,19 @@ class OrderService
         $query->setLimit($limit, $start);
         $this->db->setQuery($query);
 
-        $rows = $this->db->loadObjectList() ?: [];
+        $rows  = $this->db->loadObjectList() ?: [];
         $items = $this->mapOrderRows($rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'start' => $start,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'start'   => $start,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
             ],
         ];
@@ -404,7 +404,7 @@ class OrderService
         }
 
         $baseCurrency = ConfigHelper::getBaseCurrency();
-        $currency = strtoupper((string) ($payload['currency'] ?? $baseCurrency));
+        $currency     = strtoupper((string) ($payload['currency'] ?? $baseCurrency));
 
         if ($currency !== $baseCurrency) {
             throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_ORDER_CURRENCY_MISMATCH', $baseCurrency));
@@ -425,15 +425,15 @@ class OrderService
         $locale = $locale !== '' ? $locale : 'en-GB';
 
         return [
-            'order_no' => $orderNo,
-            'user_id' => $this->toNullableInt($payload['user_id'] ?? null),
-            'email' => $email,
-            'billing' => $billing,
-            'shipping' => $shipping,
-            'currency' => $currency,
-            'state' => $state,
-            'locale' => $locale,
-            'tax_cents' => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
+            'order_no'       => $orderNo,
+            'user_id'        => $this->toNullableInt($payload['user_id'] ?? null),
+            'email'          => $email,
+            'billing'        => $billing,
+            'shipping'       => $shipping,
+            'currency'       => $currency,
+            'state'          => $state,
+            'locale'         => $locale,
+            'tax_cents'      => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
             'shipping_cents' => $this->toNonNegativeInt($payload['shipping_cents'] ?? 0),
             'discount_cents' => $this->toNonNegativeInt($payload['discount_cents'] ?? 0),
         ];
@@ -449,15 +449,15 @@ class OrderService
     private function normaliseOrderItems(array $items): array
     {
         $baseCurrency = ConfigHelper::getBaseCurrency();
-        $normalised = [];
+        $normalised   = [];
 
         foreach ($items as $item) {
             if (!\is_array($item)) {
                 throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_ITEM_INVALID'));
             }
 
-            $sku = (string) ($item['sku'] ?? '');
-            $sku = trim($sku);
+            $sku   = (string) ($item['sku'] ?? '');
+            $sku   = trim($sku);
             $title = (string) ($item['title'] ?? '');
             $title = trim($title);
 
@@ -465,9 +465,9 @@ class OrderService
                 throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_ITEM_INVALID'));
             }
 
-            $qty = $this->toPositiveInt($item['qty'] ?? 1);
+            $qty       = $this->toPositiveInt($item['qty'] ?? 1);
             $unitPrice = $this->toNonNegativeInt($item['unit_price_cents'] ?? null);
-            $taxRate = isset($item['tax_rate']) ? (string) $item['tax_rate'] : '0.00';
+            $taxRate   = isset($item['tax_rate']) ? (string) $item['tax_rate'] : '0.00';
 
             $lineCurrency = strtoupper((string) ($item['currency'] ?? $baseCurrency));
 
@@ -478,14 +478,14 @@ class OrderService
             $total = isset($item['total_cents']) ? $this->toNonNegativeInt($item['total_cents']) : $qty * $unitPrice;
 
             $normalised[] = [
-                'product_id' => $this->toNullableInt($item['product_id'] ?? null),
-                'variant_id' => $this->toNullableInt($item['variant_id'] ?? null),
-                'sku' => $sku,
-                'title' => $title,
-                'qty' => $qty,
+                'product_id'       => $this->toNullableInt($item['product_id'] ?? null),
+                'variant_id'       => $this->toNullableInt($item['variant_id'] ?? null),
+                'sku'              => $sku,
+                'title'            => $title,
+                'qty'              => $qty,
                 'unit_price_cents' => $unitPrice,
-                'tax_rate' => $this->formatTaxRate($taxRate),
-                'total_cents' => $total,
+                'tax_rate'         => $this->formatTaxRate($taxRate),
+                'total_cents'      => $total,
             ];
         }
 
@@ -506,7 +506,7 @@ class OrderService
             $subtotal += $item['unit_price_cents'] * $item['qty'];
         }
 
-        $tax = $order['tax_cents'];
+        $tax      = $order['tax_cents'];
         $shipping = $order['shipping_cents'];
         $discount = $order['discount_cents'];
 
@@ -514,10 +514,10 @@ class OrderService
 
         return [
             'subtotal_cents' => $subtotal,
-            'tax_cents' => $tax,
+            'tax_cents'      => $tax,
             'shipping_cents' => $shipping,
             'discount_cents' => $discount,
-            'total_cents' => $total,
+            'total_cents'    => $total,
         ];
     }
 
@@ -530,28 +530,28 @@ class OrderService
         $orderId = (int) $row->id;
 
         $transactions = $includeHistory ? $this->getTransactions($orderId) : [];
-        $timeline = $includeHistory ? $this->getAuditTrail($orderId) : [];
+        $timeline     = $includeHistory ? $this->getAuditTrail($orderId) : [];
 
         return [
-            'id' => $orderId,
-            'order_no' => (string) $row->order_no,
-            'user_id' => $row->user_id !== null ? (int) $row->user_id : null,
-            'email' => (string) $row->email,
-            'billing' => $this->decodeJson($row->billing ?? '{}'),
-            'shipping' => $row->shipping !== null ? $this->decodeJson($row->shipping) : null,
+            'id'             => $orderId,
+            'order_no'       => (string) $row->order_no,
+            'user_id'        => $row->user_id !== null ? (int) $row->user_id : null,
+            'email'          => (string) $row->email,
+            'billing'        => $this->decodeJson($row->billing ?? '{}'),
+            'shipping'       => $row->shipping !== null ? $this->decodeJson($row->shipping) : null,
             'subtotal_cents' => (int) $row->subtotal_cents,
-            'tax_cents' => (int) $row->tax_cents,
+            'tax_cents'      => (int) $row->tax_cents,
             'shipping_cents' => (int) $row->shipping_cents,
             'discount_cents' => (int) $row->discount_cents,
-            'total_cents' => (int) $row->total_cents,
-            'currency' => (string) $row->currency,
-            'state' => (string) $row->state,
-            'locale' => (string) $row->locale,
-            'created' => (string) $row->created,
-            'modified' => $row->modified !== null ? (string) $row->modified : null,
-            'items' => $items,
-            'transactions' => $transactions,
-            'timeline' => $timeline,
+            'total_cents'    => (int) $row->total_cents,
+            'currency'       => (string) $row->currency,
+            'state'          => (string) $row->state,
+            'locale'         => (string) $row->locale,
+            'created'        => (string) $row->created,
+            'modified'       => $row->modified !== null ? (string) $row->modified : null,
+            'items'          => $items,
+            'transactions'   => $transactions,
+            'timeline'       => $timeline,
         ];
     }
 
@@ -613,9 +613,9 @@ class OrderService
         $placeholders = [];
 
         foreach ($orderIds as $index => $orderId) {
-            $placeholder = ':orderId' . $index;
+            $placeholder    = ':orderId' . $index;
             $placeholders[] = $placeholder;
-            $boundId = (int) $orderId;
+            $boundId        = (int) $orderId;
             $query->bind($placeholder, $boundId, ParameterType::INTEGER);
         }
 
@@ -624,7 +624,7 @@ class OrderService
         $this->db->setQuery($query);
 
         $rows = $this->db->loadObjectList() ?: [];
-        $map = [];
+        $map  = [];
 
         foreach ($rows as $row) {
             $orderId = (int) $row->order_id;
@@ -634,16 +634,16 @@ class OrderService
             }
 
             $map[$orderId][] = [
-                'id' => (int) $row->id,
-                'order_id' => $orderId,
-                'product_id' => $row->product_id !== null ? (int) $row->product_id : null,
-                'variant_id' => $row->variant_id !== null ? (int) $row->variant_id : null,
-                'sku' => (string) $row->sku,
-                'title' => (string) $row->title,
-                'qty' => (int) $row->qty,
+                'id'               => (int) $row->id,
+                'order_id'         => $orderId,
+                'product_id'       => $row->product_id !== null ? (int) $row->product_id : null,
+                'variant_id'       => $row->variant_id !== null ? (int) $row->variant_id : null,
+                'sku'              => (string) $row->sku,
+                'title'            => (string) $row->title,
+                'qty'              => (int) $row->qty,
                 'unit_price_cents' => (int) $row->unit_price_cents,
-                'tax_rate' => (string) $row->tax_rate,
-                'total_cents' => (int) $row->total_cents,
+                'tax_rate'         => (string) $row->tax_rate,
+                'total_cents'      => (int) $row->total_cents,
             ];
         }
 
@@ -678,14 +678,14 @@ class OrderService
             }
 
             return [
-                'id' => (int) $row->id,
-                'gateway' => (string) $row->gateway,
-                'external_id' => $row->ext_id !== null ? (string) $row->ext_id : null,
-                'status' => (string) $row->status,
-                'amount_cents' => (int) $row->amount_cents,
-                'payload' => $payload,
+                'id'              => (int) $row->id,
+                'gateway'         => (string) $row->gateway,
+                'external_id'     => $row->ext_id !== null ? (string) $row->ext_id : null,
+                'status'          => (string) $row->status,
+                'amount_cents'    => (int) $row->amount_cents,
+                'payload'         => $payload,
                 'idempotency_key' => $row->event_idempotency_key !== null ? (string) $row->event_idempotency_key : null,
-                'created' => (string) $row->created,
+                'created'         => (string) $row->created,
             ];
         }, $rows);
     }
@@ -730,12 +730,12 @@ class OrderService
         }
 
         $object = (object) [
-            'order_id' => $orderId,
-            'gateway' => $gateway,
-            'ext_id' => $externalId,
-            'status' => (string) ($transaction['status'] ?? 'pending'),
+            'order_id'     => $orderId,
+            'gateway'      => $gateway,
+            'ext_id'       => $externalId,
+            'status'       => (string) ($transaction['status'] ?? 'pending'),
             'amount_cents' => (int) ($transaction['amount_cents'] ?? 0),
-            'payload' => !empty($transaction['payload'])
+            'payload'      => !empty($transaction['payload'])
                 ? json_encode($transaction['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
                 : null,
             'event_idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
@@ -755,8 +755,8 @@ class OrderService
             $orderId,
             'order.payment.recorded',
             [
-                'gateway' => $gateway,
-                'status' => $object->status,
+                'gateway'      => $gateway,
+                'status'       => $object->status,
                 'amount_cents' => (int) $object->amount_cents,
             ]
         );
@@ -813,7 +813,7 @@ class OrderService
 
         foreach ($rows as $row) {
             $variantId = (int) $row->variant_id;
-            $qty = max(0, (int) $row->qty);
+            $qty       = max(0, (int) $row->qty);
 
             if ($variantId <= 0 || $qty <= 0) {
                 continue;

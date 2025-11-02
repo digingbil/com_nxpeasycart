@@ -7,8 +7,8 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Session\SessionInterface;
 use Joomla\Database\DatabaseInterface;
 use Nxp\EasyCart\Admin\Administrator\Service\CartService;
-use Nxp\EasyCart\Site\Service\CartSessionService;
 use Nxp\EasyCart\Site\Service\CartPresentationService;
+use Nxp\EasyCart\Site\Service\CartSessionService;
 
 \JLoader::registerNamespace('Nxp\\EasyCart\\Site', __DIR__ . '/src', false, false, 'psr4');
 \JLoader::registerNamespace('Nxp\\EasyCart\\Admin', JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src', false, false, 'psr4');

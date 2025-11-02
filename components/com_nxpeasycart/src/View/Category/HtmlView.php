@@ -31,12 +31,12 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
-        $app = Factory::getApplication();
+        $app      = Factory::getApplication();
         $document = $this->document;
 
-        $model = $this->getModel();
-        $this->category = $model ? $model->getItem() : null;
-        $this->products = $model ? $model->getProducts() : [];
+        $model            = $this->getModel();
+        $this->category   = $model ? $model->getItem() : null;
+        $this->products   = $model ? $model->getProducts() : [];
         $this->categories = $model ? $model->getCategories() : [];
 
         $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
@@ -44,7 +44,7 @@ class HtmlView extends BaseHtmlView
         $wa = $document->getWebAssetManager();
 
         $siteBundleAsset = 'com_nxpeasycart.site.bundle';
-        $siteScriptUri = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+        $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
 
         if (!$wa->assetExists('script', $siteBundleAsset)) {
             $wa->registerScript(
@@ -66,12 +66,12 @@ class HtmlView extends BaseHtmlView
             return;
         }
 
-        $sitename = (string) $app->get('sitename', '');
-        $title = (string) $this->category['title'];
+        $sitename  = (string) $app->get('sitename', '');
+        $title     = (string) $this->category['title'];
         $fullTitle = $sitename !== '' ? trim($title . ' | ' . $sitename, ' |') : $title;
         $document->setTitle($fullTitle);
 
-        $uri = Uri::getInstance();
+        $uri       = Uri::getInstance();
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);
         $document->addHeadLink($canonical, 'canonical');
 

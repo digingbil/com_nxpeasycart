@@ -4,13 +4,13 @@ namespace Nxp\EasyCart\Site\Model;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\DatabaseInterface;
-use Joomla\CMS\Cache\CacheControllerFactoryInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
-use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
 use Nxp\EasyCart\Admin\Administrator\Service\CacheService;
+use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
+use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
 use Nxp\EasyCart\Admin\Administrator\Service\ShippingRuleService;
 use Nxp\EasyCart\Admin\Administrator\Service\TaxService;
 use Nxp\EasyCart\Site\Service\CartPresentationService;
@@ -34,12 +34,12 @@ class CheckoutModel extends BaseDatabaseModel
 
         $container = Factory::getContainer();
 
-        $cartSession = $container->get(CartSessionService::class);
+        $cartSession  = $container->get(CartSessionService::class);
         $presentation = $this->getPresentationService();
 
         $cart = $presentation->hydrate($cartSession->current());
 
-        $cache = $this->getCacheService();
+        $cache         = $this->getCacheService();
         $shippingRules = $cache->remember(
             'checkout.shipping',
             fn () => $this->getShippingService()->paginate(['search' => ''], 50, 0)['items'] ?? [],
@@ -54,11 +54,11 @@ class CheckoutModel extends BaseDatabaseModel
         $payments = $this->getPaymentService()->getConfig();
 
         $this->payload = [
-            'cart' => $cart,
+            'cart'           => $cart,
             'shipping_rules' => $shippingRules,
-            'tax_rates' => $taxRates,
-            'settings' => $settings,
-            'payments' => $payments,
+            'tax_rates'      => $taxRates,
+            'settings'       => $settings,
+            'payments'       => $payments,
         ];
 
         return $this->payload;

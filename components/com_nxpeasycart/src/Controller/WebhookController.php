@@ -37,7 +37,7 @@ class WebhookController extends BaseController
         $manager = Factory::getContainer()->get(PaymentGatewayManager::class);
 
         try {
-            $event = $manager->handleWebhook($gateway, $payload, $context);
+            $event    = $manager->handleWebhook($gateway, $payload, $context);
             $response = new JsonResponse(['status' => 'ok', 'event' => $event]);
         } catch (RuntimeException $exception) {
             $response = new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], 400);
@@ -61,11 +61,11 @@ class WebhookController extends BaseController
         $server = $app->getInput()->server;
 
         $headers = [
-            'Stripe-Signature' => $server->getString('HTTP_STRIPE_SIGNATURE', ''),
-            'PayPal-Transmission-Id' => $server->getString('HTTP_PAYPAL_TRANSMISSION_ID', ''),
-            'PayPal-Transmission-Sig' => $server->getString('HTTP_PAYPAL_TRANSMISSION_SIG', ''),
-            'PayPal-Cert-Url' => $server->getString('HTTP_PAYPAL_CERT_URL', ''),
-            'PayPal-Auth-Algo' => $server->getString('HTTP_PAYPAL_AUTH_ALGO', ''),
+            'Stripe-Signature'         => $server->getString('HTTP_STRIPE_SIGNATURE', ''),
+            'PayPal-Transmission-Id'   => $server->getString('HTTP_PAYPAL_TRANSMISSION_ID', ''),
+            'PayPal-Transmission-Sig'  => $server->getString('HTTP_PAYPAL_TRANSMISSION_SIG', ''),
+            'PayPal-Cert-Url'          => $server->getString('HTTP_PAYPAL_CERT_URL', ''),
+            'PayPal-Auth-Algo'         => $server->getString('HTTP_PAYPAL_AUTH_ALGO', ''),
             'PayPal-Transmission-Time' => $server->getString('HTTP_PAYPAL_TRANSMISSION_TIME', ''),
         ];
 

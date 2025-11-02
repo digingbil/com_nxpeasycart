@@ -6,7 +6,7 @@ use NumberFormatter;
 /** @var array<string, mixed> $order */
 /** @var array<string, mixed> $store */
 
-$items = $order['items'] ?? [];
+$items    = $order['items']    ?? [];
 $currency = $order['currency'] ?? 'USD';
 
 $formatMoney = static function (int $cents) use ($currency): string {

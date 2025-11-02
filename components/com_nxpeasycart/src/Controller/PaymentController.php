@@ -21,7 +21,7 @@ class PaymentController extends BaseController
 {
     public function checkout(): void
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
@@ -31,41 +31,41 @@ class PaymentController extends BaseController
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
         }
 
-        $container = Factory::getContainer();
+        $container   = Factory::getContainer();
         $cartService = $container->get(CartSessionService::class);
-        $cart = $cartService->current();
+        $cart        = $cartService->current();
 
         if (empty($cart['items'])) {
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_CART_EMPTY')], 400);
         }
 
         /** @var OrderService $orders */
-        $orders = $container->get(OrderService::class);
+        $orders       = $container->get(OrderService::class);
         $orderPayload = $this->buildOrderPayload($cart, $payload);
-        $order = $orders->create($orderPayload);
+        $order        = $orders->create($orderPayload);
 
         /** @var PaymentGatewayManager $manager */
         $manager = $container->get(PaymentGatewayManager::class);
 
         $preferences = [
             'success_url' => $payload['success_url'] ?? ($this->buildOrderUrl($order['order_no']) . '&status=success'),
-            'cancel_url' => $payload['cancel_url'] ?? (Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'),
+            'cancel_url'  => $payload['cancel_url']  ?? (Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'),
         ];
 
         $checkout = $manager->createHostedCheckout($gateway, [
-            'id' => $order['id'],
+            'id'       => $order['id'],
             'order_no' => $order['order_no'],
             'currency' => $order['currency'],
-            'email' => $order['email'],
-            'items' => $order['items'],
-            'summary' => [
+            'email'    => $order['email'],
+            'items'    => $order['items'],
+            'summary'  => [
                 'total_cents' => $order['total_cents'],
             ],
         ], $preferences);
 
         $this->respond([
             'order' => [
-                'id' => $order['id'],
+                'id'       => $order['id'],
                 'order_no' => $order['order_no'],
             ],
             'checkout' => $checkout,
@@ -97,32 +97,32 @@ class PaymentController extends BaseController
 
         foreach ($cart['items'] as $item) {
             $items[] = [
-                'sku' => $item['sku'] ?? '',
-                'title' => $item['title'] ?? '',
-                'qty' => (int) ($item['qty'] ?? 1),
+                'sku'              => $item['sku']   ?? '',
+                'title'            => $item['title'] ?? '',
+                'qty'              => (int) ($item['qty'] ?? 1),
                 'unit_price_cents' => (int) ($item['unit_price_cents'] ?? 0),
-                'total_cents' => (int) ($item['total_cents'] ?? 0),
-                'currency' => $item['currency'] ?? ($cart['summary']['currency'] ?? 'USD'),
-                'product_id' => $item['product_id'] ?? null,
-                'variant_id' => $item['variant_id'] ?? null,
-                'tax_rate' => '0.00',
+                'total_cents'      => (int) ($item['total_cents'] ?? 0),
+                'currency'         => $item['currency']   ?? ($cart['summary']['currency'] ?? 'USD'),
+                'product_id'       => $item['product_id'] ?? null,
+                'variant_id'       => $item['variant_id'] ?? null,
+                'tax_rate'         => '0.00',
             ];
         }
 
         $currency = $cart['summary']['currency'] ?? 'USD';
 
         return [
-            'email' => $payload['email'] ?? '',
-            'billing' => $payload['billing'] ?? [],
-            'shipping' => $payload['shipping'] ?? null,
-            'items' => $items,
-            'currency' => $currency,
-            'state' => 'pending',
+            'email'          => $payload['email']    ?? '',
+            'billing'        => $payload['billing']  ?? [],
+            'shipping'       => $payload['shipping'] ?? null,
+            'items'          => $items,
+            'currency'       => $currency,
+            'state'          => 'pending',
             'subtotal_cents' => (int) ($cart['summary']['subtotal_cents'] ?? 0),
             'shipping_cents' => (int) ($payload['shipping_cents'] ?? 0),
-            'tax_cents' => (int) ($payload['tax_cents'] ?? 0),
+            'tax_cents'      => (int) ($payload['tax_cents'] ?? 0),
             'discount_cents' => (int) ($payload['discount_cents'] ?? 0),
-            'total_cents' => (int) ($cart['summary']['total_cents'] ?? 0),
+            'total_cents'    => (int) ($cart['summary']['total_cents'] ?? 0),
         ];
     }
 
@@ -133,7 +133,7 @@ class PaymentController extends BaseController
 
     private function respond(array $payload, int $code = 200): void
     {
-        $app = Factory::getApplication();
+        $app      = Factory::getApplication();
         $response = new JsonResponse($payload, $code);
         $app->setHeader('Content-Type', 'application/json', true);
         $app->setBody($response->toString());

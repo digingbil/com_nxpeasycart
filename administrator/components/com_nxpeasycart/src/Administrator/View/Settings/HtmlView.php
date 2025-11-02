@@ -27,7 +27,7 @@ class HtmlView extends BaseHtmlView
      * @var array<string, mixed>
      */
     protected array $taxRates = [
-        'items' => [],
+        'items'      => [],
         'pagination' => [],
     ];
 
@@ -35,7 +35,7 @@ class HtmlView extends BaseHtmlView
      * @var array<string, mixed>
      */
     protected array $shippingRules = [
-        'items' => [],
+        'items'      => [],
         'pagination' => [],
     ];
 
@@ -80,7 +80,7 @@ class HtmlView extends BaseHtmlView
 
         $this->settingsData = [
             'store' => [
-                'name' => (string) $settings->get('store.name', ''),
+                'name'  => (string) $settings->get('store.name', ''),
                 'email' => (string) $settings->get('store.email', ''),
                 'phone' => (string) $settings->get('store.phone', ''),
             ],
@@ -90,7 +90,7 @@ class HtmlView extends BaseHtmlView
             'base_currency' => ConfigHelper::getBaseCurrency(),
         ];
 
-        $this->taxRates = $container->get(TaxService::class)->paginate([], 50, 0);
+        $this->taxRates      = $container->get(TaxService::class)->paginate([], 50, 0);
         $this->shippingRules = $container->get(ShippingRuleService::class)->paginate([], 50, 0);
     }
 }

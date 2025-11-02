@@ -3,26 +3,26 @@ class ApiClient {
      * @param {Object} config
      * @param {string} config.token CSRF token required by Joomla
      */
-    constructor({ token = '' } = {}) {
+    constructor({ token = "" } = {}) {
         this.token = token;
     }
 
-   /**
-    * Perform a request with default Joomla headers and error handling.
-    *
-    * @param {string} url Fully resolved request URL
-    * @param {RequestInit} options Fetch configuration
+    /**
+     * Perform a request with default Joomla headers and error handling.
+     *
+     * @param {string} url Fully resolved request URL
+     * @param {RequestInit} options Fetch configuration
      * @returns {Promise<any>}
      */
     async request(url, options = {}) {
         const config = {
-            method: 'GET',
+            method: "GET",
             headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                Accept: 'application/json',
+                "X-Requested-With": "XMLHttpRequest",
+                Accept: "application/json",
             },
-            credentials: 'same-origin',
-            cache: 'no-store',
+            credentials: "same-origin",
+            cache: "no-store",
             ...options,
         };
 
@@ -31,13 +31,13 @@ class ApiClient {
             ...(options.headers || {}),
         };
 
-        const method = String(config.method || 'GET').toUpperCase();
+        const method = String(config.method || "GET").toUpperCase();
         let requestUrl = url;
 
         if (this.token) {
-            config.headers['X-CSRF-Token'] = this.token;
+            config.headers["X-CSRF-Token"] = this.token;
 
-            if (method !== 'GET') {
+            if (method !== "GET") {
                 requestUrl = this.ensureTokenOnUrl(requestUrl);
             }
         }
@@ -56,7 +56,10 @@ class ApiClient {
         }
 
         if (!response.ok) {
-            const error = new Error(payload?.message || `Request failed with status ${response.status}`);
+            const error = new Error(
+                payload?.message ||
+                    `Request failed with status ${response.status}`
+            );
             error.code = response.status;
             error.details = payload?.data || payload?.errors || null;
 
@@ -64,7 +67,7 @@ class ApiClient {
         }
 
         if (payload?.success === false) {
-            const error = new Error(payload.message || 'Unknown API error');
+            const error = new Error(payload.message || "Unknown API error");
             error.details = payload.data || payload.errors || null;
 
             throw error;
@@ -84,11 +87,14 @@ class ApiClient {
         const tokenParam = encodeURIComponent(this.token);
 
         try {
-            const origin = typeof window !== 'undefined' && window.location ? window.location.origin : undefined;
+            const origin =
+                typeof window !== "undefined" && window.location
+                    ? window.location.origin
+                    : undefined;
             const parsed = new URL(url, origin);
 
             if (!parsed.searchParams.has(this.token)) {
-                parsed.searchParams.set(this.token, '1');
+                parsed.searchParams.set(this.token, "1");
             }
 
             return parsed.toString();
@@ -97,7 +103,7 @@ class ApiClient {
                 return url;
             }
 
-            const separator = url.includes('?') ? '&' : '?';
+            const separator = url.includes("?") ? "&" : "?";
 
             return `${url}${separator}${tokenParam}=1`;
         }
@@ -107,7 +113,7 @@ class ApiClient {
      * GET request helper.
      */
     get(url, options = {}) {
-        return this.request(url, { ...options, method: 'GET' });
+        return this.request(url, { ...options, method: "GET" });
     }
 
     /**
@@ -115,13 +121,13 @@ class ApiClient {
      */
     post(url, body, options = {}) {
         const headers = {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...(options.headers || {}),
         };
 
         return this.request(url, {
             ...options,
-            method: 'POST',
+            method: "POST",
             headers,
             body: JSON.stringify(body),
         });
@@ -132,13 +138,13 @@ class ApiClient {
      */
     put(url, body, options = {}) {
         const headers = {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...(options.headers || {}),
         };
 
         return this.request(url, {
             ...options,
-            method: 'PUT',
+            method: "PUT",
             headers,
             body: JSON.stringify(body),
         });
@@ -148,20 +154,26 @@ class ApiClient {
      * DELETE request helper.
      */
     delete(url, options = {}) {
-        return this.request(url, { ...options, method: 'DELETE' });
+        return this.request(url, { ...options, method: "DELETE" });
     }
 
     /**
      * Domain-specific helper: fetch paginated products.
      */
-    async fetchProducts({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchProducts({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const params = new URLSearchParams({
             limit: String(limit),
             start: String(start),
         });
 
         if (search) {
-            params.set('search', search);
+            params.set("search", search);
         }
 
         const url = `${endpoint}&${params.toString()}`;
@@ -169,7 +181,12 @@ class ApiClient {
         const payload = await this.get(url, { signal });
         const body = payload.data ?? {};
         const items = body.items ?? body.data ?? [];
-        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
+        const pagination = body.pagination ?? {
+            total: 0,
+            limit,
+            pages: 0,
+            current: 0,
+        };
 
         return {
             items,
@@ -177,7 +194,13 @@ class ApiClient {
         };
     }
 
-    async fetchCategories({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchCategories({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -189,14 +212,26 @@ class ApiClient {
 
         return {
             items: body.items ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            pagination: body.pagination ?? {
+                total: 0,
+                limit,
+                pages: 0,
+                current: 0,
+            },
         };
     }
 
     /**
      * Fetch orders with pagination and filters.
      */
-    async fetchOrders({ endpoint, limit = 20, start = 0, search = '', state = '', signal }) {
+    async fetchOrders({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        state = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -207,7 +242,12 @@ class ApiClient {
         const payload = await this.get(url, { signal });
         const body = payload.data ?? {};
         const items = body.items ?? body.data ?? [];
-        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
+        const pagination = body.pagination ?? {
+            total: 0,
+            limit,
+            pages: 0,
+            current: 0,
+        };
 
         return {
             items,
@@ -215,7 +255,13 @@ class ApiClient {
         };
     }
 
-    async fetchCustomers({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchCustomers({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -225,7 +271,12 @@ class ApiClient {
         const payload = await this.get(url, { signal });
         const body = payload.data ?? {};
         const items = body.items ?? [];
-        const pagination = body.pagination ?? { total: 0, limit, pages: 0, current: 0 };
+        const pagination = body.pagination ?? {
+            total: 0,
+            limit,
+            pages: 0,
+            current: 0,
+        };
 
         return {
             items,
@@ -240,7 +291,13 @@ class ApiClient {
         return payload.data?.customer ?? null;
     }
 
-    async fetchCoupons({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchCoupons({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -252,7 +309,12 @@ class ApiClient {
 
         return {
             items: body.items ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            pagination: body.pagination ?? {
+                total: 0,
+                limit,
+                pages: 0,
+                current: 0,
+            },
         };
     }
 
@@ -273,14 +335,20 @@ class ApiClient {
         const payload = await this.delete(endpoint, {
             body: JSON.stringify({ ids }),
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
         return payload.data?.deleted ?? 0;
     }
 
-    async fetchTaxRates({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchTaxRates({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -292,7 +360,12 @@ class ApiClient {
 
         return {
             items: body.items ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            pagination: body.pagination ?? {
+                total: 0,
+                limit,
+                pages: 0,
+                current: 0,
+            },
         };
     }
 
@@ -313,14 +386,20 @@ class ApiClient {
         const payload = await this.delete(endpoint, {
             body: JSON.stringify({ ids }),
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
         return payload.data?.deleted ?? 0;
     }
 
-    async fetchShippingRules({ endpoint, limit = 20, start = 0, search = '', signal }) {
+    async fetchShippingRules({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -332,7 +411,12 @@ class ApiClient {
 
         return {
             items: body.items ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            pagination: body.pagination ?? {
+                total: 0,
+                limit,
+                pages: 0,
+                current: 0,
+            },
         };
     }
 
@@ -353,14 +437,21 @@ class ApiClient {
         const payload = await this.delete(endpoint, {
             body: JSON.stringify({ ids }),
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
         return payload.data?.deleted ?? 0;
     }
 
-    async fetchLogs({ endpoint, limit = 20, start = 0, search = '', entity = '', signal }) {
+    async fetchLogs({
+        endpoint,
+        limit = 20,
+        start = 0,
+        search = "",
+        entity = "",
+        signal,
+    }) {
         const url = this.mergeParams(endpoint, {
             limit,
             start,
@@ -373,7 +464,12 @@ class ApiClient {
 
         return {
             items: body.items ?? [],
-            pagination: body.pagination ?? { total: 0, limit, pages: 0, current: 0 },
+            pagination: body.pagination ?? {
+                total: 0,
+                limit,
+                pages: 0,
+                current: 0,
+            },
         };
     }
 
@@ -409,7 +505,7 @@ class ApiClient {
     /**
      * Retrieve a single order by id or number.
      */
-    async fetchOrder({ endpoint, id = null, orderNumber = '' }) {
+    async fetchOrder({ endpoint, id = null, orderNumber = "" }) {
         const url = this.mergeParams(endpoint, {
             id: id || undefined,
             order_no: orderNumber || undefined,
@@ -479,7 +575,7 @@ class ApiClient {
         const payload = await this.delete(endpoint, {
             body: JSON.stringify({ ids }),
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
@@ -503,7 +599,7 @@ class ApiClient {
         const payload = await this.delete(endpoint, {
             body: JSON.stringify({ ids }),
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
         });
 
@@ -517,7 +613,7 @@ class ApiClient {
         const search = new URLSearchParams();
 
         Object.entries(params).forEach(([key, value]) => {
-            if (value === undefined || value === null || value === '') {
+            if (value === undefined || value === null || value === "") {
                 return;
             }
 
@@ -528,7 +624,7 @@ class ApiClient {
             return endpoint;
         }
 
-        return `${endpoint}${endpoint.includes('?') ? '&' : '?'}${search.toString()}`;
+        return `${endpoint}${endpoint.includes("?") ? "&" : "?"}${search.toString()}`;
     }
 }
 

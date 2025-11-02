@@ -43,12 +43,12 @@ class ProductsModel extends ListModel
      */
     protected function populateState($ordering = 'a.created', $direction = 'DESC')
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $search = $input->getString('search', '');
-        $limit = $input->getInt('limit', $app->get('list_limit', 20));
-        $start = $input->getInt('start', 0);
+        $limit  = $input->getInt('limit', $app->get('list_limit', 20));
+        $start  = $input->getInt('start', 0);
 
         $this->setState('filter.search', $search);
         $this->setState('list.limit', max(0, $limit));
@@ -64,7 +64,7 @@ class ProductsModel extends ListModel
      */
     protected function getListQuery()
     {
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select(
                 [

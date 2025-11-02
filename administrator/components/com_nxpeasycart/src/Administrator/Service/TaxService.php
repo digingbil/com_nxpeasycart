@@ -23,8 +23,8 @@ class TaxService
 
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
-        $limit = $limit > 0 ? $limit : 20;
-        $start = $start >= 0 ? $start : 0;
+        $limit  = $limit > 0 ? $limit : 20;
+        $start  = $start >= 0 ? $start : 0;
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
         $query = $this->db->getQuery(true)
@@ -52,17 +52,17 @@ class TaxService
 
         $items = array_map([$this, 'mapRow'], $rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
-                'start' => $start,
+                'start'   => $start,
             ],
         ];
     }
@@ -70,7 +70,7 @@ class TaxService
     public function create(array $data): array
     {
         $payload = $this->normalise($data);
-        $rate = (object) $payload;
+        $rate    = (object) $payload;
         $this->db->insertObject('#__nxp_easycart_tax_rates', $rate);
 
         $id = (int) $this->db->insertid();
@@ -85,7 +85,7 @@ class TaxService
         }
 
         $payload = $this->normalise($data);
-        $rate = (object) array_merge(['id' => $id], $payload);
+        $rate    = (object) array_merge(['id' => $id], $payload);
         $this->db->updateObject('#__nxp_easycart_tax_rates', $rate, 'id');
 
         return $this->get($id) ?? [];
@@ -132,33 +132,33 @@ class TaxService
         }
 
         $region = trim((string) ($data['region'] ?? ''));
-        $rate = (float) ($data['rate'] ?? 0);
+        $rate   = (float) ($data['rate'] ?? 0);
 
         if ($rate < 0) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_TAX_RATE_INVALID'), 400);
         }
 
         $inclusive = isset($data['inclusive']) ? (bool) $data['inclusive'] : false;
-        $priority = isset($data['priority']) ? (int) $data['priority'] : 0;
+        $priority  = isset($data['priority']) ? (int) $data['priority'] : 0;
 
         return [
-            'country' => $country,
-            'region' => $region,
-            'rate' => $rate,
+            'country'   => $country,
+            'region'    => $region,
+            'rate'      => $rate,
             'inclusive' => $inclusive ? 1 : 0,
-            'priority' => $priority,
+            'priority'  => $priority,
         ];
     }
 
     private function mapRow(object $row): array
     {
         return [
-            'id' => (int) $row->id,
-            'country' => (string) $row->country,
-            'region' => $row->region !== null ? (string) $row->region : '',
-            'rate' => (float) $row->rate,
+            'id'        => (int) $row->id,
+            'country'   => (string) $row->country,
+            'region'    => $row->region !== null ? (string) $row->region : '',
+            'rate'      => (float) $row->rate,
             'inclusive' => (bool) $row->inclusive,
-            'priority' => (int) $row->priority,
+            'priority'  => (int) $row->priority,
         ];
     }
 }

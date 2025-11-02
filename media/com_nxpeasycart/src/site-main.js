@@ -1,41 +1,41 @@
-import { createApp, reactive, computed, ref } from 'vue';
+import { createApp, reactive, computed, ref } from "vue";
 
 const formatMoney = (cents, currency) => {
-  const amount = (cents || 0) / 100;
+    const amount = (cents || 0) / 100;
 
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: currency || 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  } catch (error) {
-    const symbol = currency ? `${currency} ` : '';
-    return `${symbol}${amount.toFixed(2)}`;
-  }
+    try {
+        return new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: currency || "USD",
+            minimumFractionDigits: 2,
+        }).format(amount);
+    } catch (error) {
+        const symbol = currency ? `${currency} ` : "";
+        return `${symbol}${amount.toFixed(2)}`;
+    }
 };
 
 const parsePayload = (value, fallback = {}) => {
-  if (!value) {
-    return fallback;
-  }
+    if (!value) {
+        return fallback;
+    }
 
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    console.warn('[NXP Easy Cart] Failed to parse island payload', error);
-    return fallback;
-  }
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        console.warn("[NXP Easy Cart] Failed to parse island payload", error);
+        return fallback;
+    }
 };
 
 const mountCategoryIsland = (el) => {
-  const category = parsePayload(el.dataset.nxpCategory, {});
-  const products = parsePayload(el.dataset.nxpProducts, []);
+    const category = parsePayload(el.dataset.nxpCategory, {});
+    const products = parsePayload(el.dataset.nxpProducts, []);
 
-  el.innerHTML = '';
+    el.innerHTML = "";
 
-  const app = createApp({
-    template: `
+    const app = createApp({
+        template: `
       <div class="nxp-category" v-cloak>
         <header class="nxp-category__header">
           <h1 class="nxp-category__title">{{ title }}</h1>
@@ -77,44 +77,48 @@ const mountCategoryIsland = (el) => {
         </div>
       </div>
     `,
-    setup() {
-      const title = category?.title || 'Products';
-      const search = ref('');
+        setup() {
+            const title = category?.title || "Products";
+            const search = ref("");
 
-      const filteredProducts = computed(() => {
-        if (!search.value) {
-          return products;
-        }
+            const filteredProducts = computed(() => {
+                if (!search.value) {
+                    return products;
+                }
 
-        const query = search.value.toLowerCase();
+                const query = search.value.toLowerCase();
 
-        return products.filter((product) => {
-          const haystack = `${product.title} ${product.short_desc || ''}`.toLowerCase();
-          return haystack.includes(query);
-        });
-      });
+                return products.filter((product) => {
+                    const haystack =
+                        `${product.title} ${product.short_desc || ""}`.toLowerCase();
+                    return haystack.includes(query);
+                });
+            });
 
-      return {
-        title,
-        search,
-        filteredProducts,
-        searchPlaceholder: 'Search products',
-        emptyCopy: 'No products found in this category yet.',
-        viewCopy: 'View product',
-      };
-    },
-  });
+            return {
+                title,
+                search,
+                filteredProducts,
+                searchPlaceholder: "Search products",
+                emptyCopy: "No products found in this category yet.",
+                viewCopy: "View product",
+            };
+        },
+    });
 
-  app.mount(el);
+    app.mount(el);
 };
 
 const mountCartIsland = (el) => {
-  const payload = parsePayload(el.dataset.nxpCart, { items: [], summary: {} });
+    const payload = parsePayload(el.dataset.nxpCart, {
+        items: [],
+        summary: {},
+    });
 
-  el.innerHTML = '';
+    el.innerHTML = "";
 
-  const app = createApp({
-    template: `
+    const app = createApp({
+        template: `
       <div class="nxp-cart" v-cloak>
         <header class="nxp-cart__header">
           <h1 class="nxp-cart__title">Your cart</h1>
@@ -194,64 +198,67 @@ const mountCartIsland = (el) => {
         </div>
       </div>
     `,
-    setup() {
-      const items = reactive(payload.items || []);
-      const currency = payload.summary?.currency || 'USD';
+        setup() {
+            const items = reactive(payload.items || []);
+            const currency = payload.summary?.currency || "USD";
 
-      const summary = reactive({
-        subtotal_cents: payload.summary?.subtotal_cents || 0,
-        total_cents: payload.summary?.total_cents || 0,
-      });
+            const summary = reactive({
+                subtotal_cents: payload.summary?.subtotal_cents || 0,
+                total_cents: payload.summary?.total_cents || 0,
+            });
 
-      const recalcSummary = () => {
-        const subtotal = items.reduce((total, item) => total + (item.total_cents || 0), 0);
-        summary.subtotal_cents = subtotal;
-        summary.total_cents = subtotal;
-      };
+            const recalcSummary = () => {
+                const subtotal = items.reduce(
+                    (total, item) => total + (item.total_cents || 0),
+                    0
+                );
+                summary.subtotal_cents = subtotal;
+                summary.total_cents = subtotal;
+            };
 
-      const remove = (item) => {
-        const index = items.indexOf(item);
+            const remove = (item) => {
+                const index = items.indexOf(item);
 
-        if (index >= 0) {
-          items.splice(index, 1);
-          recalcSummary();
-        }
-      };
+                if (index >= 0) {
+                    items.splice(index, 1);
+                    recalcSummary();
+                }
+            };
 
-      const updateQty = (item, value) => {
-        const qty = Math.max(1, parseInt(value, 10) || 1);
-        item.qty = qty;
-        item.total_cents = qty * (item.unit_price_cents || 0);
-        recalcSummary();
-      };
+            const updateQty = (item, value) => {
+                const qty = Math.max(1, parseInt(value, 10) || 1);
+                item.qty = qty;
+                item.total_cents = qty * (item.unit_price_cents || 0);
+                recalcSummary();
+            };
 
-      return {
-        items,
-        summary,
-        remove,
-        updateQty,
-        format: (cents) => formatMoney(cents, currency),
-      };
-    },
-  });
+            return {
+                items,
+                summary,
+                remove,
+                updateQty,
+                format: (cents) => formatMoney(cents, currency),
+            };
+        },
+    });
 
-  app.mount(el);
+    app.mount(el);
 };
 
 const mountCheckoutIsland = (el) => {
-  const payload = parsePayload(el.dataset.nxpCheckout, {});
-  const cart = payload.cart || { items: [], summary: {} };
-  const shippingRules = payload.shipping_rules || [];
-  const taxRates = payload.tax_rates || [];
-  const settings = payload.settings || {};
-  const payments = payload.payments || {};
-  const endpoints = payload.endpoints || {};
-  const token = payload.token || '';
+    const payload = parsePayload(el.dataset.nxpCheckout, {});
+    const cart = payload.cart || { items: [], summary: {} };
+    const shippingRules = payload.shipping_rules || [];
+    const taxRates = payload.tax_rates || [];
+    const settings = payload.settings || {};
+    const payments = payload.payments || {};
+    const endpoints = payload.endpoints || {};
+    const token = payload.token || "";
 
-  el.innerHTML = '';
+    el.innerHTML = "";
 
-  const app = createApp({
-    template: `
+    const app = createApp({
+        template: `
       <div class="nxp-checkout" v-cloak>
         <header class="nxp-checkout__header">
           <h1 class="nxp-checkout__title">Checkout</h1>
@@ -388,211 +395,238 @@ const mountCheckoutIsland = (el) => {
         </div>
       </div>
     `,
-    setup() {
-      const cartItems = reactive((cart.items || []).map((item) => ({ ...item })));
-      const currency = cart.summary?.currency || settings.base_currency || 'USD';
-      const shipping = shippingRules.map((rule, index) => ({
-        ...rule,
-        price_cents: rule.price_cents || 0,
-        default: index === 0,
-      }));
+        setup() {
+            const cartItems = reactive(
+                (cart.items || []).map((item) => ({ ...item }))
+            );
+            const currency =
+                cart.summary?.currency || settings.base_currency || "USD";
+            const shipping = shippingRules.map((rule, index) => ({
+                ...rule,
+                price_cents: rule.price_cents || 0,
+                default: index === 0,
+            }));
 
-      const isConfigured = (config, keys = []) =>
-        keys.every((key) => {
-          const value = config[key] ?? '';
-          return String(value).trim() !== '';
-        });
+            const isConfigured = (config, keys = []) =>
+                keys.every((key) => {
+                    const value = config[key] ?? "";
+                    return String(value).trim() !== "";
+                });
 
-      const gatewayOptions = [];
+            const gatewayOptions = [];
 
-      if (isConfigured(payments.stripe ?? {}, ['publishable_key', 'secret_key'])) {
-        gatewayOptions.push({
-          id: 'stripe',
-          label: 'Card (Stripe)',
-        });
-      }
+            if (
+                isConfigured(payments.stripe ?? {}, [
+                    "publishable_key",
+                    "secret_key",
+                ])
+            ) {
+                gatewayOptions.push({
+                    id: "stripe",
+                    label: "Card (Stripe)",
+                });
+            }
 
-      if (isConfigured(payments.paypal ?? {}, ['client_id', 'client_secret'])) {
-        gatewayOptions.push({
-          id: 'paypal',
-          label: 'PayPal',
-        });
-      }
+            if (
+                isConfigured(payments.paypal ?? {}, [
+                    "client_id",
+                    "client_secret",
+                ])
+            ) {
+                gatewayOptions.push({
+                    id: "paypal",
+                    label: "PayPal",
+                });
+            }
 
-      const gateways = gatewayOptions;
-      const selectedGateway = ref(gateways[0]?.id || '');
-      const hostedCheckoutAvailable = gateways.length > 0 && Boolean(endpoints.payment);
+            const gateways = gatewayOptions;
+            const selectedGateway = ref(gateways[0]?.id || "");
+            const hostedCheckoutAvailable =
+                gateways.length > 0 && Boolean(endpoints.payment);
 
-      const state = reactive({
-        email: '',
-        billing: {
-          first_name: '',
-          last_name: '',
-          address_line1: '',
-          city: '',
-          postcode: '',
-          country: '',
-        },
-        shipping_rule_id: shipping[0]?.id || null,
-      });
-
-      const ui = reactive({
-        loading: false,
-        error: '',
-        success: false,
-        orderNumber: '',
-        orderUrl: 'index.php?option=com_nxpeasycart&view=order',
-      });
-
-      const subtotal = computed(() => cartItems.reduce((total, item) => total + (item.total_cents || 0), 0));
-
-      const selectedShippingCost = computed(() => {
-        const selected = shipping.find((rule) => String(rule.id) === String(state.shipping_rule_id));
-        return selected ? selected.price_cents : 0;
-      });
-
-      const total = computed(() => subtotal.value + selectedShippingCost.value);
-
-      const submit = async () => {
-        ui.error = '';
-
-        if (cartItems.length === 0) {
-          ui.error = 'Your cart is empty.';
-          return;
-        }
-
-        ui.loading = true;
-
-        const gateway = selectedGateway.value || gateways[0]?.id || '';
-
-        const payloadBody = {
-          email: state.email,
-          billing: state.billing,
-          shipping_rule_id: state.shipping_rule_id,
-          items: cartItems.map((item) => ({
-            sku: item.sku,
-            qty: item.qty,
-            product_id: item.product_id,
-            variant_id: item.variant_id,
-            unit_price_cents: item.unit_price_cents,
-            total_cents: item.total_cents,
-            currency,
-            title: item.title,
-          })),
-          currency,
-          totals: {
-            subtotal_cents: subtotal.value,
-            shipping_cents: selectedShippingCost.value,
-            total_cents: total.value,
-          },
-          gateway,
-        };
-
-        try {
-          if (hostedCheckoutAvailable && gateway) {
-            const response = await fetch(endpoints.payment, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': token,
-                'X-Requested-With': 'XMLHttpRequest',
-              },
-              body: JSON.stringify(payloadBody),
-              credentials: 'same-origin',
+            const state = reactive({
+                email: "",
+                billing: {
+                    first_name: "",
+                    last_name: "",
+                    address_line1: "",
+                    city: "",
+                    postcode: "",
+                    country: "",
+                },
+                shipping_rule_id: shipping[0]?.id || null,
             });
 
-            if (!response.ok) {
-              const message = `Checkout failed (${response.status})`;
-              throw new Error(message);
-            }
+            const ui = reactive({
+                loading: false,
+                error: "",
+                success: false,
+                orderNumber: "",
+                orderUrl: "index.php?option=com_nxpeasycart&view=order",
+            });
 
-            const data = await response.json();
-            const redirectUrl = data?.checkout?.url;
+            const subtotal = computed(() =>
+                cartItems.reduce(
+                    (total, item) => total + (item.total_cents || 0),
+                    0
+                )
+            );
 
-            if (!redirectUrl) {
-              throw new Error('Missing checkout URL from gateway.');
-            }
+            const selectedShippingCost = computed(() => {
+                const selected = shipping.find(
+                    (rule) => String(rule.id) === String(state.shipping_rule_id)
+                );
+                return selected ? selected.price_cents : 0;
+            });
 
-            window.location.href = redirectUrl;
-            return;
-          }
+            const total = computed(
+                () => subtotal.value + selectedShippingCost.value
+            );
 
-          if (!endpoints.checkout) {
-            throw new Error('Checkout endpoint unavailable.');
-          }
+            const submit = async () => {
+                ui.error = "";
 
-          const response = await fetch(endpoints.checkout, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': token,
-              'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify(payloadBody),
-            credentials: 'same-origin',
-          });
+                if (cartItems.length === 0) {
+                    ui.error = "Your cart is empty.";
+                    return;
+                }
 
-          if (!response.ok) {
-            const message = `Checkout failed (${response.status})`;
-            throw new Error(message);
-          }
+                ui.loading = true;
 
-          const data = await response.json();
-          const order = data?.order || {};
+                const gateway = selectedGateway.value || gateways[0]?.id || "";
 
-          ui.success = true;
-          ui.orderNumber = order.order_no || '';
-          ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
-        } catch (error) {
-          ui.error = error.message || 'Unable to complete checkout right now.';
-        } finally {
-          ui.loading = false;
-        }
-      };
+                const payloadBody = {
+                    email: state.email,
+                    billing: state.billing,
+                    shipping_rule_id: state.shipping_rule_id,
+                    items: cartItems.map((item) => ({
+                        sku: item.sku,
+                        qty: item.qty,
+                        product_id: item.product_id,
+                        variant_id: item.variant_id,
+                        unit_price_cents: item.unit_price_cents,
+                        total_cents: item.total_cents,
+                        currency,
+                        title: item.title,
+                    })),
+                    currency,
+                    totals: {
+                        subtotal_cents: subtotal.value,
+                        shipping_cents: selectedShippingCost.value,
+                        total_cents: total.value,
+                    },
+                    gateway,
+                };
 
-      return {
-        model: state,
-        cartItems,
-        shippingRules: shipping,
-        subtotal,
-        selectedShippingCost,
-        total,
-        submit,
-        loading: computed(() => ui.loading),
-        error: computed(() => ui.error),
-        success: computed(() => ui.success),
-        orderNumber: computed(() => ui.orderNumber),
-        orderUrl: computed(() => ui.orderUrl),
-        formatMoney: (cents) => formatMoney(cents, currency),
-        gateways,
-        selectedGateway,
-      };
-    },
-  });
+                try {
+                    if (hostedCheckoutAvailable && gateway) {
+                        const response = await fetch(endpoints.payment, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRF-Token": token,
+                                "X-Requested-With": "XMLHttpRequest",
+                            },
+                            body: JSON.stringify(payloadBody),
+                            credentials: "same-origin",
+                        });
 
-  app.mount(el);
+                        if (!response.ok) {
+                            const message = `Checkout failed (${response.status})`;
+                            throw new Error(message);
+                        }
+
+                        const data = await response.json();
+                        const redirectUrl = data?.checkout?.url;
+
+                        if (!redirectUrl) {
+                            throw new Error(
+                                "Missing checkout URL from gateway."
+                            );
+                        }
+
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+
+                    if (!endpoints.checkout) {
+                        throw new Error("Checkout endpoint unavailable.");
+                    }
+
+                    const response = await fetch(endpoints.checkout, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-Token": token,
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        body: JSON.stringify(payloadBody),
+                        credentials: "same-origin",
+                    });
+
+                    if (!response.ok) {
+                        const message = `Checkout failed (${response.status})`;
+                        throw new Error(message);
+                    }
+
+                    const data = await response.json();
+                    const order = data?.order || {};
+
+                    ui.success = true;
+                    ui.orderNumber = order.order_no || "";
+                    ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
+                } catch (error) {
+                    ui.error =
+                        error.message ||
+                        "Unable to complete checkout right now.";
+                } finally {
+                    ui.loading = false;
+                }
+            };
+
+            return {
+                model: state,
+                cartItems,
+                shippingRules: shipping,
+                subtotal,
+                selectedShippingCost,
+                total,
+                submit,
+                loading: computed(() => ui.loading),
+                error: computed(() => ui.error),
+                success: computed(() => ui.success),
+                orderNumber: computed(() => ui.orderNumber),
+                orderUrl: computed(() => ui.orderUrl),
+                formatMoney: (cents) => formatMoney(cents, currency),
+                gateways,
+                selectedGateway,
+            };
+        },
+    });
+
+    app.mount(el);
 };
 
 const islandRegistry = {
-  category: mountCategoryIsland,
-  cart: mountCartIsland,
-  checkout: mountCheckoutIsland,
+    category: mountCategoryIsland,
+    cart: mountCartIsland,
+    checkout: mountCheckoutIsland,
 };
 
 const bootIslands = () => {
-  document.querySelectorAll('[data-nxp-island]').forEach((el) => {
-    const key = el.dataset.nxpIsland;
+    document.querySelectorAll("[data-nxp-island]").forEach((el) => {
+        const key = el.dataset.nxpIsland;
 
-    if (!key || !islandRegistry[key]) {
-      return;
-    }
+        if (!key || !islandRegistry[key]) {
+            return;
+        }
 
-    islandRegistry[key](el);
-  });
+        islandRegistry[key](el);
+    });
 };
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', bootIslands);
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootIslands);
 } else {
-  bootIslands();
+    bootIslands();
 }

@@ -24,7 +24,7 @@ class DisplayController extends BaseController
     public function display($cachable = false, $urlparams = [])
     {
         $requestedView = $this->input->getCmd('view', $this->default_view);
-        $section = $requestedView ?: $this->default_view;
+        $section       = $requestedView ?: $this->default_view;
 
         if ($section === 'app') {
             $section = $this->input->getCmd('screen', 'dashboard');

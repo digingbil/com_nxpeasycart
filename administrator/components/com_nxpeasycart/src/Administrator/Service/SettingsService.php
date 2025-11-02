@@ -54,7 +54,7 @@ class SettingsService
         $payload = $this->encodeValue($value);
 
         $object = (object) [
-            'key' => $key,
+            'key'   => $key,
             'value' => $payload,
         ];
 
@@ -84,7 +84,7 @@ class SettingsService
 
         $this->db->setQuery($query);
 
-        $rows = $this->db->loadObjectList() ?: [];
+        $rows     = $this->db->loadObjectList() ?: [];
         $settings = [];
 
         foreach ($rows as $row) {
@@ -142,7 +142,7 @@ class SettingsService
     private function looksLikeJson(string $value): bool
     {
         $first = $value[0];
-        $last = $value[strlen($value) - 1];
+        $last  = $value[strlen($value) - 1];
 
         return ($first === '{' && $last === '}') || ($first === '[' && $last === ']');
     }

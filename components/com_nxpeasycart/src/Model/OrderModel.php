@@ -20,7 +20,7 @@ class OrderModel extends BaseDatabaseModel
      */
     protected function populateState($ordering = null, $direction = null)
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $this->setState('order.id', $input->getInt('id'));
@@ -47,7 +47,7 @@ class OrderModel extends BaseDatabaseModel
 
         $service = $container->get(OrderService::class);
 
-        $id = (int) $this->getState('order.id');
+        $id     = (int) $this->getState('order.id');
         $number = (string) $this->getState('order.number');
 
         $order = null;

@@ -34,7 +34,7 @@ class CategoryModel extends BaseDatabaseModel
      */
     protected function populateState($ordering = null, $direction = null)
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $this->setState('category.id', $input->getInt('id'));
@@ -46,7 +46,7 @@ class CategoryModel extends BaseDatabaseModel
 
         if ($menu) {
             $params = $menu->getParams();
-            $raw = $params->get('root_categories', []);
+            $raw    = $params->get('root_categories', []);
 
             if (is_string($raw) && str_starts_with(trim($raw), '[')) {
                 $decoded = json_decode($raw, true);
@@ -80,8 +80,8 @@ class CategoryModel extends BaseDatabaseModel
             return $this->item;
         }
 
-        $db = $this->getDatabase();
-        $id = (int) $this->getState('category.id');
+        $db   = $this->getDatabase();
+        $id   = (int) $this->getState('category.id');
         $slug = (string) $this->getState('category.slug');
 
         if ($id > 0 || $slug !== '') {
@@ -103,11 +103,11 @@ class CategoryModel extends BaseDatabaseModel
 
             if ($row) {
                 $this->item = [
-                    'id' => (int) $row->id,
-                    'title' => (string) $row->title,
-                    'slug' => (string) $row->slug,
+                    'id'        => (int) $row->id,
+                    'title'     => (string) $row->title,
+                    'slug'      => (string) $row->slug,
                     'parent_id' => $row->parent_id !== null ? (int) $row->parent_id : null,
-                    'sort' => (int) $row->sort,
+                    'sort'      => (int) $row->sort,
                 ];
 
                 return $this->item;
@@ -115,11 +115,11 @@ class CategoryModel extends BaseDatabaseModel
         }
 
         $this->item = [
-            'id' => null,
-            'title' => Text::_('COM_NXPEASYCART_CATEGORY_ALL'),
-            'slug' => '',
+            'id'        => null,
+            'title'     => Text::_('COM_NXPEASYCART_CATEGORY_ALL'),
+            'slug'      => '',
             'parent_id' => null,
-            'sort' => 0,
+            'sort'      => 0,
         ];
 
         return $this->item;
@@ -138,7 +138,7 @@ class CategoryModel extends BaseDatabaseModel
 
         $category = $this->getItem();
 
-        $db = $this->getDatabase();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -167,7 +167,7 @@ class CategoryModel extends BaseDatabaseModel
                 $placeholders = [];
 
                 foreach ($rootIds as $index => $rootId) {
-                    $placeholder = ':rootCat' . $index;
+                    $placeholder    = ':rootCat' . $index;
                     $placeholders[] = $placeholder;
                     $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
                 }
@@ -206,12 +206,12 @@ class CategoryModel extends BaseDatabaseModel
             }
 
             $products[] = [
-                'id' => (int) $row->id,
-                'title' => (string) $row->title,
-                'slug' => (string) $row->slug,
+                'id'         => (int) $row->id,
+                'title'      => (string) $row->title,
+                'slug'       => (string) $row->slug,
                 'short_desc' => (string) ($row->short_desc ?? ''),
-                'images' => $images,
-                'link' => Route::_(
+                'images'     => $images,
+                'link'       => Route::_(
                     'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
                 ),
             ];
@@ -231,7 +231,7 @@ class CategoryModel extends BaseDatabaseModel
     {
         $rootIds = (array) $this->getState('category.root_ids', []);
 
-        $db = $this->getDatabase();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('id'),
@@ -246,7 +246,7 @@ class CategoryModel extends BaseDatabaseModel
             $placeholders = [];
 
             foreach ($rootIds as $index => $rootId) {
-                $placeholder = ':navRoot' . $index;
+                $placeholder    = ':navRoot' . $index;
                 $placeholders[] = $placeholder;
                 $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
             }
@@ -264,18 +264,18 @@ class CategoryModel extends BaseDatabaseModel
         $rows = $db->loadObjectList() ?: [];
 
         $categories = [[
-            'id' => null,
+            'id'    => null,
             'title' => Text::_('COM_NXPEASYCART_CATEGORY_FILTER_ALL'),
-            'slug' => '',
-            'link' => Route::_('index.php?option=com_nxpeasycart&view=category'),
+            'slug'  => '',
+            'link'  => Route::_('index.php?option=com_nxpeasycart&view=category'),
         ]];
 
         foreach ($rows as $row) {
             $categories[] = [
-                'id' => (int) $row->id,
+                'id'    => (int) $row->id,
                 'title' => (string) $row->title,
-                'slug' => (string) $row->slug,
-                'link' => Route::_('index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug)),
+                'slug'  => (string) $row->slug,
+                'link'  => Route::_('index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug)),
             ];
         }
 

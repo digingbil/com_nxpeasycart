@@ -29,15 +29,15 @@ class PaymentGatewayService
         return [
             'stripe' => [
                 'publishable_key' => $raw['stripe']['publishable_key'] ?? '',
-                'secret_key' => $this->maskSecret($raw['stripe']['secret_key'] ?? ''),
-                'webhook_secret' => $this->maskSecret($raw['stripe']['webhook_secret'] ?? ''),
-                'mode' => $raw['stripe']['mode'] ?? 'test',
+                'secret_key'      => $this->maskSecret($raw['stripe']['secret_key'] ?? ''),
+                'webhook_secret'  => $this->maskSecret($raw['stripe']['webhook_secret'] ?? ''),
+                'mode'            => $raw['stripe']['mode'] ?? 'test',
             ],
             'paypal' => [
-                'client_id' => $raw['paypal']['client_id'] ?? '',
+                'client_id'     => $raw['paypal']['client_id'] ?? '',
                 'client_secret' => $this->maskSecret($raw['paypal']['client_secret'] ?? ''),
-                'webhook_id' => $this->maskSecret($raw['paypal']['webhook_id'] ?? ''),
-                'mode' => $raw['paypal']['mode'] ?? 'sandbox',
+                'webhook_id'    => $this->maskSecret($raw['paypal']['webhook_id'] ?? ''),
+                'mode'          => $raw['paypal']['mode'] ?? 'sandbox',
             ],
         ];
     }
@@ -59,7 +59,7 @@ class PaymentGatewayService
      */
     public function saveConfig(array $payload): array
     {
-        $existing = $this->getRawConfig();
+        $existing   = $this->getRawConfig();
         $normalised = [
             'stripe' => $this->normaliseStripe($payload['stripe'] ?? [], $existing['stripe'] ?? []),
             'paypal' => $this->normalisePaypal($payload['paypal'] ?? [], $existing['paypal'] ?? []),
@@ -94,14 +94,14 @@ class PaymentGatewayService
         $mode = isset($input['mode']) && strtolower((string) $input['mode']) === 'live' ? 'live' : 'test';
 
         $publishable = trim((string) ($input['publishable_key'] ?? ''));
-        $secret = trim((string) ($input['secret_key'] ?? ''));
-        $webhook = trim((string) ($input['webhook_secret'] ?? ''));
+        $secret      = trim((string) ($input['secret_key'] ?? ''));
+        $webhook     = trim((string) ($input['webhook_secret'] ?? ''));
 
         return [
             'publishable_key' => $publishable !== '' ? $publishable : ($existing['publishable_key'] ?? ''),
-            'secret_key' => $secret !== '' && strpos($secret, '•') === false ? $secret : ($existing['secret_key'] ?? ''),
-            'webhook_secret' => $webhook !== '' && strpos($webhook, '•') === false ? $webhook : ($existing['webhook_secret'] ?? ''),
-            'mode' => $mode,
+            'secret_key'      => $secret           !== '' && strpos($secret, '•')  === false ? $secret : ($existing['secret_key'] ?? ''),
+            'webhook_secret'  => $webhook      !== ''     && strpos($webhook, '•') === false ? $webhook : ($existing['webhook_secret'] ?? ''),
+            'mode'            => $mode,
         ];
     }
 
@@ -113,12 +113,12 @@ class PaymentGatewayService
     {
         $mode = isset($input['mode']) && strtolower((string) $input['mode']) === 'live' ? 'live' : 'sandbox';
 
-        $clientId = trim((string) ($input['client_id'] ?? ''));
+        $clientId     = trim((string) ($input['client_id'] ?? ''));
         $clientSecret = trim((string) ($input['client_secret'] ?? ''));
-        $webhookId = trim((string) ($input['webhook_id'] ?? ''));
+        $webhookId    = trim((string) ($input['webhook_id'] ?? ''));
 
         return [
-            'client_id' => $clientId !== '' ? $clientId : ($existing['client_id'] ?? ''),
+            'client_id'     => $clientId         !== '' ? $clientId : ($existing['client_id'] ?? ''),
             'client_secret' => $clientSecret !== '' && strpos($clientSecret, '•') === false
                 ? $clientSecret
                 : ($existing['client_secret'] ?? ''),

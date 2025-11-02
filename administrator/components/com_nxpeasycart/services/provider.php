@@ -2,34 +2,34 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
-use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
-use Joomla\CMS\Session\SessionInterface;
 use Joomla\CMS\Form\FormFactoryInterface;
-use Joomla\CMS\Router\SiteRouter;
-use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\CMS\Mail\MailerFactoryInterface;
-use Joomla\CMS\Cache\CacheControllerFactoryInterface;
+use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
+use Joomla\CMS\Router\SiteRouter;
+use Joomla\CMS\Session\SessionInterface;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Database\DatabaseInterface;
-use Joomla\Event\DispatcherInterface;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
-use Nxp\EasyCart\Admin\Administrator\Factory\EasyCartMVCFactory;
+use Joomla\Event\DispatcherInterface;
 use Nxp\EasyCart\Admin\Administrator\Extension\NxpEasyCartComponent;
-use Nxp\EasyCart\Admin\Administrator\Service\CartService;
-use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
-use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
-use Nxp\EasyCart\Admin\Administrator\Service\CacheService;
-use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
+use Nxp\EasyCart\Admin\Administrator\Factory\EasyCartMVCFactory;
 use Nxp\EasyCart\Admin\Administrator\Payment\PaymentGatewayManager;
+use Nxp\EasyCart\Admin\Administrator\Service\CacheService;
+use Nxp\EasyCart\Admin\Administrator\Service\CartService;
 use Nxp\EasyCart\Admin\Administrator\Service\GdprService;
 use Nxp\EasyCart\Admin\Administrator\Service\MailService;
-use Nxp\EasyCart\Site\Service\CartSessionService;
+use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
+use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
 use Nxp\EasyCart\Site\Service\CartPresentationService;
+use Nxp\EasyCart\Site\Service\CartSessionService;
 
-return new class implements ServiceProviderInterface {
+return new class () implements ServiceProviderInterface {
     /**
      * Registers the component services with the Joomla DI container.
      *

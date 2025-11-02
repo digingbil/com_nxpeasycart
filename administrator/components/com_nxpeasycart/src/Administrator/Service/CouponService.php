@@ -31,8 +31,8 @@ class CouponService
      */
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
-        $limit = $limit > 0 ? $limit : 20;
-        $start = $start >= 0 ? $start : 0;
+        $limit  = $limit > 0 ? $limit : 20;
+        $start  = $start >= 0 ? $start : 0;
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
         $query = $this->db->getQuery(true)
@@ -60,17 +60,17 @@ class CouponService
 
         $items = array_map([$this, 'mapRow'], $rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
-                'start' => $start,
+                'start'   => $start,
             ],
         ];
     }
@@ -162,7 +162,7 @@ class CouponService
         }
 
         $minTotal = (float) ($data['min_total'] ?? 0);
-        $maxUses = $data['max_uses'] !== null ? (int) $data['max_uses'] : null;
+        $maxUses  = $data['max_uses'] !== null ? (int) $data['max_uses'] : null;
 
         if ($maxUses !== null && $maxUses < 0) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_COUPON_MAX_USES_INVALID'), 400);
@@ -171,17 +171,17 @@ class CouponService
         $active = isset($data['active']) ? (bool) $data['active'] : true;
 
         $start = $this->normaliseDate($data['start'] ?? null);
-        $end = $this->normaliseDate($data['end'] ?? null);
+        $end   = $this->normaliseDate($data['end'] ?? null);
 
         return [
-            'code' => $code,
-            'type' => $type,
-            'value' => $value,
+            'code'            => $code,
+            'type'            => $type,
+            'value'           => $value,
             'min_total_cents' => (int) round($minTotal * 100),
-            'start' => $start,
-            'end' => $end,
-            'max_uses' => $maxUses,
-            'active' => $active ? 1 : 0,
+            'start'           => $start,
+            'end'             => $end,
+            'max_uses'        => $maxUses,
+            'active'          => $active ? 1 : 0,
         ];
     }
 
@@ -221,17 +221,17 @@ class CouponService
     private function mapRow(object $row): array
     {
         return [
-            'id' => (int) $row->id,
-            'code' => (string) $row->code,
-            'type' => (string) $row->type,
-            'value' => (float) $row->value,
+            'id'              => (int) $row->id,
+            'code'            => (string) $row->code,
+            'type'            => (string) $row->type,
+            'value'           => (float) $row->value,
             'min_total_cents' => (int) ($row->min_total_cents ?? 0),
-            'min_total' => ((int) ($row->min_total_cents ?? 0)) / 100,
-            'start' => $row->start ? (string) $row->start : null,
-            'end' => $row->end ? (string) $row->end : null,
-            'max_uses' => $row->max_uses !== null ? (int) $row->max_uses : null,
-            'times_used' => (int) ($row->times_used ?? 0),
-            'active' => (bool) $row->active,
+            'min_total'       => ((int) ($row->min_total_cents ?? 0)) / 100,
+            'start'           => $row->start ? (string) $row->start : null,
+            'end'             => $row->end ? (string) $row->end : null,
+            'max_uses'        => $row->max_uses !== null ? (int) $row->max_uses : null,
+            'times_used'      => (int) ($row->times_used ?? 0),
+            'active'          => (bool) $row->active,
         ];
     }
 }

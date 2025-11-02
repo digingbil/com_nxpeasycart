@@ -9,23 +9,23 @@ use Joomla\CMS\Session\Session;
 /** @var array<string, mixed> $this->checkout */
 $checkout = $this->checkout ?? [];
 
-$cart = $checkout['cart'] ?? ['items' => [], 'summary' => []];
+$cart          = $checkout['cart']           ?? ['items' => [], 'summary' => []];
 $shippingRules = $checkout['shipping_rules'] ?? [];
-$taxRates = $checkout['tax_rates'] ?? [];
-$settings = $checkout['settings'] ?? [];
+$taxRates      = $checkout['tax_rates']      ?? [];
+$settings      = $checkout['settings']       ?? [];
 
 $payload = htmlspecialchars(
     json_encode(
         [
-            'cart' => $cart,
+            'cart'           => $cart,
             'shipping_rules' => $shippingRules,
-            'tax_rates' => $taxRates,
-            'settings' => $settings,
-            'payments' => $checkout['payments'] ?? [],
-            'token' => Session::getFormToken(),
-            'endpoints' => [
+            'tax_rates'      => $taxRates,
+            'settings'       => $settings,
+            'payments'       => $checkout['payments'] ?? [],
+            'token'          => Session::getFormToken(),
+            'endpoints'      => [
                 'checkout' => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
-                'payment' => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
+                'payment'  => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
             ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES

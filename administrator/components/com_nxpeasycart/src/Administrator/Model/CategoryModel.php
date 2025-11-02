@@ -60,9 +60,9 @@ class CategoryModel extends AdminModel
             return false;
         }
 
-        $valid['title'] = trim((string) ($valid['title'] ?? ''));
-        $valid['slug'] = isset($valid['slug']) ? trim((string) $valid['slug']) : '';
-        $valid['sort'] = isset($valid['sort']) ? (int) $valid['sort'] : 0;
+        $valid['title']     = trim((string) ($valid['title'] ?? ''));
+        $valid['slug']      = isset($valid['slug']) ? trim((string) $valid['slug']) : '';
+        $valid['sort']      = isset($valid['sort']) ? (int) $valid['sort'] : 0;
         $valid['parent_id'] = isset($valid['parent_id']) && $valid['parent_id'] !== ''
             ? (int) $valid['parent_id']
             : null;
@@ -94,8 +94,8 @@ class CategoryModel extends AdminModel
     protected function prepareTable($table)
     {
         $table->title = trim((string) $table->title);
-        $table->slug = trim((string) $table->slug);
-        $table->sort = (int) $table->sort;
+        $table->slug  = trim((string) $table->slug);
+        $table->sort  = (int) $table->sort;
 
         if ($table->sort < 0) {
             $table->sort = 0;
@@ -117,7 +117,7 @@ class CategoryModel extends AdminModel
      */
     private function categoryExists(int $id): bool
     {
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select('1')
             ->from($db->quoteName('#__nxp_easycart_categories'))
@@ -135,7 +135,7 @@ class CategoryModel extends AdminModel
      */
     private function resolveNextSort(): int
     {
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select('MAX(' . $db->quoteName('sort') . ')')
             ->from($db->quoteName('#__nxp_easycart_categories'));

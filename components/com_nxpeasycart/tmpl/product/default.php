@@ -6,7 +6,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 
 /** @var array<string, mixed> $product */
-$product = $this->product ?? [];
+$product       = $this->product       ?? [];
 $isPlaceholder = $this->isPlaceholder ?? empty($product);
 
 if ($isPlaceholder) : ?>
@@ -24,10 +24,10 @@ if ($isPlaceholder) : ?>
 
 <?php endif;
 
-$price = $product['price'] ?? ['currency' => 'USD', 'min_cents' => 0, 'max_cents' => 0];
-$currency = strtoupper((string) ($price['currency'] ?? 'USD'));
-$images = $product['images'] ?? [];
-$variants = $product['variants'] ?? [];
+$price      = $product['price'] ?? ['currency' => 'USD', 'min_cents' => 0, 'max_cents' => 0];
+$currency   = strtoupper((string) ($price['currency'] ?? 'USD'));
+$images     = $product['images']     ?? [];
+$variants   = $product['variants']   ?? [];
 $categories = $product['categories'] ?? [];
 
 $formatMoney = static function (int $cents, string $currency): string {
@@ -50,9 +50,9 @@ $formatMoney = static function (int $cents, string $currency): string {
 };
 
 $primaryImage = $images[0] ?? '';
-$priceMin = (int) ($price['min_cents'] ?? 0);
-$priceMax = (int) ($price['max_cents'] ?? 0);
-$priceLabel = $priceMin === $priceMax
+$priceMin     = (int) ($price['min_cents'] ?? 0);
+$priceMax     = (int) ($price['max_cents'] ?? 0);
+$priceLabel   = $priceMin === $priceMax
     ? $formatMoney($priceMin, $currency)
     : Text::sprintf('COM_NXPEASYCART_PRODUCT_PRICE_RANGE', $formatMoney($priceMin, $currency), $formatMoney($priceMax, $currency));
 

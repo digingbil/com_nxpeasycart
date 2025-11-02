@@ -34,10 +34,10 @@ class CartPresentationService
      */
     public function hydrate(array $cart): array
     {
-        $items = $cart['data']['items'] ?? [];
+        $items    = $cart['data']['items'] ?? [];
         $hydrated = $this->hydrateItems(\is_array($items) ? $items : []);
 
-        $cart['items'] = $hydrated;
+        $cart['items']   = $hydrated;
         $cart['summary'] = $this->buildSummary($hydrated);
 
         return $cart;
@@ -78,7 +78,7 @@ class CartPresentationService
                 static function ($item) use ($products, $variants, $baseCurrency) {
                     $productId = isset($item['product_id']) ? (int) $item['product_id'] : null;
                     $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : null;
-                    $qty = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;
+                    $qty       = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;
 
                     $product = $productId !== null && isset($products[$productId]) ? $products[$productId] : null;
                     $variant = $variantId !== null && isset($variants[$variantId]) ? $variants[$variantId] : null;
@@ -96,18 +96,18 @@ class CartPresentationService
                         : ($variant['title'] ?? ($product['title'] ?? ''));
 
                     return [
-                        'id' => $variantId ?? $productId ?? spl_object_id((object) $item),
-                        'product_id' => $productId,
-                        'variant_id' => $variantId,
-                        'title' => $title,
-                        'product_title' => $product['title'] ?? $title,
-                        'qty' => $qty,
+                        'id'               => $variantId ?? $productId ?? spl_object_id((object) $item),
+                        'product_id'       => $productId,
+                        'variant_id'       => $variantId,
+                        'title'            => $title,
+                        'product_title'    => $product['title'] ?? $title,
+                        'qty'              => $qty,
                         'unit_price_cents' => $priceCents,
-                        'currency' => $currency,
-                        'total_cents' => $priceCents * $qty,
-                        'sku' => $variant['sku'] ?? ($item['sku'] ?? null),
-                        'image' => $variant['image'] ?? ($product['image'] ?? null),
-                        'options' => $variant['options'] ?? [],
+                        'currency'         => $currency,
+                        'total_cents'      => $priceCents * $qty,
+                        'sku'              => $variant['sku']     ?? ($item['sku'] ?? null),
+                        'image'            => $variant['image']   ?? ($product['image'] ?? null),
+                        'options'          => $variant['options'] ?? [],
                     ];
                 },
                 $items
@@ -154,7 +154,7 @@ class CartPresentationService
             }
 
             $products[(int) $row->id] = [
-                'id' => (int) $row->id,
+                'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'image' => $image,
             ];
@@ -194,14 +194,14 @@ class CartPresentationService
             }
 
             $variants[(int) $row->id] = [
-                'id' => (int) $row->id,
-                'product_id' => (int) $row->product_id,
-                'title' => (string) $row->sku,
-                'sku' => (string) $row->sku,
+                'id'          => (int) $row->id,
+                'product_id'  => (int) $row->product_id,
+                'title'       => (string) $row->sku,
+                'sku'         => (string) $row->sku,
                 'price_cents' => (int) $row->price_cents,
-                'currency' => strtoupper((string) $row->currency),
-                'options' => $options,
-                'image' => null,
+                'currency'    => strtoupper((string) $row->currency),
+                'options'     => $options,
+                'image'       => null,
             ];
         }
 
@@ -228,11 +228,11 @@ class CartPresentationService
 
         return [
             'subtotal_cents' => $subtotal,
-            'tax_cents' => 0,
+            'tax_cents'      => 0,
             'shipping_cents' => 0,
             'discount_cents' => 0,
-            'total_cents' => $subtotal,
-            'currency' => $currency,
+            'total_cents'    => $subtotal,
+            'currency'       => $currency,
         ];
     }
 }

@@ -4,8 +4,8 @@ namespace Nxp\EasyCart\Site\Controller;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Factory;
+use Joomla\CMS\MVC\Controller\BaseController;
 use Nxp\EasyCart\Site\Service\CartSessionService;
 
 /**

@@ -49,7 +49,7 @@ class HtmlView extends BaseHtmlView
         /** @var DashboardService $dashboard */
         $dashboard = $container->get(DashboardService::class);
 
-        $this->dashboardSummary = $dashboard->getSummary();
+        $this->dashboardSummary   = $dashboard->getSummary();
         $this->dashboardChecklist = $dashboard->getChecklist();
 
         parent::display($tpl);

@@ -28,10 +28,10 @@ class CartModel extends BaseDatabaseModel
             return $this->cart;
         }
 
-        $container = Factory::getContainer();
+        $container   = Factory::getContainer();
         $cartService = $container->get(CartSessionService::class);
-        $cart = $cartService->current();
-        $cart = $this->getPresentationService()->hydrate($cart);
+        $cart        = $cartService->current();
+        $cart        = $this->getPresentationService()->hydrate($cart);
 
         $this->cart = $cart;
 

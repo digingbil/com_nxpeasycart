@@ -30,7 +30,7 @@ class ConfigHelper
 
         $params = ComponentHelper::getParams('com_nxpeasycart');
 
-        $raw = strtoupper((string) $params->get('base_currency', ''));
+        $raw      = strtoupper((string) $params->get('base_currency', ''));
         $filtered = preg_replace('/[^A-Z]/', '', $raw);
 
         if ($filtered === null || strlen($filtered) !== 3) {

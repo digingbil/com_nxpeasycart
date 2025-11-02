@@ -48,7 +48,7 @@ class Com_NxpeasycartInstallerScript
         }
 
         $container = Factory::getContainer();
-        $db = $container->get(DatabaseInterface::class);
+        $db        = $container->get(DatabaseInterface::class);
 
         $queries = Installer::splitSql(file_get_contents($path));
 

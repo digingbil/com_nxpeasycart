@@ -30,7 +30,7 @@ class DashboardController extends AbstractJsonController
 
         if (str_contains($task, '.')) {
             $segments = array_filter(explode('.', $task));
-            $task = trim((string) array_pop($segments));
+            $task     = trim((string) array_pop($segments));
         }
 
         $task = $task !== '' ? $task : 'summary';
@@ -70,7 +70,7 @@ class DashboardController extends AbstractJsonController
         $service = $container->get(DashboardService::class);
 
         return $this->respond([
-            'summary' => $service->getSummary(),
+            'summary'   => $service->getSummary(),
             'checklist' => $service->getChecklist(),
         ]);
     }

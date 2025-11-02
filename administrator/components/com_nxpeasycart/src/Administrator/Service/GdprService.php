@@ -32,7 +32,7 @@ class GdprService
         $orders = $this->loadOrders($email);
 
         return [
-            'email' => $email,
+            'email'  => $email,
             'orders' => $orders,
         ];
     }
@@ -45,7 +45,7 @@ class GdprService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_GDPR_EMAIL_INVALID'), 400);
         }
 
-        $hash = substr(sha1($email . microtime()), 0, 12);
+        $hash            = substr(sha1($email . microtime()), 0, 12);
         $anonymisedEmail = sprintf('gdpr+%s@example.invalid', $hash);
 
         $query = $this->db->getQuery(true)
@@ -84,13 +84,13 @@ class GdprService
             $orderId = (int) $order->id;
 
             $export[] = [
-                'id' => $orderId,
-                'order_no' => $order->order_no,
-                'state' => $order->state,
-                'total_cents' => (int) $order->total_cents,
-                'currency' => $order->currency,
-                'created' => $order->created,
-                'items' => $this->loadOrderItems($orderId),
+                'id'           => $orderId,
+                'order_no'     => $order->order_no,
+                'state'        => $order->state,
+                'total_cents'  => (int) $order->total_cents,
+                'currency'     => $order->currency,
+                'created'      => $order->created,
+                'items'        => $this->loadOrderItems($orderId),
                 'transactions' => $this->loadOrderTransactions($orderId),
             ];
         }

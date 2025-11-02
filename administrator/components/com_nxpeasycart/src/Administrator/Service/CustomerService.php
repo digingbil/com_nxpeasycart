@@ -27,8 +27,8 @@ class CustomerService
      */
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
-        $limit = $limit > 0 ? $limit : 20;
-        $start = $start >= 0 ? $start : 0;
+        $limit  = $limit > 0 ? $limit : 20;
+        $start  = $start >= 0 ? $start : 0;
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
         $query = $this->db->getQuery(true)
@@ -65,17 +65,17 @@ class CustomerService
 
         $items = array_map(fn ($row) => $this->mapCustomerRow($row), $rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
-                'start' => $start,
+                'start'   => $start,
             ],
         ];
     }
@@ -112,7 +112,7 @@ class CustomerService
             return null;
         }
 
-        $customer = $this->mapCustomerRow($row, true);
+        $customer           = $this->mapCustomerRow($row, true);
         $customer['orders'] = $this->getOrdersForEmail($email);
 
         return $customer;
@@ -123,13 +123,13 @@ class CustomerService
         $email = (string) $row->email;
 
         $profile = [
-            'id' => (int) ($row->id ?? 0),
-            'email' => $email,
-            'orders_count' => (int) $row->orders_count,
+            'id'                => (int) ($row->id ?? 0),
+            'email'             => $email,
+            'orders_count'      => (int) $row->orders_count,
             'total_spent_cents' => (int) $row->total_spent_cents,
-            'currency' => (string) $row->currency,
-            'last_order' => (string) $row->last_order,
-            'meta' => $this->getProfileMeta($email, $withAddress),
+            'currency'          => (string) $row->currency,
+            'last_order'        => (string) $row->last_order,
+            'meta'              => $this->getProfileMeta($email, $withAddress),
         ];
 
         return $profile;
@@ -153,19 +153,19 @@ class CustomerService
 
         if (!$row) {
             return [
-                'name' => '',
-                'billing' => [],
+                'name'     => '',
+                'billing'  => [],
                 'shipping' => [],
             ];
         }
 
-        $billing = $this->decodeJson($row->billing ?? '{}');
+        $billing  = $this->decodeJson($row->billing ?? '{}');
         $shipping = $includeShipping && $row->shipping !== null ? $this->decodeJson($row->shipping) : [];
-        $name = trim(($billing['first_name'] ?? '') . ' ' . ($billing['last_name'] ?? ''));
+        $name     = trim(($billing['first_name'] ?? '') . ' ' . ($billing['last_name'] ?? ''));
 
         return [
-            'name' => $name,
-            'billing' => $billing,
+            'name'     => $name,
+            'billing'  => $billing,
             'shipping' => $shipping,
         ];
     }
@@ -192,12 +192,12 @@ class CustomerService
 
         return array_map(static function ($row) {
             return [
-                'id' => (int) $row->id,
-                'order_no' => (string) $row->order_no,
+                'id'          => (int) $row->id,
+                'order_no'    => (string) $row->order_no,
                 'total_cents' => (int) $row->total_cents,
-                'currency' => (string) $row->currency,
-                'state' => (string) $row->state,
-                'created' => (string) $row->created,
+                'currency'    => (string) $row->currency,
+                'state'       => (string) $row->state,
+                'created'     => (string) $row->created,
             ];
         }, $rows);
     }

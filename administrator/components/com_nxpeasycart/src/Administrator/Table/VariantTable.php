@@ -61,7 +61,7 @@ class VariantTable extends Table
         }
 
         $this->active = (int) (bool) $this->active;
-        $this->stock = max(0, (int) $this->stock);
+        $this->stock  = max(0, (int) $this->stock);
 
         if ($this->price_cents < 0) {
             $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRICE_INVALID'));
@@ -76,7 +76,7 @@ class VariantTable extends Table
         }
 
         // Enforce unique SKU
-        $db = $this->getDbo();
+        $db  = $this->getDbo();
         $sku = (string) $this->sku;
 
         $query = $db->getQuery(true)

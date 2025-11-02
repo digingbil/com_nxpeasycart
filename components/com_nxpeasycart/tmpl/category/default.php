@@ -9,12 +9,12 @@ use Joomla\CMS\Router\Route;
 /** @var array<int, array<string, mixed>> $this->products */
 /** @var array<int, array<string, mixed>> $this->categories */
 
-$category = $this->category ?? null;
-$products = $this->products ?? [];
-$categories = $this->categories ?? [];
-$activeSlug = $category['slug'] ?? '';
+$category      = $this->category    ?? null;
+$products      = $this->products    ?? [];
+$categories    = $this->categories  ?? [];
+$activeSlug    = $category['slug']  ?? '';
 $categoryTitle = $category['title'] ?? Text::_('COM_NXPEASYCART_CATEGORY_ALL');
-$categoryJson = htmlspecialchars(
+$categoryJson  = htmlspecialchars(
     json_encode($category ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
     'UTF-8'

@@ -6,8 +6,8 @@ namespace Nxp\EasyCart\Admin\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Mailer\MailerInterface;
+use Joomla\CMS\Uri\Uri;
 use RuntimeException;
 
 /**
@@ -36,11 +36,11 @@ class MailService
         }
 
         $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SUBJECT', $order['order_no'] ?? '');
-        $body = $this->renderTemplate('order_confirmation', [
+        $body    = $this->renderTemplate('order_confirmation', [
             'order' => $order,
             'store' => [
                 'name' => Factory::getConfig()->get('sitename'),
-                'url' => Uri::root(),
+                'url'  => Uri::root(),
             ],
         ]);
 

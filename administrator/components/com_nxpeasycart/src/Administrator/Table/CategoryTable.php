@@ -50,8 +50,8 @@ class CategoryTable extends Table
             return false;
         }
 
-        $db = $this->getDbo();
-        $slug = $this->slug;
+        $db    = $this->getDbo();
+        $slug  = $this->slug;
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
             ->from($db->quoteName($this->_tbl))

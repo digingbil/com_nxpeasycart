@@ -24,11 +24,11 @@ class AuditService
     {
         $entry = (object) [
             'entity_type' => $entityType,
-            'entity_id' => $entityId,
-            'action' => $action,
-            'context' => empty($context) ? null : json_encode($context, JSON_UNESCAPED_SLASHES),
-            'created' => (new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
-            'created_by' => $userId,
+            'entity_id'   => $entityId,
+            'action'      => $action,
+            'context'     => empty($context) ? null : json_encode($context, JSON_UNESCAPED_SLASHES),
+            'created'     => (new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+            'created_by'  => $userId,
         ];
 
         $this->db->insertObject('#__nxp_easycart_audit', $entry);
@@ -61,10 +61,10 @@ class AuditService
             }
 
             return [
-                'id' => (int) $row->id,
-                'action' => (string) $row->action,
-                'context' => $context,
-                'created' => (string) $row->created,
+                'id'         => (int) $row->id,
+                'action'     => (string) $row->action,
+                'context'    => $context,
+                'created'    => (string) $row->created,
                 'created_by' => $row->created_by !== null ? (int) $row->created_by : null,
             ];
         }, $rows);
@@ -72,8 +72,8 @@ class AuditService
 
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
-        $limit = $limit > 0 ? $limit : 20;
-        $start = $start >= 0 ? $start : 0;
+        $limit  = $limit > 0 ? $limit : 20;
+        $start  = $start >= 0 ? $start : 0;
         $entity = isset($filters['entity']) ? trim((string) $filters['entity']) : '';
         $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
 
@@ -126,31 +126,31 @@ class AuditService
             }
 
             return [
-                'id' => (int) $row->id,
+                'id'          => (int) $row->id,
                 'entity_type' => (string) $row->entity_type,
-                'entity_id' => (int) $row->entity_id,
-                'action' => (string) $row->action,
-                'context' => $context,
-                'created' => (string) $row->created,
-                'created_by' => $row->created_by !== null ? (int) $row->created_by : null,
-                'user' => [
-                    'name' => $row->user_name !== null ? (string) $row->user_name : '',
+                'entity_id'   => (int) $row->entity_id,
+                'action'      => (string) $row->action,
+                'context'     => $context,
+                'created'     => (string) $row->created,
+                'created_by'  => $row->created_by !== null ? (int) $row->created_by : null,
+                'user'        => [
+                    'name'     => $row->user_name         !== null ? (string) $row->user_name : '',
                     'username' => $row->user_username !== null ? (string) $row->user_username : '',
                 ],
             ];
         }, $rows);
 
-        $pages = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $pages   = $limit > 0 ? (int) ceil($total / $limit) : 1;
         $current = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
 
         return [
-            'items' => $items,
+            'items'      => $items,
             'pagination' => [
-                'total' => $total,
-                'limit' => $limit,
-                'pages' => max(1, $pages),
+                'total'   => $total,
+                'limit'   => $limit,
+                'pages'   => max(1, $pages),
                 'current' => max(1, $current),
-                'start' => $start,
+                'start'   => $start,
             ],
         ];
     }

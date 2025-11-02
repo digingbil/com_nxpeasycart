@@ -38,7 +38,7 @@ class CategoriesModel extends ListModel
      */
     protected function populateState($ordering = 'a.sort', $direction = 'ASC')
     {
-        $app = Factory::getApplication();
+        $app   = Factory::getApplication();
         $input = $app->input;
 
         $search = $input->getString('search', '');
@@ -57,7 +57,7 @@ class CategoriesModel extends ListModel
      */
     protected function getListQuery()
     {
-        $db = $this->getDbo();
+        $db    = $this->getDbo();
         $query = $db->getQuery(true)
             ->select(
                 [
