@@ -4,9 +4,9 @@
 
 -   `administrator/components/com_nxpeasycart`
     -   `services/provider.php`: registers the component, custom MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
-    -   `src/Administrator/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Nxp\EasyCart\Site` namespace while keeping administrator and API traffic on `Nxp\EasyCart\Admin\Administrator`.
+    -   `src/Administrator/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Joomla\Component\Nxpeasycart\Site` namespace while keeping administrator and API traffic on `Joomla\Component\Nxpeasycart\Administrator`.
     -   `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
-    -   `src/Administrator/`: PSR-4 namespaced administrator classes (`Nxp\EasyCart\Admin\Administrator\…`).
+    -   `src/Administrator/`: PSR-4 namespaced administrator classes (`Joomla\Component\Nxpeasycart\Administrator\…`).
         -   `Controller/ApiController.php`: task router delegating to JSON resource controllers.
         -   `Controller/Api/*Controller.php`: JSON endpoints returning RFC-7807-style payloads.
         -   `Model/*.php`: table-backed product storage and listing with transactional saves for variants/categories.
@@ -16,7 +16,7 @@
     -   `sql/`: install, uninstall, and future update scripts for the `#__nxp_easycart_*` tables.
     -   `forms/product.xml`: Joomla form definition used to validate API payloads.
 -   `components/com_nxpeasycart`
-    -   `src/`: storefront controllers/views in the `Nxp\EasyCart\Site\…` namespace; the default `DisplayController` now renders product detail pages populated from the database with SEO-aware metadata.
+    -   `src/`: storefront controllers/views in the `Joomla\Component\Nxpeasycart\Site\…` namespace; the default `DisplayController` now renders product detail pages populated from the database with SEO-aware metadata.
 
 The admin view exposes a `<div id="nxp-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
 

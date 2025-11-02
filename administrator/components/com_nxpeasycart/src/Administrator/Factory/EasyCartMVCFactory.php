@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Factory;
+namespace Joomla\Component\Nxpeasycart\Administrator\Factory;
 
 \defined('_JEXEC') or die;
 
@@ -24,7 +24,7 @@ class EasyCartMVCFactory extends MVCFactory
         $prefix = ucfirst($prefix);
 
         if ($prefix === 'Site') {
-            $className = 'Nxp\\EasyCart\\Site\\' . $suffix;
+            $className = 'Joomla\\Component\\Nxpeasycart\\Site\\' . $suffix;
 
             if (class_exists($className)) {
                 return $className;
@@ -32,7 +32,7 @@ class EasyCartMVCFactory extends MVCFactory
         }
 
         if ($prefix === 'Administrator' || $prefix === 'Api') {
-            $className = 'Nxp\\EasyCart\\Admin\\Administrator\\' . $suffix;
+            $className = 'Joomla\\Component\\Nxpeasycart\\Administrator\\' . $suffix;
 
             if (class_exists($className)) {
                 return $className;

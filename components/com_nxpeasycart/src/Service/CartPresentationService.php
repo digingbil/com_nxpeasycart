@@ -1,11 +1,11 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Service;
+namespace Joomla\Component\Nxpeasycart\Site\Service;
 
 \defined('_JEXEC') or die;
 
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 /**
  * Hydrates cart payloads with product and variant metadata for storefront views.

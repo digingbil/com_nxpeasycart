@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Site\View\Landing;
+namespace Joomla\Component\Nxpeasycart\Site\View\Landing;
 
 \defined('_JEXEC') or die;
 

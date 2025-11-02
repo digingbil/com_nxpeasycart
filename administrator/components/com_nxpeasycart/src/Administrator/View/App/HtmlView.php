@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\View\App;
+namespace Joomla\Component\Nxpeasycart\Administrator\View\App;
 
 \defined('_JEXEC') or die;
 
@@ -8,8 +8,8 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\DashboardService;
-use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\DashboardService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 
 /**
  * Basic HTML view for the admin dashboard wrapper.

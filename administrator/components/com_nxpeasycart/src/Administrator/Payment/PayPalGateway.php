@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Payment;
+namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 \defined('_JEXEC') or die;
 

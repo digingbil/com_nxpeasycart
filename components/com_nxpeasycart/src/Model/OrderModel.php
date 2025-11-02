@@ -1,12 +1,12 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Model;
+namespace Joomla\Component\Nxpeasycart\Site\Model;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
-use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 
 /**
  * Order confirmation model powering storefront order summary.

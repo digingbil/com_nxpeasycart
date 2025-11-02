@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Table;
+namespace Joomla\Component\Nxpeasycart\Administrator\Table;
 
 \defined('_JEXEC') or die;
 
@@ -8,7 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Database\ParameterType;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 /**
  * Database table for product variants.

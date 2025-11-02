@@ -4,7 +4,7 @@
         <message>COM_NXPEASYCART_MENU_LANDING_DESC</message>
     </layout>
 
-    <fields name="params">
+    <fields name="params" addfieldprefix="Joomla\Component\Nxpeasycart\Site\Field">
         <fieldset name="hero" label="COM_NXPEASYCART_LANDING_FIELDSET_HERO">
             <field
                 name="hero_headline"

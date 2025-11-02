@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\View\Customers;
+namespace Joomla\Component\Nxpeasycart\Administrator\View\Customers;
 
 \defined('_JEXEC') or die;
 
@@ -8,7 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\CustomerService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CustomerService;
 
 /**
  * Customers listing view placeholder.

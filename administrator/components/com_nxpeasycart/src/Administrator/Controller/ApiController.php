@@ -1,12 +1,12 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Controller;
+namespace Joomla\Component\Nxpeasycart\Administrator\Controller;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
-use Nxp\EasyCart\Admin\Administrator\Controller\Api\AbstractJsonController;
+use Joomla\Component\Nxpeasycart\Administrator\Controller\Api\AbstractJsonController;
 use RuntimeException;
 
 /**

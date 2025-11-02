@@ -11,7 +11,7 @@
     <description>COM_NXPEASYCART_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
 
-    <namespace path="src">Nxp\EasyCart</namespace>
+    <namespace path="src">Joomla\Component\Nxpeasycart</namespace>
 
     <install>
         <sql>
@@ -39,7 +39,7 @@
     </media>
 
     <administration>
-        <namespace path="src">Nxp\EasyCart\Admin</namespace>
+        <namespace path="src/Administrator">Joomla\Component\Nxpeasycart\Administrator</namespace>
 
         <menu img="class:cart">COM_NXPEASYCART</menu>
 
@@ -73,7 +73,7 @@
     </administration>
 
     <site>
-        <namespace path="src">Nxp\EasyCart\Site</namespace>
+        <namespace path="src">Joomla\Component\Nxpeasycart\Site</namespace>
 
         <files>
             <folder>src</folder>

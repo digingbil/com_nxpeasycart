@@ -4,7 +4,7 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 
 ## Overview
 
--   Namespaced Joomla MVC structure for administrator (`Nxp\\EasyCart\\Admin\\Administrator`) and site (`Nxp\\EasyCart\\Site`) applications, backed by a custom `EasyCartMVCFactory` so the dispatcher resolves controllers on both clients.
+-   Namespaced Joomla MVC structure for administrator (`Joomla\\Component\\Nxpeasycart\\Administrator`) and site (`Joomla\\Component\\Nxpeasycart\\Site`) applications, backed by a custom `EasyCartMVCFactory` so the dispatcher resolves controllers on both clients.
 -   Install/uninstall SQL covering the core NXP data model (`#__nxp_easycart_*` tables).
 -   Service provider bootstrap for Joomla's dependency injection container (no legacy `com_nxpeasycart.php` entry file).
 -   Cart and order services wired through the DI container, enforcing single-currency rules via the configuration helper and hydrating JSON billing/shipping payloads.
@@ -27,6 +27,7 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 -   **Categories workspace (admin)** surfaces a dedicated CRUD panel with slug validation, usage counts, and an indented tree so parent/child relationships are obvious at a glance. The parent selector now prevents loops by removing the current node and its descendants.
 -   **Product editor category selector** consumes the categories API, letting merchants multi-select existing categories and create new ones inline; the payload now posts normalised `{id, title, slug}` entries so product/category mappings stay deduplicated.
 -   **Database binding hardening** replaced every inline `->bind()` cast with real variables, eliminating the “Argument #2 ($value) could not be passed by reference” fatal that previously appeared during saves.
+-   **Shop landing menu type** now loads the custom `RootCategories` field via the field prefix and routes cleanly to `/shop` without the `?view=landing` fallback after wiring the router factory.
 
 ### Currency decision (MVP)
 
@@ -52,7 +53,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 4. Install the component through the Joomla extension manager or via `Discover`.
 5. After installation, access the admin menu entry **NXP Easy Cart** to verify the placeholder dashboard renders.
 6. Open **System → Manage → Extensions → NXP Easy Cart → Options** and set the store base currency (default `USD`); product variants are validated against this single-currency guardrail.
-7. Copy or symlink the generated `vendor/` directory into the Joomla instance if needed—Composer never has to run inside the live site tree.
+7. The component bootstrapper now falls back to the repository root for `vendor/autoload.php`, so you only need to copy the optimised `vendor/` directory when preparing a distributable package.
 
 ## Tooling & dependencies
 
@@ -68,7 +69,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 
 ## Packaging / deployment
 
--   Local development keeps `administrator/components/com_nxpeasycart/vendor` and `components/com_nxpeasycart/vendor` symlinked to the repository’s root `vendor/` directory for convenience.
+-   Local development uses the root `vendor/` directory directly; runtime bootstraps the autoloader automatically. When packaging for release, copy the trimmed `vendor/` tree into the bundle alongside the component files.
 -   To produce an installable ZIP, run `composer install --no-dev --optimize-autoloader` in a clean workspace, build frontend assets (`npm run build:admin`), and include the trimmed `vendor/` directory plus component files in the package.
 -   Do **not** run Composer inside the live Joomla tree; copy or mirror the prepared `vendor/` folder alongside the component when deploying.
 -   The manifest living at `administrator/components/com_nxpeasycart/nxpeasycart.xml` follows Joomla’s discovery convention (no `com_` prefix in the filename). After copying the component into a site, use **System → Discover** or `php cli/joomla.php extension:discover` to register it, then complete the install from that screen. Joomla 5’s DI bootstrapping means no administrator entry script is required.

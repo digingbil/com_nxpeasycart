@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
+namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 
 \defined('_JEXEC') or die;
 
@@ -10,8 +10,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
-use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use RuntimeException;
 
 /**

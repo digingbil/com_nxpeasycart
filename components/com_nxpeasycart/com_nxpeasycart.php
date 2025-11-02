@@ -4,14 +4,27 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
-use Joomla\CMS\Session\SessionInterface;
+use Joomla\Session\SessionInterface;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\CartService;
-use Nxp\EasyCart\Site\Service\CartPresentationService;
-use Nxp\EasyCart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
-\JLoader::registerNamespace('Nxp\\EasyCart\\Site', __DIR__ . '/src', false, false, 'psr4');
-\JLoader::registerNamespace('Nxp\\EasyCart\\Admin', JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src', false, false, 'psr4');
+$autoloadCandidates = [
+    __DIR__ . '/vendor/autoload.php',
+    JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
+    dirname(__DIR__, 2) . '/vendor/autoload.php',
+];
+
+foreach ($autoloadCandidates as $autoload) {
+    if (is_file($autoload)) {
+        require_once $autoload;
+        break;
+    }
+}
+
+\JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Site', __DIR__ . '/src', false, false, 'psr4');
+\JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Administrator', JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src/Administrator', false, false, 'psr4');
 
 $container = Factory::getContainer();
 
@@ -44,7 +57,7 @@ if (!$container->has(CartPresentationService::class)) {
 $controller = BaseController::getInstance(
     'Nxpeasycart',
     [
-        'namespace' => 'Nxp\\EasyCart\\Site\\Controller',
+    'namespace' => 'Joomla\\Component\\Nxpeasycart\\Site\\Controller',
     ]
 );
 

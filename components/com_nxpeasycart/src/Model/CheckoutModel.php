@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Model;
+namespace Joomla\Component\Nxpeasycart\Site\Model;
 
 \defined('_JEXEC') or die;
 
@@ -8,13 +8,13 @@ use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\CacheService;
-use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
-use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
-use Nxp\EasyCart\Admin\Administrator\Service\ShippingRuleService;
-use Nxp\EasyCart\Admin\Administrator\Service\TaxService;
-use Nxp\EasyCart\Site\Service\CartPresentationService;
-use Nxp\EasyCart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CacheService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Checkout model aggregating cart + configuration data.

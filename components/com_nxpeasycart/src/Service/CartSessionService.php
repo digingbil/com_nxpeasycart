@@ -1,13 +1,13 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Service;
+namespace Joomla\Component\Nxpeasycart\Site\Service;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Session\SessionInterface;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
-use Nxp\EasyCart\Admin\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 
 /**
  * Session-aware cart accessor for the storefront.

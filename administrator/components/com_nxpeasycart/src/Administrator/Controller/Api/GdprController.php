@@ -1,13 +1,13 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
+namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Response\JsonResponse;
-use Nxp\EasyCart\Admin\Administrator\Service\GdprService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\GdprService;
 use RuntimeException;
 
 /**

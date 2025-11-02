@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Model;
+namespace Joomla\Component\Nxpeasycart\Site\Model;
 
 \defined('_JEXEC') or die;
 
@@ -9,7 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 /**
  * Model powering the shop landing page.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\View\Orders;
+namespace Joomla\Component\Nxpeasycart\Administrator\View\Orders;
 
 \defined('_JEXEC') or die;
 
@@ -8,8 +8,8 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\AuditService;
-use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 
 /**
  * Orders listing view.

@@ -5,7 +5,7 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
-/** @var Nxp\EasyCart\Site\View\Landing\HtmlView $this */
+/** @var Joomla\Component\Nxpeasycart\Site\View\Landing\HtmlView $this */
 
 $payload = $this->getLandingPayload();
 

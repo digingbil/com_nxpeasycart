@@ -1,14 +1,14 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Model;
+namespace Joomla\Component\Nxpeasycart\Site\Model;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Site\Service\CartPresentationService;
-use Nxp\EasyCart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Cart view model for storefront.

@@ -1,12 +1,12 @@
 <?php
 
-namespace Nxp\EasyCart\Site\Controller;
+namespace Joomla\Component\Nxpeasycart\Site\Controller;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
-use Nxp\EasyCart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Default site controller for routing storefront views.

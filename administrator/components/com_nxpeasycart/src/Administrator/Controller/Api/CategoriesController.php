@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Controller\Api;
+namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 
 \defined('_JEXEC') or die;
 

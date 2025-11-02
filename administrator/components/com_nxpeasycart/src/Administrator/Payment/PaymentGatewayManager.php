@@ -1,14 +1,14 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Payment;
+namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 \defined('_JEXEC') or die;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\MailService;
-use Nxp\EasyCart\Admin\Administrator\Service\OrderService;
-use Nxp\EasyCart\Admin\Administrator\Service\PaymentGatewayService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
 use RuntimeException;
 
 /**

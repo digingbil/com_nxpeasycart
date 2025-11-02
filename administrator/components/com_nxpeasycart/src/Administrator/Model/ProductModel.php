@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Model;
+namespace Joomla\Component\Nxpeasycart\Administrator\Model;
 
 \defined('_JEXEC') or die;
 
@@ -13,10 +13,10 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
 use JsonException;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
-use Nxp\EasyCart\Admin\Administrator\Table\CategoryTable;
-use Nxp\EasyCart\Admin\Administrator\Table\ProductTable;
-use Nxp\EasyCart\Admin\Administrator\Table\VariantTable;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Table\CategoryTable;
+use Joomla\Component\Nxpeasycart\Administrator\Table\ProductTable;
+use Joomla\Component\Nxpeasycart\Administrator\Table\VariantTable;
 use RuntimeException;
 use Throwable;
 

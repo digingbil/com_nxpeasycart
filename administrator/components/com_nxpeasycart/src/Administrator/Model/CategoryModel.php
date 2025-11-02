@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\Model;
+namespace Joomla\Component\Nxpeasycart\Administrator\Model;
 
 \defined('_JEXEC') or die;
 
@@ -8,7 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
-use Nxp\EasyCart\Admin\Administrator\Table\CategoryTable;
+use Joomla\Component\Nxpeasycart\Administrator\Table\CategoryTable;
 
 /**
  * Single category admin model.

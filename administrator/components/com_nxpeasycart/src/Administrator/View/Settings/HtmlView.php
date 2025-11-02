@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\View\Settings;
+namespace Joomla\Component\Nxpeasycart\Administrator\View\Settings;
 
 \defined('_JEXEC') or die;
 
@@ -8,10 +8,10 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Helper\ConfigHelper;
-use Nxp\EasyCart\Admin\Administrator\Service\SettingsService;
-use Nxp\EasyCart\Admin\Administrator\Service\ShippingRuleService;
-use Nxp\EasyCart\Admin\Administrator\Service\TaxService;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 
 /**
  * Settings view placeholder.

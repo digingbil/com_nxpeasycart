@@ -45,6 +45,8 @@ desktop.ini
 /scripts
 /REFERENCE_ONLY_unusedimagefinder_REFERENCE_ONLY/
 /SHOP_LANDING.md
+administrator/components/com_nxpeasycart/vendor/
+components/com_nxpeasycart/vendor/
 
 # AI assistants
 .copilot/

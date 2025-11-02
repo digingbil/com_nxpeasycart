@@ -1,6 +1,6 @@
 <?php
 
-namespace Nxp\EasyCart\Admin\Administrator\View\Coupons;
+namespace Joomla\Component\Nxpeasycart\Administrator\View\Coupons;
 
 \defined('_JEXEC') or die;
 
@@ -8,7 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Database\DatabaseInterface;
-use Nxp\EasyCart\Admin\Administrator\Service\CouponService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CouponService;
 
 /**
  * Coupons listing view placeholder.
