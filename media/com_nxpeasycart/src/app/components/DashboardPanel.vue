@@ -192,16 +192,25 @@
                         <a
                             v-if="item.link"
                             :href="item.link"
-                            class="nxp-ec-link-button"
+                            class="nxp-ec-link-button nxp-ec-btn--icon"
+                            :title="__(
+                                'COM_NXPEASYCART_DASHBOARD_CHECKLIST_ACTION',
+                                'Open',
+                                [],
+                                'dashboardChecklistAction'
+                            )"
                         >
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_DASHBOARD_CHECKLIST_ACTION",
-                                    "Open",
-                                    [],
-                                    "dashboardChecklistAction"
-                                )
-                            }}
+                            <i class="fa-solid fa-up-right-from-square" aria-hidden="true"></i>
+                            <span class="nxp-ec-sr-only">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_DASHBOARD_CHECKLIST_ACTION",
+                                        "Open",
+                                        [],
+                                        "dashboardChecklistAction"
+                                    )
+                                }}
+                            </span>
                         </a>
                     </li>
                 </ul>

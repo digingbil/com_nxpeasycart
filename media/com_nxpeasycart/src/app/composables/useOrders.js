@@ -1,5 +1,11 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 const deriveEndpoint = (listEndpoint, action) => {
     if (!listEndpoint) {
@@ -22,8 +28,10 @@ export function useOrders({
     states = [],
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("orders");
 
     const listEndpoint = endpoints?.list ?? "";
     const showEndpoint =
@@ -64,15 +72,42 @@ export function useOrders({
                 : ["pending", "paid", "fulfilled", "refunded", "canceled"],
         activeOrder: null,
         selection: new Set(),
+        lastUpdated: null,
     });
 
-    const loadOrders = async () => {
+    const buildCacheKey = () => {
+        const page = state.pagination.current || 1;
+        const limit = state.pagination.limit || 20;
+        const search = state.search.trim();
+        const filterState = state.filterState || "";
+
+        return `orders:page=${page}:limit=${limit}:search=${search}:state=${filterState}`;
+    };
+
+    const loadOrders = async (forceRefresh = false) => {
         if (!listEndpoint) {
             state.error = "Orders endpoint unavailable.";
             state.items = [];
 
             return;
         }
+
+        const cacheKey = buildCacheKey();
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.items = cached.items;
+            state.pagination = {
+                ...state.pagination,
+                ...cached.pagination,
+            };
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
 
         state.loading = true;
         state.error = "";
@@ -83,6 +118,8 @@ export function useOrders({
 
         const controller = abortSupported ? new AbortController() : null;
         abortRef.value = controller;
+
+        const startMark = perf.startFetch();
 
         try {
             const start = Math.max(
@@ -108,6 +145,13 @@ export function useOrders({
                         : 1,
             };
             state.selection.clear();
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                items,
+                pagination: state.pagination,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             if (error?.name === "AbortError") {
                 return;
@@ -115,6 +159,8 @@ export function useOrders({
 
             state.error = error?.message ?? "Unknown error";
         } finally {
+            perf.endFetch(startMark);
+
             if (abortSupported && abortRef.value === controller) {
                 abortRef.value = null;
             }
@@ -125,7 +171,8 @@ export function useOrders({
 
     const refresh = () => {
         state.pagination.current = 1;
-        loadOrders();
+        clearCachedData(buildCacheKey());
+        loadOrders(true);
     };
 
     const search = () => {
@@ -266,6 +313,8 @@ export function useOrders({
                 if (state.activeOrder && state.activeOrder.id === updated.id) {
                     state.activeOrder = updated;
                 }
+
+                clearCachedData(buildCacheKey());
             }
 
             return updated;
@@ -340,6 +389,7 @@ export function useOrders({
         bulkTransition,
         toggleSelection,
         clearSelection,
+        metrics: perf.metrics,
         addNote: async (orderId, message) => {
             if (!noteEndpoint) {
                 throw new Error("Note endpoint unavailable.");

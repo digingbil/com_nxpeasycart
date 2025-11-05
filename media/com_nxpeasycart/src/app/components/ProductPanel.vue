@@ -47,25 +47,41 @@
                     "
                 />
                 <button
-                    class="nxp-ec-btn"
+                    class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
+                    :title="__(
+                        'COM_NXPEASYCART_PRODUCTS_REFRESH',
+                        'Refresh',
+                        [],
+                        'productsRefresh'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_PRODUCTS_REFRESH',
+                        'Refresh',
+                        [],
+                        'productsRefresh'
+                    )"
                 >
-                    {{
-                        __(
-                            "COM_NXPEASYCART_PRODUCTS_REFRESH",
-                            "Refresh",
-                            [],
-                            "productsRefresh"
-                        )
-                    }}
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_PRODUCTS_REFRESH",
+                                "Refresh",
+                                [],
+                                "productsRefresh"
+                            )
+                        }}
+                    </span>
                 </button>
                 <button
                     class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="openCreate"
                 >
+                    <i class="fa-solid fa-plus"></i>
                     {{ __("COM_NXPEASYCART_PRODUCTS_ADD", "Add product") }}
                 </button>
             </div>
@@ -75,15 +91,8 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
-            {{
-                __(
-                    "COM_NXPEASYCART_PRODUCTS_LOADING",
-                    "Loading products…",
-                    [],
-                    "productsLoading"
-                )
-            }}
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+            <SkeletonLoader type="table" :rows="5" :columns="5" />
         </div>
 
         <div v-else class="nxp-ec-admin-panel__body">
@@ -91,9 +100,19 @@
                 :items="state.items"
                 :translate="__"
                 :base-currency="baseCurrency"
+                :saving="state.saving"
                 @edit="openEdit"
                 @delete="confirmDelete"
+                @toggle-active="toggleActive"
             />
+            <div
+                v-if="state.lastUpdated"
+                class="nxp-ec-admin-panel__metadata"
+                :title="state.lastUpdated"
+            >
+                {{ __("COM_NXPEASYCART_LAST_UPDATED", "Last updated") }}:
+                {{ formatTimestamp(state.lastUpdated) }}
+            </div>
         </div>
 
         <ProductEditor
@@ -104,6 +123,7 @@
             :translate="__"
             :errors="state.validationErrors"
             :category-options="categoryOptions"
+            :media-modal-url="mediaModalUrl"
             @submit="handleSubmit"
             @cancel="closeEditor"
         />
@@ -114,6 +134,7 @@
 import { computed, reactive, ref, watch } from "vue";
 import ProductTable from "./ProductTable.vue";
 import ProductEditor from "./ProductEditor.vue";
+import SkeletonLoader from "./SkeletonLoader.vue";
 
 const props = defineProps({
     state: {
@@ -131,6 +152,10 @@ const props = defineProps({
     categoryOptions: {
         type: Array,
         default: () => [],
+    },
+    mediaModalUrl: {
+        type: String,
+        default: "",
     },
 });
 
@@ -150,6 +175,8 @@ const baseCurrency = computed(() =>
 );
 
 const editorProduct = computed(() => editorState.product);
+
+const mediaModalUrl = computed(() => (props.mediaModalUrl || "").trim());
 
 const openCreate = () => {
     props.state.validationErrors = [];
@@ -209,12 +236,281 @@ const confirmDelete = async (product) => {
     }
 };
 
+const toggleActive = (product) => {
+    if (!product?.id || props.state.saving) {
+        return;
+    }
+
+    const normalizeString = (value) => {
+        if (value === null || value === undefined) {
+            return "";
+        }
+
+        return String(value);
+    };
+
+    const normalizeNumber = (value, fallback = 0) => {
+        const number = Number(value);
+
+        return Number.isFinite(number) ? number : fallback;
+    };
+
+    const normalisedVariants = Array.isArray(product.variants)
+        ? product.variants
+              .map((variant) => {
+                  if (!variant) {
+                      return null;
+                  }
+
+                  const sku = normalizeString(variant.sku).trim();
+
+                  if (!sku) {
+                      return null;
+                  }
+
+                  let priceCents = normalizeNumber(
+                      variant.price_cents,
+                      Number.NaN
+                  );
+
+                  if (!Number.isFinite(priceCents)) {
+                      const price = normalizeString(variant.price);
+                      const parsed = price ? Number.parseFloat(price) : NaN;
+                      priceCents = Number.isFinite(parsed)
+                          ? Math.round(parsed * 100)
+                          : NaN;
+                  }
+
+                  if (!Number.isFinite(priceCents)) {
+                      return null;
+                  }
+
+                  const currency = normalizeString(
+                      variant.currency ?? baseCurrency.value
+                  )
+                      .trim()
+                      .toUpperCase();
+
+                  if (!currency) {
+                      return null;
+                  }
+
+                  const options = variant.options ?? null;
+                  const stock = Math.max(
+                      0,
+                      Math.round(normalizeNumber(variant.stock, 0))
+                  );
+
+                  return {
+                      id: normalizeNumber(variant.id, 0),
+                      sku,
+                      price_cents: Math.round(priceCents),
+                      currency,
+                      stock,
+                      options:
+                          options !== null && options !== undefined
+                              ? options
+                              : null,
+                      weight:
+                          variant.weight !== null &&
+                          variant.weight !== undefined &&
+                          variant.weight !== ""
+                              ? String(variant.weight)
+                              : null,
+                      active:
+                          variant.active === undefined
+                              ? true
+                              : Boolean(variant.active),
+                  };
+              })
+              .filter(Boolean)
+        : [];
+
+    if (!normalisedVariants.length) {
+        props.state.error = __(
+            "COM_NXPEASYCART_ERROR_PRODUCT_VARIANT_REQUIRED",
+            "At least one variant with a price is required."
+        );
+
+        return;
+    }
+
+    const normalisedCategories = Array.isArray(product.categories)
+        ? product.categories
+              .map((category) => {
+                  if (category === null || category === undefined) {
+                      return null;
+                  }
+
+                  if (typeof category === "number") {
+                      return category > 0
+                          ? {
+                                id: category,
+                                title: "",
+                                slug: "",
+                            }
+                          : null;
+                  }
+
+                  if (
+                      typeof category === "string" &&
+                      category.trim() !== "" &&
+                      Number.isFinite(Number(category))
+                  ) {
+                      const numericId = Number(category);
+
+                      return numericId > 0
+                          ? {
+                                id: numericId,
+                                title: "",
+                                slug: "",
+                            }
+                          : null;
+                  }
+
+                  if (typeof category === "object") {
+                      if (category.id) {
+                          const categoryId = normalizeNumber(category.id, 0);
+
+                          return categoryId > 0
+                              ? {
+                                    id: categoryId,
+                                    title: "",
+                                    slug: "",
+                                }
+                              : null;
+                      }
+
+                      const categoryId = normalizeNumber(category.id, 0);
+
+                      if (categoryId <= 0 && !category.title) {
+                          return null;
+                      }
+
+                      return {
+                          id: 0,
+                          title: normalizeString(category.title),
+                          slug: normalizeString(category.slug),
+                      };
+                  }
+
+                  const title = normalizeString(category).trim();
+
+                  if (!title) {
+                      return null;
+                  }
+
+                  return {
+                      id: 0,
+                      title,
+                      slug: "",
+                  };
+              })
+              .filter(Boolean)
+        : [];
+
+    const normalisedImages = Array.isArray(product.images)
+        ? product.images
+              .map((image) => normalizeString(image).trim())
+              .map((image) => {
+                  let value = image;
+
+                  if (!value) {
+                      return "";
+                  }
+
+                  const metadataIndex = value.indexOf("#joomlaImage://");
+                  if (metadataIndex !== -1) {
+                      value = value.substring(0, metadataIndex);
+                  }
+
+                  const adapterMatch = value.match(/^(?:local-[a-z0-9_-]+|images|videos|audios|documents):\/\/?(.*)$/i);
+                  if (adapterMatch && adapterMatch[1]) {
+                      value = adapterMatch[1];
+                  }
+
+                  if (typeof window !== "undefined") {
+                      try {
+                          const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
+                          const rootFull = systemPaths.rootFull || window.location.origin;
+                          const rootRel = systemPaths.root || "/";
+
+                          if (value.startsWith(rootFull)) {
+                              value = value.substring(rootFull.length);
+                          }
+
+                          if (value.startsWith(rootRel)) {
+                              value = value.substring(rootRel.length);
+                          }
+                      } catch (error) {
+                          // ignore
+                      }
+                  }
+
+                  return value.trim();
+              })
+              .filter((image) => image !== "")
+        : [];
+
+    props.state.error = "";
+
+    emit("update", {
+        id: product.id,
+        data: {
+            title: normalizeString(product.title),
+            slug: normalizeString(product.slug),
+            short_desc: normalizeString(product.short_desc),
+            long_desc: normalizeString(product.long_desc),
+            active: product.active ? 0 : 1,
+            featured: product.featured ? 1 : 0,
+            images: normalisedImages,
+            variants: normalisedVariants,
+            categories: normalisedCategories,
+        },
+    });
+};
+
 const emitRefresh = () => {
     emit("refresh");
 };
 
 const emitSearch = () => {
     emit("search");
+};
+
+const formatTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return "";
+    }
+
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (seconds < 60) {
+            return __("COM_NXPEASYCART_TIME_SECONDS_AGO", "just now");
+        } else if (minutes < 60) {
+            return __(
+                "COM_NXPEASYCART_TIME_MINUTES_AGO",
+                "%s minutes ago",
+                [minutes]
+            );
+        } else if (hours < 24) {
+            return __(
+                "COM_NXPEASYCART_TIME_HOURS_AGO",
+                "%s hours ago",
+                [hours]
+            );
+        } else {
+            return date.toLocaleString();
+        }
+    } catch (error) {
+        return timestamp;
+    }
 };
 
 watch(

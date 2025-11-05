@@ -25,7 +25,7 @@
                 </p>
             </div>
             <button
-                v-if="hasIncompleteOnboarding"
+                v-show="hasIncompleteOnboarding"
                 class="nxp-ec-btn nxp-ec-btn--ghost"
                 type="button"
                 @click="openOnboarding"
@@ -65,6 +65,7 @@
             :translate="__"
             :base-currency="baseCurrency"
             :category-options="categoryOptions"
+            :media-modal-url="mediaModalUrl"
             @create="onProductCreate"
             @update="onProductUpdate"
             @delete="onProductDelete"
@@ -505,6 +506,11 @@ const settingsBaseCurrency = computed(() => {
 const baseCurrency = computed(() => {
     const currency = settingsBaseCurrency.value || datasetBaseCurrency.value;
     return currency !== "" ? currency : "USD";
+});
+
+const mediaModalUrl = computed(() => {
+    const value = props.dataset?.mediaModalUrl ?? "";
+    return typeof value === "string" ? value.trim() : "";
 });
 
 const onboardingCopy = (label) => {

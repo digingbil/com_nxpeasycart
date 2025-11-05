@@ -11,6 +11,7 @@ use Joomla\CMS\Uri\Uri;
 $document = $this->getDocument();
 $wa        = $document->getWebAssetManager();
 $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
+$wa->getRegistry()->addRegistryFile('media/com_media/joomla.asset.json');
 $wa->useScript('com_nxpeasycart.admin');
 $wa->registerAndUseStyle(
     'com_nxpeasycart.admin.css',
@@ -21,9 +22,45 @@ $wa->registerAndUseStyle(
 // Explicitly queue the bundle in case the registry file is not picked up (symlinked dev installs).
 $document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
 
+// Ensure the Joomla media picker assets are available for the product editor.
+$wa->useStyle('webcomponent.field-media')
+    ->useStyle('webcomponent.media-select')
+    ->useScript('webcomponent.field-media')
+    ->useScript('webcomponent.media-select')
+    ->useScript('joomla.dialog')
+    ->useScript('joomla.dialog-autocreate')
+    ->useStyle('com_media.mediamanager')
+    ->useScript('com_media.mediamanager');
+
+$mediaParams    = ComponentHelper::getParams('com_media');
+$imagesExt      = array_map('trim', explode(',', $mediaParams->get('image_extensions', 'bmp,gif,jpg,jpeg,png,webp,svg,avif')));
+$audiosExt      = array_map('trim', explode(',', $mediaParams->get('audio_extensions', 'mp3,m4a,mp4a,ogg')));
+$videosExt      = array_map('trim', explode(',', $mediaParams->get('video_extensions', 'mp4,mp4v,mpeg,mov,webm')));
+$documentsExt   = array_map('trim', explode(',', $mediaParams->get('doc_extensions', 'doc,odg,odp,ods,odt,pdf,ppt,txt,xcf,xls,csv')));
+$mediaScriptSet = $document->getScriptOptions('media-picker');
+
+$document->addScriptOptions(
+    'media-picker-api',
+    ['apiBaseUrl' => Uri::base(true) . '/index.php?option=com_media&format=json']
+);
+
+if (!$mediaScriptSet) {
+    $document->addScriptOptions(
+        'media-picker',
+        [
+            'images'    => $imagesExt,
+            'audios'    => $audiosExt,
+            'videos'    => $videosExt,
+            'documents' => $documentsExt,
+        ]
+    );
+}
+
+$user           = Factory::getApplication()->getIdentity();
 $token                        = Session::getFormToken();
 $tokenQuery                   = $token . '=1';
 $adminBase                    = rtrim(Uri::base(), '/');
+$mediaModalUrl                = $adminBase . '/index.php?option=com_media&view=media&layout=modal&tmpl=component&mediatypes=0,1,2,3&asset=com_nxpeasycart&author=' . (int) $user->id;
 $productsEndpointList         = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.list&format=json';
 $productsEndpointStore        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json&' . $tokenQuery;
 $productsEndpointUpdate       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json&' . $tokenQuery;
@@ -417,6 +454,7 @@ $dataAttributes = [
     'dashboard-metric-currency'          => Text::_('COM_NXPEASYCART_DASHBOARD_METRIC_CURRENCY'),
     'dashboard-checklist-title'          => Text::_('COM_NXPEASYCART_DASHBOARD_CHECKLIST'),
     'dashboard-checklist-action'         => Text::_('COM_NXPEASYCART_DASHBOARD_CHECKLIST_ACTION'),
+    'media-modal-url'                    => $mediaModalUrl,
 ];
 ?>
 

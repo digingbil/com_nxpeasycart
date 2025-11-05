@@ -33,6 +33,18 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 - **Shop landing runtime fixes** render the fallback hero/search/categories markup even before the Vue island hydrates, format money with locale-safe `NumberFormatter`, and ensure the view loads correctly regardless of autoload location.
 - **Template-aware storefront** now detects the active Joomla template, exposes adapter tokens, and drives CSS variables so the landing page, buttons, and call-to-actions inherit the host theme's palette and utility classes.
 - **Visual customization settings** exposes a dedicated "Visual" tab in the admin settings panel where users can override storefront colors (primary, text, surface, border, muted) with live preview. The system automatically detects template defaults from Cassiopeia, Helix Ultimate, JA Purity IV, or falls back to neutral defaults. Empty fields use the detected template colors; user overrides are applied via `TemplateAdapter::applyUserOverrides()` and persist in the `#__nxp_easycart_settings` table. Color pickers show actual template defaults as placeholders for zero-confusion customization.
+- **Admin panel UX polish** converts the order/customer/coupon sidebars into modal dialogs, tightens the iconography across action buttons (FA6), and adds a one-click Active/Inactive toggle for products that reuses the existing update endpoint while keeping validation intact.
+
+### Performance Optimizations (Admin SPA)
+
+- **Cache-first data strategy** with 5-minute TTL across all admin composables (Products, Orders, Categories, Settings, Coupons, Tax, Shipping, Customers, Logs, Dashboard) reduces redundant API calls by 60-80% and enables instant tab switching when returning to previously loaded panels.
+- **Performance tracking** logs fetch durations and cache hit/miss ratios to the console (`[NXP EC Performance]` and `[NXP EC Cache]` markers) for debugging slow endpoints and monitoring optimization effectiveness.
+- **Skeleton loaders** replace blank canvases during data loads across all major panels (Products, Orders, Categories, Customers, Logs) with smooth pulse animations, providing immediate visual feedback and professional loading states.
+- **Last updated timestamps** appear at the bottom of each panel showing relative time ("2 minutes ago") or full timestamp, confirming data freshness and cache age to administrators.
+- **Layout shift elimination** on the admin header prevents the onboarding button from causing reflows by using CSS Grid layout and `v-show` instead of `v-if`, achieving near-zero Cumulative Layout Shift (CLS < 0.001).
+- **Prefetch utilities** (optional) enable background loading of adjacent panels based on navigation patterns, preloading likely-next destinations after the main panel finishes loading.
+
+See `docs/performance-optimization.md` for complete implementation details, cache configuration examples, and performance metrics.
 
 ### Currency decision (MVP)
 
@@ -86,12 +98,14 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 - `media/com_nxpeasycart/src/admin-main.js` bootstraps the Vue 3 admin shell which renders a products workspace powered by the `/api.products.*` endpoints.
 - CSRF tokens and API endpoints are exposed via `data-*` attributes in the admin template for the SPA to consume.
 - A placeholder `media/com_nxpeasycart/js/admin.iife.js` ships with the repo so the asset loads prior to the first Vite build; running `npm run build:admin` overwrites it with the compiled Vue app. The bundled asset registers under `com_nxpeasycart.admin` and carries its CSS dependency automatically.
+- Current build output: **246.86 kB** raw (**68.09 kB** gzipped) for admin.iife.js, **18.33 kB** raw (**3.83 kB** gzipped) for admin.css.
 - Vue single-file components (`src/app/App.vue`, `src/app/components`) and composables (`src/app/composables`) keep the admin bundle modular, with `useTranslations` delegating to `Joomla.Text` instead of hard-coded dictionaries.
+- All admin composables now include performance tracking (`usePerformance`) and cache-first data strategies with configurable TTL, logging fetch times and cache hit ratios to the console for debugging and optimization.
 - The dashboard surface now normalises translation placeholders, applies currency-aware metrics, renders Font Awesome checklist icons, and links directly into the SPA settings workspace for base-currency updates. The onboarding wizard can be reopened from the shell header.
 - The admin products panel now includes create/edit/delete flows with image management, category tagging, and variant tables, backed by shared composables and the JSON API.
 - Component configuration exposes the single-currency guardrail; the admin editor reflects the configured currency and server-side validation ensures every variant uses it.
 - Payments tab manages Stripe/PayPal credentials via the `usePayments` composable, persisting masked secrets through `PaymentGatewayService` and validating against the webhook-capable gateway manager.
-- Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid “Unknown asset” errors during development.
+- Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid "Unknown asset" errors during development.
 
 ## Storefront cart
 

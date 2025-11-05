@@ -1,5 +1,11 @@
 import { onMounted, reactive } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 const normaliseSettings = (data = {}) => {
     const store = data.store ?? {};
@@ -45,8 +51,10 @@ export function useSettings({
     token,
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("settings");
 
     const showEndpoint = endpoints?.show ?? "";
     const updateEndpoint = endpoints?.update ?? showEndpoint;
@@ -56,24 +64,47 @@ export function useSettings({
         saving: false,
         error: "",
         values: normaliseSettings(preload),
+        lastUpdated: null,
     });
 
-    const refresh = async () => {
+    const refresh = async (forceRefresh = false) => {
         if (!showEndpoint) {
             state.error = "Settings endpoint unavailable.";
             return;
         }
 
+        const cacheKey = "settings:data";
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.values = cached.values;
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
+
         state.loading = true;
         state.error = "";
+
+        const startMark = perf.startFetch();
 
         try {
             const data = await api.fetchSettings({ endpoint: showEndpoint });
             state.values = normaliseSettings(data);
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                values: state.values,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             state.error = error?.message ?? "Unknown error";
             throw error;
         } finally {
+            perf.endFetch(startMark);
             state.loading = false;
         }
     };
@@ -93,6 +124,13 @@ export function useSettings({
                 data: payload,
             });
             state.values = normaliseSettings(data);
+            state.lastUpdated = new Date().toISOString();
+
+            clearCachedData("settings:data");
+            setCachedData("settings:data", {
+                values: state.values,
+                lastUpdated: state.lastUpdated,
+            });
 
             return state.values;
         } catch (error) {
@@ -113,6 +151,7 @@ export function useSettings({
         state,
         refresh,
         save,
+        metrics: perf.metrics,
     };
 }
 

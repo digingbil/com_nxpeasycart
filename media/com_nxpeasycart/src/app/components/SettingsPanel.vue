@@ -448,23 +448,33 @@
                                 <td>{{ rate.priority }}</td>
                                 <td class="nxp-ec-admin-table__actions">
                                     <button
-                                        class="nxp-ec-btn nxp-ec-btn--link"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"
                                         type="button"
                                         @click="editTax(rate)"
+                                        :title="__('JEDIT', 'Edit')"
+                                        :aria-label="__('JEDIT', 'Edit')"
                                     >
-                                        {{ __("JEDIT", "Edit") }}
+                                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                        <span class="nxp-ec-sr-only">
+                                            {{ __("JEDIT", "Edit") }}
+                                        </span>
                                     </button>
                                     <button
-                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                                         type="button"
                                         @click="deleteTax(rate)"
+                                        :title="__('COM_NXPEASYCART_REMOVE', 'Remove')"
+                                        :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
                                     >
-                                        {{
-                                            __(
-                                                "COM_NXPEASYCART_REMOVE",
-                                                "Remove"
-                                            )
-                                        }}
+                                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                        <span class="nxp-ec-sr-only">
+                                            {{
+                                                __(
+                                                    "COM_NXPEASYCART_REMOVE",
+                                                    "Remove"
+                                                )
+                                            }}
+                                        </span>
                                     </button>
                                 </td>
                             </tr>
@@ -784,31 +794,54 @@
                                     }}
                                 </td>
                                 <td>
-                                    {{
-                                        rule.active
-                                            ? __("JYES", "Yes")
-                                            : __("JNO", "No")
-                                    }}
+                                    <span
+                                        class="nxp-ec-badge"
+                                        :class="{ 'is-active': rule.active }"
+                                    >
+                                        <i
+                                            :class="
+                                                rule.active
+                                                    ? 'fa-solid fa-circle-check'
+                                                    : 'fa-regular fa-circle'
+                                            "
+                                            aria-hidden="true"
+                                        ></i>
+                                        {{
+                                            rule.active
+                                                ? __("JYES", "Yes")
+                                                : __("JNO", "No")
+                                        }}
+                                    </span>
                                 </td>
                                 <td class="nxp-ec-admin-table__actions">
                                     <button
-                                        class="nxp-ec-btn nxp-ec-btn--link"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"
                                         type="button"
                                         @click="editShipping(rule)"
+                                        :title="__('JEDIT', 'Edit')"
+                                        :aria-label="__('JEDIT', 'Edit')"
                                     >
-                                        {{ __("JEDIT", "Edit") }}
+                                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                        <span class="nxp-ec-sr-only">
+                                            {{ __("JEDIT", "Edit") }}
+                                        </span>
                                     </button>
                                     <button
-                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                                         type="button"
                                         @click="deleteShipping(rule)"
+                                        :title="__('COM_NXPEASYCART_REMOVE', 'Remove')"
+                                        :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
                                     >
-                                        {{
-                                            __(
-                                                "COM_NXPEASYCART_REMOVE",
-                                                "Remove"
-                                            )
-                                        }}
+                                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                        <span class="nxp-ec-sr-only">
+                                            {{
+                                                __(
+                                                    "COM_NXPEASYCART_REMOVE",
+                                                    "Remove"
+                                                )
+                                            }}
+                                        </span>
                                     </button>
                                 </td>
                             </tr>

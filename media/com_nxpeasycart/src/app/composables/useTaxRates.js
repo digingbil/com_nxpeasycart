@@ -1,13 +1,21 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 export function useTaxRates({
     endpoints,
     token,
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("taxRates");
 
     const listEndpoint = endpoints?.list ?? "";
     const createEndpoint = endpoints?.create ?? listEndpoint;
@@ -26,17 +34,43 @@ export function useTaxRates({
             current: preload.pagination?.current ?? 1,
         },
         search: "",
+        lastUpdated: null,
     });
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
 
-    const loadRates = async () => {
+    const buildCacheKey = () => {
+        const page = state.pagination.current || 1;
+        const limit = state.pagination.limit || 20;
+        const search = state.search.trim();
+
+        return `taxRates:page=${page}:limit=${limit}:search=${search}`;
+    };
+
+    const loadRates = async (forceRefresh = false) => {
         if (!listEndpoint) {
             state.error = "Tax endpoint unavailable.";
             state.items = [];
             return;
         }
+
+        const cacheKey = buildCacheKey();
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.items = cached.items;
+            state.pagination = {
+                ...state.pagination,
+                ...cached.pagination,
+            };
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
 
         state.loading = true;
         state.error = "";
@@ -47,6 +81,8 @@ export function useTaxRates({
 
         const controller = abortSupported ? new AbortController() : null;
         abortRef.value = controller;
+
+        const startMark = perf.startFetch();
 
         try {
             const start = Math.max(
@@ -70,6 +106,13 @@ export function useTaxRates({
                         ? pagination.current
                         : 1,
             };
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                items,
+                pagination: state.pagination,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             if (error?.name === "AbortError") {
                 return;
@@ -77,6 +120,8 @@ export function useTaxRates({
 
             state.error = error?.message ?? "Unknown error";
         } finally {
+            perf.endFetch(startMark);
+
             if (abortSupported && abortRef.value === controller) {
                 abortRef.value = null;
             }
@@ -87,7 +132,8 @@ export function useTaxRates({
 
     const refresh = () => {
         state.pagination.current = 1;
-        loadRates();
+        clearCachedData(buildCacheKey());
+        loadRates(true);
     };
 
     const saveRate = async (payload) => {
@@ -116,6 +162,8 @@ export function useTaxRates({
                 } else {
                     state.items.splice(index, 1, rate);
                 }
+
+                clearCachedData(buildCacheKey());
             }
 
             return rate;
@@ -145,6 +193,8 @@ export function useTaxRates({
                 state.items = state.items.filter(
                     (item) => !ids.includes(item.id)
                 );
+
+                clearCachedData(buildCacheKey());
             }
 
             return deleted;
@@ -171,6 +221,7 @@ export function useTaxRates({
         refresh,
         saveRate,
         deleteRates,
+        metrics: perf.metrics,
     };
 }
 

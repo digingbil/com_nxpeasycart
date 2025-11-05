@@ -1,13 +1,21 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 export function useShippingRules({
     endpoints,
     token,
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("shippingRules");
 
     const listEndpoint = endpoints?.list ?? "";
     const createEndpoint = endpoints?.create ?? listEndpoint;
@@ -26,17 +34,43 @@ export function useShippingRules({
             current: preload.pagination?.current ?? 1,
         },
         search: "",
+        lastUpdated: null,
     });
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
 
-    const loadRules = async () => {
+    const buildCacheKey = () => {
+        const page = state.pagination.current || 1;
+        const limit = state.pagination.limit || 20;
+        const search = state.search.trim();
+
+        return `shippingRules:page=${page}:limit=${limit}:search=${search}`;
+    };
+
+    const loadRules = async (forceRefresh = false) => {
         if (!listEndpoint) {
             state.error = "Shipping endpoint unavailable.";
             state.items = [];
             return;
         }
+
+        const cacheKey = buildCacheKey();
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.items = cached.items;
+            state.pagination = {
+                ...state.pagination,
+                ...cached.pagination,
+            };
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
 
         state.loading = true;
         state.error = "";
@@ -47,6 +81,8 @@ export function useShippingRules({
 
         const controller = abortSupported ? new AbortController() : null;
         abortRef.value = controller;
+
+        const startMark = perf.startFetch();
 
         try {
             const start = Math.max(
@@ -70,6 +106,13 @@ export function useShippingRules({
                         ? pagination.current
                         : 1,
             };
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                items,
+                pagination: state.pagination,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             if (error?.name === "AbortError") {
                 return;
@@ -77,6 +120,8 @@ export function useShippingRules({
 
             state.error = error?.message ?? "Unknown error";
         } finally {
+            perf.endFetch(startMark);
+
             if (abortSupported && abortRef.value === controller) {
                 abortRef.value = null;
             }
@@ -87,7 +132,8 @@ export function useShippingRules({
 
     const refresh = () => {
         state.pagination.current = 1;
-        loadRules();
+        clearCachedData(buildCacheKey());
+        loadRules(true);
     };
 
     const saveRule = async (payload) => {
@@ -116,6 +162,8 @@ export function useShippingRules({
                 } else {
                     state.items.splice(index, 1, rule);
                 }
+
+                clearCachedData(buildCacheKey());
             }
 
             return rule;
@@ -145,6 +193,8 @@ export function useShippingRules({
                 state.items = state.items.filter(
                     (item) => !ids.includes(item.id)
                 );
+
+                clearCachedData(buildCacheKey());
             }
 
             return deleted;
@@ -171,6 +221,7 @@ export function useShippingRules({
         refresh,
         saveRule,
         deleteRules,
+        metrics: perf.metrics,
     };
 }
 

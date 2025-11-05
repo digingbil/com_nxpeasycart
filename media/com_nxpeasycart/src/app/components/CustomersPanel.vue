@@ -47,19 +47,34 @@
                     "
                 />
                 <button
-                    class="nxp-ec-btn"
+                    class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
+                    :title="__(
+                        'COM_NXPEASYCART_CUSTOMERS_REFRESH',
+                        'Refresh',
+                        [],
+                        'customersRefresh'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_CUSTOMERS_REFRESH',
+                        'Refresh',
+                        [],
+                        'customersRefresh'
+                    )"
                 >
-                    {{
-                        __(
-                            "COM_NXPEASYCART_CUSTOMERS_REFRESH",
-                            "Refresh",
-                            [],
-                            "customersRefresh"
-                        )
-                    }}
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_CUSTOMERS_REFRESH",
+                                "Refresh",
+                                [],
+                                "customersRefresh"
+                            )
+                        }}
+                    </span>
                 </button>
             </div>
         </header>
@@ -68,15 +83,8 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
-            {{
-                __(
-                    "COM_NXPEASYCART_CUSTOMERS_LOADING",
-                    "Loading customers…",
-                    [],
-                    "customersLoading"
-                )
-            }}
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+            <SkeletonLoader type="table" :rows="5" :columns="5" />
         </div>
 
         <div v-else class="nxp-ec-admin-panel__body">
@@ -212,225 +220,267 @@
                 </div>
             </div>
 
-            <aside
-                v-if="state.activeCustomer"
-                class="nxp-ec-admin-panel__sidebar"
-                aria-live="polite"
+            <div
+                v-if="state.lastUpdated"
+                class="nxp-ec-admin-panel__metadata"
+                :title="state.lastUpdated"
             >
-                <header class="nxp-ec-admin-panel__sidebar-header">
-                    <h3>
-                        {{ state.activeCustomer.email }}
-                    </h3>
-                    <button
-                        class="nxp-ec-link-button"
-                        type="button"
-                        @click="emitClose"
+                {{ __("COM_NXPEASYCART_LAST_UPDATED", "Last updated") }}:
+                {{ formatTimestamp(state.lastUpdated) }}
+            </div>
+
+            <div
+                v-if="state.activeCustomer"
+                class="nxp-ec-modal"
+                role="dialog"
+                aria-modal="true"
+            >
+                <div
+                    class="nxp-ec-modal__backdrop"
+                    aria-hidden="true"
+                    @click="emitClose"
+                ></div>
+                <div
+                    class="nxp-ec-modal__dialog nxp-ec-modal__dialog--panel"
+                    role="document"
+                >
+                    <aside
+                        class="nxp-ec-admin-panel__sidebar"
+                        aria-live="polite"
                     >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_CLOSE",
-                                "Close details",
-                                [],
-                                "customersDetailsClose"
-                            )
-                        }}
-                    </button>
-                </header>
+                        <header class="nxp-ec-admin-panel__sidebar-header">
+                            <h3>
+                                {{ state.activeCustomer.email }}
+                            </h3>
+                            <button
+                                class="nxp-ec-link-button nxp-ec-btn--icon"
+                                type="button"
+                                @click="emitClose"
+                                :title="__(
+                                    'COM_NXPEASYCART_CUSTOMERS_DETAILS_CLOSE',
+                                    'Close details',
+                                    [],
+                                    'customersDetailsClose'
+                                )"
+                                :aria-label="__(
+                                    'COM_NXPEASYCART_CUSTOMERS_DETAILS_CLOSE',
+                                    'Close details',
+                                    [],
+                                    'customersDetailsClose'
+                                )"
+                            >
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span class="nxp-ec-sr-only">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_CUSTOMERS_DETAILS_CLOSE",
+                                            "Close details",
+                                            [],
+                                            "customersDetailsClose"
+                                        )
+                                    }}
+                                </span>
+                            </button>
+                        </header>
 
-                <section class="nxp-ec-admin-panel__section">
-                    <h4>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_SUMMARY",
-                                "Summary",
-                                [],
-                                "customersDetailsSummary"
-                            )
-                        }}
-                    </h4>
-                    <dl class="nxp-ec-admin-summary">
-                        <div>
-                            <dt>
+                        <section class="nxp-ec-admin-panel__section">
+                            <h4>
                                 {{
                                     __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_NAME",
-                                        "Name",
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_SUMMARY",
+                                        "Summary",
                                         [],
-                                        "customersDetailsName"
+                                        "customersDetailsSummary"
                                     )
                                 }}
-                            </dt>
-                            <dd>
-                                {{ state.activeCustomer.meta?.name || "—" }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>
+                            </h4>
+                            <dl class="nxp-ec-admin-summary">
+                                <div>
+                                    <dt>
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_NAME",
+                                                "Name",
+                                                [],
+                                                "customersDetailsName"
+                                            )
+                                        }}
+                                    </dt>
+                                    <dd>
+                                        {{ state.activeCustomer.meta?.name || "—" }}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_TOTAL",
+                                                "Total spent",
+                                                [],
+                                                "customersDetailsTotal"
+                                            )
+                                        }}
+                                    </dt>
+                                    <dd>
+                                        {{
+                                            formatCurrency(
+                                                state.activeCustomer.total_spent_cents,
+                                                state.activeCustomer.currency ||
+                                                    baseCurrency
+                                            )
+                                        }}
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt>
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS",
+                                                "Orders",
+                                                [],
+                                                "customersDetailsOrders"
+                                            )
+                                        }}
+                                    </dt>
+                                    <dd>{{ state.activeCustomer.orders_count }}</dd>
+                                </div>
+                                <div>
+                                    <dt>
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_LAST",
+                                                "Last order",
+                                                [],
+                                                "customersDetailsLast"
+                                            )
+                                        }}
+                                    </dt>
+                                    <dd>
+                                        {{
+                                            formatDate(state.activeCustomer.last_order)
+                                        }}
+                                    </dd>
+                                </div>
+                            </dl>
+                        </section>
+
+                        <section class="nxp-ec-admin-panel__section">
+                            <h4>
                                 {{
                                     __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_TOTAL",
-                                        "Total spent",
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_BILLING",
+                                        "Billing address",
                                         [],
-                                        "customersDetailsTotal"
+                                        "customersDetailsBilling"
                                     )
                                 }}
-                            </dt>
-                            <dd>
-                                {{
-                                    formatCurrency(
-                                        state.activeCustomer.total_spent_cents,
-                                        state.activeCustomer.currency ||
-                                            baseCurrency
-                                    )
-                                }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>
+                            </h4>
+                            <address class="nxp-ec-admin-address">
+                                <span
+                                    v-for="line in addressLines(
+                                        state.activeCustomer.meta?.billing
+                                    )"
+                                    :key="line.key"
+                                >
+                                    {{ line.value }}
+                                </span>
+                            </address>
+                        </section>
+
+                        <section class="nxp-ec-admin-panel__section">
+                            <h4>
                                 {{
                                     __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS",
-                                        "Orders",
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_SHIPPING",
+                                        "Shipping address",
                                         [],
-                                        "customersDetailsOrders"
+                                        "customersDetailsShipping"
                                     )
                                 }}
-                            </dt>
-                            <dd>{{ state.activeCustomer.orders_count }}</dd>
-                        </div>
-                        <div>
-                            <dt>
+                            </h4>
+                            <address
+                                class="nxp-ec-admin-address"
+                                v-if="state.activeCustomer.meta?.shipping"
+                            >
+                                <span
+                                    v-for="line in addressLines(
+                                        state.activeCustomer.meta.shipping
+                                    )"
+                                    :key="line.key"
+                                >
+                                    {{ line.value }}
+                                </span>
+                            </address>
+                            <p v-else class="nxp-ec-admin-panel__muted">
                                 {{
                                     __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_LAST",
-                                        "Last order",
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING",
+                                        "No shipping address on file.",
                                         [],
-                                        "customersDetailsLast"
+                                        "customersDetailsNoShipping"
                                     )
                                 }}
-                            </dt>
-                            <dd>
+                            </p>
+                        </section>
+
+                        <section class="nxp-ec-admin-panel__section">
+                            <h4>
                                 {{
-                                    formatDate(state.activeCustomer.last_order)
-                                }}
-                            </dd>
-                        </div>
-                    </dl>
-                </section>
-
-                <section class="nxp-ec-admin-panel__section">
-                    <h4>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_BILLING",
-                                "Billing address",
-                                [],
-                                "customersDetailsBilling"
-                            )
-                        }}
-                    </h4>
-                    <address class="nxp-ec-admin-address">
-                        <span
-                            v-for="line in addressLines(
-                                state.activeCustomer.meta?.billing
-                            )"
-                            :key="line.key"
-                        >
-                            {{ line.value }}
-                        </span>
-                    </address>
-                </section>
-
-                <section class="nxp-ec-admin-panel__section">
-                    <h4>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_SHIPPING",
-                                "Shipping address",
-                                [],
-                                "customersDetailsShipping"
-                            )
-                        }}
-                    </h4>
-                    <address
-                        class="nxp-ec-admin-address"
-                        v-if="state.activeCustomer.meta?.shipping"
-                    >
-                        <span
-                            v-for="line in addressLines(
-                                state.activeCustomer.meta.shipping
-                            )"
-                            :key="line.key"
-                        >
-                            {{ line.value }}
-                        </span>
-                    </address>
-                    <p v-else class="nxp-ec-admin-panel__muted">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING",
-                                "No shipping address on file.",
-                                [],
-                                "customersDetailsNoShipping"
-                            )
-                        }}
-                    </p>
-                </section>
-
-                <section class="nxp-ec-admin-panel__section">
-                    <h4>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS_LIST",
-                                "Recent orders",
-                                [],
-                                "customersDetailsOrdersList"
-                            )
-                        }}
-                    </h4>
-                    <ul
-                        class="nxp-ec-admin-list"
-                        v-if="
-                            state.activeCustomer.orders &&
-                            state.activeCustomer.orders.length
-                        "
-                    >
-                        <li
-                            v-for="order in state.activeCustomer.orders"
-                            :key="order.id"
-                        >
-                            <div class="nxp-ec-admin-list__title">
-                                {{ order.order_no }} ·
-                                {{
-                                    formatCurrency(
-                                        order.total_cents,
-                                        order.currency || baseCurrency
+                                    __(
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_ORDERS_LIST",
+                                        "Recent orders",
+                                        [],
+                                        "customersDetailsOrdersList"
                                     )
                                 }}
-                            </div>
-                            <div class="nxp-ec-admin-list__meta">
-                                {{ stateLabel(order.state) }} ·
-                                {{ formatDate(order.created) }}
-                            </div>
-                        </li>
-                    </ul>
-                    <p v-else class="nxp-ec-admin-panel__muted">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_ORDERS",
-                                "No orders yet.",
-                                [],
-                                "customersDetailsNoOrders"
-                            )
-                        }}
-                    </p>
-                </section>
-            </aside>
+                            </h4>
+                            <ul
+                                class="nxp-ec-admin-list"
+                                v-if="
+                                    state.activeCustomer.orders &&
+                                    state.activeCustomer.orders.length
+                                "
+                            >
+                                <li
+                                    v-for="order in state.activeCustomer.orders"
+                                    :key="order.id"
+                                >
+                                    <div class="nxp-ec-admin-list__title">
+                                        {{ order.order_no }} ·
+                                        {{
+                                            formatCurrency(
+                                                order.total_cents,
+                                                order.currency || baseCurrency
+                                            )
+                                        }}
+                                    </div>
+                                    <div class="nxp-ec-admin-list__meta">
+                                        {{ stateLabel(order.state) }} ·
+                                        {{ formatDate(order.created) }}
+                                    </div>
+                                </li>
+                            </ul>
+                            <p v-else class="nxp-ec-admin-panel__muted">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_ORDERS",
+                                        "No orders yet.",
+                                        [],
+                                        "customersDetailsNoOrders"
+                                    )
+                                }}
+                            </p>
+                        </section>
+                    </aside>
+                </div>
+            </div>
         </div>
     </section>
 </template>
 
 <script setup>
+import SkeletonLoader from "./SkeletonLoader.vue";
+
 const props = defineProps({
     state: {
         type: Object,
@@ -506,6 +556,41 @@ const emitSearch = () => emit("search");
 const emitPage = (page) => emit("page", page);
 const emitView = (customer) => emit("view", customer);
 const emitClose = () => emit("close");
+
+const formatTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return "";
+    }
+
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (seconds < 60) {
+            return __("COM_NXPEASYCART_TIME_SECONDS_AGO", "just now");
+        } else if (minutes < 60) {
+            return __(
+                "COM_NXPEASYCART_TIME_MINUTES_AGO",
+                "%s minutes ago",
+                [minutes]
+            );
+        } else if (hours < 24) {
+            return __(
+                "COM_NXPEASYCART_TIME_HOURS_AGO",
+                "%s hours ago",
+                [hours]
+            );
+        } else {
+            return date.toLocaleString();
+        }
+    } catch (error) {
+        return timestamp;
+    }
+};
 </script>
 
 <style scoped>

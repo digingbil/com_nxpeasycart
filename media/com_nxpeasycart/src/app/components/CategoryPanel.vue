@@ -47,25 +47,41 @@
                     "
                 />
                 <button
-                    class="nxp-ec-btn"
+                    class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
+                    :title="__(
+                        'COM_NXPEASYCART_CATEGORIES_REFRESH',
+                        'Refresh',
+                        [],
+                        'categoriesRefresh'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_CATEGORIES_REFRESH',
+                        'Refresh',
+                        [],
+                        'categoriesRefresh'
+                    )"
                 >
-                    {{
-                        __(
-                            "COM_NXPEASYCART_CATEGORIES_REFRESH",
-                            "Refresh",
-                            [],
-                            "categoriesRefresh"
-                        )
-                    }}
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_CATEGORIES_REFRESH",
+                                "Refresh",
+                                [],
+                                "categoriesRefresh"
+                            )
+                        }}
+                    </span>
                 </button>
                 <button
                     class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="startCreate"
                 >
+                    <i class="fa-solid fa-plus"></i>
                     {{
                         __(
                             "COM_NXPEASYCART_CATEGORIES_ADD",
@@ -82,15 +98,8 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
-            {{
-                __(
-                    "COM_NXPEASYCART_CATEGORIES_LOADING",
-                    "Loading categories...",
-                    [],
-                    "categoriesLoading"
-                )
-            }}
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+            <SkeletonLoader type="table" :rows="5" :columns="5" />
         </div>
 
         <div v-else class="nxp-ec-admin-panel__body">
@@ -197,19 +206,25 @@
                             <td>{{ category.usage ?? 0 }}</td>
                             <td class="nxp-ec-admin-table__actions">
                                 <button
-                                    class="nxp-ec-btn nxp-ec-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"
                                     type="button"
                                     @click="startEdit(category)"
+                                    :title="__('JEDIT', 'Edit')"
+                                    :aria-label="__('JEDIT', 'Edit')"
                                 >
-                                    {{ __("JEDIT", "Edit") }}
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    <span class="nxp-ec-sr-only">{{ __("JEDIT", "Edit") }}</span>
                                 </button>
                                 <button
-                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                                     type="button"
                                     :disabled="state.deleting"
                                     @click="confirmDelete(category)"
+                                    :title="__('COM_NXPEASYCART_REMOVE', 'Remove')"
+                                    :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
                                 >
-                                    {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
+                                    <i class="fa-solid fa-trash"></i>
+                                    <span class="nxp-ec-sr-only">{{ __("COM_NXPEASYCART_REMOVE", "Remove") }}</span>
                                 </button>
                             </td>
                         </tr>
@@ -246,6 +261,15 @@
             </div>
 
             <div
+                v-if="state.lastUpdated"
+                class="nxp-ec-admin-panel__metadata"
+                :title="state.lastUpdated"
+            >
+                {{ __("COM_NXPEASYCART_LAST_UPDATED", "Last updated") }}:
+                {{ formatTimestamp(state.lastUpdated) }}
+            </div>
+
+            <div
                 v-if="formOpen"
                 class="nxp-ec-modal"
                 role="dialog"
@@ -267,12 +291,14 @@
                             }}
                         </h3>
                         <button
-                            class="nxp-ec-modal__close"
+                            class="nxp-ec-modal__close nxp-ec-btn--icon"
                             type="button"
                             @click="cancelEdit"
+                            :title="__('JCLOSE', 'Close')"
                             :aria-label="__('JCLOSE', 'Close')"
                         >
-                            &times;
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span class="nxp-ec-sr-only">{{ __("JCLOSE", "Close") }}</span>
                         </button>
                     </header>
 
@@ -405,6 +431,7 @@
                             type="submit"
                             :disabled="state.saving"
                         >
+                            <i class="fa-solid fa-floppy-disk"></i>
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_SAVE",
@@ -419,6 +446,7 @@
                             type="button"
                             @click="cancelEdit"
                         >
+                            <i class="fa-solid fa-ban"></i>
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_CANCEL",
@@ -438,6 +466,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
+import SkeletonLoader from "./SkeletonLoader.vue";
 
 const props = defineProps({
     state: {
@@ -737,6 +766,41 @@ const confirmDelete = (category) => {
     }
 
     emit("delete", [category.id]);
+};
+
+const formatTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return "";
+    }
+
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (seconds < 60) {
+            return __("COM_NXPEASYCART_TIME_SECONDS_AGO", "just now");
+        } else if (minutes < 60) {
+            return __(
+                "COM_NXPEASYCART_TIME_MINUTES_AGO",
+                "%s minutes ago",
+                [minutes]
+            );
+        } else if (hours < 24) {
+            return __(
+                "COM_NXPEASYCART_TIME_HOURS_AGO",
+                "%s hours ago",
+                [hours]
+            );
+        } else {
+            return date.toLocaleString();
+        }
+    } catch (error) {
+        return timestamp;
+    }
 };
 
 watch(

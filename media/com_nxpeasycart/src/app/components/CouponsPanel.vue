@@ -47,25 +47,41 @@
                     "
                 />
                 <button
-                    class="nxp-ec-btn"
+                    class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
+                    :title="__(
+                        'COM_NXPEASYCART_COUPONS_REFRESH',
+                        'Refresh',
+                        [],
+                        'couponsRefresh'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_COUPONS_REFRESH',
+                        'Refresh',
+                        [],
+                        'couponsRefresh'
+                    )"
                 >
-                    {{
-                        __(
-                            "COM_NXPEASYCART_COUPONS_REFRESH",
-                            "Refresh",
-                            [],
-                            "couponsRefresh"
-                        )
-                    }}
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_COUPONS_REFRESH",
+                                "Refresh",
+                                [],
+                                "couponsRefresh"
+                            )
+                        }}
+                    </span>
                 </button>
                 <button
                     class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="startCreate"
                 >
+                    <i class="fa-solid fa-plus"></i>
                     {{
                         __(
                             "COM_NXPEASYCART_COUPONS_ADD",
@@ -200,6 +216,14 @@
                                     class="nxp-ec-badge"
                                     :class="{ 'is-active': coupon.active }"
                                 >
+                                    <i
+                                        :class="
+                                            coupon.active
+                                                ? 'fa-solid fa-circle-check'
+                                                : 'fa-regular fa-circle'
+                                        "
+                                        aria-hidden="true"
+                                    ></i>
                                     {{
                                         coupon.active
                                             ? __("JYES", "Yes")
@@ -217,18 +241,28 @@
                             </td>
                             <td class="nxp-ec-admin-table__actions">
                                 <button
-                                    class="nxp-ec-btn nxp-ec-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"
                                     type="button"
                                     @click="startEdit(coupon)"
+                                    :title="__('JEDIT', 'Edit')"
+                                    :aria-label="__('JEDIT', 'Edit')"
                                 >
-                                    {{ __("JEDIT", "Edit") }}
+                                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                                    <span class="nxp-ec-sr-only">
+                                        {{ __("JEDIT", "Edit") }}
+                                    </span>
                                 </button>
                                 <button
-                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                                     type="button"
                                     @click="confirmDelete(coupon)"
+                                    :title="__('COM_NXPEASYCART_REMOVE', 'Remove')"
+                                    :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
                                 >
-                                    {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
+                                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                    <span class="nxp-ec-sr-only">
+                                        {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
+                                    </span>
                                 </button>
                             </td>
                         </tr>
@@ -264,271 +298,303 @@
                 </div>
             </div>
 
-            <aside
+            <div
                 v-if="formOpen"
-                class="nxp-ec-admin-panel__sidebar"
-                aria-live="polite"
+                class="nxp-ec-modal"
+                role="dialog"
+                aria-modal="true"
             >
-                <header class="nxp-ec-admin-panel__sidebar-header">
-                    <h3>
-                        {{
-                            draft.id
-                                ? __("JEDIT", "Edit")
-                                : __(
-                                      "COM_NXPEASYCART_COUPONS_ADD",
-                                      "Add coupon",
-                                      [],
-                                      "couponsAdd"
-                                  )
-                        }}
-                    </h3>
-                    <button
-                        class="nxp-ec-link-button"
-                        type="button"
-                        @click="cancelEdit"
-                    >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_COUPONS_DETAILS_CLOSE",
-                                "Close",
-                                [],
-                                "couponsDetailsClose"
-                            )
-                        }}
-                    </button>
-                </header>
-
-                <form
-                    class="nxp-ec-form"
-                    @submit.prevent="emitSave"
-                    autocomplete="off"
+                <div
+                    class="nxp-ec-modal__backdrop"
+                    aria-hidden="true"
+                    @click="cancelEdit"
+                ></div>
+                <div
+                    class="nxp-ec-modal__dialog nxp-ec-modal__dialog--panel"
+                    role="document"
                 >
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-code">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_CODE",
-                                    "Coupon code",
-                                    [],
-                                    "couponsFormCode"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-code"
-                            class="nxp-ec-form-input"
-                            type="text"
-                            v-model.trim="draft.code"
-                            required
-                            maxlength="64"
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-type">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_TYPE",
-                                    "Discount type",
-                                    [],
-                                    "couponsFormType"
-                                )
-                            }}
-                        </label>
-                        <select
-                            id="coupon-type"
-                            class="nxp-ec-form-select"
-                            v-model="draft.type"
-                        >
-                            <option value="percent">
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_COUPONS_FORM_TYPE_PERCENT",
-                                        "Percent",
-                                        [],
-                                        "couponsFormTypePercent"
-                                    )
-                                }}
-                            </option>
-                            <option value="fixed">
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_COUPONS_FORM_TYPE_FIXED",
-                                        "Fixed amount",
-                                        [],
-                                        "couponsFormTypeFixed"
-                                    )
-                                }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-value">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_VALUE",
-                                    "Discount value",
-                                    [],
-                                    "couponsFormValue"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-value"
-                            class="nxp-ec-form-input"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            v-model.number="draft.value"
-                            required
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-min-total">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_MIN_TOTAL",
-                                    "Minimum order total",
-                                    [],
-                                    "couponsFormMinTotal"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-min-total"
-                            class="nxp-ec-form-input"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            v-model.number="draft.min_total"
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-start">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_START",
-                                    "Start date",
-                                    [],
-                                    "couponsFormStart"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-start"
-                            class="nxp-ec-form-input"
-                            type="date"
-                            v-model="draft.start"
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-end">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_END",
-                                    "End date",
-                                    [],
-                                    "couponsFormEnd"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-end"
-                            class="nxp-ec-form-input"
-                            type="date"
-                            v-model="draft.end"
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field">
-                        <label class="nxp-ec-form-label" for="coupon-max-uses">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_MAX_USES",
-                                    "Maximum uses",
-                                    [],
-                                    "couponsFormMaxUses"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-max-uses"
-                            class="nxp-ec-form-input"
-                            type="number"
-                            min="0"
-                            step="1"
-                            v-model.number="draft.max_uses"
-                        />
-                    </div>
-
-                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                        <label class="nxp-ec-form-label" for="coupon-active">
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_ACTIVE",
-                                    "Active",
-                                    [],
-                                    "couponsFormActive"
-                                )
-                            }}
-                        </label>
-                        <input
-                            id="coupon-active"
-                            class="nxp-ec-form-checkbox"
-                            type="checkbox"
-                            v-model="draft.active"
-                        />
-                    </div>
-
-                    <footer class="nxp-ec-modal__actions">
-                        <button
-                            class="nxp-ec-btn"
-                            type="button"
-                            @click="cancelEdit"
-                            :disabled="state.saving"
-                        >
-                            {{
-                                __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_CANCEL",
-                                    "Cancel",
-                                    [],
-                                    "couponsFormCancel"
-                                )
-                            }}
-                        </button>
-                        <button
-                            class="nxp-ec-btn nxp-ec-btn--primary"
-                            type="submit"
-                            :disabled="state.saving"
-                        >
-                            {{
-                                state.saving
-                                    ? __("JPROCESSING_REQUEST", "Saving…")
-                                    : __(
-                                          "COM_NXPEASYCART_COUPONS_FORM_SAVE",
-                                          "Save coupon",
-                                          [],
-                                          "couponsFormSave"
-                                      )
-                            }}
-                        </button>
-                    </footer>
-
-                    <button
-                        v-if="draft.id"
-                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
-                        type="button"
-                        @click="confirmDelete(draft)"
-                        :disabled="state.saving"
+                    <aside
+                        class="nxp-ec-admin-panel__sidebar"
+                        aria-live="polite"
                     >
-                        {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
-                    </button>
-                </form>
-            </aside>
+                        <header class="nxp-ec-admin-panel__sidebar-header">
+                            <h3>
+                                {{
+                                    draft.id
+                                        ? __("JEDIT", "Edit")
+                                        : __(
+                                              "COM_NXPEASYCART_COUPONS_ADD",
+                                              "Add coupon",
+                                              [],
+                                              "couponsAdd"
+                                          )
+                                }}
+                            </h3>
+                            <button
+                                class="nxp-ec-link-button nxp-ec-btn--icon"
+                                type="button"
+                                @click="cancelEdit"
+                                :title="__(
+                                    'COM_NXPEASYCART_COUPONS_DETAILS_CLOSE',
+                                    'Close',
+                                    [],
+                                    'couponsDetailsClose'
+                                )"
+                                :aria-label="__(
+                                    'COM_NXPEASYCART_COUPONS_DETAILS_CLOSE',
+                                    'Close',
+                                    [],
+                                    'couponsDetailsClose'
+                                )"
+                            >
+                                <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+                                <span class="nxp-ec-sr-only">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_DETAILS_CLOSE",
+                                            "Close",
+                                            [],
+                                            "couponsDetailsClose"
+                                        )
+                                    }}
+                                </span>
+                            </button>
+                        </header>
+
+                        <form
+                            class="nxp-ec-form"
+                            @submit.prevent="emitSave"
+                            autocomplete="off"
+                        >
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-code">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_CODE",
+                                            "Coupon code",
+                                            [],
+                                            "couponsFormCode"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-code"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model.trim="draft.code"
+                                    required
+                                    maxlength="64"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-type">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_TYPE",
+                                            "Discount type",
+                                            [],
+                                            "couponsFormType"
+                                        )
+                                    }}
+                                </label>
+                                <select
+                                    id="coupon-type"
+                                    class="nxp-ec-form-select"
+                                    v-model="draft.type"
+                                >
+                                    <option value="percent">
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_COUPONS_FORM_TYPE_PERCENT",
+                                                "Percent",
+                                                [],
+                                                "couponsFormTypePercent"
+                                            )
+                                        }}
+                                    </option>
+                                    <option value="fixed">
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_COUPONS_FORM_TYPE_FIXED",
+                                                "Fixed amount",
+                                                [],
+                                                "couponsFormTypeFixed"
+                                            )
+                                        }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-value">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_VALUE",
+                                            "Discount value",
+                                            [],
+                                            "couponsFormValue"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-value"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    v-model.number="draft.value"
+                                    required
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-min-total">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_MIN_TOTAL",
+                                            "Minimum order total",
+                                            [],
+                                            "couponsFormMinTotal"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-min-total"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    v-model.number="draft.min_total"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-start">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_START",
+                                            "Start date",
+                                            [],
+                                            "couponsFormStart"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-start"
+                                    class="nxp-ec-form-input"
+                                    type="date"
+                                    v-model="draft.start"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-end">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_END",
+                                            "End date",
+                                            [],
+                                            "couponsFormEnd"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-end"
+                                    class="nxp-ec-form-input"
+                                    type="date"
+                                    v-model="draft.end"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-max-uses">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_MAX_USES",
+                                            "Maximum uses",
+                                            [],
+                                            "couponsFormMaxUses"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-max-uses"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    v-model.number="draft.max_uses"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                                <label class="nxp-ec-form-label" for="coupon-active">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_ACTIVE",
+                                            "Active",
+                                            [],
+                                            "couponsFormActive"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-active"
+                                    class="nxp-ec-form-checkbox"
+                                    type="checkbox"
+                                    v-model="draft.active"
+                                />
+                            </div>
+
+                            <footer class="nxp-ec-modal__actions">
+                                <button
+                                    class="nxp-ec-btn"
+                                    type="button"
+                                    @click="cancelEdit"
+                                    :disabled="state.saving"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_CANCEL",
+                                            "Cancel",
+                                            [],
+                                            "couponsFormCancel"
+                                        )
+                                    }}
+                                </button>
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--primary"
+                                    type="submit"
+                                    :disabled="state.saving"
+                                >
+                                    {{
+                                        state.saving
+                                            ? __("JPROCESSING_REQUEST", "Saving…")
+                                            : __(
+                                                  "COM_NXPEASYCART_COUPONS_FORM_SAVE",
+                                                  "Save coupon",
+                                                  [],
+                                                  "couponsFormSave"
+                                              )
+                                    }}
+                                </button>
+                            </footer>
+
+                            <button
+                                v-if="draft.id"
+                                class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
+                                type="button"
+                                @click="confirmDelete(draft)"
+                                :disabled="state.saving"
+                            >
+                                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                                {{ __("COM_NXPEASYCART_REMOVE", "Remove") }}
+                            </button>
+                        </form>
+                    </aside>
+                </div>
+            </div>
         </div>
     </section>
 </template>

@@ -170,13 +170,14 @@
                             <div class="nxp-ec-image-row__actions">
                                 <button
                                     type="button"
-                                    class="nxp-ec-btn nxp-ec-btn--link"
-                                    @click="selectImage(index)"
+                                    class="nxp-ec-btn"
+                                    @click="openMediaModal(index)"
                                 >
+                                    <i class="fa-solid fa-photo-film" aria-hidden="true"></i>
                                     {{
                                         __(
                                             "COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_SELECT",
-                                            "Select",
+                                            "Select from media",
                                             [],
                                             "productImagesSelect"
                                         )
@@ -665,7 +666,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, onBeforeUnmount } from "vue";
 
 const props = defineProps({
     open: {
@@ -695,6 +696,10 @@ const props = defineProps({
     categoryOptions: {
         type: Array,
         default: () => [],
+    },
+    mediaModalUrl: {
+        type: String,
+        default: "",
     },
 });
 
@@ -1131,10 +1136,59 @@ const formatVariantPrice = (index) => {
     variant.price = numeric.toFixed(2);
 };
 
+let mediaPickerField = null;
+let mediaPickerWrapper = null;
+let mediaPickerInput = null;
+let mediaPickerIndex = null;
+let pendingMediaValue = "";
+
 const ensureImagesArray = () => {
     if (!Array.isArray(form.images)) {
         form.images = [];
     }
+};
+
+const normaliseMediaValue = (value) => {
+    if (!value) {
+        return "";
+    }
+
+    let result = String(value).trim();
+
+    if (result === "") {
+        return "";
+    }
+
+    // Convert absolute site URLs back to relative paths
+    try {
+        const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
+        const rootFull = systemPaths.rootFull || window.location.origin;
+        const rootRel = systemPaths.root || "/";
+
+        if (result.startsWith(rootFull)) {
+            result = result.substring(rootFull.length);
+        }
+
+        if (result.startsWith(rootRel)) {
+            result = result.substring(rootRel.length);
+        }
+    } catch (error) {
+        // ignore
+    }
+
+    // Handle media adapter prefixes like local-images:/path/to/file.jpg
+    const adapterMatch = result.match(/^(?:local-[a-z0-9_-]+|images|videos|audios|documents):\/\/?(.*)$/i);
+    if (adapterMatch && adapterMatch[1]) {
+        result = adapterMatch[1];
+    }
+
+    // Remove Joomla image metadata suffix
+    const metadataIndex = result.indexOf("#joomlaImage://");
+    if (metadataIndex !== -1) {
+        result = result.substring(0, metadataIndex);
+    }
+
+    return result.trim();
 };
 
 const addImage = () => {
@@ -1166,7 +1220,7 @@ const moveImage = (index, offset) => {
     form.images.splice(nextIndex, 0, current);
 };
 
-const selectImage = (index) => {
+const promptForImage = (index) => {
     ensureImagesArray();
 
     const current = form.images[index] ?? "";
@@ -1180,10 +1234,242 @@ const selectImage = (index) => {
         current
     );
 
-    if (value !== null && value.trim() !== "") {
-        form.images[index] = value.trim();
+    const normalised = normaliseMediaValue(value ?? "");
+
+    if (normalised !== "") {
+        form.images[index] = normalised;
     }
 };
+
+const buildMediaModalUrl = () => {
+    const configured = (props.mediaModalUrl || "").trim();
+
+    if (configured !== "") {
+        return configured;
+    }
+
+    const mediaPickerOptions =
+        window.Joomla?.getOptions?.("media-picker", {}) ?? {};
+    if (mediaPickerOptions.modalUrl) {
+        return mediaPickerOptions.modalUrl;
+    }
+
+    const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
+    const root = systemPaths.rootFull || systemPaths.root || "";
+    const base = root ? root.replace(/\/?$/, "/") : "";
+
+    return (
+        base +
+        "index.php?option=com_media&view=media&tmpl=component&layout=modal&mediatypes=0,1,2,3&asset=com_nxpeasycart"
+    );
+};
+
+const ensureMediaPickerField = async () => {
+    if (mediaPickerField) {
+        return mediaPickerField;
+    }
+
+    if (
+        typeof window === "undefined" ||
+        !window.Joomla ||
+        !window.customElements
+    ) {
+        return null;
+    }
+
+    if (!customElements.get("joomla-field-media")) {
+        try {
+            await customElements.whenDefined("joomla-field-media");
+        } catch (error) {
+            return null;
+        }
+    }
+
+    const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
+    const rootFull = systemPaths.rootFull || window.location.origin;
+    const mediaParams = window.Joomla?.getOptions?.("com_media", {}) ?? {};
+    const rootFolder = mediaParams?.file_path || "images";
+    const supported =
+        window.Joomla?.getOptions?.("media-picker", {}) ?? {
+            images: ["bmp", "gif", "jpg", "jpeg", "png", "webp", "svg", "avif"],
+            audios: [],
+            videos: [],
+            documents: [],
+        };
+    const modalTitleText = __(
+        "COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_MODAL_TITLE",
+        "Media Manager",
+        [],
+        "productImagesModalTitle"
+    );
+    const safeModalTitle = modalTitleText.replace(/"/g, "&quot;");
+
+    mediaPickerWrapper = document.createElement("div");
+    mediaPickerWrapper.className = "nxp-ec-media-picker-host";
+    mediaPickerWrapper.style.display = "none";
+
+    mediaPickerWrapper.innerHTML = `
+        <joomla-field-media
+            class="nxp-ec-media-field"
+            types="images"
+            base-path="${rootFull.replace(/"/g, "&quot;")}"
+            root-folder="${rootFolder.replace(/"/g, "&quot;")}"
+            url=""
+            preview="none"
+            input=".nxp-ec-media-field__input"
+            button-select=".nxp-ec-media-field__select"
+            button-clear=".nxp-ec-media-field__clear"
+            modal-title="${safeModalTitle}"
+            modal-width="960"
+            modal-height="600"
+            supported-extensions='${JSON.stringify(supported).replace(/'/g, "&apos;")}'
+        >
+            <div class="input-group">
+                <input type="text" class="nxp-ec-media-field__input field-media-input" />
+                <button type="button" class="nxp-ec-media-field__select button-select"></button>
+                <button type="button" class="nxp-ec-media-field__clear button-clear"></button>
+            </div>
+        </joomla-field-media>
+    `;
+
+    document.body.appendChild(mediaPickerWrapper);
+
+    mediaPickerField = mediaPickerWrapper.querySelector("joomla-field-media");
+    mediaPickerInput = mediaPickerWrapper.querySelector(
+        ".nxp-ec-media-field__input"
+    );
+
+    mediaPickerField.addEventListener("change", (event) => {
+        const rawValue =
+            event.detail?.value ?? mediaPickerInput?.value ?? "";
+        let value = normaliseMediaValue(rawValue);
+
+        if (value === "" && pendingMediaValue !== "") {
+            value = pendingMediaValue;
+        }
+
+        if (import.meta?.env?.DEV) {
+            console.debug("[ProductEditor] media change", {
+                value,
+                index: mediaPickerIndex,
+                detail: event.detail,
+            });
+        }
+
+        if (mediaPickerIndex !== null && value !== "") {
+            ensureImagesArray();
+            form.images.splice(mediaPickerIndex, 1, value);
+        }
+
+        mediaPickerIndex = null;
+        pendingMediaValue = "";
+    });
+
+    mediaPickerField.addEventListener("joomla-dialog:close", () => {
+        mediaPickerIndex = null;
+    });
+
+    if (mediaPickerInput) {
+        mediaPickerInput.addEventListener("change", () => {
+            if (mediaPickerIndex === null) {
+                return;
+            }
+
+        let value = normaliseMediaValue(mediaPickerInput.value ?? "");
+
+        if (value === "" && pendingMediaValue !== "") {
+            value = pendingMediaValue;
+        }
+
+        if (value === "") {
+            return;
+        }
+
+        ensureImagesArray();
+        form.images.splice(mediaPickerIndex, 1, value);
+        mediaPickerIndex = null;
+        pendingMediaValue = "";
+    });
+    }
+
+    return mediaPickerField;
+};
+
+const handleMediaFileSelected = (event) => {
+    const detail = event?.detail;
+
+    if (!detail || typeof detail !== "object") {
+        return;
+    }
+
+    const path = normaliseMediaValue(detail.path ?? "");
+    const url = normaliseMediaValue(detail.url ?? "");
+
+    const resolved = url || path;
+
+    if (resolved === "") {
+        return;
+    }
+
+    if (import.meta?.env?.DEV) {
+        console.debug("[ProductEditor] media file selected", {
+            resolved,
+            detail,
+        });
+    }
+
+    pendingMediaValue = resolved;
+};
+
+if (typeof document !== "undefined") {
+    document.addEventListener("onMediaFileSelected", handleMediaFileSelected);
+}
+
+const openMediaModal = async (index) => {
+    ensureImagesArray();
+
+    const picker = await ensureMediaPickerField();
+
+    if (!picker || typeof picker.show !== "function") {
+        promptForImage(index);
+        return;
+    }
+
+    mediaPickerIndex = index;
+    picker.setAttribute("url", buildMediaModalUrl());
+
+    const currentValue = form.images[index] ?? "";
+
+    if (typeof picker.setValue === "function") {
+        picker.setValue(currentValue);
+    } else if (mediaPickerInput) {
+        mediaPickerInput.value = currentValue;
+    }
+
+    try {
+        picker.show();
+    } catch (error) {
+        mediaPickerIndex = null;
+        pendingMediaValue = "";
+        promptForImage(index);
+    }
+};
+
+onBeforeUnmount(() => {
+    if (mediaPickerWrapper && mediaPickerWrapper.parentNode) {
+        mediaPickerWrapper.parentNode.removeChild(mediaPickerWrapper);
+    }
+
+    mediaPickerField = null;
+    mediaPickerWrapper = null;
+    mediaPickerInput = null;
+    mediaPickerIndex = null;
+    pendingMediaValue = "";
+
+    if (typeof document !== "undefined") {
+        document.removeEventListener("onMediaFileSelected", handleMediaFileSelected);
+    }
+});
 
 const submit = () => {
     ensureImagesArray();
@@ -1195,6 +1481,10 @@ const submit = () => {
                 .filter((image) => image !== "")
         )
     );
+
+    if (import.meta?.env?.DEV) {
+        console.debug('[ProductEditor] submit payload images', payloadImages);
+    }
 
     const payloadCategories = form.categories
         .map((category) => {

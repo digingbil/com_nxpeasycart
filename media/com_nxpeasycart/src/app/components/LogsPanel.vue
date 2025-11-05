@@ -71,19 +71,34 @@
                     </option>
                 </select>
                 <button
-                    class="nxp-ec-btn"
+                    class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
+                    :title="__(
+                        'COM_NXPEASYCART_COUPONS_REFRESH',
+                        'Refresh',
+                        [],
+                        'couponsRefresh'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_COUPONS_REFRESH',
+                        'Refresh',
+                        [],
+                        'couponsRefresh'
+                    )"
                 >
-                    {{
-                        __(
-                            "COM_NXPEASYCART_COUPONS_REFRESH",
-                            "Refresh",
-                            [],
-                            "couponsRefresh"
-                        )
-                    }}
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_COUPONS_REFRESH",
+                                "Refresh",
+                                [],
+                                "couponsRefresh"
+                            )
+                        }}
+                    </span>
                 </button>
             </div>
         </header>
@@ -92,15 +107,8 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
-            {{
-                __(
-                    "COM_NXPEASYCART_LOGS_LOADING",
-                    "Loading logs…",
-                    [],
-                    "logsLoading"
-                )
-            }}
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+            <SkeletonLoader type="table" :rows="5" :columns="5" />
         </div>
 
         <div v-else class="nxp-ec-admin-panel__body">
@@ -222,12 +230,22 @@
                     </button>
                 </div>
             </div>
+
+            <div
+                v-if="state.lastUpdated"
+                class="nxp-ec-admin-panel__metadata"
+                :title="state.lastUpdated"
+            >
+                {{ __("COM_NXPEASYCART_LAST_UPDATED", "Last updated") }}:
+                {{ formatTimestampRelative(state.lastUpdated) }}
+            </div>
         </div>
     </section>
 </template>
 
 <script setup>
 import { computed } from "vue";
+import SkeletonLoader from "./SkeletonLoader.vue";
 
 const props = defineProps({
     state: {
@@ -357,6 +375,41 @@ const formatContext = (context) => {
         return JSON.stringify(context, null, 2);
     } catch (error) {
         return String(context);
+    }
+};
+
+const formatTimestampRelative = (timestamp) => {
+    if (!timestamp) {
+        return "";
+    }
+
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        if (seconds < 60) {
+            return __("COM_NXPEASYCART_TIME_SECONDS_AGO", "just now");
+        } else if (minutes < 60) {
+            return __(
+                "COM_NXPEASYCART_TIME_MINUTES_AGO",
+                "%s minutes ago",
+                [minutes]
+            );
+        } else if (hours < 24) {
+            return __(
+                "COM_NXPEASYCART_TIME_HOURS_AGO",
+                "%s hours ago",
+                [hours]
+            );
+        } else {
+            return date.toLocaleString();
+        }
+    } catch (error) {
+        return timestamp;
     }
 };
 </script>

@@ -1,13 +1,21 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 export function useCustomers({
     endpoints,
     token,
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("customers");
 
     const listEndpoint = endpoints?.list ?? "";
     const showEndpoint = endpoints?.show ?? "";
@@ -24,17 +32,43 @@ export function useCustomers({
         },
         search: "",
         activeCustomer: preload.active ?? null,
+        lastUpdated: null,
     });
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
 
-    const loadCustomers = async () => {
+    const buildCacheKey = () => {
+        const page = state.pagination.current || 1;
+        const limit = state.pagination.limit || 20;
+        const search = state.search.trim();
+
+        return `customers:page=${page}:limit=${limit}:search=${search}`;
+    };
+
+    const loadCustomers = async (forceRefresh = false) => {
         if (!listEndpoint) {
             state.error = "Customers endpoint unavailable.";
             state.items = [];
             return;
         }
+
+        const cacheKey = buildCacheKey();
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.items = cached.items;
+            state.pagination = {
+                ...state.pagination,
+                ...cached.pagination,
+            };
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
 
         state.loading = true;
         state.error = "";
@@ -45,6 +79,8 @@ export function useCustomers({
 
         const controller = abortSupported ? new AbortController() : null;
         abortRef.value = controller;
+
+        const startMark = perf.startFetch();
 
         try {
             const start = Math.max(
@@ -68,6 +104,13 @@ export function useCustomers({
                         ? pagination.current
                         : 1,
             };
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                items,
+                pagination: state.pagination,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             if (error?.name === "AbortError") {
                 return;
@@ -75,6 +118,8 @@ export function useCustomers({
 
             state.error = error?.message ?? "Unknown error";
         } finally {
+            perf.endFetch(startMark);
+
             if (abortSupported && abortRef.value === controller) {
                 abortRef.value = null;
             }
@@ -85,7 +130,8 @@ export function useCustomers({
 
     const refresh = () => {
         state.pagination.current = 1;
-        loadCustomers();
+        clearCachedData(buildCacheKey());
+        loadCustomers(true);
     };
 
     const search = () => {
@@ -147,6 +193,7 @@ export function useCustomers({
         goToPage,
         viewCustomer,
         closeCustomer,
+        metrics: perf.metrics,
     };
 }
 

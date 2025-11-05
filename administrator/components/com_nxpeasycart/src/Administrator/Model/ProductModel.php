@@ -468,24 +468,49 @@ class ProductModel extends AdminModel
         }
 
         $categories = [];
+        $seen       = [];
 
         foreach ($input as $category) {
             if (\is_int($category) || (\is_numeric($category) && (int) $category > 0)) {
-                $categories[] = [
+                $normalised = [
                     'id'    => (int) $category,
                     'title' => null,
                     'slug'  => null,
                 ];
 
+                $key = 'id:' . $normalised['id'];
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key]  = true;
+                $categories[] = $normalised;
+
                 continue;
             }
 
             if (\is_array($category)) {
-                $categories[] = [
+                $normalised = [
                     'id'    => isset($category['id']) ? (int) $category['id'] : 0,
                     'title' => isset($category['title']) ? trim((string) $category['title']) : '',
                     'slug'  => isset($category['slug']) ? trim((string) $category['slug']) : '',
                 ];
+
+                $key = $normalised['id'] > 0
+                    ? 'id:' . $normalised['id']
+                    : 'slug:' . strtolower($normalised['slug'] ?: $normalised['title']);
+
+                if ($key === 'slug:' && $normalised['id'] === 0) {
+                    continue;
+                }
+
+                if (isset($seen[$key])) {
+                    continue;
+                }
+
+                $seen[$key]  = true;
+                $categories[] = $normalised;
 
                 continue;
             }
@@ -496,11 +521,20 @@ class ProductModel extends AdminModel
                 continue;
             }
 
-            $categories[] = [
+            $normalised = [
                 'id'    => 0,
                 'title' => $title,
                 'slug'  => '',
             ];
+
+            $key = 'slug:' . strtolower($title);
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key]  = true;
+            $categories[] = $normalised;
         }
 
         return $categories;
@@ -659,7 +693,12 @@ class ProductModel extends AdminModel
             $categoryIds[] = $this->findOrCreateCategory($title, $slug);
         }
 
-        $categoryIds = array_values(array_unique(array_filter($categoryIds)));
+        $categoryIds = array_values(
+            array_unique(
+                array_filter($categoryIds, static fn ($id) => (int) $id > 0),
+                SORT_NUMERIC
+            )
+        );
 
         $query = $db->getQuery(true)
             ->select($db->quoteName('category_id'))
@@ -675,17 +714,18 @@ class ProductModel extends AdminModel
 
         if (!empty($toInsert)) {
             $columns = [$db->quoteName('product_id'), $db->quoteName('category_id')];
-            $query   = $db->getQuery(true)
-                ->insert($db->quoteName('#__nxp_easycart_product_categories'))
-                ->columns($columns);
+            $values = [];
 
-            foreach (array_values($toInsert) as $index => $categoryId) {
-                $query->values(':productIdInsert, :categoryInsert' . $index);
-                $categoryInsertId = (int) $categoryId;
-                $query->bind(':categoryInsert' . $index, $categoryInsertId, ParameterType::INTEGER);
+            foreach (array_values($toInsert) as $categoryId) {
+                $values[] = sprintf(
+                    '(%d,%d)',
+                    (int) $productId,
+                    (int) $categoryId
+                );
             }
 
-            $query->bind(':productIdInsert', $productId, ParameterType::INTEGER);
+            $query = 'INSERT IGNORE INTO ' . $db->quoteName('#__nxp_easycart_product_categories')
+                . ' (' . implode(',', $columns) . ') VALUES ' . implode(',', $values);
 
             $db->setQuery($query);
             $db->execute();

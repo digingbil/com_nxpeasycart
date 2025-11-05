@@ -68,6 +68,7 @@
                     <div class="nxp-ec-products-table__slug">{{ item.slug }}</div>
                     <div v-if="item.featured" class="nxp-ec-products-table__badge">
                         <span class="nxp-ec-status nxp-ec-status--featured">
+                            <i class="fa-solid fa-sun" aria-hidden="true"></i>
                             {{
                                 __(
                                     "COM_NXPEASYCART_PRODUCTS_BADGE_FEATURED",
@@ -102,14 +103,53 @@
                     </span>
                 </td>
                 <td>
-                    <span
+                    <button
+                        type="button"
                         :class="[
                             'nxp-ec-status',
+                            'nxp-ec-status-button',
                             item.active
                                 ? 'nxp-ec-status--active'
                                 : 'nxp-ec-status--inactive',
                         ]"
+                        :disabled="saving"
+                        :aria-pressed="item.active ? 'true' : 'false'"
+                        :title="
+                            item.active
+                                ? __(
+                                      'COM_NXPEASYCART_PRODUCTS_STATUS_DEACTIVATE',
+                                      'Deactivate product',
+                                      [],
+                                      'productsStatusDeactivate'
+                                  )
+                                : __(
+                                      'COM_NXPEASYCART_PRODUCTS_STATUS_ACTIVATE',
+                                      'Activate product',
+                                      [],
+                                      'productsStatusActivate'
+                                  )
+                        "
+                        :aria-label="
+                            item.active
+                                ? __(
+                                      'COM_NXPEASYCART_PRODUCTS_STATUS_DEACTIVATE',
+                                      'Deactivate product',
+                                      [],
+                                      'productsStatusDeactivate'
+                                  )
+                                : __(
+                                      'COM_NXPEASYCART_PRODUCTS_STATUS_ACTIVATE',
+                                      'Activate product',
+                                      [],
+                                      'productsStatusActivate'
+                                  )
+                        "
+                        @click="$emit('toggle-active', item)"
                     >
+                        <i
+                            :class="item.active ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"
+                            aria-hidden="true"
+                        ></i>
                         {{
                             item.active
                                 ? __(
@@ -125,23 +165,43 @@
                                       "statusInactive"
                                   )
                         }}
-                    </span>
+                        <span class="nxp-ec-sr-only">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_PRODUCTS_STATUS_TOGGLE",
+                                    "Toggle status",
+                                    [],
+                                    "productsStatusToggle"
+                                )
+                            }}
+                        </span>
+                    </button>
                 </td>
                 <td>{{ item.modified || item.created }}</td>
                 <td class="nxp-ec-admin-table__actions">
                     <button
-                        class="nxp-ec-btn nxp-ec-btn--link"
+                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"
                         type="button"
                         @click="$emit('edit', item)"
+                        :title="__('JGLOBAL_EDIT', 'Edit')"
+                        :aria-label="__('JGLOBAL_EDIT', 'Edit')"
                     >
-                        {{ __("JGLOBAL_EDIT", "Edit") }}
+                        <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                        <span class="nxp-ec-sr-only">
+                            {{ __("JGLOBAL_EDIT", "Edit") }}
+                        </span>
                     </button>
                     <button
-                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                         type="button"
                         @click="$emit('delete', item)"
+                        :title="__('JTRASH', 'Delete')"
+                        :aria-label="__('JTRASH', 'Delete')"
                     >
-                        {{ __("JTRASH", "Delete") }}
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                        <span class="nxp-ec-sr-only">
+                            {{ __("JTRASH", "Delete") }}
+                        </span>
                     </button>
                 </td>
             </tr>
@@ -165,9 +225,13 @@ const props = defineProps({
         type: String,
         default: "USD",
     },
+    saving: {
+        type: Boolean,
+        default: false,
+    },
 });
 
-defineEmits(["edit", "delete"]);
+defineEmits(["edit", "delete", "toggle-active"]);
 
 const __ = props.translate;
 

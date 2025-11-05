@@ -1,13 +1,21 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
+import {
+    usePerformance,
+    getCachedData,
+    setCachedData,
+    clearCachedData,
+} from "./usePerformance.js";
 
 export function useCategories({
     endpoints,
     token,
     preload = {},
     autoload = true,
+    cacheTTL = 300000,
 }) {
     const api = createApiClient({ token });
+    const perf = usePerformance("categories");
 
     const listEndpoint = endpoints?.list ?? "";
     const createEndpoint = endpoints?.create ?? listEndpoint;
@@ -28,17 +36,43 @@ export function useCategories({
             current: preload.pagination?.current ?? 1,
         },
         search: "",
+        lastUpdated: null,
     });
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
 
-    const loadCategories = async () => {
+    const buildCacheKey = () => {
+        const page = state.pagination.current || 1;
+        const limit = state.pagination.limit || 20;
+        const search = state.search.trim();
+
+        return `categories:page=${page}:limit=${limit}:search=${search}`;
+    };
+
+    const loadCategories = async (forceRefresh = false) => {
         if (!listEndpoint) {
             state.error = "Categories endpoint unavailable.";
             state.items = [];
             return;
         }
+
+        const cacheKey = buildCacheKey();
+        const cached = !forceRefresh ? getCachedData(cacheKey, cacheTTL) : null;
+
+        if (cached) {
+            perf.recordCacheHit();
+            state.items = cached.items;
+            state.pagination = {
+                ...state.pagination,
+                ...cached.pagination,
+            };
+            state.lastUpdated = cached.lastUpdated;
+
+            return;
+        }
+
+        perf.recordCacheMiss();
 
         state.loading = true;
         state.error = "";
@@ -50,6 +84,8 @@ export function useCategories({
 
         const controller = abortSupported ? new AbortController() : null;
         abortRef.value = controller;
+
+        const startMark = perf.startFetch();
 
         try {
             const start = Math.max(
@@ -73,6 +109,13 @@ export function useCategories({
                         ? pagination.current
                         : 1,
             };
+            state.lastUpdated = new Date().toISOString();
+
+            setCachedData(cacheKey, {
+                items,
+                pagination: state.pagination,
+                lastUpdated: state.lastUpdated,
+            });
         } catch (error) {
             if (error?.name === "AbortError") {
                 return;
@@ -80,6 +123,8 @@ export function useCategories({
 
             state.error = error?.message ?? "Unknown error";
         } finally {
+            perf.endFetch(startMark);
+
             if (abortSupported && abortRef.value === controller) {
                 abortRef.value = null;
             }
@@ -90,7 +135,8 @@ export function useCategories({
 
     const refresh = () => {
         state.pagination.current = 1;
-        loadCategories();
+        clearCachedData(buildCacheKey());
+        loadCategories(true);
     };
 
     const searchCategories = () => {
@@ -168,6 +214,7 @@ export function useCategories({
             }
 
             if (category) {
+                clearCachedData(buildCacheKey());
                 await loadCategories();
             }
 
@@ -195,6 +242,7 @@ export function useCategories({
             });
 
             if (deleted) {
+                clearCachedData(buildCacheKey());
                 await loadCategories();
             }
 
@@ -244,6 +292,7 @@ export function useCategories({
         saveCategory,
         deleteCategories,
         loadOptions,
+        metrics: perf.metrics,
     };
 }
 
