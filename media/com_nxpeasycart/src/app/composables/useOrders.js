@@ -16,7 +16,13 @@ const deriveEndpoint = (listEndpoint, action) => {
     return `${url.pathname}?${url.searchParams.toString()}`;
 };
 
-export function useOrders({ endpoints, token, states = [], preload = {} }) {
+export function useOrders({
+    endpoints,
+    token,
+    states = [],
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const listEndpoint = endpoints?.list ?? "";
@@ -314,7 +320,9 @@ export function useOrders({ endpoints, token, states = [], preload = {} }) {
     };
 
     onMounted(() => {
-        loadOrders();
+        if (autoload) {
+            loadOrders();
+        }
     });
 
     return {

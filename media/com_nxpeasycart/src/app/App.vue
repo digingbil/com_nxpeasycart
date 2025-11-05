@@ -283,6 +283,19 @@ const activeSection = computed(
         "dashboard"
 );
 
+const sectionIs = (id) => activeSection.value === id;
+
+const shouldLoadDashboard = computed(() => sectionIs("dashboard"));
+const shouldLoadProducts = computed(() => sectionIs("products"));
+const shouldLoadCategories = computed(
+    () => sectionIs("categories") || sectionIs("products")
+);
+const shouldLoadOrders = computed(() => sectionIs("orders"));
+const shouldLoadCustomers = computed(() => sectionIs("customers"));
+const shouldLoadCoupons = computed(() => sectionIs("coupons"));
+const shouldLoadSettings = computed(() => sectionIs("settings"));
+const shouldLoadLogs = computed(() => sectionIs("logs"));
+
 const productsEndpoints = props.endpoints?.products ?? {
     list: props.dataset?.productsEndpoint ?? "",
     create: props.dataset?.productsEndpointCreate ?? "",
@@ -358,6 +371,7 @@ const { state: dashboardState, refresh: refreshDashboard } = useDashboard({
         summary: parseJSON(props.dataset?.dashboardSummary, {}),
         checklist: parseJSON(props.dataset?.dashboardChecklist, []),
     },
+    autoload: shouldLoadDashboard.value,
 });
 
 const {
@@ -370,6 +384,7 @@ const {
 } = useProducts({
     endpoints: productsEndpoints,
     token: props.csrfToken,
+    autoload: shouldLoadProducts.value,
 });
 
 const {
@@ -387,6 +402,7 @@ const {
         items: parseJSON(props.dataset?.categoriesPreload, []),
         pagination: parseJSON(props.dataset?.categoriesPreloadPagination, {}),
     },
+    autoload: shouldLoadCategories.value,
 });
 
 const categoryOptions = computed(() => {
@@ -424,6 +440,7 @@ const {
         items: parseJSON(props.dataset?.ordersPreload, []),
         pagination: parseJSON(props.dataset?.ordersPreloadPagination, {}),
     },
+    autoload: shouldLoadOrders.value,
 });
 
 const {
@@ -440,6 +457,7 @@ const {
         items: parseJSON(props.dataset?.customersPreload, []),
         pagination: parseJSON(props.dataset?.customersPreloadPagination, {}),
     },
+    autoload: shouldLoadCustomers.value,
 });
 
 const {
@@ -456,6 +474,7 @@ const {
         items: parseJSON(props.dataset?.couponsPreload, []),
         pagination: parseJSON(props.dataset?.couponsPreloadPagination, {}),
     },
+    autoload: shouldLoadCoupons.value,
 });
 
 const settingsPreload =
@@ -470,6 +489,7 @@ const {
     endpoints: settingsEndpoints,
     token: props.csrfToken,
     preload: settingsPreload,
+    autoload: shouldLoadSettings.value,
 });
 
 const datasetBaseCurrency = computed(() => {
@@ -659,6 +679,7 @@ const {
     endpoints: taxEndpoints,
     token: props.csrfToken,
     preload: taxPreload,
+    autoload: shouldLoadSettings.value,
 });
 
 const shippingPreload = props.config?.preload?.shipping ?? {
@@ -675,6 +696,7 @@ const {
     endpoints: shippingEndpoints,
     token: props.csrfToken,
     preload: shippingPreload,
+    autoload: shouldLoadSettings.value,
 });
 
 const logsPreload = props.config?.preload?.logs ?? {
@@ -692,6 +714,7 @@ const {
     endpoints: logsEndpoints,
     token: props.csrfToken,
     preload: logsPreload,
+    autoload: shouldLoadLogs.value,
 });
 
 const {
@@ -701,6 +724,41 @@ const {
 } = usePayments({
     endpoints: paymentsEndpoints,
     token: props.csrfToken,
+});
+
+watch(activeSection, (section) => {
+    switch (section) {
+        case "dashboard":
+            refreshDashboard();
+            break;
+        case "products":
+            refreshProducts();
+            refreshCategories();
+            break;
+        case "categories":
+            refreshCategories();
+            break;
+        case "orders":
+            refreshOrders();
+            break;
+        case "customers":
+            refreshCustomers();
+            break;
+        case "coupons":
+            refreshCoupons();
+            break;
+        case "settings":
+            refreshSettings();
+            refreshTaxRates();
+            refreshShippingRules();
+            refreshPayments();
+            break;
+        case "logs":
+            refreshLogs();
+            break;
+        default:
+            break;
+    }
 });
 
 onMounted(() => {
@@ -726,7 +784,9 @@ onMounted(() => {
         }
     }
 
-    refreshPayments();
+    if (shouldLoadSettings.value) {
+        refreshPayments();
+    }
 
     //console.info('[NXP Easy Cart] Admin App mounted', props.dataset);
 });

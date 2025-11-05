@@ -40,7 +40,12 @@ const normaliseSettings = (data = {}) => {
     };
 };
 
-export function useSettings({ endpoints, token, preload = {} }) {
+export function useSettings({
+    endpoints,
+    token,
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const showEndpoint = endpoints?.show ?? "";
@@ -99,7 +104,7 @@ export function useSettings({ endpoints, token, preload = {} }) {
     };
 
     onMounted(() => {
-        if (!preload || !preload.store) {
+        if (autoload && (!preload || !preload.store)) {
             refresh();
         }
     });

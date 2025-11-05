@@ -1,7 +1,12 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
 
-export function useShippingRules({ endpoints, token, preload = {} }) {
+export function useShippingRules({
+    endpoints,
+    token,
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const listEndpoint = endpoints?.list ?? "";
@@ -152,7 +157,10 @@ export function useShippingRules({ endpoints, token, preload = {} }) {
     };
 
     onMounted(() => {
-        if (!Array.isArray(state.items) || !state.items.length) {
+        if (
+            autoload &&
+            (!Array.isArray(state.items) || !state.items.length)
+        ) {
             loadRules();
         }
     });

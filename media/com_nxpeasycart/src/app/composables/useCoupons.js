@@ -1,7 +1,12 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
 
-export function useCoupons({ endpoints, token, preload = {} }) {
+export function useCoupons({
+    endpoints,
+    token,
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const listEndpoint = endpoints?.list ?? "";
@@ -191,7 +196,10 @@ export function useCoupons({ endpoints, token, preload = {} }) {
     };
 
     onMounted(() => {
-        if (!Array.isArray(state.items) || !state.items.length) {
+        if (
+            autoload &&
+            (!Array.isArray(state.items) || !state.items.length)
+        ) {
             loadCoupons();
         }
     });

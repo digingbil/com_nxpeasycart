@@ -1,7 +1,12 @@
 import { onMounted, reactive } from "vue";
 import { createApiClient } from "../../api.js";
 
-export function useDashboard({ endpoint = "", token = "", preload = {} }) {
+export function useDashboard({
+    endpoint = "",
+    token = "",
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const state = reactive({
@@ -46,7 +51,10 @@ export function useDashboard({ endpoint = "", token = "", preload = {} }) {
     };
 
     onMounted(() => {
-        if (!Array.isArray(state.checklist) || !state.checklist.length) {
+        if (
+            autoload &&
+            (!Array.isArray(state.checklist) || !state.checklist.length)
+        ) {
             refresh();
         }
     });

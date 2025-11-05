@@ -1,7 +1,12 @@
 import { onMounted, reactive, ref } from "vue";
 import { createApiClient } from "../../api.js";
 
-export function useCustomers({ endpoints, token, preload = {} }) {
+export function useCustomers({
+    endpoints,
+    token,
+    preload = {},
+    autoload = true,
+}) {
     const api = createApiClient({ token });
 
     const listEndpoint = endpoints?.list ?? "";
@@ -126,7 +131,10 @@ export function useCustomers({ endpoints, token, preload = {} }) {
     };
 
     onMounted(() => {
-        if (!Array.isArray(state.items) || !state.items.length) {
+        if (
+            autoload &&
+            (!Array.isArray(state.items) || !state.items.length)
+        ) {
             loadCustomers();
         }
     });

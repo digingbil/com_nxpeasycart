@@ -16,7 +16,7 @@ const deriveEndpoint = (listEndpoint, action) => {
     return `${url.pathname}?${url.searchParams.toString()}`;
 };
 
-export function useProducts({ endpoints, token }) {
+export function useProducts({ endpoints, token, autoload = true }) {
     const api = createApiClient({ token });
 
     const listEndpoint = endpoints?.list ?? "";
@@ -237,7 +237,9 @@ export function useProducts({ endpoints, token }) {
     };
 
     onMounted(() => {
-        loadProducts();
+        if (autoload) {
+            loadProducts();
+        }
     });
 
     return {

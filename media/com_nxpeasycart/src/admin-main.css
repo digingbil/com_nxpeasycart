@@ -284,7 +284,9 @@
     font-weight: 600;
     color: #495057;
 }
-
+.nxp-ec-form-input {
+    max-width: 120px;
+}
 .nxp-ec-form-input,
 .nxp-ec-form-textarea {
     border: 1px solid #ced4da;
