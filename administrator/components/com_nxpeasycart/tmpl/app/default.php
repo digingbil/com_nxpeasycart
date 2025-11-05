@@ -11,10 +11,14 @@ use Joomla\CMS\Uri\Uri;
 $wa = $this->document->getWebAssetManager();
 $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
 $wa->useScript('com_nxpeasycart.admin');
+$wa->registerAndUseStyle(
+    'com_nxpeasycart.admin.css',
+    'media/com_nxpeasycart/css/admin.css',
+    ['version' => 'auto', 'relative' => true]
+);
 
 // Explicitly queue the bundle in case the registry file is not picked up (symlinked dev installs).
 $this->document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
-$this->document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/admin.css');
 
 $token                        = Session::getFormToken();
 $tokenQuery                   = $token . '=1';

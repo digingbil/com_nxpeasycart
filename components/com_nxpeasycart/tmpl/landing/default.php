@@ -9,6 +9,18 @@ use Joomla\CMS\Router\Route;
 
 $payload = $this->getLandingPayload();
 
+$theme            = $this->theme ?? [];
+$containerClass   = trim('component-content nxp-landing__inner ' . ($theme['container_class'] ?? ''));
+$primaryBtnClass  = trim('nxp-btn nxp-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
+$secondaryBtnClass = trim('nxp-btn nxp-btn--ghost ' . ($theme['button_secondary_extra'] ?? ''));
+$sectionLinkClass = trim('nxp-landing__section-link ' . ($theme['section_link_class'] ?? ''));
+$categoryClass    = trim('nxp-landing__category ' . ($theme['category_tile_class'] ?? ''));
+
+$cssVars = '';
+foreach (($theme['css_vars'] ?? []) as $var => $value) {
+    $cssVars .= $var . ':' . $value . ';';
+}
+
 $payloadJson = htmlspecialchars(
     json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
@@ -30,8 +42,9 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
     class="nxp-landing"
     data-nxp-island="landing"
     data-nxp-landing="<?php echo $payloadJson; ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
-    <div class="nxp-landing__inner">
+    <div class="<?php echo htmlspecialchars($containerClass, ENT_QUOTES, 'UTF-8'); ?>">
             <header class="nxp-landing__hero">
                 <div class="nxp-landing__hero-copy">
                     <?php if (!empty($hero['eyebrow'])) : ?>
@@ -48,7 +61,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                         </p>
                     <?php endif; ?>
                     <div class="nxp-landing__actions">
-                        <a class="nxp-btn nxp-btn--primary" href="<?php echo htmlspecialchars($ctaLink, ENT_QUOTES, 'UTF-8'); ?>">
+                        <a class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($ctaLink, ENT_QUOTES, 'UTF-8'); ?>">
                             <?php echo htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                     </div>
@@ -63,7 +76,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                         type="search"
                         placeholder="<?php echo htmlspecialchars($searchPlaceholder, ENT_QUOTES, 'UTF-8'); ?>"
                     />
-                    <button type="submit" class="nxp-btn nxp-btn--ghost">
+                    <button type="submit" class="<?php echo htmlspecialchars($secondaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>">
                         <?php echo Text::_('COM_NXPEASYCART_LANDING_SEARCH_SUBMIT'); ?>
                     </button>
                 </form>
@@ -72,7 +85,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
             <?php if (!empty($categories)) : ?>
                 <section class="nxp-landing__categories" aria-label="<?php echo Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'); ?>">
                     <?php foreach ($categories as $category) : ?>
-                        <a class="nxp-landing__category" href="<?php echo htmlspecialchars($category['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                        <a class="<?php echo htmlspecialchars($categoryClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($category['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                             <span class="nxp-landing__category-title">
                                 <?php echo htmlspecialchars($category['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                             </span>
@@ -91,7 +104,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                         <h2 class="nxp-landing__section-title">
                             <?php echo htmlspecialchars($section['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                         </h2>
-                        <a class="nxp-landing__section-link" href="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>">
+                        <a class="<?php echo htmlspecialchars($sectionLinkClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>">
                             <?php echo Text::_('COM_NXPEASYCART_LANDING_VIEW_ALL'); ?>
                         </a>
                     </header>
@@ -123,7 +136,7 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                                             <?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?>
                                         </p>
                                     <?php endif; ?>
-                                    <a class="nxp-btn nxp-btn--ghost" href="<?php echo htmlspecialchars($item['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                    <a class="<?php echo htmlspecialchars($secondaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($item['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php echo Text::_('COM_NXPEASYCART_LANDING_CARD_VIEW'); ?>
                                     </a>
                                 </div>

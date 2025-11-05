@@ -7,7 +7,6 @@ namespace Joomla\Component\Nxpeasycart\Site\View\Order;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
-use Joomla\CMS\Uri\Uri;
 
 /**
  * Order confirmation view.
@@ -22,9 +21,13 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         $document = $this->document;
-        $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
         $wa = $document->getWebAssetManager();
+        $wa->registerAndUseStyle(
+            'com_nxpeasycart.site.css',
+            'media/com_nxpeasycart/css/site.css',
+            ['version' => 'auto', 'relative' => true]
+        );
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 

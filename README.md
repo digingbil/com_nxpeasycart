@@ -28,6 +28,8 @@ NXP Easy Cart is a Joomla 5 component that prioritises a 10-minute setup, a clea
 -   **Product editor category selector** consumes the categories API, letting merchants multi-select existing categories and create new ones inline; the payload now posts normalised `{id, title, slug}` entries so product/category mappings stay deduplicated.
 -   **Database binding hardening** replaced every inline `->bind()` cast with real variables, eliminating the “Argument #2 ($value) could not be passed by reference” fatal that previously appeared during saves.
 -   **Shop landing menu type** now loads the custom `RootCategories` field via the field prefix and routes cleanly to `/shop` without the `?view=landing` fallback after wiring the router factory.
+-   **Shop landing runtime fixes** render the fallback hero/search/categories markup even before the Vue island hydrates, format money with locale-safe `NumberFormatter`, and ensure the view loads correctly regardless of autoload location.
+-   **Template-aware storefront** now detects the active Joomla template, exposes adapter tokens, and drives CSS variables so the landing page, buttons, and call-to-actions inherit the host theme’s palette and utility classes.
 
 ### Currency decision (MVP)
 

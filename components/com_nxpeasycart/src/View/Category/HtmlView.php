@@ -44,9 +44,12 @@ class HtmlView extends BaseHtmlView
         $this->products   = $model ? $model->getProducts() : [];
         $this->categories = $model ? $model->getCategories() : [];
 
-        $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
-
         $wa = $document->getWebAssetManager();
+        $wa->registerAndUseStyle(
+            'com_nxpeasycart.site.css',
+            'media/com_nxpeasycart/css/site.css',
+            ['version' => 'auto', 'relative' => true]
+        );
 
         $siteBundleAsset = 'com_nxpeasycart.site.bundle';
         $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
@@ -67,7 +70,9 @@ class HtmlView extends BaseHtmlView
             $this->products = [];
             $this->searchTerm = trim($app->input->getString('q', ''));
 
+            ob_start();
             parent::display($tpl);
+            TemplateAdapter::injectIntoT4($document, ob_get_clean() ?: '');
 
             return;
         }
@@ -83,6 +88,8 @@ class HtmlView extends BaseHtmlView
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);
         $document->addHeadLink($canonical, 'canonical');
 
+        ob_start();
         parent::display($tpl);
+        TemplateAdapter::injectIntoT4($document, ob_get_clean() ?: '');
     }
 }

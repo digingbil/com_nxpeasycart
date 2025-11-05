@@ -8,7 +8,6 @@ use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
-use Joomla\CMS\Uri\Uri;
 
 /**
  * Checkout view combining cart and configuration metadata.
@@ -24,9 +23,13 @@ class HtmlView extends BaseHtmlView
     {
         /** @var HtmlDocument $document */
         $document = $this->document;
-        $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
         $wa = $document->getWebAssetManager();
+        $wa->registerAndUseStyle(
+            'com_nxpeasycart.site.css',
+            'media/com_nxpeasycart/css/site.css',
+            ['version' => 'auto', 'relative' => true]
+        );
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 

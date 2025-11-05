@@ -38,9 +38,13 @@ class HtmlView extends BaseHtmlView
     {
         $app      = Factory::getApplication();
         $document = $this->document;
-        $document->addStyleSheet(Uri::root(true) . '/media/com_nxpeasycart/css/site.css');
 
         $wa = $document->getWebAssetManager();
+        $wa->registerAndUseStyle(
+            'com_nxpeasycart.site.css',
+            'media/com_nxpeasycart/css/site.css',
+            ['version' => 'auto', 'relative' => true]
+        );
         $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
         $wa->useScript('com_nxpeasycart.site');
 
