@@ -18,40 +18,40 @@
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/let Vs;const ai=typeof window!="undefined"&&window.trustedTypes;if(ai)try{Vs=ai.createPolicy("vue",{createHTML:e=>e})}catch(e){}const fi=Vs?e=>Vs.createHTML(e):e=>e,jo="http://www.w3.org/2000/svg",ko="http://www.w3.org/1998/Math/MathML",Ne=typeof document!="undefined"?document:null,ui=Ne&&Ne.createElement("template"),Uo={insert:(e,t,s)=>{t.insertBefore(e,s||null)},remove:e=>{const t=e.parentNode;t&&t.removeChild(e)},createElement:(e,t,s,n)=>{const i=t==="svg"?Ne.createElementNS(jo,e):t==="mathml"?Ne.createElementNS(ko,e):s?Ne.createElement(e,{is:s}):Ne.createElement(e);return e==="select"&&n&&n.multiple!=null&&i.setAttribute("multiple",n.multiple),i},createText:e=>Ne.createTextNode(e),createComment:e=>Ne.createComment(e),setText:(e,t)=>{e.nodeValue=t},setElementText:(e,t)=>{e.textContent=t},parentNode:e=>e.parentNode,nextSibling:e=>e.nextSibling,querySelector:e=>Ne.querySelector(e),setScopeId(e,t){e.setAttribute(t,"")},insertStaticContent(e,t,s,n,i,r){const o=s?s.previousSibling:t.lastChild;if(i&&(i===r||i.nextSibling))for(;t.insertBefore(i.cloneNode(!0),s),!(i===r||!(i=i.nextSibling)););else{ui.innerHTML=fi(n==="svg"?`<svg>${e}</svg>`:n==="mathml"?`<math>${e}</math>`:e);const l=ui.content;if(n==="svg"||n==="mathml"){const a=l.firstChild;for(;a.firstChild;)l.appendChild(a.firstChild);l.removeChild(a)}t.insertBefore(l,s)}return[o?o.nextSibling:t.firstChild,s?s.previousSibling:t.lastChild]}},Vo=Symbol("_vtc");function Wo(e,t,s){const n=e[Vo];n&&(t=(t?[t,...n]:[...n]).join(" ")),t==null?e.removeAttribute("class"):s?e.setAttribute("class",t):e.className=t}const di=Symbol("_vod"),Bo=Symbol("_vsh"),Ko=Symbol(""),qo=/(?:^|;)\s*display\s*:/;function Go(e,t,s){const n=e.style,i=X(s);let r=!1;if(s&&!i){if(t)if(X(t))for(const o of t.split(";")){const l=o.slice(0,o.indexOf(":")).trim();s[l]==null&&Qt(n,l,"")}else for(const o in t)s[o]==null&&Qt(n,o,"");for(const o in s)o==="display"&&(r=!0),Qt(n,o,s[o])}else if(i){if(t!==s){const o=n[Ko];o&&(s+=";"+o),n.cssText=s,r=qo.test(s)}}else t&&e.removeAttribute("style");di in e&&(e[di]=r?n.display:"",e[Bo]&&(n.display="none"))}const pi=/\s*!important$/;function Qt(e,t,s){if(R(s))s.forEach(n=>Qt(e,t,n));else if(s==null&&(s=""),t.startsWith("--"))e.setProperty(t,s);else{const n=Jo(e,t);pi.test(s)?e.setProperty(Ge(n),s.replace(pi,""),"important"):e[n]=s}}const hi=["Webkit","Moz","ms"],Ws={};function Jo(e,t){const s=Ws[t];if(s)return s;let n=$e(t);if(n!=="filter"&&n in e)return Ws[t]=n;n=Js(n);for(let i=0;i<hi.length;i++){const r=hi[i]+n;if(r in e)return Ws[t]=r}return t}const gi="http://www.w3.org/1999/xlink";function _i(e,t,s,n,i,r=Vi(t)){n&&t.startsWith("xlink:")?s==null?e.removeAttributeNS(gi,t.slice(6,t.length)):e.setAttributeNS(gi,t,s):s==null||r&&!zs(s)?e.removeAttribute(t):e.setAttribute(t,r?"":tt(s)?String(s):s)}function mi(e,t,s,n,i){if(t==="innerHTML"||t==="textContent"){s!=null&&(e[t]=t==="innerHTML"?fi(s):s);return}const r=e.tagName;if(t==="value"&&r!=="PROGRESS"&&!r.includes("-")){const l=r==="OPTION"?e.getAttribute("value")||"":e.value,a=s==null?e.type==="checkbox"?"on":"":String(s);(l!==a||!("_value"in e))&&(e.value=a),s==null&&e.removeAttribute(t),e._value=s;return}let o=!1;if(s===""||s==null){const l=typeof e[t];l==="boolean"?s=zs(s):s==null&&l==="string"?(s="",o=!0):l==="number"&&(s=0,o=!0)}try{e[t]=s}catch(l){}o&&e.removeAttribute(i||t)}function Yo(e,t,s,n){e.addEventListener(t,s,n)}function Xo(e,t,s,n){e.removeEventListener(t,s,n)}const bi=Symbol("_vei");function zo(e,t,s,n,i=null){const r=e[bi]||(e[bi]={}),o=r[t];if(n&&o)o.value=n;else{const[l,a]=Qo(t);if(n){const p=r[t]=tl(n,i);Yo(e,l,p,a)}else o&&(Xo(e,l,o,a),r[t]=void 0)}}const yi=/(?:Once|Passive|Capture)$/;function Qo(e){let t;if(yi.test(e)){t={};let n;for(;n=e.match(yi);)e=e.slice(0,e.length-n[0].length),t[n[0].toLowerCase()]=!0}return[e[2]===":"?e.slice(3):Ge(e.slice(2)),t]}let Bs=0;const Zo=Promise.resolve(),el=()=>Bs||(Zo.then(()=>Bs=0),Bs=Date.now());function tl(e,t){const s=n=>{if(!n._vts)n._vts=Date.now();else if(n._vts<=s.attached)return;Se(sl(n,s.value),t,5,[n])};return s.value=e,s.attached=el(),s}function sl(e,t){if(R(t)){const s=e.stopImmediatePropagation;return e.stopImmediatePropagation=()=>{s.call(e),e._stopped=!0},t.map(n=>i=>!i._stopped&&n&&n(i))}else return t}const vi=e=>e.charCodeAt(0)===111&&e.charCodeAt(1)===110&&e.charCodeAt(2)>96&&e.charCodeAt(2)<123,nl=(e,t,s,n,i,r)=>{const o=i==="svg";t==="class"?Wo(e,n,o):t==="style"?Go(e,s,n):It(t)?ss(t)||zo(e,t,s,n,r):(t[0]==="."?(t=t.slice(1),!0):t[0]==="^"?(t=t.slice(1),!1):il(e,t,n,o))?(mi(e,t,n),!e.tagName.includes("-")&&(t==="value"||t==="checked"||t==="selected")&&_i(e,t,n,o,r,t!=="value")):e._isVueCE&&(/[A-Z]/.test(t)||!X(n))?mi(e,$e(t),n,r,t):(t==="true-value"?e._trueValue=n:t==="false-value"&&(e._falseValue=n),_i(e,t,n,o))};function il(e,t,s,n){if(n)return!!(t==="innerHTML"||t==="textContent"||t in e&&vi(t)&&I(s));if(t==="spellcheck"||t==="draggable"||t==="translate"||t==="autocorrect"||t==="form"||t==="list"&&e.tagName==="INPUT"||t==="type"&&e.tagName==="TEXTAREA")return!1;if(t==="width"||t==="height"){const i=e.tagName;if(i==="IMG"||i==="VIDEO"||i==="CANVAS"||i==="SOURCE")return!1}return vi(t)&&X(s)?!1:t in e}const rl=te({patchProp:nl},Uo);let xi;function ol(){return xi||(xi=ro(rl))}const Zt=(...e)=>{const t=ol().createApp(...e),{mount:s}=t;return t.mount=n=>{const i=cl(n);if(!i)return;const r=t._component;!I(r)&&!r.render&&!r.template&&(r.template=i.innerHTML),i.nodeType===1&&(i.textContent="");const o=s(i,!1,ll(i));return i instanceof Element&&(i.removeAttribute("v-cloak"),i.setAttribute("data-v-app","")),o},t};function ll(e){if(e instanceof SVGElement)return"svg";if(typeof MathMLElement=="function"&&e instanceof MathMLElement)return"mathml"}function cl(e){return X(e)?document.querySelector(e):e}const wi=(e,t)=>{const s=(e||0)/100;try{return new Intl.NumberFormat(void 0,{style:"currency",currency:t||"USD",minimumFractionDigits:2}).format(s)}catch(n){return`${t?`${t} `:""}${s.toFixed(2)}`}},Pt=(e,t={})=>{if(!e)return t;try{return JSON.parse(e)}catch(s){return console.warn("[NXP Easy Cart] Failed to parse island payload",s),t}},Si={category:e=>{const t=Pt(e.dataset.nxpCategory,{}),s=Pt(e.dataset.nxpProducts,[]),n=e.dataset.nxpSearch||"";e.innerHTML="",Zt({template:`
-      <div class="nxp-category" v-cloak>
-        <header class="nxp-category__header">
-          <h1 class="nxp-category__title">{{ title }}</h1>
-          <div class="nxp-category__search">
+      <div class="nxp-ec-category" v-cloak>
+        <header class="nxp-ec-category__header">
+          <h1 class="nxp-ec-category__title">{{ title }}</h1>
+          <div class="nxp-ec-category__search">
             <input
               type="search"
-              class="nxp-admin-search"
+              class="nxp-ec-admin-search"
               v-model="search"
               :placeholder="searchPlaceholder"
             />
           </div>
         </header>
 
-        <p v-if="filteredProducts.length === 0" class="nxp-category__empty">
+        <p v-if="filteredProducts.length === 0" class="nxp-ec-category__empty">
           {{ emptyCopy }}
         </p>
 
-        <div v-else class="nxp-category__grid">
+        <div v-else class="nxp-ec-category__grid">
           <article
             v-for="product in filteredProducts"
             :key="product.id"
-            class="nxp-product-card"
+            class="nxp-ec-product-card"
           >
-            <figure v-if="product.images && product.images.length" class="nxp-product-card__media">
+            <figure v-if="product.images && product.images.length" class="nxp-ec-product-card__media">
               <img :src="product.images[0]" :alt="product.title" loading="lazy" />
             </figure>
-            <div class="nxp-product-card__body">
-              <h2 class="nxp-product-card__title">
+            <div class="nxp-ec-product-card__body">
+              <h2 class="nxp-ec-product-card__title">
                 <a :href="product.link">{{ product.title }}</a>
               </h2>
-              <p v-if="product.short_desc" class="nxp-product-card__intro">
+              <p v-if="product.short_desc" class="nxp-ec-product-card__intro">
                 {{ product.short_desc }}
               </p>
-              <a class="nxp-btn nxp-btn--ghost" :href="product.link">
+              <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
                 {{ viewCopy }}
               </a>
             </div>
@@ -59,29 +59,29 @@
         </div>
       </div>
     `,setup(){const r=(t==null?void 0:t.title)||"Products",o=Cs(n),l=ye(()=>{if(!o.value)return s;const a=o.value.toLowerCase();return s.filter(p=>`${p.title} ${p.short_desc||""}`.toLowerCase().includes(a))});return{title:r,search:o,filteredProducts:l,searchPlaceholder:"Search products",emptyCopy:"No products found in this category yet.",viewCopy:"View product"}}}).mount(e)},landing:e=>{var O,F;const t=Pt(e.dataset.nxpLanding,{}),s=t.hero||{},n=t.search||{},i=Array.isArray(t.categories)?t.categories:[],r=Array.isArray(t.sections)?t.sections:[],o=t.labels||{},l=t.trust||{},a=n.action||"index.php?option=com_nxpeasycart&view=category",p=n.placeholder||"Search for shoes, laptops, gifts…",u=((O=s==null?void 0:s.cta)==null?void 0:O.label)||"Shop Best Sellers",h=((F=s==null?void 0:s.cta)==null?void 0:F.link)||a,v={search_label:o.search_label||"Search the catalogue",search_button:o.search_button||"Search",view_all:o.view_all||"View all",view_product:o.view_product||"View product",categories_aria:o.categories_aria||"Browse categories"};e.innerHTML="",Zt({template:`
-      <div class="nxp-landing__inner" v-cloak>
-        <header class="nxp-landing__hero">
-          <div class="nxp-landing__hero-copy">
-            <p v-if="hero.eyebrow" class="nxp-landing__eyebrow">{{ hero.eyebrow }}</p>
-            <h1 class="nxp-landing__title">{{ hero.title }}</h1>
-            <p v-if="hero.subtitle" class="nxp-landing__subtitle">{{ hero.subtitle }}</p>
-            <div class="nxp-landing__actions">
-              <a class="nxp-btn nxp-btn--primary" :href="cta.link">
+      <div class="nxp-ec-landing__inner" v-cloak>
+        <header class="nxp-ec-landing__hero">
+          <div class="nxp-ec-landing__hero-copy">
+            <p v-if="hero.eyebrow" class="nxp-ec-landing__eyebrow">{{ hero.eyebrow }}</p>
+            <h1 class="nxp-ec-landing__title">{{ hero.title }}</h1>
+            <p v-if="hero.subtitle" class="nxp-ec-landing__subtitle">{{ hero.subtitle }}</p>
+            <div class="nxp-ec-landing__actions">
+              <a class="nxp-ec-btn nxp-ec-btn--primary" :href="cta.link">
                 {{ cta.label }}
               </a>
             </div>
           </div>
-          <form class="nxp-landing__search" @submit.prevent="submitSearch">
-            <label class="sr-only" for="nxp-landing-search-input">
+          <form class="nxp-ec-landing__search" @submit.prevent="submitSearch">
+            <label class="sr-only" for="nxp-ec-landing-search-input">
               {{ labels.search_label }}
             </label>
             <input
-              id="nxp-landing-search-input"
+              id="nxp-ec-landing-search-input"
               type="search"
               v-model="term"
               :placeholder="searchPlaceholder"
             />
-            <button type="submit" class="nxp-btn nxp-btn--ghost">
+            <button type="submit" class="nxp-ec-btn nxp-ec-btn--ghost">
               {{ labels.search_button }}
             </button>
           </form>
@@ -89,50 +89,50 @@
 
         <section
           v-if="categoryTiles.length"
-          class="nxp-landing__categories"
+          class="nxp-ec-landing__categories"
           :aria-label="labels.categories_aria"
         >
           <a
             v-for="category in categoryTiles"
             :key="category.id || category.slug || category.title"
-            class="nxp-landing__category"
+            class="nxp-ec-landing__category"
             :href="category.link"
           >
-            <span class="nxp-landing__category-title">{{ category.title }}</span>
+            <span class="nxp-ec-landing__category-title">{{ category.title }}</span>
           </a>
         </section>
 
         <section
           v-for="section in visibleSections"
           :key="section.key"
-          class="nxp-landing__section"
+          class="nxp-ec-landing__section"
         >
-          <header class="nxp-landing__section-header">
-            <h2 class="nxp-landing__section-title">{{ section.title }}</h2>
-            <a class="nxp-landing__section-link" :href="searchAction">
+          <header class="nxp-ec-landing__section-header">
+            <h2 class="nxp-ec-landing__section-title">{{ section.title }}</h2>
+            <a class="nxp-ec-landing__section-link" :href="searchAction">
               {{ labels.view_all }}
             </a>
           </header>
-          <div class="nxp-landing__grid">
+          <div class="nxp-ec-landing__grid">
             <article
               v-for="item in section.items"
               :key="item.id || item.slug || item.title"
-              class="nxp-landing__card"
+              class="nxp-ec-landing__card"
             >
-              <figure v-if="item.images && item.images.length" class="nxp-landing__card-media">
+              <figure v-if="item.images && item.images.length" class="nxp-ec-landing__card-media">
                 <img :src="item.images[0]" :alt="item.title" loading="lazy" />
               </figure>
-              <div class="nxp-landing__card-body">
-                <h3 class="nxp-landing__card-title">
+              <div class="nxp-ec-landing__card-body">
+                <h3 class="nxp-ec-landing__card-title">
                   <a :href="item.link">{{ item.title }}</a>
                 </h3>
-                <p v-if="item.short_desc" class="nxp-landing__card-intro">
+                <p v-if="item.short_desc" class="nxp-ec-landing__card-intro">
                   {{ item.short_desc }}
                 </p>
-                <p v-if="item.price_label" class="nxp-landing__card-price">
+                <p v-if="item.price_label" class="nxp-ec-landing__card-price">
                   {{ item.price_label }}
                 </p>
-                <a class="nxp-btn nxp-btn--ghost" :href="item.link">
+                <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="item.link">
                   {{ labels.view_product }}
                 </a>
               </div>
@@ -140,42 +140,42 @@
           </div>
         </section>
 
-        <aside v-if="trust.text" class="nxp-landing__trust">
-          <p class="nxp-landing__trust-text">{{ trust.text }}</p>
+        <aside v-if="trust.text" class="nxp-ec-landing__trust">
+          <p class="nxp-ec-landing__trust-text">{{ trust.text }}</p>
         </aside>
       </div>
     `,setup(){var ce,Oe;const z={eyebrow:s.eyebrow||"",title:s.title||"Shop",subtitle:s.subtitle||""},D={label:((ce=s==null?void 0:s.cta)==null?void 0:ce.label)||u,link:((Oe=s==null?void 0:s.cta)==null?void 0:Oe.link)||h},M=n.action||a,k=n.placeholder||p,E=r.filter(J=>Array.isArray(J.items)&&J.items.length),G=ye(()=>E.map(J=>({key:J.key||J.title,title:J.title||"",items:J.items.slice(0,12)}))),ge=Cs("");return{hero:z,cta:D,term:ge,submitSearch:()=>{const J=n.action||a,de=ge.value.trim();try{const K=new URL(J,window.location.origin);de?K.searchParams.set("q",de):K.searchParams.delete("q"),window.location.href=K.toString()}catch(K){if(de){const Z=J.includes("?")?"&":"?";window.location.href=`${J}${Z}q=${encodeURIComponent(de)}`;return}window.location.href=J}},searchPlaceholder:k,searchAction:M,labels:v,categoryTiles:i,visibleSections:G,trust:typeof l.text=="string"?{text:l.text}:{text:""}}}}).mount(e)},cart:e=>{const t=Pt(e.dataset.nxpCart,{items:[],summary:{}});e.innerHTML="",Zt({template:`
-      <div class="nxp-cart" v-cloak>
-        <header class="nxp-cart__header">
-          <h1 class="nxp-cart__title">Your cart</h1>
-          <p class="nxp-cart__lead">
+      <div class="nxp-ec-cart" v-cloak>
+        <header class="nxp-ec-cart__header">
+          <h1 class="nxp-ec-cart__title">Your cart</h1>
+          <p class="nxp-ec-cart__lead">
             Review your items and proceed to checkout.
           </p>
         </header>
 
-        <div v-if="items.length === 0" class="nxp-cart__empty">
+        <div v-if="items.length === 0" class="nxp-ec-cart__empty">
           <p>Your cart is currently empty.</p>
-          <a class="nxp-btn" href="index.php?option=com_nxpeasycart&view=category">
+          <a class="nxp-ec-btn" href="index.php?option=com_nxpeasycart&view=category">
             Continue browsing
           </a>
         </div>
 
-        <div v-else class="nxp-cart__content">
-          <table class="nxp-cart__table">
+        <div v-else class="nxp-ec-cart__content">
+          <table class="nxp-ec-cart__table">
             <thead>
               <tr>
                 <th scope="col">Product</th>
                 <th scope="col">Price</th>
                 <th scope="col">Qty</th>
                 <th scope="col">Total</th>
-                <th scope="col" class="nxp-cart__actions"></th>
+                <th scope="col" class="nxp-ec-cart__actions"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in items" :key="item.id">
                 <td data-label="Product">
                   <strong>{{ item.product_title || item.title }}</strong>
-                  <ul v-if="item.options && item.options.length" class="nxp-cart__options">
+                  <ul v-if="item.options && item.options.length" class="nxp-ec-cart__options">
                     <li v-for="(option, index) in item.options" :key="index">
                       <span>{{ option.name }}:</span> {{ option.value }}
                     </li>
@@ -191,8 +191,8 @@
                   />
                 </td>
                 <td data-label="Total">{{ format(item.total_cents) }}</td>
-                <td class="nxp-cart__actions">
-                  <button type="button" class="nxp-link-button" @click="remove(item)">
+                <td class="nxp-ec-cart__actions">
+                  <button type="button" class="nxp-ec-link-button" @click="remove(item)">
                     Remove
                   </button>
                 </td>
@@ -200,7 +200,7 @@
             </tbody>
           </table>
 
-          <aside class="nxp-cart__summary">
+          <aside class="nxp-ec-cart__summary">
             <h2>Summary</h2>
             <dl>
               <div>
@@ -213,68 +213,68 @@
               </div>
               <div>
                 <dt>Total</dt>
-                <dd class="nxp-cart__summary-total">{{ format(summary.total_cents) }}</dd>
+                <dd class="nxp-ec-cart__summary-total">{{ format(summary.total_cents) }}</dd>
               </div>
             </dl>
 
-            <a class="nxp-btn nxp-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
+            <a class="nxp-ec-btn nxp-ec-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
               Proceed to checkout
             </a>
           </aside>
         </div>
       </div>
     `,setup(){var p,u,h;const n=ke(t.items||[]),i=((p=t.summary)==null?void 0:p.currency)||"USD",r=ke({subtotal_cents:((u=t.summary)==null?void 0:u.subtotal_cents)||0,total_cents:((h=t.summary)==null?void 0:h.total_cents)||0}),o=()=>{const v=n.reduce((S,O)=>S+(O.total_cents||0),0);r.subtotal_cents=v,r.total_cents=v};return{items:n,summary:r,remove:v=>{const S=n.indexOf(v);S>=0&&(n.splice(S,1),o())},updateQty:(v,S)=>{const O=Math.max(1,parseInt(S,10)||1);v.qty=O,v.total_cents=O*(v.unit_price_cents||0),o()},format:v=>wi(v,i)}}}).mount(e)},checkout:e=>{const t=Pt(e.dataset.nxpCheckout,{}),s=t.cart||{items:[],summary:{}},n=t.shipping_rules||[];t.tax_rates;const i=t.settings||{},r=t.payments||{},o=t.endpoints||{},l=t.token||"";e.innerHTML="",Zt({template:`
-      <div class="nxp-checkout" v-cloak>
-        <header class="nxp-checkout__header">
-          <h1 class="nxp-checkout__title">Checkout</h1>
-          <p class="nxp-checkout__lead">
+      <div class="nxp-ec-checkout" v-cloak>
+        <header class="nxp-ec-checkout__header">
+          <h1 class="nxp-ec-checkout__title">Checkout</h1>
+          <p class="nxp-ec-checkout__lead">
             Enter your details to complete the order.
           </p>
         </header>
 
-        <div class="nxp-checkout__layout" v-if="!success">
-          <form class="nxp-checkout__form" @submit.prevent="submit">
+        <div class="nxp-ec-checkout__layout" v-if="!success">
+          <form class="nxp-ec-checkout__form" @submit.prevent="submit">
             <fieldset>
               <legend>Contact</legend>
-              <div class="nxp-checkout__field">
-                <label for="nxp-checkout-email">Email</label>
-                <input id="nxp-checkout-email" type="email" v-model="model.email" required />
+              <div class="nxp-ec-checkout__field">
+                <label for="nxp-ec-checkout-email">Email</label>
+                <input id="nxp-ec-checkout-email" type="email" v-model="model.email" required />
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Billing address</legend>
-              <div class="nxp-checkout__grid">
-                <div class="nxp-checkout__field">
-                  <label for="nxp-first-name">First name</label>
-                  <input id="nxp-first-name" type="text" v-model="model.billing.first_name" required />
+              <div class="nxp-ec-checkout__grid">
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-first-name">First name</label>
+                  <input id="nxp-ec-first-name" type="text" v-model="model.billing.first_name" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-last-name">Last name</label>
-                  <input id="nxp-last-name" type="text" v-model="model.billing.last_name" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-last-name">Last name</label>
+                  <input id="nxp-ec-last-name" type="text" v-model="model.billing.last_name" required />
                 </div>
-                <div class="nxp-checkout__field nxp-checkout__field--wide">
-                  <label for="nxp-address-line1">Address</label>
-                  <input id="nxp-address-line1" type="text" v-model="model.billing.address_line1" required />
+                <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
+                  <label for="nxp-ec-address-line1">Address</label>
+                  <input id="nxp-ec-address-line1" type="text" v-model="model.billing.address_line1" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-city">City</label>
-                  <input id="nxp-city" type="text" v-model="model.billing.city" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-city">City</label>
+                  <input id="nxp-ec-city" type="text" v-model="model.billing.city" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-postcode">Postcode</label>
-                  <input id="nxp-postcode" type="text" v-model="model.billing.postcode" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-postcode">Postcode</label>
+                  <input id="nxp-ec-postcode" type="text" v-model="model.billing.postcode" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-country">Country</label>
-                  <input id="nxp-country" type="text" v-model="model.billing.country" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-country">Country</label>
+                  <input id="nxp-ec-country" type="text" v-model="model.billing.country" required />
                 </div>
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Shipping</legend>
-              <p class="nxp-checkout__radio-group">
+              <p class="nxp-ec-checkout__radio-group">
                 <label
                   v-for="rule in shippingRules"
                   :key="rule.id"
@@ -293,14 +293,14 @@
 
             <fieldset>
               <legend>Payment method</legend>
-              <p class="nxp-checkout__radio-group" v-if="gateways.length">
+              <p class="nxp-ec-checkout__radio-group" v-if="gateways.length">
                 <label
                   v-for="gateway in gateways"
                   :key="gateway.id"
                 >
                   <input
                     type="radio"
-                    name="nxp-checkout-gateway"
+                    name="nxp-ec-checkout-gateway"
                     :value="gateway.id"
                     v-model="selectedGateway"
                   />
@@ -312,29 +312,29 @@
               </p>
             </fieldset>
 
-            <div v-if="error" class="nxp-admin-alert nxp-admin-alert--error">
+            <div v-if="error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
               {{ error }}
             </div>
 
-            <button type="submit" class="nxp-btn nxp-btn--primary" :disabled="loading">
+            <button type="submit" class="nxp-ec-btn nxp-ec-btn--primary" :disabled="loading">
               <span v-if="loading">Processing…</span>
               <span v-else>Complete order</span>
             </button>
           </form>
 
-          <aside class="nxp-checkout__summary">
+          <aside class="nxp-ec-checkout__summary">
             <h2>Order summary</h2>
-            <div class="nxp-checkout__cart" v-if="cartItems.length">
+            <div class="nxp-ec-checkout__cart" v-if="cartItems.length">
               <ul>
                 <li v-for="item in cartItems" :key="item.id">
                   <div>
                     <strong>{{ item.product_title || item.title }}</strong>
-                    <span class="nxp-checkout__qty">× {{ item.qty }}</span>
+                    <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
                   </div>
-                  <div class="nxp-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                  <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
                 </li>
               </ul>
-              <div class="nxp-checkout__totals">
+              <div class="nxp-ec-checkout__totals">
                 <div>
                   <span>Subtotal</span>
                   <strong>{{ formatMoney(subtotal) }}</strong>
@@ -353,10 +353,10 @@
           </aside>
         </div>
 
-        <div v-else class="nxp-order-confirmation__summary">
+        <div v-else class="nxp-ec-order-confirmation__summary">
           <h2>Thank you!</h2>
           <p>Your order <strong>{{ orderNumber }}</strong> was created successfully.</p>
-          <a class="nxp-btn" :href="orderUrl">View order summary</a>
+          <a class="nxp-ec-btn" :href="orderUrl">View order summary</a>
         </div>
       </div>
     `,setup(){var le,ce,Oe,J,de;const p=ke((s.items||[]).map(K=>({...K}))),u=((le=s.summary)==null?void 0:le.currency)||i.base_currency||"USD",h=n.map((K,Z)=>({...K,price_cents:K.price_cents||0,default:Z===0})),v=(K,Z=[])=>Z.every(Ke=>{var N;const et=(N=K[Ke])!=null?N:"";return String(et).trim()!==""}),S=[];v((ce=r.stripe)!=null?ce:{},["publishable_key","secret_key"])&&S.push({id:"stripe",label:"Card (Stripe)"}),v((Oe=r.paypal)!=null?Oe:{},["client_id","client_secret"])&&S.push({id:"paypal",label:"PayPal"});const O=S,F=Cs(((J=O[0])==null?void 0:J.id)||""),z=O.length>0&&!!o.payment,D=ke({email:"",billing:{first_name:"",last_name:"",address_line1:"",city:"",postcode:"",country:""},shipping_rule_id:((de=h[0])==null?void 0:de.id)||null}),M=ke({loading:!1,error:"",success:!1,orderNumber:"",orderUrl:"index.php?option=com_nxpeasycart&view=order"}),k=ye(()=>p.reduce((K,Z)=>K+(Z.total_cents||0),0)),E=ye(()=>{const K=h.find(Z=>String(Z.id)===String(D.shipping_rule_id));return K?K.price_cents:0}),G=ye(()=>k.value+E.value);return{model:D,cartItems:p,shippingRules:h,subtotal:k,selectedShippingCost:E,total:G,submit:async()=>{var Ke,et;if(M.error="",p.length===0){M.error="Your cart is empty.";return}M.loading=!0;const K=F.value||((Ke=O[0])==null?void 0:Ke.id)||"",Z={email:D.email,billing:D.billing,shipping_rule_id:D.shipping_rule_id,items:p.map(N=>({sku:N.sku,qty:N.qty,product_id:N.product_id,variant_id:N.variant_id,unit_price_cents:N.unit_price_cents,total_cents:N.total_cents,currency:u,title:N.title})),currency:u,totals:{subtotal_cents:k.value,shipping_cents:E.value,total_cents:G.value},gateway:K};try{if(z&&K){const pe=await fetch(o.payment,{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":l,"X-Requested-With":"XMLHttpRequest"},body:JSON.stringify(Z),credentials:"same-origin"});if(!pe.ok){const _e=`Checkout failed (${pe.status})`;throw new Error(_e)}const qe=await pe.json(),Ae=(et=qe==null?void 0:qe.checkout)==null?void 0:et.url;if(!Ae)throw new Error("Missing checkout URL from gateway.");window.location.href=Ae;return}if(!o.checkout)throw new Error("Checkout endpoint unavailable.");const N=await fetch(o.checkout,{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":l,"X-Requested-With":"XMLHttpRequest"},body:JSON.stringify(Z),credentials:"same-origin"});if(!N.ok){const pe=`Checkout failed (${N.status})`;throw new Error(pe)}const V=await N.json(),U=(V==null?void 0:V.order)||{};M.success=!0,M.orderNumber=U.order_no||"",M.orderUrl=`index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(M.orderNumber)}`}catch(N){M.error=N.message||"Unable to complete checkout right now."}finally{M.loading=!1}},loading:ye(()=>M.loading),error:ye(()=>M.error),success:ye(()=>M.success),orderNumber:ye(()=>M.orderNumber),orderUrl:ye(()=>M.orderUrl),formatMoney:K=>wi(K,u),gateways:O,selectedGateway:F}}}).mount(e)}},Ci=()=>{document.querySelectorAll("[data-nxp-island]").forEach(e=>{const t=e.dataset.nxpIsland;!t||!Si[t]||Si[t](e)})};document.readyState==="loading"?document.addEventListener("DOMContentLoaded",Ci):Ci()})();

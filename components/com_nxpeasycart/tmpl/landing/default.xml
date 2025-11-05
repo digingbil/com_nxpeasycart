@@ -62,7 +62,7 @@
                 label="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT"
                 description="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT_DESC"
                 default="6"
-                min="1"
+                min="0"
                 max="12"
                 filter="integer"
             />

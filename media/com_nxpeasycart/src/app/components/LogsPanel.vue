@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--logs">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--logs">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_LOGS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_LOGS_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     v-model="state.search"
                     :placeholder="
                         __(
@@ -47,7 +47,7 @@
                     @keyup.enter="emitSearch"
                 />
                 <select
-                    class="nxp-form-select nxp-admin-select"
+                    class="nxp-ec-form-select nxp-ec-admin-select"
                     :value="state.entity"
                     @change="emitFilter($event.target.value)"
                     aria-label="Entity filter"
@@ -71,7 +71,7 @@
                     </option>
                 </select>
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -88,11 +88,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_LOGS_LOADING",
@@ -103,9 +103,9 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body">
-            <div class="nxp-admin-panel__table">
-                <table class="nxp-admin-table">
+        <div v-else class="nxp-ec-admin-panel__body">
+            <div class="nxp-ec-admin-panel__table">
+                <table class="nxp-ec-admin-table">
                     <thead>
                         <tr>
                             <th scope="col">
@@ -176,17 +176,17 @@
                         <tr v-for="log in state.items" :key="log.id">
                             <td>{{ formatTimestamp(log.created) }}</td>
                             <td>
-                                <span class="nxp-log-entity">{{
+                                <span class="nxp-ec-log-entity">{{
                                     formatEntity(log.entity_type)
                                 }}</span>
-                                <span class="nxp-log-entity-id"
+                                <span class="nxp-ec-log-entity-id"
                                     >#{{ log.entity_id }}</span
                                 >
                             </td>
                             <td>{{ log.action }}</td>
                             <td>{{ formatActor(log) }}</td>
                             <td>
-                                <pre class="nxp-log-context">{{
+                                <pre class="nxp-ec-log-context">{{
                                     formatContext(log.context)
                                 }}</pre>
                             </td>
@@ -195,23 +195,23 @@
                 </table>
 
                 <div
-                    class="nxp-admin-pagination"
+                    class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
                 >
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
                     >
                         ‹
                     </button>
-                    <span class="nxp-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="
                             state.pagination.current >= state.pagination.pages
@@ -362,18 +362,18 @@ const formatContext = (context) => {
 </script>
 
 <style scoped>
-.nxp-admin-panel--logs .nxp-admin-panel__table {
+.nxp-ec-admin-panel--logs .nxp-ec-admin-panel__table {
     overflow-x: auto;
 }
 
-.nxp-admin-panel--logs table {
+.nxp-ec-admin-panel--logs table {
     min-width: 720px;
 }
 
-.nxp-log-context {
+.nxp-ec-log-context {
     margin: 0;
     font-family: var(
-        --nxp-font-mono,
+        --nxp-ec-font-mono,
         ui-monospace,
         SFMono-Regular,
         Menlo,
@@ -388,18 +388,18 @@ const formatContext = (context) => {
     word-break: break-word;
 }
 
-.nxp-log-entity {
+.nxp-ec-log-entity {
     display: inline-block;
     font-weight: 600;
 }
 
-.nxp-log-entity-id {
+.nxp-ec-log-entity-id {
     display: inline-block;
     margin-left: 0.25rem;
     color: #475467;
 }
 
-.nxp-admin-select {
+.nxp-ec-admin-select {
     min-width: 160px;
 }
 </style>

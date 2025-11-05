@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_PRODUCTS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_PRODUCTS_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     :placeholder="
                         __(
                             'COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER',
@@ -47,7 +47,7 @@
                     "
                 />
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -62,7 +62,7 @@
                     }}
                 </button>
                 <button
-                    class="nxp-btn nxp-btn--primary"
+                    class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="openCreate"
                 >
@@ -71,11 +71,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_PRODUCTS_LOADING",
@@ -86,7 +86,7 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body">
+        <div v-else class="nxp-ec-admin-panel__body">
             <ProductTable
                 :items="state.items"
                 :translate="__"

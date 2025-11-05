@@ -12,19 +12,19 @@ require __DIR__ . '/../app/default.php';
 $orders = property_exists($this, 'orders') && \is_array($this->orders) ? ($this->orders['items'] ?? []) : [];
 
 if (!empty($orders)) : ?>
-    <div id="nxp-orders-fallback" class="nxp-admin-panel nxp-admin-panel--fallback">
-        <header class="nxp-admin-panel__header">
+    <div id="nxp-ec-orders-fallback" class="nxp-ec-admin-panel nxp-ec-admin-panel--fallback">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     <?php echo htmlspecialchars(\Joomla\CMS\Language\Text::_('COM_NXPEASYCART_MENU_ORDERS'), ENT_QUOTES, 'UTF-8'); ?>
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     <?php echo htmlspecialchars(\Joomla\CMS\Language\Text::_('COM_NXPEASYCART_ORDERS_LEAD'), ENT_QUOTES, 'UTF-8'); ?>
                 </p>
             </div>
         </header>
-        <div class="nxp-admin-panel__body">
-            <table class="nxp-admin-table">
+        <div class="nxp-ec-admin-panel__body">
+            <table class="nxp-ec-admin-table">
                 <thead>
                     <tr>
                         <th><?php echo htmlspecialchars(\Joomla\CMS\Language\Text::_('COM_NXPEASYCART_ORDERS_TABLE_ORDER'), ENT_QUOTES, 'UTF-8'); ?></th>
@@ -66,7 +66,7 @@ if (!empty($orders)) : ?>
         (function () {
             var removeFallback = function () {
                 if (window.__NXP_EASYCART__ && window.__NXP_EASYCART__.adminMounted) {
-                    var fallback = document.getElementById('nxp-orders-fallback');
+                    var fallback = document.getElementById('nxp-ec-orders-fallback');
                     if (fallback && fallback.parentNode) {
                         fallback.parentNode.removeChild(fallback);
                     }

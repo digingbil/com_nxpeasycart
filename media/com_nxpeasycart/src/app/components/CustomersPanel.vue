@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--customers">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--customers">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_CUSTOMERS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_CUSTOMERS_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     :placeholder="
                         __(
                             'COM_NXPEASYCART_CUSTOMERS_SEARCH_PLACEHOLDER',
@@ -47,7 +47,7 @@
                     "
                 />
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -64,11 +64,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_CUSTOMERS_LOADING",
@@ -79,9 +79,9 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body">
-            <div class="nxp-admin-panel__table">
-                <table class="nxp-admin-table">
+        <div v-else class="nxp-ec-admin-panel__body">
+            <div class="nxp-ec-admin-panel__table">
+                <table class="nxp-ec-admin-table">
                     <thead>
                         <tr>
                             <th scope="col">
@@ -161,7 +161,7 @@
                         >
                             <th scope="row">
                                 <button
-                                    class="nxp-link-button"
+                                    class="nxp-ec-link-button"
                                     type="button"
                                     @click="emitView(customer)"
                                 >
@@ -184,23 +184,23 @@
                 </table>
 
                 <div
-                    class="nxp-admin-pagination"
+                    class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
                 >
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
                     >
                         ‹
                     </button>
-                    <span class="nxp-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="
                             state.pagination.current >= state.pagination.pages
@@ -214,15 +214,15 @@
 
             <aside
                 v-if="state.activeCustomer"
-                class="nxp-admin-panel__sidebar"
+                class="nxp-ec-admin-panel__sidebar"
                 aria-live="polite"
             >
-                <header class="nxp-admin-panel__sidebar-header">
+                <header class="nxp-ec-admin-panel__sidebar-header">
                     <h3>
                         {{ state.activeCustomer.email }}
                     </h3>
                     <button
-                        class="nxp-link-button"
+                        class="nxp-ec-link-button"
                         type="button"
                         @click="emitClose"
                     >
@@ -237,7 +237,7 @@
                     </button>
                 </header>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -248,7 +248,7 @@
                             )
                         }}
                     </h4>
-                    <dl class="nxp-admin-summary">
+                    <dl class="nxp-ec-admin-summary">
                         <div>
                             <dt>
                                 {{
@@ -318,7 +318,7 @@
                     </dl>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -329,7 +329,7 @@
                             )
                         }}
                     </h4>
-                    <address class="nxp-admin-address">
+                    <address class="nxp-ec-admin-address">
                         <span
                             v-for="line in addressLines(
                                 state.activeCustomer.meta?.billing
@@ -341,7 +341,7 @@
                     </address>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -353,7 +353,7 @@
                         }}
                     </h4>
                     <address
-                        class="nxp-admin-address"
+                        class="nxp-ec-admin-address"
                         v-if="state.activeCustomer.meta?.shipping"
                     >
                         <span
@@ -365,7 +365,7 @@
                             {{ line.value }}
                         </span>
                     </address>
-                    <p v-else class="nxp-admin-panel__muted">
+                    <p v-else class="nxp-ec-admin-panel__muted">
                         {{
                             __(
                                 "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING",
@@ -377,7 +377,7 @@
                     </p>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -389,7 +389,7 @@
                         }}
                     </h4>
                     <ul
-                        class="nxp-admin-list"
+                        class="nxp-ec-admin-list"
                         v-if="
                             state.activeCustomer.orders &&
                             state.activeCustomer.orders.length
@@ -399,7 +399,7 @@
                             v-for="order in state.activeCustomer.orders"
                             :key="order.id"
                         >
-                            <div class="nxp-admin-list__title">
+                            <div class="nxp-ec-admin-list__title">
                                 {{ order.order_no }} ·
                                 {{
                                     formatCurrency(
@@ -408,13 +408,13 @@
                                     )
                                 }}
                             </div>
-                            <div class="nxp-admin-list__meta">
+                            <div class="nxp-ec-admin-list__meta">
                                 {{ stateLabel(order.state) }} ·
                                 {{ formatDate(order.created) }}
                             </div>
                         </li>
                     </ul>
-                    <p v-else class="nxp-admin-panel__muted">
+                    <p v-else class="nxp-ec-admin-panel__muted">
                         {{
                             __(
                                 "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_ORDERS",
@@ -509,24 +509,24 @@ const emitClose = () => emit("close");
 </script>
 
 <style scoped>
-.nxp-admin-panel--customers .nxp-admin-panel__table {
+.nxp-ec-admin-panel--customers .nxp-ec-admin-panel__table {
     flex: 1;
 }
 
-.nxp-admin-summary {
+.nxp-ec-admin-summary {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 0.75rem;
 }
 
-.nxp-admin-summary dt {
+.nxp-ec-admin-summary dt {
     font-size: 0.75rem;
     text-transform: uppercase;
     color: #667085;
     margin: 0;
 }
 
-.nxp-admin-summary dd {
+.nxp-ec-admin-summary dd {
     margin: 0;
     font-weight: 500;
 }

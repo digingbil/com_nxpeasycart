@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Router\Route;
+use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
@@ -27,8 +28,11 @@ class LandingModel extends BaseDatabaseModel
 
         $this->setState('params', $params);
 
+        $categoryLimitParam = (int) $params->get('category_tile_limit', 6);
+        $categoryLimit = $categoryLimitParam <= 0 ? 0 : $this->clampPositive($categoryLimitParam, 1);
+
         $this->setState('landing.category_ids', $this->normaliseIds($params->get('category_root_ids', [])));
-        $this->setState('landing.category_limit', $this->clampPositive((int) $params->get('category_tile_limit', 6), 1));
+        $this->setState('landing.category_limit', $categoryLimit);
         $this->setState('landing.featured_limit', $this->clampPositive((int) $params->get('featured_limit', 6), 1));
         $this->setState('landing.arrivals_limit', $this->clampPositive((int) $params->get('new_arrivals_limit', 4), 1));
         $this->setState('landing.deals_limit', $this->clampPositive((int) $params->get('deals_limit', 4), 1));
@@ -110,7 +114,15 @@ class LandingModel extends BaseDatabaseModel
      */
     public function getCategoryTiles(): array
     {
-        $limit = (int) $this->getState('landing.category_limit', 6);
+        $limitState = $this->getState('landing.category_limit', 6);
+
+        if ($limitState === null) {
+            $limit = 6;
+        } elseif ((int) $limitState <= 0) {
+            $limit = null;
+        } else {
+            $limit = max(0, (int) $limitState);
+        }
         $ids   = (array) $this->getState('landing.category_ids', []);
 
         $db    = $this->getDatabase();
@@ -147,7 +159,11 @@ class LandingModel extends BaseDatabaseModel
                 ->order($db->quoteName('title') . ' ASC');
         }
 
-        $db->setQuery($query, 0, $limit);
+        if ($limit === null) {
+            $db->setQuery($query);
+        } else {
+            $db->setQuery($query, 0, $limit);
+        }
 
         $rows = $db->loadObjectList() ?: [];
 

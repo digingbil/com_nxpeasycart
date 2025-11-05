@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import App from "./app/App.vue";
 import "./admin-main.css";
 
-const mount = document.getElementById("nxp-admin-app");
+const mount = document.getElementById("nxp-ec-admin-app");
 
 if (!mount) {
     console.warn("[NXP Easy Cart] Admin mount point not found.");

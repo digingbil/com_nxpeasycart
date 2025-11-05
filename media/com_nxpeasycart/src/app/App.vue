@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-app__shell">
-        <header class="nxp-admin-app__header">
+    <section class="nxp-ec-admin-app__shell">
+        <header class="nxp-ec-admin-app__header">
             <div>
-                <h1 class="nxp-admin-app__title">
+                <h1 class="nxp-ec-admin-app__title">
                     {{
                         __(
                             appTitleKey,
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h1>
-                <p class="nxp-admin-app__lead">
+                <p class="nxp-ec-admin-app__lead">
                     {{
                         __(
                             appLeadKey,
@@ -26,7 +26,7 @@
             </div>
             <button
                 v-if="hasIncompleteOnboarding"
-                class="nxp-btn nxp-btn--ghost"
+                class="nxp-ec-btn nxp-ec-btn--ghost"
                 type="button"
                 @click="openOnboarding"
             >
@@ -41,7 +41,7 @@
             </button>
         </header>
 
-        <nav v-if="navItems.length" class="nxp-admin-nav">
+        <nav v-if="navItems.length" class="nxp-ec-admin-nav">
             <a
                 v-for="item in navItems"
                 :key="item.id"
@@ -155,9 +155,9 @@
             @page="onLogsPage"
         />
 
-        <div v-else class="nxp-admin-panel nxp-admin-panel--placeholder">
-            <div class="nxp-admin-panel__body">
-                <p class="nxp-admin-panel__lead">
+        <div v-else class="nxp-ec-admin-panel nxp-ec-admin-panel--placeholder">
+            <div class="nxp-ec-admin-panel__body">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             appLeadKey,

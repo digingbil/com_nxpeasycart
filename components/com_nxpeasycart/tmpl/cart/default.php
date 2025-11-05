@@ -21,35 +21,35 @@ $cartJson = htmlspecialchars(
 ?>
 
 <section
-    class="nxp-cart"
+    class="nxp-ec-cart"
     data-nxp-island="cart"
     data-nxp-cart="<?php echo $cartJson; ?>"
 >
     <noscript>
-        <header class="nxp-cart__header">
-            <h1 class="nxp-cart__title"><?php echo Text::_('COM_NXPEASYCART_CART_TITLE'); ?></h1>
-            <p class="nxp-cart__lead">
+        <header class="nxp-ec-cart__header">
+            <h1 class="nxp-ec-cart__title"><?php echo Text::_('COM_NXPEASYCART_CART_TITLE'); ?></h1>
+            <p class="nxp-ec-cart__lead">
                 <?php echo Text::_('COM_NXPEASYCART_CART_LEAD'); ?>
             </p>
         </header>
 
         <?php if (empty($items)) : ?>
-            <div class="nxp-cart__empty">
+            <div class="nxp-ec-cart__empty">
                 <p><?php echo Text::_('COM_NXPEASYCART_CART_EMPTY'); ?></p>
-                <a class="nxp-btn" href="<?php echo htmlspecialchars(\Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=category'), ENT_QUOTES, 'UTF-8'); ?>">
+                <a class="nxp-ec-btn" href="<?php echo htmlspecialchars(\Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=category'), ENT_QUOTES, 'UTF-8'); ?>">
                     <?php echo Text::_('COM_NXPEASYCART_CART_CONTINUE_BROWSING'); ?>
                 </a>
             </div>
         <?php else : ?>
-            <div class="nxp-cart__content">
-                <table class="nxp-cart__table">
+            <div class="nxp-ec-cart__content">
+                <table class="nxp-ec-cart__table">
                     <thead>
                         <tr>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRICE'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_QTY'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_TOTAL'); ?></th>
-                            <th scope="col" class="nxp-cart__actions"></th>
+                            <th scope="col" class="nxp-ec-cart__actions"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,7 +58,7 @@ $cartJson = htmlspecialchars(
                                 <td data-label="<?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'); ?>">
                                     <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
                                     <?php if (!empty($item['options'])) : ?>
-                                        <ul class="nxp-cart__options">
+                                        <ul class="nxp-ec-cart__options">
                                             <?php foreach ($item['options'] as $option) : ?>
                                                 <?php if (!isset($option['name'], $option['value'])) : ?>
                                                     <?php continue; ?>
@@ -82,10 +82,10 @@ $cartJson = htmlspecialchars(
                                     <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                     <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
                                 </td>
-                                <td class="nxp-cart__actions">
+                                <td class="nxp-ec-cart__actions">
                                     <button
                                         type="button"
-                                        class="nxp-link-button"
+                                        class="nxp-ec-link-button"
                                         data-nxp-remove="<?php echo (int) ($item['variant_id'] ?? $item['product_id']); ?>"
                                     >
                                         <?php echo Text::_('COM_NXPEASYCART_CART_REMOVE'); ?>
@@ -96,7 +96,7 @@ $cartJson = htmlspecialchars(
                     </tbody>
                 </table>
 
-                <aside class="nxp-cart__summary">
+                <aside class="nxp-ec-cart__summary">
                     <h2><?php echo Text::_('COM_NXPEASYCART_CART_SUMMARY'); ?></h2>
                     <dl>
                         <div>
@@ -114,14 +114,14 @@ $cartJson = htmlspecialchars(
                         </div>
                         <div>
                             <dt><?php echo Text::_('COM_NXPEASYCART_CART_TOTAL'); ?></dt>
-                            <dd class="nxp-cart__summary-total">
+                            <dd class="nxp-ec-cart__summary-total">
                                 <?php echo htmlspecialchars($summary['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                 <?php echo number_format(((int) ($summary['total_cents'] ?? 0)) / 100, 2); ?>
                             </dd>
                         </div>
                     </dl>
 
-                    <a class="nxp-btn nxp-btn--primary" href="<?php echo htmlspecialchars(\Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=checkout'), ENT_QUOTES, 'UTF-8'); ?>">
+                    <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars(\Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=checkout'), ENT_QUOTES, 'UTF-8'); ?>">
                         <?php echo Text::_('COM_NXPEASYCART_CART_TO_CHECKOUT'); ?>
                     </a>
                 </aside>

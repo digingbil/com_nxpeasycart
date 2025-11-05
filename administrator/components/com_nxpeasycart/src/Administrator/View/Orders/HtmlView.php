@@ -29,7 +29,7 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null): void
     {
-        $this->document->setTitle(Text::_('COM_NXPEASYCART_MENU_ORDERS'));
+        $this->getDocument()->setTitle(Text::_('COM_NXPEASYCART_MENU_ORDERS'));
         $this->orders = $this->fetchOrders();
 
         parent::display($tpl);

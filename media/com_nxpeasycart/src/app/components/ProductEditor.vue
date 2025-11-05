@@ -1,9 +1,9 @@
 <template>
-    <div v-if="open" class="nxp-modal" role="dialog" aria-modal="true">
-        <div class="nxp-modal__backdrop"></div>
-        <div class="nxp-modal__dialog">
-            <header class="nxp-modal__header">
-                <h2 class="nxp-modal__title">
+    <div v-if="open" class="nxp-ec-modal" role="dialog" aria-modal="true">
+        <div class="nxp-ec-modal__backdrop"></div>
+        <div class="nxp-ec-modal__dialog">
+            <header class="nxp-ec-modal__header">
+                <h2 class="nxp-ec-modal__title">
                     {{
                         mode === "edit"
                             ? __(
@@ -15,7 +15,7 @@
                 </h2>
                 <button
                     type="button"
-                    class="nxp-modal__close"
+                    class="nxp-ec-modal__close"
                     @click="cancel"
                     :aria-label="__('JCLOSE', 'Close')"
                 >
@@ -23,36 +23,36 @@
                 </button>
             </header>
 
-            <form class="nxp-form" @submit.prevent="submit">
+            <form class="nxp-ec-form" @submit.prevent="submit">
                 <div
                     v-if="errors.length"
-                    class="nxp-admin-alert nxp-admin-alert--error"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
                 >
                     <p v-for="(error, index) in errors" :key="index">
                         {{ error }}
                     </p>
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-title">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-title">
                         {{ __("COM_NXPEASYCART_FIELD_PRODUCT_TITLE", "Title") }}
                     </label>
                     <input
                         id="product-title"
-                        class="nxp-form-input"
+                        class="nxp-ec-form-input"
                         type="text"
                         v-model.trim="form.title"
                         required
                     />
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-slug">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-slug">
                         {{ __("COM_NXPEASYCART_FIELD_PRODUCT_SLUG", "Slug") }}
                     </label>
                     <input
                         id="product-slug"
-                        class="nxp-form-input"
+                        class="nxp-ec-form-input"
                         type="text"
                         v-model.trim="form.slug"
                         @input="onSlugInput"
@@ -65,8 +65,8 @@
                     />
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-short-desc">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-short-desc">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_SHORT_DESC",
@@ -76,14 +76,14 @@
                     </label>
                     <textarea
                         id="product-short-desc"
-                        class="nxp-form-textarea"
+                        class="nxp-ec-form-textarea"
                         rows="3"
                         v-model="form.short_desc"
                     ></textarea>
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-long-desc">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-long-desc">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_LONG_DESC",
@@ -93,14 +93,14 @@
                     </label>
                     <textarea
                         id="product-long-desc"
-                        class="nxp-form-textarea"
+                        class="nxp-ec-form-textarea"
                         rows="5"
                         v-model="form.long_desc"
                     ></textarea>
                 </div>
 
-                <div class="nxp-form-field nxp-form-field--inline">
-                    <label class="nxp-form-label" for="product-active">
+                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                    <label class="nxp-ec-form-label" for="product-active">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_ACTIVE",
@@ -111,13 +111,13 @@
                     <input
                         id="product-active"
                         type="checkbox"
-                        class="nxp-form-checkbox"
+                        class="nxp-ec-form-checkbox"
                         v-model="form.active"
                     />
                 </div>
 
-                <div class="nxp-form-field nxp-form-field--inline">
-                    <label class="nxp-form-label" for="product-featured">
+                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                    <label class="nxp-ec-form-label" for="product-featured">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_FEATURED",
@@ -128,10 +128,10 @@
                     <input
                         id="product-featured"
                         type="checkbox"
-                        class="nxp-form-checkbox"
+                        class="nxp-ec-form-checkbox"
                         v-model="form.featured"
                     />
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_FEATURED_DESC",
@@ -141,21 +141,21 @@
                     </p>
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-images">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-images">
                         {{
                             __("COM_NXPEASYCART_FIELD_PRODUCT_IMAGES", "Images")
                         }}
                     </label>
-                    <div id="product-images" class="nxp-image-list">
+                    <div id="product-images" class="nxp-ec-image-list">
                         <div
                             v-for="(image, index) in form.images"
                             :key="`product-image-${index}`"
-                            class="nxp-image-row"
+                            class="nxp-ec-image-row"
                         >
                             <input
                                 :id="`product-image-${index}`"
-                                class="nxp-form-input"
+                                class="nxp-ec-form-input"
                                 type="text"
                                 v-model.trim="form.images[index]"
                                 :placeholder="
@@ -167,10 +167,10 @@
                                     )
                                 "
                             />
-                            <div class="nxp-image-row__actions">
+                            <div class="nxp-ec-image-row__actions">
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     @click="selectImage(index)"
                                 >
                                     {{
@@ -184,7 +184,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     @click="moveImage(index, -1)"
                                     :disabled="index === 0"
                                 >
@@ -199,7 +199,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     @click="moveImage(index, 1)"
                                     :disabled="index === form.images.length - 1"
                                 >
@@ -214,7 +214,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                     @click="removeImage(index)"
                                     :aria-label="
                                         __(
@@ -230,7 +230,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="nxp-btn" @click="addImage">
+                    <button type="button" class="nxp-ec-btn" @click="addImage">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_ADD",
@@ -240,7 +240,7 @@
                             )
                         }}
                     </button>
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_IMAGES_HELP",
@@ -250,8 +250,8 @@
                     </p>
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="product-category-select">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-category-select">
                         {{
                             __(
                                 "COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL",
@@ -261,7 +261,7 @@
                     </label>
                     <select
                         id="product-category-select"
-                        class="nxp-form-select"
+                        class="nxp-ec-form-select"
                         multiple
                         v-model="selectedCategoryIds"
                     >
@@ -273,16 +273,16 @@
                             {{ option.title }}
                         </option>
                     </select>
-                    <div class="nxp-chip-input nxp-chip-input--selected">
+                    <div class="nxp-ec-chip-input nxp-ec-chip-input--selected">
                         <span
                             v-for="(category, index) in form.categories"
                             :key="`selected-category-${index}`"
-                            class="nxp-chip"
+                            class="nxp-ec-chip"
                         >
                             {{ category.title }}
                             <button
                                 type="button"
-                                class="nxp-chip__remove"
+                                class="nxp-ec-chip__remove"
                                 @click="removeCategory(index)"
                                 :aria-label="
                                     __(
@@ -295,11 +295,11 @@
                             </button>
                         </span>
                     </div>
-                    <div class="nxp-chip-input nxp-chip-input--new">
+                    <div class="nxp-ec-chip-input nxp-ec-chip-input--new">
                         <input
                             id="product-category-input"
                             type="text"
-                            class="nxp-chip-input__field"
+                            class="nxp-ec-chip-input__field"
                             v-model="newCategoryDraft"
                             @keydown.enter.prevent="addCategory"
                             :placeholder="
@@ -313,7 +313,7 @@
                         />
                         <button
                             type="button"
-                            class="nxp-btn"
+                            class="nxp-ec-btn"
                             @click="addCategory"
                         >
                             {{
@@ -326,7 +326,7 @@
                             }}
                         </button>
                     </div>
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_PRODUCT_CATEGORIES_HELP",
@@ -338,9 +338,9 @@
                     </p>
                 </div>
 
-                <section class="nxp-variant-section">
-                    <header class="nxp-variant-section__header">
-                        <h3 class="nxp-variant-section__title">
+                <section class="nxp-ec-variant-section">
+                    <header class="nxp-ec-variant-section__header">
+                        <h3 class="nxp-ec-variant-section__title">
                             {{
                                 __(
                                     "COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS",
@@ -350,7 +350,7 @@
                         </h3>
                         <button
                             type="button"
-                            class="nxp-btn"
+                            class="nxp-ec-btn"
                             @click="addVariant"
                         >
                             {{
@@ -362,7 +362,7 @@
                         </button>
                     </header>
 
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS_HELP",
@@ -374,10 +374,10 @@
                     <article
                         v-for="(variant, index) in form.variants"
                         :key="variantKey(variant, index)"
-                        class="nxp-variant-card"
+                        class="nxp-ec-variant-card"
                     >
-                        <header class="nxp-variant-card__header">
-                            <h4 class="nxp-variant-card__title">
+                        <header class="nxp-ec-variant-card__header">
+                            <h4 class="nxp-ec-variant-card__title">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_FIELD_PRODUCT_VARIANT_HEADING",
@@ -388,7 +388,7 @@
                             </h4>
                             <button
                                 type="button"
-                                class="nxp-btn nxp-btn--link"
+                                class="nxp-ec-btn nxp-ec-btn--link"
                                 @click="duplicateVariant(index)"
                             >
                                 {{
@@ -400,7 +400,7 @@
                             </button>
                             <button
                                 type="button"
-                                class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                 @click="removeVariant(index)"
                                 :disabled="form.variants.length <= 1"
                             >
@@ -413,10 +413,10 @@
                             </button>
                         </header>
 
-                        <div class="nxp-variant-card__grid">
-                            <div class="nxp-form-field">
+                        <div class="nxp-ec-variant-card__grid">
+                            <div class="nxp-ec-form-field">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-sku-${index}`"
                                 >
                                     {{
@@ -428,16 +428,16 @@
                                 </label>
                                 <input
                                     :id="`variant-sku-${index}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="text"
                                     v-model.trim="variant.sku"
                                     required
                                 />
                             </div>
 
-                            <div class="nxp-form-field">
+                            <div class="nxp-ec-form-field">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-price-${index}`"
                                 >
                                     {{
@@ -449,7 +449,7 @@
                                 </label>
                                 <input
                                     :id="`variant-price-${index}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="number"
                                     min="0"
                                     step="0.01"
@@ -459,9 +459,9 @@
                                 />
                             </div>
 
-                            <div class="nxp-form-field">
+                            <div class="nxp-ec-form-field">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-currency-${index}`"
                                 >
                                     {{
@@ -473,14 +473,14 @@
                                 </label>
                                 <input
                                     :id="`variant-currency-${index}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="text"
                                     maxlength="3"
                                     v-model.trim="variant.currency"
                                     readonly
                                     aria-readonly="true"
                                 />
-                                <p class="nxp-form-help">
+                                <p class="nxp-ec-form-help">
                                     {{
                                         __(
                                             "COM_NXPEASYCART_FIELD_VARIANT_CURRENCY_HELP",
@@ -491,9 +491,9 @@
                                 </p>
                             </div>
 
-                            <div class="nxp-form-field">
+                            <div class="nxp-ec-form-field">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-stock-${index}`"
                                 >
                                     {{
@@ -505,7 +505,7 @@
                                 </label>
                                 <input
                                     :id="`variant-stock-${index}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="number"
                                     min="0"
                                     step="1"
@@ -513,9 +513,9 @@
                                 />
                             </div>
 
-                            <div class="nxp-form-field">
+                            <div class="nxp-ec-form-field">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-weight-${index}`"
                                 >
                                     {{
@@ -527,7 +527,7 @@
                                 </label>
                                 <input
                                     :id="`variant-weight-${index}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="number"
                                     min="0"
                                     step="0.001"
@@ -535,9 +535,9 @@
                                 />
                             </div>
 
-                            <div class="nxp-form-field nxp-form-field--inline">
+                            <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                                 <label
-                                    class="nxp-form-label"
+                                    class="nxp-ec-form-label"
                                     :for="`variant-active-${index}`"
                                 >
                                     {{
@@ -549,16 +549,16 @@
                                 </label>
                                 <input
                                     :id="`variant-active-${index}`"
-                                    class="nxp-form-checkbox"
+                                    class="nxp-ec-form-checkbox"
                                     type="checkbox"
                                     v-model="variant.active"
                                 />
                             </div>
                         </div>
 
-                        <section class="nxp-variant-options">
-                            <header class="nxp-variant-options__header">
-                                <h5 class="nxp-variant-options__title">
+                        <section class="nxp-ec-variant-options">
+                            <header class="nxp-ec-variant-options__header">
+                                <h5 class="nxp-ec-variant-options__title">
                                     {{
                                         __(
                                             "COM_NXPEASYCART_FIELD_VARIANT_OPTIONS",
@@ -568,7 +568,7 @@
                                 </h5>
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     @click="addVariantOption(index)"
                                 >
                                     {{
@@ -580,7 +580,7 @@
                                 </button>
                             </header>
 
-                            <p class="nxp-form-help">
+                            <p class="nxp-ec-form-help">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_FIELD_VARIANT_OPTIONS_HELP",
@@ -592,11 +592,11 @@
                             <div
                                 v-for="(option, optionIndex) in variant.options"
                                 :key="`variant-${index}-option-${optionIndex}`"
-                                class="nxp-variant-option-row"
+                                class="nxp-ec-variant-option-row"
                             >
                                 <input
                                     :id="`variant-${index}-option-name-${optionIndex}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="text"
                                     v-model.trim="option.name"
                                     :placeholder="
@@ -608,7 +608,7 @@
                                 />
                                 <input
                                     :id="`variant-${index}-option-value-${optionIndex}`"
-                                    class="nxp-form-input"
+                                    class="nxp-ec-form-input"
                                     type="text"
                                     v-model.trim="option.value"
                                     :placeholder="
@@ -620,7 +620,7 @@
                                 />
                                 <button
                                     type="button"
-                                    class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                     @click="
                                         removeVariantOption(index, optionIndex)
                                     "
@@ -638,10 +638,10 @@
                     </article>
                 </section>
 
-                <footer class="nxp-modal__actions">
+                <footer class="nxp-ec-modal__actions">
                     <button
                         type="button"
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         @click="cancel"
                         :disabled="saving"
                     >
@@ -649,7 +649,7 @@
                     </button>
                     <button
                         type="submit"
-                        class="nxp-btn nxp-btn--primary"
+                        class="nxp-ec-btn nxp-ec-btn--primary"
                         :disabled="saving"
                     >
                         {{
@@ -1293,24 +1293,24 @@ watch(
 </script>
 
 <style scoped>
-.nxp-image-list {
+.nxp-ec-image-list {
     display: grid;
     gap: 0.75rem;
 }
 
-.nxp-image-row {
+.nxp-ec-image-row {
     display: grid;
     gap: 0.5rem;
 }
 
 @media (min-width: 640px) {
-    .nxp-image-row {
+    .nxp-ec-image-row {
         grid-template-columns: 1fr auto;
         align-items: center;
     }
 }
 
-.nxp-image-row__actions {
+.nxp-ec-image-row__actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;

@@ -11,11 +11,11 @@ $isPlaceholder = $this->isPlaceholder ?? empty($product);
 
 if ($isPlaceholder) : ?>
 
-    <div class="nxp-product-placeholder">
-        <h1 class="nxp-product-placeholder__title">
+    <div class="nxp-ec-product-placeholder">
+        <h1 class="nxp-ec-product-placeholder__title">
             <?php echo Text::_('COM_NXPEASYCART_PRODUCT_PLACEHOLDER'); ?>
         </h1>
-        <p class="nxp-product-placeholder__lead">
+        <p class="nxp-ec-product-placeholder__lead">
             <?php echo Text::_('COM_NXPEASYCART_PRODUCT_PLACEHOLDER_LEAD'); ?>
         </p>
     </div>
@@ -59,10 +59,10 @@ $priceLabel   = $priceMin === $priceMax
 $preparedLongDescription = $product['long_desc'] !== '' ? HTMLHelper::_('content.prepare', $product['long_desc'], '', 'com_nxpeasycart.product') : '';
 ?>
 
-<article class="nxp-product">
-    <div class="nxp-product__media">
+<article class="nxp-ec-product">
+    <div class="nxp-ec-product__media">
         <?php if ($primaryImage) : ?>
-            <figure class="nxp-product__figure">
+            <figure class="nxp-ec-product__figure">
                 <img
                     src="<?php echo htmlspecialchars($primaryImage, ENT_QUOTES, 'UTF-8'); ?>"
                     alt="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
@@ -72,13 +72,13 @@ $preparedLongDescription = $product['long_desc'] !== '' ? HTMLHelper::_('content
         <?php endif; ?>
     </div>
 
-    <div class="nxp-product__summary">
-        <h1 class="nxp-product__title">
+    <div class="nxp-ec-product__summary">
+        <h1 class="nxp-ec-product__title">
             <?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>
         </h1>
 
         <?php if (!empty($categories)) : ?>
-            <ul class="nxp-product__categories">
+            <ul class="nxp-ec-product__categories">
                 <?php foreach ($categories as $category) : ?>
                     <li>
                         <?php echo htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8'); ?>
@@ -87,34 +87,34 @@ $preparedLongDescription = $product['long_desc'] !== '' ? HTMLHelper::_('content
             </ul>
         <?php endif; ?>
 
-        <div class="nxp-product__price">
+        <div class="nxp-ec-product__price">
             <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
         </div>
 
         <?php if (!empty($product['short_desc'])) : ?>
-            <p class="nxp-product__intro">
+            <p class="nxp-ec-product__intro">
                 <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
         <?php endif; ?>
 
-        <button class="nxp-btn nxp-btn--primary nxp-product__buy" type="button">
+        <button class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy" type="button">
             <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
         </button>
     </div>
 
     <?php if ($preparedLongDescription !== '') : ?>
-        <section class="nxp-product__description">
+        <section class="nxp-ec-product__description">
             <?php echo $preparedLongDescription; ?>
         </section>
     <?php endif; ?>
 
     <?php if (!empty($variants)) : ?>
-        <section class="nxp-product__variants">
-            <h2 class="nxp-product__variants-title">
+        <section class="nxp-ec-product__variants">
+            <h2 class="nxp-ec-product__variants-title">
                 <?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANTS_HEADING'); ?>
             </h2>
 
-            <table class="nxp-product__variants-table">
+            <table class="nxp-ec-product__variants-table">
                 <thead>
                     <tr>
                         <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_SKU_LABEL'); ?></th>
@@ -131,7 +131,7 @@ $preparedLongDescription = $product['long_desc'] !== '' ? HTMLHelper::_('content
                             <td><?php echo (int) $variant['stock']; ?></td>
                             <td>
                                 <?php if (!empty($variant['options'])) : ?>
-                                    <ul class="nxp-product__variant-options">
+                                    <ul class="nxp-ec-product__variant-options">
                                         <?php foreach ($variant['options'] as $option) : ?>
                                             <?php if (!isset($option['name'], $option['value'])) : ?>
                                                 <?php continue; ?>
@@ -143,7 +143,7 @@ $preparedLongDescription = $product['long_desc'] !== '' ? HTMLHelper::_('content
                                         <?php endforeach; ?>
                                     </ul>
                                 <?php else : ?>
-                                    <span class="nxp-product__variant-none">—</span>
+                                    <span class="nxp-ec-product__variant-none">—</span>
                                 <?php endif; ?>
                             </td>
                         </tr>

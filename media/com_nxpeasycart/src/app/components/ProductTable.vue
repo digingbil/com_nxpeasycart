@@ -1,6 +1,6 @@
 <template>
-    <table class="nxp-admin-table" aria-describedby="nxp-products-caption">
-        <caption id="nxp-products-caption" class="visually-hidden">
+    <table class="nxp-ec-admin-table" aria-describedby="nxp-ec-products-caption">
+        <caption id="nxp-ec-products-caption" class="visually-hidden">
             {{
                 __(
                     "COM_NXPEASYCART_MENU_PRODUCTS",
@@ -41,14 +41,14 @@
                         __("COM_NXPEASYCART_PRODUCTS_TABLE_UPDATED", "Updated")
                     }}
                 </th>
-                <th scope="col" class="nxp-admin-table__actions">
+                <th scope="col" class="nxp-ec-admin-table__actions">
                     {{ __("JGLOBAL_ACTIONS", "Actions") }}
                 </th>
             </tr>
         </thead>
         <tbody>
             <tr v-if="!items.length">
-                <td colspan="8" class="nxp-admin-table__empty">
+                <td colspan="8" class="nxp-ec-admin-table__empty">
                     {{
                         __(
                             "COM_NXPEASYCART_PRODUCTS_EMPTY",
@@ -62,12 +62,12 @@
             <tr v-for="item in items" :key="item.id">
                 <td>{{ item.id }}</td>
                 <td>
-                    <div class="nxp-products-table__title">
+                    <div class="nxp-ec-products-table__title">
                         {{ item.title }}
                     </div>
-                    <div class="nxp-products-table__slug">{{ item.slug }}</div>
-                    <div v-if="item.featured" class="nxp-products-table__badge">
-                        <span class="nxp-status nxp-status--featured">
+                    <div class="nxp-ec-products-table__slug">{{ item.slug }}</div>
+                    <div v-if="item.featured" class="nxp-ec-products-table__badge">
+                        <span class="nxp-ec-status nxp-ec-status--featured">
                             {{
                                 __(
                                     "COM_NXPEASYCART_PRODUCTS_BADGE_FEATURED",
@@ -104,10 +104,10 @@
                 <td>
                     <span
                         :class="[
-                            'nxp-status',
+                            'nxp-ec-status',
                             item.active
-                                ? 'nxp-status--active'
-                                : 'nxp-status--inactive',
+                                ? 'nxp-ec-status--active'
+                                : 'nxp-ec-status--inactive',
                         ]"
                     >
                         {{
@@ -128,16 +128,16 @@
                     </span>
                 </td>
                 <td>{{ item.modified || item.created }}</td>
-                <td class="nxp-admin-table__actions">
+                <td class="nxp-ec-admin-table__actions">
                     <button
-                        class="nxp-btn nxp-btn--link"
+                        class="nxp-ec-btn nxp-ec-btn--link"
                         type="button"
                         @click="$emit('edit', item)"
                     >
                         {{ __("JGLOBAL_EDIT", "Edit") }}
                     </button>
                     <button
-                        class="nxp-btn nxp-btn--link nxp-btn--danger"
+                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                         type="button"
                         @click="$emit('delete', item)"
                     >

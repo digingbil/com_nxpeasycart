@@ -18,7 +18,7 @@
 -   `components/com_nxpeasycart`
     -   `src/`: storefront controllers/views in the `Joomla\Component\Nxpeasycart\Site\…` namespace; the default `DisplayController` now renders product detail pages populated from the database with SEO-aware metadata.
 
-The admin view exposes a `<div id="nxp-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
+The admin view exposes a `<div id="nxp-ec-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
 
 ## Database schema
 

@@ -37,7 +37,7 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         $app      = Factory::getApplication();
-        $document = $this->document;
+        $document = $this->getDocument();
 
         $wa = $document->getWebAssetManager();
         $wa->registerAndUseStyle(

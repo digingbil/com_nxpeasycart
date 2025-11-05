@@ -4,6 +4,8 @@ import { createApiClient } from "../../api.js";
 const normaliseSettings = (data = {}) => {
     const store = data.store ?? {};
     const payments = data.payments ?? {};
+    const visual = data.visual ?? {};
+    const visualDefaults = data.visual_defaults ?? {};
 
     const baseCurrency =
         typeof data.base_currency === "string" &&
@@ -21,6 +23,20 @@ const normaliseSettings = (data = {}) => {
             configured: Boolean(payments.configured),
         },
         base_currency: baseCurrency,
+        visual: {
+            primary_color: visual.primary_color ?? "",
+            text_color: visual.text_color ?? "",
+            surface_color: visual.surface_color ?? "",
+            border_color: visual.border_color ?? "",
+            muted_color: visual.muted_color ?? "",
+        },
+        visual_defaults: {
+            primary_color: visualDefaults.primary_color ?? "#4f6d7a",
+            text_color: visualDefaults.text_color ?? "#1f2933",
+            surface_color: visualDefaults.surface_color ?? "#ffffff",
+            border_color: visualDefaults.border_color ?? "#e4e7ec",
+            muted_color: visualDefaults.muted_color ?? "#6b7280",
+        },
     };
 };
 

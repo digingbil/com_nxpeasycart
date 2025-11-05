@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--categories">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--categories">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_CATEGORIES",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_CATEGORIES_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     :placeholder="
                         __(
                             'COM_NXPEASYCART_CATEGORIES_SEARCH_PLACEHOLDER',
@@ -47,7 +47,7 @@
                     "
                 />
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -62,7 +62,7 @@
                     }}
                 </button>
                 <button
-                    class="nxp-btn nxp-btn--primary"
+                    class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="startCreate"
                 >
@@ -78,11 +78,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_CATEGORIES_LOADING",
@@ -93,9 +93,9 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body">
-            <div class="nxp-admin-panel__table">
-                <table class="nxp-admin-table">
+        <div v-else class="nxp-ec-admin-panel__body">
+            <div class="nxp-ec-admin-panel__table">
+                <table class="nxp-ec-admin-table">
                     <thead>
                         <tr>
                             <th scope="col">
@@ -150,7 +150,7 @@
                             </th>
                             <th
                                 scope="col"
-                                class="nxp-admin-table__actions"
+                                class="nxp-ec-admin-table__actions"
                             ></th>
                         </tr>
                     </thead>
@@ -195,16 +195,16 @@
                             </td>
                             <td>{{ category.sort }}</td>
                             <td>{{ category.usage ?? 0 }}</td>
-                            <td class="nxp-admin-table__actions">
+                            <td class="nxp-ec-admin-table__actions">
                                 <button
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     type="button"
                                     @click="startEdit(category)"
                                 >
                                     {{ __("JEDIT", "Edit") }}
                                 </button>
                                 <button
-                                    class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                     type="button"
                                     :disabled="state.deleting"
                                     @click="confirmDelete(category)"
@@ -217,23 +217,23 @@
                 </table>
 
                 <div
-                    class="nxp-admin-pagination"
+                    class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
                 >
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
                     >
                         ‹
                     </button>
-                    <span class="nxp-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="
                             state.pagination.current >= state.pagination.pages
@@ -245,51 +245,48 @@
                 </div>
             </div>
 
-            <aside
+            <div
                 v-if="formOpen"
-                class="nxp-admin-panel__sidebar"
-                aria-live="polite"
+                class="nxp-ec-modal"
+                role="dialog"
+                aria-modal="true"
             >
-                <header class="nxp-admin-panel__sidebar-header">
-                    <h3>
-                        {{
-                            draft.id
-                                ? __("JEDIT", "Edit")
-                                : __(
-                                      "COM_NXPEASYCART_CATEGORIES_ADD",
-                                      "Add category",
-                                      [],
-                                      "categoriesAdd"
-                                  )
-                        }}
-                    </h3>
-                    <button
-                        class="nxp-link-button"
-                        type="button"
-                        @click="cancelEdit"
-                    >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_CATEGORIES_DETAILS_CLOSE",
-                                "Close",
-                                [],
-                                "categoriesDetailsClose"
-                            )
-                        }}
-                    </button>
-                </header>
+                <div class="nxp-ec-modal__backdrop" @click="cancelEdit"></div>
+                <div class="nxp-ec-modal__dialog">
+                    <header class="nxp-ec-modal__header">
+                        <h3 class="nxp-ec-modal__title">
+                            {{
+                                draft.id
+                                    ? __("JEDIT", "Edit")
+                                    : __(
+                                          "COM_NXPEASYCART_CATEGORIES_ADD",
+                                          "Add category",
+                                          [],
+                                          "categoriesAdd"
+                                      )
+                            }}
+                        </h3>
+                        <button
+                            class="nxp-ec-modal__close"
+                            type="button"
+                            @click="cancelEdit"
+                            :aria-label="__('JCLOSE', 'Close')"
+                        >
+                            &times;
+                        </button>
+                    </header>
 
-                <form
-                    class="nxp-form"
-                    @submit.prevent="submitForm"
-                    autocomplete="off"
-                >
+                    <form
+                        class="nxp-ec-form"
+                        @submit.prevent="submitForm"
+                        autocomplete="off"
+                    >
                     <div
                         v-if="
                             Array.isArray(state.validationErrors) &&
                             state.validationErrors.length
                         "
-                        class="nxp-admin-alert nxp-admin-alert--error"
+                        class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
                     >
                         <ul>
                             <li
@@ -303,8 +300,8 @@
                         </ul>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="category-title">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="category-title">
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_FORM_TITLE",
@@ -316,7 +313,7 @@
                         </label>
                         <input
                             id="category-title"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="draft.title"
                             required
@@ -324,8 +321,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="category-slug">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="category-slug">
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_FORM_SLUG",
@@ -337,7 +334,7 @@
                         </label>
                         <input
                             id="category-slug"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="draft.slug"
                             maxlength="190"
@@ -345,8 +342,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="category-parent">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="category-parent">
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_FORM_PARENT",
@@ -358,7 +355,7 @@
                         </label>
                         <select
                             id="category-parent"
-                            class="nxp-form-select"
+                            class="nxp-ec-form-select"
                             v-model.number="draft.parent_id"
                         >
                             <option value="">
@@ -381,8 +378,8 @@
                         </select>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="category-sort">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="category-sort">
                             {{
                                 __(
                                     "COM_NXPEASYCART_CATEGORIES_FORM_SORT",
@@ -394,7 +391,7 @@
                         </label>
                         <input
                             id="category-sort"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             v-model.number="draft.sort"
                             min="0"
@@ -402,9 +399,9 @@
                         />
                     </div>
 
-                    <footer class="nxp-form-actions">
+                    <footer class="nxp-ec-modal__actions">
                         <button
-                            class="nxp-btn nxp-btn--primary"
+                            class="nxp-ec-btn nxp-ec-btn--primary"
                             type="submit"
                             :disabled="state.saving"
                         >
@@ -418,7 +415,7 @@
                             }}
                         </button>
                         <button
-                            class="nxp-btn nxp-btn--ghost"
+                            class="nxp-ec-btn nxp-ec-btn--ghost"
                             type="button"
                             @click="cancelEdit"
                         >
@@ -432,8 +429,9 @@
                             }}
                         </button>
                     </footer>
-                </form>
-            </aside>
+                    </form>
+                </div>
+            </div>
         </div>
     </section>
 </template>

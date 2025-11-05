@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--settings">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--settings">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_SETTINGS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_SETTINGS_LEAD",
@@ -25,10 +25,10 @@
             </div>
         </header>
 
-        <nav class="nxp-settings-tabs">
+        <nav class="nxp-ec-settings-tabs">
             <button
                 type="button"
-                class="nxp-settings-tab"
+                class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'general' }"
                 @click="activeTab = 'general'"
             >
@@ -43,7 +43,7 @@
             </button>
             <button
                 type="button"
-                class="nxp-settings-tab"
+                class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'tax' }"
                 @click="activeTab = 'tax'"
             >
@@ -58,7 +58,7 @@
             </button>
             <button
                 type="button"
-                class="nxp-settings-tab"
+                class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'shipping' }"
                 @click="activeTab = 'shipping'"
             >
@@ -73,7 +73,7 @@
             </button>
             <button
                 type="button"
-                class="nxp-settings-tab"
+                class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'payments' }"
                 @click="activeTab = 'payments'"
             >
@@ -86,10 +86,25 @@
                     )
                 }}
             </button>
+            <button
+                type="button"
+                class="nxp-ec-settings-tab"
+                :class="{ 'is-active': activeTab === 'visual' }"
+                @click="activeTab = 'visual'"
+            >
+                {{
+                    __(
+                        "COM_NXPEASYCART_SETTINGS_TAB_VISUAL",
+                        "Visual",
+                        [],
+                        "settingsTabVisual"
+                    )
+                }}
+            </button>
         </nav>
 
-        <div v-if="activeTab === 'general'" class="nxp-settings-panel">
-            <header class="nxp-settings-panel__header">
+        <div v-if="activeTab === 'general'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
                 <h3>
                     {{
                         __(
@@ -101,7 +116,7 @@
                     }}
                 </h3>
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="refreshGeneral"
                     :disabled="settingsState.loading"
@@ -119,14 +134,14 @@
 
             <div
                 v-if="settingsState.error"
-                class="nxp-admin-alert nxp-admin-alert--error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
             >
                 {{ settingsState.error }}
             </div>
 
             <div
                 v-else-if="settingsState.loading"
-                class="nxp-admin-panel__loading"
+                class="nxp-ec-admin-panel__loading"
             >
                 {{
                     __(
@@ -140,11 +155,11 @@
 
             <form
                 v-else
-                class="nxp-settings-form"
+                class="nxp-ec-settings-form"
                 @submit.prevent="saveGeneral"
             >
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="settings-store-name">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="settings-store-name">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_NAME",
@@ -156,15 +171,15 @@
                     </label>
                     <input
                         id="settings-store-name"
-                        class="nxp-form-input"
+                        class="nxp-ec-form-input"
                         type="text"
                         v-model.trim="settingsDraft.storeName"
                         maxlength="190"
                     />
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="settings-store-email">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="settings-store-email">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_EMAIL",
@@ -176,14 +191,14 @@
                     </label>
                     <input
                         id="settings-store-email"
-                        class="nxp-form-input"
+                        class="nxp-ec-form-input"
                         type="email"
                         v-model.trim="settingsDraft.storeEmail"
                     />
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="settings-store-phone">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="settings-store-phone">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_PHONE",
@@ -195,15 +210,15 @@
                     </label>
                     <input
                         id="settings-store-phone"
-                        class="nxp-form-input"
+                        class="nxp-ec-form-input"
                         type="text"
                         v-model.trim="settingsDraft.storePhone"
                         maxlength="64"
                     />
                 </div>
 
-                <div class="nxp-form-field">
-                    <label class="nxp-form-label" for="settings-base-currency">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="settings-base-currency">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY",
@@ -215,7 +230,7 @@
                     </label>
                     <input
                         id="settings-base-currency"
-                        class="nxp-form-input nxp-form-input--uppercase"
+                        class="nxp-ec-form-input nxp-ec-form-input--uppercase"
                         type="text"
                         v-model.trim="settingsDraft.baseCurrency"
                         minlength="3"
@@ -223,7 +238,7 @@
                         pattern="[A-Za-z]{3}"
                         required
                     />
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY_HELP",
@@ -235,9 +250,9 @@
                     </p>
                 </div>
 
-                <div class="nxp-form-field nxp-form-field--inline">
+                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                     <label
-                        class="nxp-form-label"
+                        class="nxp-ec-form-label"
                         for="settings-payments-configured"
                     >
                         {{
@@ -251,11 +266,11 @@
                     </label>
                     <input
                         id="settings-payments-configured"
-                        class="nxp-form-checkbox"
+                        class="nxp-ec-form-checkbox"
                         type="checkbox"
                         v-model="settingsDraft.paymentsConfigured"
                     />
-                    <p class="nxp-form-help">
+                    <p class="nxp-ec-form-help">
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_HELP",
@@ -267,9 +282,9 @@
                     </p>
                 </div>
 
-                <div class="nxp-settings-actions">
+                <div class="nxp-ec-settings-actions">
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         @click="resetGeneral"
                         :disabled="settingsState.saving"
@@ -284,7 +299,7 @@
                         }}
                     </button>
                     <button
-                        class="nxp-btn nxp-btn--primary"
+                        class="nxp-ec-btn nxp-ec-btn--primary"
                         type="submit"
                         :disabled="settingsState.saving"
                     >
@@ -303,8 +318,8 @@
             </form>
         </div>
 
-        <div v-else-if="activeTab === 'tax'" class="nxp-settings-panel">
-            <header class="nxp-settings-panel__header">
+        <div v-else-if="activeTab === 'tax'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
                 <h3>
                     {{
                         __(
@@ -316,7 +331,7 @@
                     }}
                 </h3>
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="refreshTax"
                     :disabled="taxState.loading"
@@ -334,14 +349,14 @@
 
             <div
                 v-if="taxState.error"
-                class="nxp-admin-alert nxp-admin-alert--error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
             >
                 {{ taxState.error }}
             </div>
 
-            <div v-else class="nxp-settings-grid">
-                <div class="nxp-settings-table">
-                    <table class="nxp-admin-table">
+            <div v-else class="nxp-ec-settings-grid">
+                <div class="nxp-ec-settings-table">
+                    <table class="nxp-ec-admin-table">
                         <thead>
                             <tr>
                                 <th scope="col">
@@ -396,7 +411,7 @@
                                 </th>
                                 <th
                                     scope="col"
-                                    class="nxp-admin-table__actions"
+                                    class="nxp-ec-admin-table__actions"
                                 ></th>
                             </tr>
                         </thead>
@@ -431,16 +446,16 @@
                                     }}
                                 </td>
                                 <td>{{ rate.priority }}</td>
-                                <td class="nxp-admin-table__actions">
+                                <td class="nxp-ec-admin-table__actions">
                                     <button
-                                        class="nxp-btn nxp-btn--link"
+                                        class="nxp-ec-btn nxp-ec-btn--link"
                                         type="button"
                                         @click="editTax(rate)"
                                     >
                                         {{ __("JEDIT", "Edit") }}
                                     </button>
                                     <button
-                                        class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                         type="button"
                                         @click="deleteTax(rate)"
                                     >
@@ -457,7 +472,7 @@
                     </table>
                 </div>
 
-                <form class="nxp-settings-form" @submit.prevent="saveTax">
+                <form class="nxp-ec-settings-form" @submit.prevent="saveTax">
                     <h4>
                         {{
                             taxDraft.id
@@ -471,8 +486,8 @@
                         }}
                     </h4>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="tax-country">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="tax-country">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_TAX_COUNTRY",
@@ -484,7 +499,7 @@
                         </label>
                         <input
                             id="tax-country"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="taxDraft.country"
                             maxlength="2"
@@ -492,8 +507,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="tax-region">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="tax-region">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_TAX_REGION",
@@ -505,14 +520,14 @@
                         </label>
                         <input
                             id="tax-region"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="taxDraft.region"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="tax-rate">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="tax-rate">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_TAX_RATE",
@@ -524,7 +539,7 @@
                         </label>
                         <input
                             id="tax-rate"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="0.01"
@@ -533,8 +548,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field nxp-form-field--inline">
-                        <label class="nxp-form-label" for="tax-inclusive">
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="tax-inclusive">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_TAX_INCLUSIVE",
@@ -546,14 +561,14 @@
                         </label>
                         <input
                             id="tax-inclusive"
-                            class="nxp-form-checkbox"
+                            class="nxp-ec-form-checkbox"
                             type="checkbox"
                             v-model="taxDraft.inclusive"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="tax-priority">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="tax-priority">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_TAX_PRIORITY",
@@ -565,16 +580,16 @@
                         </label>
                         <input
                             id="tax-priority"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             step="1"
                             v-model.number="taxDraft.priority"
                         />
                     </div>
 
-                    <div class="nxp-settings-actions">
+                    <div class="nxp-ec-settings-actions">
                         <button
-                            class="nxp-btn"
+                            class="nxp-ec-btn"
                             type="button"
                             @click="resetTax"
                             :disabled="taxState.saving"
@@ -589,7 +604,7 @@
                             }}
                         </button>
                         <button
-                            class="nxp-btn nxp-btn--primary"
+                            class="nxp-ec-btn nxp-ec-btn--primary"
                             type="submit"
                             :disabled="taxState.saving"
                         >
@@ -609,8 +624,8 @@
             </div>
         </div>
 
-        <div v-else-if="activeTab === 'shipping'" class="nxp-settings-panel">
-            <header class="nxp-settings-panel__header">
+        <div v-else-if="activeTab === 'shipping'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
                 <h3>
                     {{
                         __(
@@ -622,7 +637,7 @@
                     }}
                 </h3>
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="refreshShipping"
                     :disabled="shippingState.loading"
@@ -640,14 +655,14 @@
 
             <div
                 v-if="shippingState.error"
-                class="nxp-admin-alert nxp-admin-alert--error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
             >
                 {{ shippingState.error }}
             </div>
 
-            <div v-else class="nxp-settings-grid">
-                <div class="nxp-settings-table">
-                    <table class="nxp-admin-table">
+            <div v-else class="nxp-ec-settings-grid">
+                <div class="nxp-ec-settings-table">
+                    <table class="nxp-ec-admin-table">
                         <thead>
                             <tr>
                                 <th scope="col">
@@ -712,7 +727,7 @@
                                 </th>
                                 <th
                                     scope="col"
-                                    class="nxp-admin-table__actions"
+                                    class="nxp-ec-admin-table__actions"
                                 ></th>
                             </tr>
                         </thead>
@@ -775,16 +790,16 @@
                                             : __("JNO", "No")
                                     }}
                                 </td>
-                                <td class="nxp-admin-table__actions">
+                                <td class="nxp-ec-admin-table__actions">
                                     <button
-                                        class="nxp-btn nxp-btn--link"
+                                        class="nxp-ec-btn nxp-ec-btn--link"
                                         type="button"
                                         @click="editShipping(rule)"
                                     >
                                         {{ __("JEDIT", "Edit") }}
                                     </button>
                                     <button
-                                        class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                         type="button"
                                         @click="deleteShipping(rule)"
                                     >
@@ -801,7 +816,7 @@
                     </table>
                 </div>
 
-                <form class="nxp-settings-form" @submit.prevent="saveShipping">
+                <form class="nxp-ec-settings-form" @submit.prevent="saveShipping">
                     <h4>
                         {{
                             shippingDraft.id
@@ -815,8 +830,8 @@
                         }}
                     </h4>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="shipping-name">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="shipping-name">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_NAME",
@@ -828,15 +843,15 @@
                         </label>
                         <input
                             id="shipping-name"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="shippingDraft.name"
                             required
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="shipping-type">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="shipping-type">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_TYPE",
@@ -848,7 +863,7 @@
                         </label>
                         <select
                             id="shipping-type"
-                            class="nxp-form-select"
+                            class="nxp-ec-form-select"
                             v-model="shippingDraft.type"
                         >
                             <option value="flat">
@@ -874,8 +889,8 @@
                         </select>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="shipping-price">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="shipping-price">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_PRICE",
@@ -887,7 +902,7 @@
                         </label>
                         <input
                             id="shipping-price"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="0.01"
@@ -897,10 +912,10 @@
                     </div>
 
                     <div
-                        class="nxp-form-field"
+                        class="nxp-ec-form-field"
                         v-if="shippingDraft.type === 'free_over'"
                     >
-                        <label class="nxp-form-label" for="shipping-threshold">
+                        <label class="nxp-ec-form-label" for="shipping-threshold">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_THRESHOLD",
@@ -912,7 +927,7 @@
                         </label>
                         <input
                             id="shipping-threshold"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="0.01"
@@ -921,8 +936,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="shipping-regions">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="shipping-regions">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_REGIONS",
@@ -934,7 +949,7 @@
                         </label>
                         <input
                             id="shipping-regions"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="shippingDraft.regions"
                             :placeholder="
@@ -948,8 +963,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field nxp-form-field--inline">
-                        <label class="nxp-form-label" for="shipping-active">
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="shipping-active">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_SHIPPING_ACTIVE",
@@ -961,15 +976,15 @@
                         </label>
                         <input
                             id="shipping-active"
-                            class="nxp-form-checkbox"
+                            class="nxp-ec-form-checkbox"
                             type="checkbox"
                             v-model="shippingDraft.active"
                         />
                     </div>
 
-                    <div class="nxp-settings-actions">
+                    <div class="nxp-ec-settings-actions">
                         <button
-                            class="nxp-btn"
+                            class="nxp-ec-btn"
                             type="button"
                             @click="resetShipping"
                             :disabled="shippingState.saving"
@@ -984,7 +999,7 @@
                             }}
                         </button>
                         <button
-                            class="nxp-btn nxp-btn--primary"
+                            class="nxp-ec-btn nxp-ec-btn--primary"
                             type="submit"
                             :disabled="shippingState.saving"
                         >
@@ -1004,8 +1019,8 @@
             </div>
         </div>
 
-        <div v-else-if="activeTab === 'payments'" class="nxp-settings-panel">
-            <header class="nxp-settings-panel__header">
+        <div v-else-if="activeTab === 'payments'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
                 <h3>
                     {{
                         __(
@@ -1016,9 +1031,9 @@
                         )
                     }}
                 </h3>
-                <div class="nxp-settings-actions">
+                <div class="nxp-ec-settings-actions">
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         @click="refreshPayments"
                         :disabled="paymentsState.loading"
@@ -1037,14 +1052,14 @@
 
             <div
                 v-if="paymentsState.error"
-                class="nxp-admin-alert nxp-admin-alert--error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
             >
                 {{ paymentsState.error }}
             </div>
 
             <div
                 v-else-if="paymentsState.loading"
-                class="nxp-admin-panel__loading"
+                class="nxp-ec-admin-panel__loading"
             >
                 {{
                     __(
@@ -1058,7 +1073,7 @@
 
             <form
                 v-else
-                class="nxp-settings-form nxp-settings-form--payments"
+                class="nxp-ec-settings-form nxp-ec-settings-form--payments"
                 @submit.prevent="savePayments"
             >
                 <fieldset>
@@ -1072,10 +1087,10 @@
                             )
                         }}
                     </legend>
-                    <div class="nxp-form-field">
+                    <div class="nxp-ec-form-field">
                         <label
-                            class="nxp-form-label"
-                            for="nxp-stripe-publishable"
+                            class="nxp-ec-form-label"
+                            for="nxp-ec-stripe-publishable"
                         >
                             {{
                                 __(
@@ -1087,15 +1102,15 @@
                             }}
                         </label>
                         <input
-                            id="nxp-stripe-publishable"
-                            class="nxp-form-input"
+                            id="nxp-ec-stripe-publishable"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.stripe.publishable_key"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="nxp-stripe-secret">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-stripe-secret">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_SECRET",
@@ -1106,16 +1121,16 @@
                             }}
                         </label>
                         <input
-                            id="nxp-stripe-secret"
-                            class="nxp-form-input"
+                            id="nxp-ec-stripe-secret"
+                            class="nxp-ec-form-input"
                             type="password"
                             v-model.trim="paymentsDraft.stripe.secret_key"
                             autocomplete="off"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="nxp-stripe-webhook">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-stripe-webhook">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_WEBHOOK",
@@ -1126,13 +1141,13 @@
                             }}
                         </label>
                         <input
-                            id="nxp-stripe-webhook"
-                            class="nxp-form-input"
+                            id="nxp-ec-stripe-webhook"
+                            class="nxp-ec-form-input"
                             type="password"
                             v-model.trim="paymentsDraft.stripe.webhook_secret"
                             autocomplete="off"
                         />
-                        <p class="nxp-form-help">
+                        <p class="nxp-ec-form-help">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_HELP",
@@ -1144,8 +1159,8 @@
                         </p>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="nxp-stripe-mode">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-stripe-mode">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE",
@@ -1156,8 +1171,8 @@
                             }}
                         </label>
                         <select
-                            id="nxp-stripe-mode"
-                            class="nxp-form-input"
+                            id="nxp-ec-stripe-mode"
+                            class="nxp-ec-form-input"
                             v-model="paymentsDraft.stripe.mode"
                         >
                             <option value="test">
@@ -1195,10 +1210,10 @@
                             )
                         }}
                     </legend>
-                    <div class="nxp-form-field">
+                    <div class="nxp-ec-form-field">
                         <label
-                            class="nxp-form-label"
-                            for="nxp-paypal-client-id"
+                            class="nxp-ec-form-label"
+                            for="nxp-ec-paypal-client-id"
                         >
                             {{
                                 __(
@@ -1210,17 +1225,17 @@
                             }}
                         </label>
                         <input
-                            id="nxp-paypal-client-id"
-                            class="nxp-form-input"
+                            id="nxp-ec-paypal-client-id"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.paypal.client_id"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
+                    <div class="nxp-ec-form-field">
                         <label
-                            class="nxp-form-label"
-                            for="nxp-paypal-client-secret"
+                            class="nxp-ec-form-label"
+                            for="nxp-ec-paypal-client-secret"
                         >
                             {{
                                 __(
@@ -1232,18 +1247,18 @@
                             }}
                         </label>
                         <input
-                            id="nxp-paypal-client-secret"
-                            class="nxp-form-input"
+                            id="nxp-ec-paypal-client-secret"
+                            class="nxp-ec-form-input"
                             type="password"
                             v-model.trim="paymentsDraft.paypal.client_secret"
                             autocomplete="off"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
+                    <div class="nxp-ec-form-field">
                         <label
-                            class="nxp-form-label"
-                            for="nxp-paypal-webhook-id"
+                            class="nxp-ec-form-label"
+                            for="nxp-ec-paypal-webhook-id"
                         >
                             {{
                                 __(
@@ -1255,12 +1270,12 @@
                             }}
                         </label>
                         <input
-                            id="nxp-paypal-webhook-id"
-                            class="nxp-form-input"
+                            id="nxp-ec-paypal-webhook-id"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.paypal.webhook_id"
                         />
-                        <p class="nxp-form-help">
+                        <p class="nxp-ec-form-help">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_HELP",
@@ -1272,8 +1287,8 @@
                         </p>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="nxp-paypal-mode">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-paypal-mode">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE",
@@ -1284,8 +1299,8 @@
                             }}
                         </label>
                         <select
-                            id="nxp-paypal-mode"
-                            class="nxp-form-input"
+                            id="nxp-ec-paypal-mode"
+                            class="nxp-ec-form-input"
                             v-model="paymentsDraft.paypal.mode"
                         >
                             <option value="sandbox">
@@ -1314,14 +1329,14 @@
 
                 <div
                     v-if="paymentsState.message"
-                    class="nxp-admin-alert nxp-admin-alert--success"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
                 >
                     {{ paymentsState.message }}
                 </div>
 
-                <div class="nxp-settings-actions">
+                <div class="nxp-ec-settings-actions">
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         @click="resetPayments"
                         :disabled="paymentsState.saving"
@@ -1336,7 +1351,7 @@
                         }}
                     </button>
                     <button
-                        class="nxp-btn nxp-btn--primary"
+                        class="nxp-ec-btn nxp-ec-btn--primary"
                         type="submit"
                         :disabled="paymentsState.saving"
                     >
@@ -1348,6 +1363,321 @@
                                       "Save payments",
                                       [],
                                       "settingsPaymentsSave"
+                                  )
+                        }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div v-else-if="activeTab === 'visual'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
+                <h3>
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_VISUAL_TITLE",
+                            "Storefront colors",
+                            [],
+                            "settingsVisualTitle"
+                        )
+                    }}
+                </h3>
+                <button
+                    class="nxp-ec-btn"
+                    type="button"
+                    @click="refreshVisual"
+                    :disabled="settingsState.loading"
+                >
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_VISUAL_REFRESH",
+                            "Refresh",
+                            [],
+                            "settingsVisualRefresh"
+                        )
+                    }}
+                </button>
+            </header>
+
+            <div
+                v-if="settingsState.error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
+            >
+                {{ settingsState.error }}
+            </div>
+
+            <div
+                v-else-if="settingsState.loading"
+                class="nxp-ec-admin-panel__loading"
+            >
+                {{
+                    __(
+                        "COM_NXPEASYCART_SETTINGS_VISUAL_LOADING",
+                        "Loading visual settings…",
+                        [],
+                        "settingsVisualLoading"
+                    )
+                }}
+            </div>
+
+            <form
+                v-else
+                class="nxp-ec-settings-form nxp-ec-settings-form--visual"
+                @submit.prevent="saveVisual"
+            >
+                <p class="nxp-ec-form-help">
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_VISUAL_HINT",
+                            "Override your template's colors. Empty fields will use your current template defaults shown in the color pickers.",
+                            [],
+                            "settingsVisualHint"
+                        )
+                    }}
+                </p>
+
+                <div class="nxp-ec-visual-grid">
+                    <div class="nxp-ec-visual-field">
+                        <label class="nxp-ec-form-label" for="visual-primary-color">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_VISUAL_PRIMARY",
+                                    "Primary color",
+                                    [],
+                                    "visualPrimary"
+                                )
+                            }}
+                        </label>
+                        <div class="nxp-ec-color-input-group">
+                            <input
+                                id="visual-primary-color"
+                                class="nxp-ec-color-picker"
+                                type="color"
+                                :value="visualDraft.primaryColor || templateDefaults.primary"
+                                @input="visualDraft.primaryColor = $event.target.value"
+                            />
+                            <input
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="visualDraft.primaryColor"
+                                :placeholder="templateDefaults.primary"
+                                maxlength="7"
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn nxp-ec-btn--link"
+                                @click="visualDraft.primaryColor = ''"
+                            >
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_VISUAL_RESET",
+                                        "Reset",
+                                        [],
+                                        "visualReset"
+                                    )
+                                }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="nxp-ec-visual-field">
+                        <label class="nxp-ec-form-label" for="visual-text-color">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_VISUAL_TEXT",
+                                    "Text color",
+                                    [],
+                                    "visualText"
+                                )
+                            }}
+                        </label>
+                        <div class="nxp-ec-color-input-group">
+                            <input
+                                id="visual-text-color"
+                                class="nxp-ec-color-picker"
+                                type="color"
+                                :value="visualDraft.textColor || templateDefaults.text"
+                                @input="visualDraft.textColor = $event.target.value"
+                            />
+                            <input
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="visualDraft.textColor"
+                                :placeholder="templateDefaults.text"
+                                maxlength="7"
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn nxp-ec-btn--link"
+                                @click="visualDraft.textColor = ''"
+                            >
+                                {{ __("COM_NXPEASYCART_VISUAL_RESET", "Reset", [], "visualReset") }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="nxp-ec-visual-field">
+                        <label class="nxp-ec-form-label" for="visual-surface-color">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_VISUAL_SURFACE",
+                                    "Background color",
+                                    [],
+                                    "visualSurface"
+                                )
+                            }}
+                        </label>
+                        <div class="nxp-ec-color-input-group">
+                            <input
+                                id="visual-surface-color"
+                                class="nxp-ec-color-picker"
+                                type="color"
+                                :value="visualDraft.surfaceColor || templateDefaults.surface"
+                                @input="visualDraft.surfaceColor = $event.target.value"
+                            />
+                            <input
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="visualDraft.surfaceColor"
+                                :placeholder="templateDefaults.surface"
+                                maxlength="7"
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn nxp-ec-btn--link"
+                                @click="visualDraft.surfaceColor = ''"
+                            >
+                                {{ __("COM_NXPEASYCART_VISUAL_RESET", "Reset", [], "visualReset") }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="nxp-ec-visual-field">
+                        <label class="nxp-ec-form-label" for="visual-border-color">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_VISUAL_BORDER",
+                                    "Border color",
+                                    [],
+                                    "visualBorder"
+                                )
+                            }}
+                        </label>
+                        <div class="nxp-ec-color-input-group">
+                            <input
+                                id="visual-border-color"
+                                class="nxp-ec-color-picker"
+                                type="color"
+                                :value="visualDraft.borderColor || templateDefaults.border"
+                                @input="visualDraft.borderColor = $event.target.value"
+                            />
+                            <input
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="visualDraft.borderColor"
+                                :placeholder="templateDefaults.border"
+                                maxlength="7"
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn nxp-ec-btn--link"
+                                @click="visualDraft.borderColor = ''"
+                            >
+                                {{ __("COM_NXPEASYCART_VISUAL_RESET", "Reset", [], "visualReset") }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="nxp-ec-visual-field">
+                        <label class="nxp-ec-form-label" for="visual-muted-color">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_VISUAL_MUTED",
+                                    "Muted text color",
+                                    [],
+                                    "visualMuted"
+                                )
+                            }}
+                        </label>
+                        <div class="nxp-ec-color-input-group">
+                            <input
+                                id="visual-muted-color"
+                                class="nxp-ec-color-picker"
+                                type="color"
+                                :value="visualDraft.mutedColor || templateDefaults.muted"
+                                @input="visualDraft.mutedColor = $event.target.value"
+                            />
+                            <input
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="visualDraft.mutedColor"
+                                :placeholder="templateDefaults.muted"
+                                maxlength="7"
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn nxp-ec-btn--link"
+                                @click="visualDraft.mutedColor = ''"
+                            >
+                                {{ __("COM_NXPEASYCART_VISUAL_RESET", "Reset", [], "visualReset") }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nxp-ec-visual-preview">
+                    <h4>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_VISUAL_PREVIEW",
+                                "Preview",
+                                [],
+                                "visualPreview"
+                            )
+                        }}
+                    </h4>
+                    <div class="nxp-ec-preview-box" :style="previewStyles">
+                        <button type="button" class="nxp-ec-preview-btn">
+                            {{ __("COM_NXPEASYCART_VISUAL_PREVIEW_BUTTON", "Sample Button", [], "visualPreviewButton") }}
+                        </button>
+                        <p class="nxp-ec-preview-text">
+                            {{ __("COM_NXPEASYCART_VISUAL_PREVIEW_TEXT", "Sample text in your chosen colors", [], "visualPreviewText") }}
+                        </p>
+                        <p class="nxp-ec-preview-muted">
+                            {{ __("COM_NXPEASYCART_VISUAL_PREVIEW_MUTED", "Muted text example", [], "visualPreviewMuted") }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="nxp-ec-settings-actions">
+                    <button
+                        class="nxp-ec-btn"
+                        type="button"
+                        @click="resetVisual"
+                        :disabled="settingsState.saving"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_VISUAL_CANCEL",
+                                "Cancel",
+                                [],
+                                "settingsVisualCancel"
+                            )
+                        }}
+                    </button>
+                    <button
+                        class="nxp-ec-btn nxp-ec-btn--primary"
+                        type="submit"
+                        :disabled="settingsState.saving"
+                    >
+                        {{
+                            settingsState.saving
+                                ? __("JPROCESSING_REQUEST", "Saving…")
+                                : __(
+                                      "COM_NXPEASYCART_SETTINGS_VISUAL_SAVE",
+                                      "Save colors",
+                                      [],
+                                      "settingsVisualSave"
                                   )
                         }}
                     </button>
@@ -1476,9 +1806,37 @@ const paymentsDraft = reactive({
     },
 });
 
+const visualDraft = reactive({
+    primaryColor: "",
+    textColor: "",
+    surfaceColor: "",
+    borderColor: "",
+    mutedColor: "",
+});
+
+const templateDefaults = computed(() => {
+    const defaults = settingsState.values?.visual_defaults ?? {};
+    return {
+        primary: defaults.primary_color || "#4f6d7a",
+        text: defaults.text_color || "#1f2933",
+        surface: defaults.surface_color || "#ffffff",
+        border: defaults.border_color || "#e4e7ec",
+        muted: defaults.muted_color || "#6b7280",
+    };
+});
+
+const previewStyles = computed(() => ({
+    "--nxp-ec-color-primary": visualDraft.primaryColor || templateDefaults.value.primary,
+    "--nxp-ec-color-text": visualDraft.textColor || templateDefaults.value.text,
+    "--nxp-ec-color-surface": visualDraft.surfaceColor || templateDefaults.value.surface,
+    "--nxp-ec-color-border": visualDraft.borderColor || templateDefaults.value.border,
+    "--nxp-ec-color-muted": visualDraft.mutedColor || templateDefaults.value.muted,
+}));
+
 const applySettings = (values = {}) => {
     const store = values?.store ?? {};
     const payments = values?.payments ?? {};
+    const visual = values?.visual ?? {};
 
     Object.assign(settingsDraft, {
         storeName: store.name ?? "",
@@ -1489,6 +1847,14 @@ const applySettings = (values = {}) => {
             typeof values?.base_currency === "string"
                 ? values.base_currency.trim().toUpperCase()
                 : (props.baseCurrency || "USD").toUpperCase(),
+    });
+
+    Object.assign(visualDraft, {
+        primaryColor: visual.primary_color ?? "",
+        textColor: visual.text_color ?? "",
+        surfaceColor: visual.surface_color ?? "",
+        borderColor: visual.border_color ?? "",
+        mutedColor: visual.muted_color ?? "",
     });
 };
 
@@ -1588,6 +1954,29 @@ const savePayments = () => {
 };
 const resetPayments = () => {
     applyPayments(paymentsState.config ?? {});
+};
+
+const refreshVisual = () => emit("refresh-settings");
+const saveVisual = () => {
+    emit("save-settings", {
+        visual: {
+            primary_color: visualDraft.primaryColor,
+            text_color: visualDraft.textColor,
+            surface_color: visualDraft.surfaceColor,
+            border_color: visualDraft.borderColor,
+            muted_color: visualDraft.mutedColor,
+        },
+    });
+};
+const resetVisual = () => {
+    const visual = settingsState.values?.visual ?? {};
+    Object.assign(visualDraft, {
+        primaryColor: visual.primary_color ?? "",
+        textColor: visual.text_color ?? "",
+        surfaceColor: visual.surface_color ?? "",
+        borderColor: visual.border_color ?? "",
+        mutedColor: visual.muted_color ?? "",
+    });
 };
 
 const refreshTax = () => emit("refresh-tax");
@@ -1751,14 +2140,14 @@ const shippingTypeLabel = (type) => {
 </script>
 
 <style scoped>
-.nxp-settings-tabs {
+.nxp-ec-settings-tabs {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1.5rem;
     padding: 1.5rem 1.5rem 0;
 }
 
-.nxp-settings-tab {
+.nxp-ec-settings-tab {
     padding: 0.5rem 1rem;
     border: 1px solid #d0d5dd;
     border-radius: 999px;
@@ -1766,41 +2155,41 @@ const shippingTypeLabel = (type) => {
     cursor: pointer;
 }
 
-.nxp-settings-tab.is-active {
+.nxp-ec-settings-tab.is-active {
     background: #4f46e5;
     color: #fff;
     border-color: #4f46e5;
 }
 
-.nxp-settings-panel {
+.nxp-ec-settings-panel {
     display: grid;
     gap: 1.5rem;
 }
 
-.nxp-settings-panel__header {
+.nxp-ec-settings-panel__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 1.5rem 0;
 }
 
-.nxp-settings-grid {
+.nxp-ec-settings-grid {
     display: grid;
     gap: 1.5rem;
     grid-template-columns: 2fr 1fr;
 }
 
 @media (max-width: 960px) {
-    .nxp-settings-grid {
+    .nxp-ec-settings-grid {
         grid-template-columns: 1fr;
     }
 }
 
-.nxp-settings-table {
+.nxp-ec-settings-table {
     overflow-x: auto;
 }
 
-.nxp-settings-form {
+.nxp-ec-settings-form {
     display: grid;
     gap: 1rem;
     padding: 1rem;
@@ -1809,21 +2198,99 @@ const shippingTypeLabel = (type) => {
     background: #fff;
 }
 
-.nxp-settings-actions {
+.nxp-ec-settings-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
 }
 
-.nxp-form-input--uppercase {
+.nxp-ec-form-input--uppercase {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-.nxp-form-static {
+.nxp-ec-form-static {
     padding: 0.5rem 0.75rem;
     border: 1px solid #e4e7ec;
     border-radius: 0.5rem;
     background: #f9fafb;
+}
+
+.nxp-ec-visual-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.nxp-ec-visual-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nxp-ec-color-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nxp-ec-color-picker {
+    width: 4rem;
+    height: 2.5rem;
+    border: 1px solid #d0d5dd;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.nxp-ec-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.nxp-ec-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 0.375rem;
+}
+
+.nxp-ec-visual-preview {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e4e7ec;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+}
+
+.nxp-ec-visual-preview h4 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.nxp-ec-preview-box {
+    padding: 2rem;
+    border-radius: 0.5rem;
+    background: var(--nxp-ec-color-surface);
+    border: 1px solid var(--nxp-ec-color-border);
+}
+
+.nxp-ec-preview-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: var(--nxp-ec-color-primary);
+    color: #ffffff;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.nxp-ec-preview-text {
+    margin: 1rem 0 0.5rem;
+    color: var(--nxp-ec-color-text);
+    font-size: 1rem;
+}
+
+.nxp-ec-preview-muted {
+    margin: 0;
+    color: var(--nxp-ec-color-muted);
+    font-size: 0.875rem;
 }
 </style>

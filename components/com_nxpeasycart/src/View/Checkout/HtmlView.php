@@ -22,7 +22,7 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         /** @var HtmlDocument $document */
-        $document = $this->document;
+        $document = $this->getDocument();
 
         $wa = $document->getWebAssetManager();
         $wa->registerAndUseStyle(

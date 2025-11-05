@@ -17,7 +17,7 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null): void
     {
-        $this->document->setTitle(Text::_('COM_NXPEASYCART_MENU_CATEGORIES'));
+        $this->getDocument()->setTitle(Text::_('COM_NXPEASYCART_MENU_CATEGORIES'));
 
         parent::display($tpl);
     }

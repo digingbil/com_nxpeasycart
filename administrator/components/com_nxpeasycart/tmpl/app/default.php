@@ -8,7 +8,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 
-$wa = $this->document->getWebAssetManager();
+$document = $this->getDocument();
+$wa        = $document->getWebAssetManager();
 $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
 $wa->useScript('com_nxpeasycart.admin');
 $wa->registerAndUseStyle(
@@ -18,7 +19,7 @@ $wa->registerAndUseStyle(
 );
 
 // Explicitly queue the bundle in case the registry file is not picked up (symlinked dev installs).
-$this->document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
+$document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
 
 $token                        = Session::getFormToken();
 $tokenQuery                   = $token . '=1';
@@ -420,8 +421,8 @@ $dataAttributes = [
 ?>
 
 <div
-    id="nxp-admin-app"
-    class="nxp-admin-app"
+    id="nxp-ec-admin-app"
+    class="nxp-ec-admin-app"
     <?php foreach ($dataAttributes as $key => $value) : ?>
         data-<?php echo $key; ?>="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>"
     <?php endforeach; ?>
@@ -437,7 +438,7 @@ $dataAttributes = [
         </header>
 
         <?php if (!empty($navItems)) : ?>
-            <nav class="nxp-admin-nav nxp-admin-nav--loading" aria-label="<?php echo Text::_('JGLOBAL_NAVIGATION'); ?>">
+            <nav class="nxp-ec-admin-nav nxp-ec-admin-nav--loading" aria-label="<?php echo Text::_('JGLOBAL_NAVIGATION'); ?>">
                 <?php foreach ($navItems as $item) : ?>
                     <?php
                         $link = htmlspecialchars($item['link'], ENT_QUOTES, 'UTF-8');
@@ -455,9 +456,9 @@ $dataAttributes = [
             </nav>
         <?php endif; ?>
 
-        <div class="nxp-admin-panel nxp-admin-panel--placeholder">
-            <div class="nxp-admin-panel__body">
-                <p class="nxp-admin-panel__lead">
+        <div class="nxp-ec-admin-panel nxp-ec-admin-panel--placeholder">
+            <div class="nxp-ec-admin-panel__body">
+                <p class="nxp-ec-admin-panel__lead">
                     <?php echo htmlspecialchars($appLead, ENT_QUOTES, 'UTF-8'); ?>
                 </p>
             </div>

@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--orders">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--orders">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_ORDERS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_ORDERS_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     :placeholder="
                         __(
                             'COM_NXPEASYCART_ORDERS_SEARCH_PLACEHOLDER',
@@ -47,7 +47,7 @@
                     "
                 />
                 <select
-                    class="nxp-admin-select"
+                    class="nxp-ec-admin-select"
                     v-model="state.filterState"
                     @change="emitFilter"
                     :aria-label="
@@ -80,7 +80,7 @@
                     </option>
                 </select>
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -97,11 +97,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_ORDERS_LOADING",
@@ -112,12 +112,12 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body nxp-admin-panel__body--orders">
-            <div class="nxp-admin-panel__table">
-                <div class="nxp-admin-panel__selection" v-if="hasSelection">
+        <div v-else class="nxp-ec-admin-panel__body nxp-ec-admin-panel__body--orders">
+            <div class="nxp-ec-admin-panel__table">
+                <div class="nxp-ec-admin-panel__selection" v-if="hasSelection">
                     <span>{{ selectionSummary }}</span>
                     <select
-                        class="nxp-admin-select"
+                        class="nxp-ec-admin-select"
                         v-model="bulkState"
                         :aria-label="
                             __(
@@ -147,7 +147,7 @@
                         </option>
                     </select>
                     <button
-                        class="nxp-btn nxp-btn--primary"
+                        class="nxp-ec-btn nxp-ec-btn--primary"
                         type="button"
                         :disabled="!bulkState || state.saving"
                         @click="emitBulkTransition"
@@ -162,7 +162,7 @@
                         }}
                     </button>
                     <button
-                        class="nxp-link-button"
+                        class="nxp-ec-link-button"
                         type="button"
                         @click="emitClearSelection"
                     >
@@ -177,10 +177,10 @@
                     </button>
                 </div>
 
-                <table class="nxp-admin-table">
+                <table class="nxp-ec-admin-table">
                     <thead>
                         <tr>
-                            <th scope="col" class="nxp-admin-table__select">
+                            <th scope="col" class="nxp-ec-admin-table__select">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_ORDERS_TABLE_SELECT",
@@ -240,7 +240,7 @@
                                     )
                                 }}
                             </th>
-                            <th scope="col" class="nxp-admin-table__actions">
+                            <th scope="col" class="nxp-ec-admin-table__actions">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_ORDERS_CHANGE_STATE",
@@ -274,10 +274,10 @@
                                     state.activeOrder.id === order.id,
                             }"
                         >
-                            <td class="nxp-admin-table__select">
+                            <td class="nxp-ec-admin-table__select">
                                 <input
                                     type="checkbox"
-                                    class="nxp-admin-checkbox"
+                                    class="nxp-ec-admin-checkbox"
                                     :checked="isSelected(order.id)"
                                     @change="emitToggleSelection(order.id)"
                                     :aria-label="
@@ -292,7 +292,7 @@
                             </td>
                             <th scope="row">
                                 <button
-                                    class="nxp-link-button"
+                                    class="nxp-ec-link-button"
                                     type="button"
                                     @click="emitView(order)"
                                 >
@@ -301,7 +301,7 @@
                             </th>
                             <td>
                                 <div>{{ order.email }}</div>
-                                <div class="nxp-admin-table__meta">
+                                <div class="nxp-ec-admin-table__meta">
                                     {{ itemsLabel(order.items?.length ?? 0) }}
                                 </div>
                             </td>
@@ -314,7 +314,7 @@
                                 }}
                             </td>
                             <td>
-                                <span class="nxp-badge">
+                                <span class="nxp-ec-badge">
                                     {{ stateLabel(order.state) }}
                                 </span>
                             </td>
@@ -323,9 +323,9 @@
                                     formatDate(order.modified || order.created)
                                 }}
                             </td>
-                            <td class="nxp-admin-table__actions">
+                            <td class="nxp-ec-admin-table__actions">
                                 <select
-                                    class="nxp-admin-select"
+                                    class="nxp-ec-admin-select"
                                     v-model="selections[order.id]"
                                     :aria-label="
                                         __(
@@ -348,7 +348,7 @@
                                     </option>
                                 </select>
                                 <button
-                                    class="nxp-btn"
+                                    class="nxp-ec-btn"
                                     type="button"
                                     :disabled="
                                         state.saving || !hasStateChanged(order)
@@ -370,23 +370,23 @@
                 </table>
 
                 <div
-                    class="nxp-admin-pagination"
+                    class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
                 >
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
                     >
                         ‹
                     </button>
-                    <span class="nxp-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="
                             state.pagination.current >= state.pagination.pages
@@ -400,10 +400,10 @@
 
             <aside
                 v-if="state.activeOrder"
-                class="nxp-admin-panel__sidebar"
+                class="nxp-ec-admin-panel__sidebar"
                 aria-live="polite"
             >
-                <header class="nxp-admin-panel__sidebar-header">
+                <header class="nxp-ec-admin-panel__sidebar-header">
                     <h3>
                         {{
                             __(
@@ -416,7 +416,7 @@
                         · {{ state.activeOrder.order_no }}
                     </h3>
                     <button
-                        class="nxp-link-button"
+                        class="nxp-ec-link-button"
                         type="button"
                         @click="emitClose"
                     >
@@ -433,12 +433,12 @@
 
                 <div
                     v-if="state.transitionError"
-                    class="nxp-admin-alert nxp-admin-alert--error"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
                 >
                     {{ state.transitionError }}
                 </div>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -449,15 +449,15 @@
                             )
                         }}
                     </h4>
-                    <ul class="nxp-admin-list">
+                    <ul class="nxp-ec-admin-list">
                         <li
                             v-for="item in state.activeOrder.items"
                             :key="item.id"
                         >
-                            <div class="nxp-admin-list__title">
+                            <div class="nxp-ec-admin-list__title">
                                 {{ item.title }} <small>({{ item.sku }})</small>
                             </div>
-                            <div class="nxp-admin-list__meta">
+                            <div class="nxp-ec-admin-list__meta">
                                 × {{ item.qty }} ·
                                 {{
                                     formatCurrency(
@@ -470,7 +470,7 @@
                     </ul>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -481,7 +481,7 @@
                             )
                         }}
                     </h4>
-                    <p class="nxp-admin-panel__total">
+                    <p class="nxp-ec-admin-panel__total">
                         {{
                             formatCurrency(
                                 state.activeOrder.total_cents,
@@ -491,7 +491,7 @@
                     </p>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -502,7 +502,7 @@
                             )
                         }}
                     </h4>
-                    <address class="nxp-admin-address">
+                    <address class="nxp-ec-admin-address">
                         <span
                             v-for="line in addressLines(
                                 state.activeOrder.billing
@@ -514,7 +514,7 @@
                     </address>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -526,7 +526,7 @@
                         }}
                     </h4>
                     <address
-                        class="nxp-admin-address"
+                        class="nxp-ec-admin-address"
                         v-if="state.activeOrder.shipping"
                     >
                         <span
@@ -538,7 +538,7 @@
                             {{ line.value }}
                         </span>
                     </address>
-                    <p v-else class="nxp-admin-panel__muted">
+                    <p v-else class="nxp-ec-admin-panel__muted">
                         {{
                             __(
                                 "COM_NXPEASYCART_ORDERS_NO_SHIPPING",
@@ -551,7 +551,7 @@
                 </section>
 
                 <section
-                    class="nxp-admin-panel__section"
+                    class="nxp-ec-admin-panel__section"
                     v-if="
                         state.activeOrder.transactions &&
                         state.activeOrder.transactions.length
@@ -567,13 +567,13 @@
                             )
                         }}
                     </h4>
-                    <ul class="nxp-admin-list">
+                    <ul class="nxp-ec-admin-list">
                         <li
                             v-for="transaction in state.activeOrder
                                 .transactions"
                             :key="transaction.id"
                         >
-                            <div class="nxp-admin-list__title">
+                            <div class="nxp-ec-admin-list__title">
                                 {{ transaction.gateway }} ·
                                 {{
                                     formatCurrency(
@@ -582,7 +582,7 @@
                                     )
                                 }}
                             </div>
-                            <div class="nxp-admin-list__meta">
+                            <div class="nxp-ec-admin-list__meta">
                                 {{ transactionStatusLabel(transaction) }} ·
                                 {{ formatDate(transaction.created) }}
                             </div>
@@ -590,7 +590,7 @@
                     </ul>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -601,9 +601,9 @@
                             )
                         }}
                     </h4>
-                    <form class="nxp-admin-form" @submit.prevent="emitAddNote">
+                    <form class="nxp-ec-admin-form" @submit.prevent="emitAddNote">
                         <textarea
-                            class="nxp-form-textarea"
+                            class="nxp-ec-form-textarea"
                             rows="3"
                             v-model="noteDraft"
                             :placeholder="
@@ -615,9 +615,9 @@
                                 )
                             "
                         ></textarea>
-                        <div class="nxp-admin-form__actions">
+                        <div class="nxp-ec-admin-form__actions">
                             <button
-                                class="nxp-btn"
+                                class="nxp-ec-btn"
                                 type="submit"
                                 :disabled="!noteReady || state.saving"
                             >
@@ -634,7 +634,7 @@
                     </form>
                 </section>
 
-                <section class="nxp-admin-panel__section">
+                <section class="nxp-ec-admin-panel__section">
                     <h4>
                         {{
                             __(
@@ -646,7 +646,7 @@
                         }}
                     </h4>
                     <ul
-                        class="nxp-admin-list"
+                        class="nxp-ec-admin-list"
                         v-if="
                             state.activeOrder.timeline &&
                             state.activeOrder.timeline.length
@@ -656,15 +656,15 @@
                             v-for="entry in state.activeOrder.timeline"
                             :key="entry.id"
                         >
-                            <div class="nxp-admin-list__title">
+                            <div class="nxp-ec-admin-list__title">
                                 {{ historyLabel(entry) }}
                             </div>
-                            <div class="nxp-admin-list__meta">
+                            <div class="nxp-ec-admin-list__meta">
                                 {{ formatDate(entry.created) }}
                             </div>
                         </li>
                     </ul>
-                    <p v-else class="nxp-admin-panel__muted">
+                    <p v-else class="nxp-ec-admin-panel__muted">
                         {{
                             __(
                                 "COM_NXPEASYCART_ORDERS_TIMELINE_EMPTY",
@@ -1005,37 +1005,37 @@ const transactionStatusLabel = (transaction) =>
 </script>
 
 <style scoped>
-.nxp-admin-panel__selection {
+.nxp-ec-admin-panel__selection {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     margin-bottom: 1rem;
 }
 
-.nxp-admin-table__select {
+.nxp-ec-admin-table__select {
     width: 3rem;
     text-align: center;
 }
 
-.nxp-admin-table__select .nxp-admin-checkbox {
+.nxp-ec-admin-table__select .nxp-ec-admin-checkbox {
     margin: 0 auto;
 }
 
-.nxp-admin-checkbox {
+.nxp-ec-admin-checkbox {
     width: 1rem;
     height: 1rem;
 }
 
-.nxp-admin-panel__section .nxp-admin-list {
+.nxp-ec-admin-panel__section .nxp-ec-admin-list {
     gap: 0.5rem;
 }
 
-.nxp-admin-form {
+.nxp-ec-admin-form {
     display: grid;
     gap: 0.75rem;
 }
 
-.nxp-admin-form__actions {
+.nxp-ec-admin-form__actions {
     display: flex;
     justify-content: flex-end;
 }

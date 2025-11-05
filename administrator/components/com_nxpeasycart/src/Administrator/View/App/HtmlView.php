@@ -25,7 +25,7 @@ class HtmlView extends BaseHtmlView
      */
     public function display($tpl = null): void
     {
-        $this->document->setTitle(Text::_('COM_NXPEASYCART'));
+        $this->getDocument()->setTitle(Text::_('COM_NXPEASYCART'));
 
         $container = Factory::getContainer();
 

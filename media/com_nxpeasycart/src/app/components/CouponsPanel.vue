@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--coupons">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--coupons">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_COUPONS",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_COUPONS_LEAD",
@@ -23,10 +23,10 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <input
                     type="search"
-                    class="nxp-admin-search"
+                    class="nxp-ec-admin-search"
                     :placeholder="
                         __(
                             'COM_NXPEASYCART_COUPONS_SEARCH_PLACEHOLDER',
@@ -47,7 +47,7 @@
                     "
                 />
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
@@ -62,7 +62,7 @@
                     }}
                 </button>
                 <button
-                    class="nxp-btn nxp-btn--primary"
+                    class="nxp-ec-btn nxp-ec-btn--primary"
                     type="button"
                     @click="startCreate"
                 >
@@ -78,11 +78,11 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-admin-panel__loading">
+        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_COUPONS_LOADING",
@@ -93,9 +93,9 @@
             }}
         </div>
 
-        <div v-else class="nxp-admin-panel__body">
-            <div class="nxp-admin-panel__table">
-                <table class="nxp-admin-table">
+        <div v-else class="nxp-ec-admin-panel__body">
+            <div class="nxp-ec-admin-panel__table">
+                <table class="nxp-ec-admin-table">
                     <thead>
                         <tr>
                             <th scope="col">
@@ -160,7 +160,7 @@
                             </th>
                             <th
                                 scope="col"
-                                class="nxp-admin-table__actions"
+                                class="nxp-ec-admin-table__actions"
                             ></th>
                         </tr>
                     </thead>
@@ -197,7 +197,7 @@
                             </td>
                             <td>
                                 <span
-                                    class="nxp-badge"
+                                    class="nxp-ec-badge"
                                     :class="{ 'is-active': coupon.active }"
                                 >
                                     {{
@@ -215,16 +215,16 @@
                                         : ""
                                 }}
                             </td>
-                            <td class="nxp-admin-table__actions">
+                            <td class="nxp-ec-admin-table__actions">
                                 <button
-                                    class="nxp-btn nxp-btn--link"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
                                     type="button"
                                     @click="startEdit(coupon)"
                                 >
                                     {{ __("JEDIT", "Edit") }}
                                 </button>
                                 <button
-                                    class="nxp-btn nxp-btn--link nxp-btn--danger"
+                                    class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                                     type="button"
                                     @click="confirmDelete(coupon)"
                                 >
@@ -236,23 +236,23 @@
                 </table>
 
                 <div
-                    class="nxp-admin-pagination"
+                    class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
                 >
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
                     >
                         ‹
                     </button>
-                    <span class="nxp-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
                     <button
-                        class="nxp-btn"
+                        class="nxp-ec-btn"
                         type="button"
                         :disabled="
                             state.pagination.current >= state.pagination.pages
@@ -266,10 +266,10 @@
 
             <aside
                 v-if="formOpen"
-                class="nxp-admin-panel__sidebar"
+                class="nxp-ec-admin-panel__sidebar"
                 aria-live="polite"
             >
-                <header class="nxp-admin-panel__sidebar-header">
+                <header class="nxp-ec-admin-panel__sidebar-header">
                     <h3>
                         {{
                             draft.id
@@ -283,7 +283,7 @@
                         }}
                     </h3>
                     <button
-                        class="nxp-link-button"
+                        class="nxp-ec-link-button"
                         type="button"
                         @click="cancelEdit"
                     >
@@ -299,12 +299,12 @@
                 </header>
 
                 <form
-                    class="nxp-form"
+                    class="nxp-ec-form"
                     @submit.prevent="emitSave"
                     autocomplete="off"
                 >
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-code">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-code">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_CODE",
@@ -316,7 +316,7 @@
                         </label>
                         <input
                             id="coupon-code"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="draft.code"
                             required
@@ -324,8 +324,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-type">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-type">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_TYPE",
@@ -337,7 +337,7 @@
                         </label>
                         <select
                             id="coupon-type"
-                            class="nxp-form-select"
+                            class="nxp-ec-form-select"
                             v-model="draft.type"
                         >
                             <option value="percent">
@@ -363,8 +363,8 @@
                         </select>
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-value">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-value">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_VALUE",
@@ -376,7 +376,7 @@
                         </label>
                         <input
                             id="coupon-value"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="0.01"
@@ -385,8 +385,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-min-total">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-min-total">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_MIN_TOTAL",
@@ -398,7 +398,7 @@
                         </label>
                         <input
                             id="coupon-min-total"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="0.01"
@@ -406,8 +406,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-start">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-start">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_START",
@@ -419,14 +419,14 @@
                         </label>
                         <input
                             id="coupon-start"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="date"
                             v-model="draft.start"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-end">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-end">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_END",
@@ -438,14 +438,14 @@
                         </label>
                         <input
                             id="coupon-end"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="date"
                             v-model="draft.end"
                         />
                     </div>
 
-                    <div class="nxp-form-field">
-                        <label class="nxp-form-label" for="coupon-max-uses">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="coupon-max-uses">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_MAX_USES",
@@ -457,7 +457,7 @@
                         </label>
                         <input
                             id="coupon-max-uses"
-                            class="nxp-form-input"
+                            class="nxp-ec-form-input"
                             type="number"
                             min="0"
                             step="1"
@@ -465,8 +465,8 @@
                         />
                     </div>
 
-                    <div class="nxp-form-field nxp-form-field--inline">
-                        <label class="nxp-form-label" for="coupon-active">
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="coupon-active">
                             {{
                                 __(
                                     "COM_NXPEASYCART_COUPONS_FORM_ACTIVE",
@@ -478,15 +478,15 @@
                         </label>
                         <input
                             id="coupon-active"
-                            class="nxp-form-checkbox"
+                            class="nxp-ec-form-checkbox"
                             type="checkbox"
                             v-model="draft.active"
                         />
                     </div>
 
-                    <footer class="nxp-modal__actions">
+                    <footer class="nxp-ec-modal__actions">
                         <button
-                            class="nxp-btn"
+                            class="nxp-ec-btn"
                             type="button"
                             @click="cancelEdit"
                             :disabled="state.saving"
@@ -501,7 +501,7 @@
                             }}
                         </button>
                         <button
-                            class="nxp-btn nxp-btn--primary"
+                            class="nxp-ec-btn nxp-ec-btn--primary"
                             type="submit"
                             :disabled="state.saving"
                         >
@@ -520,7 +520,7 @@
 
                     <button
                         v-if="draft.id"
-                        class="nxp-btn nxp-btn--link nxp-btn--danger"
+                        class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
                         type="button"
                         @click="confirmDelete(draft)"
                         :disabled="state.saving"
@@ -694,16 +694,16 @@ watch(
 </script>
 
 <style scoped>
-.nxp-admin-panel--coupons .nxp-admin-panel__table {
+.nxp-ec-admin-panel--coupons .nxp-ec-admin-panel__table {
     flex: 1;
 }
 
-.nxp-admin-panel__sidebar form {
+.nxp-ec-admin-panel__sidebar form {
     display: grid;
     gap: 1rem;
 }
 
-.nxp-admin-table__actions {
+.nxp-ec-admin-table__actions {
     white-space: nowrap;
 }
 </style>

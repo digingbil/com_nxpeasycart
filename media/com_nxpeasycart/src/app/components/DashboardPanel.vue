@@ -1,8 +1,8 @@
 <template>
-    <section class="nxp-admin-panel nxp-admin-panel--dashboard">
-        <header class="nxp-admin-panel__header">
+    <section class="nxp-ec-admin-panel nxp-ec-admin-panel--dashboard">
+        <header class="nxp-ec-admin-panel__header">
             <div>
-                <h2 class="nxp-admin-panel__title">
+                <h2 class="nxp-ec-admin-panel__title">
                     {{
                         __(
                             "COM_NXPEASYCART_MENU_DASHBOARD",
@@ -12,7 +12,7 @@
                         )
                     }}
                 </h2>
-                <p class="nxp-admin-panel__lead">
+                <p class="nxp-ec-admin-panel__lead">
                     {{
                         __(
                             "COM_NXPEASYCART_DASHBOARD_LEAD",
@@ -23,9 +23,9 @@
                     }}
                 </p>
             </div>
-            <div class="nxp-admin-panel__actions">
+            <div class="nxp-ec-admin-panel__actions">
                 <button
-                    class="nxp-btn"
+                    class="nxp-ec-btn"
                     type="button"
                     @click="$emit('refresh')"
                     :disabled="state.loading"
@@ -42,13 +42,13 @@
             </div>
         </header>
 
-        <div v-if="state.error" class="nxp-admin-alert nxp-admin-alert--error">
+        <div v-if="state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.error }}
         </div>
 
-        <div v-else class="nxp-dashboard">
-            <div class="nxp-dashboard__metrics">
-                <article class="nxp-dashboard__card">
+        <div v-else class="nxp-ec-dashboard">
+            <div class="nxp-ec-dashboard__metrics">
+                <article class="nxp-ec-dashboard__card">
                     <h3>
                         {{
                             __(
@@ -59,10 +59,10 @@
                             )
                         }}
                     </h3>
-                    <p class="nxp-dashboard__value">
+                    <p class="nxp-ec-dashboard__value">
                         {{ state.summary.products.active }}
                     </p>
-                    <p class="nxp-dashboard__hint">
+                    <p class="nxp-ec-dashboard__hint">
                         {{
                             __(
                                 "COM_NXPEASYCART_DASHBOARD_METRIC_PRODUCTS_TOTAL",
@@ -73,7 +73,7 @@
                         }}
                     </p>
                 </article>
-                <article class="nxp-dashboard__card">
+                <article class="nxp-ec-dashboard__card">
                     <h3>
                         {{
                             __(
@@ -84,10 +84,10 @@
                             )
                         }}
                     </h3>
-                    <p class="nxp-dashboard__value">
+                    <p class="nxp-ec-dashboard__value">
                         {{ formatCurrency(state.summary.orders.revenue_today) }}
                     </p>
-                    <p class="nxp-dashboard__hint">
+                    <p class="nxp-ec-dashboard__hint">
                         {{
                             __(
                                 "COM_NXPEASYCART_DASHBOARD_METRIC_ORDERS_COUNT",
@@ -98,7 +98,7 @@
                         }}
                     </p>
                 </article>
-                <article class="nxp-dashboard__card">
+                <article class="nxp-ec-dashboard__card">
                     <h3>
                         {{
                             __(
@@ -109,10 +109,10 @@
                             )
                         }}
                     </h3>
-                    <p class="nxp-dashboard__value">
+                    <p class="nxp-ec-dashboard__value">
                         {{ state.summary.customers.total }}
                     </p>
-                    <p class="nxp-dashboard__hint">
+                    <p class="nxp-ec-dashboard__hint">
                         {{
                             __(
                                 "COM_NXPEASYCART_DASHBOARD_METRIC_CUSTOMERS_HINT",
@@ -123,7 +123,7 @@
                         }}
                     </p>
                 </article>
-                <article class="nxp-dashboard__card">
+                <article class="nxp-ec-dashboard__card">
                     <h3>
                         {{
                             __(
@@ -134,10 +134,10 @@
                             )
                         }}
                     </h3>
-                    <p class="nxp-dashboard__value">
+                    <p class="nxp-ec-dashboard__value">
                         {{ formatCurrency(state.summary.orders.revenue_month) }}
                     </p>
-                    <p class="nxp-dashboard__hint">
+                    <p class="nxp-ec-dashboard__hint">
                         {{
                             __(
                                 "COM_NXPEASYCART_DASHBOARD_METRIC_CURRENCY",
@@ -151,10 +151,10 @@
             </div>
 
             <section
-                class="nxp-dashboard__checklist"
+                class="nxp-ec-dashboard__checklist"
                 aria-labelledby="dashboard-checklist-heading"
             >
-                <header class="nxp-dashboard__checklist-header">
+                <header class="nxp-ec-dashboard__checklist-header">
                     <h3 id="dashboard-checklist-heading">
                         {{
                             __(
@@ -165,19 +165,19 @@
                             )
                         }}
                     </h3>
-                    <span class="nxp-dashboard__checklist-progress">
+                    <span class="nxp-ec-dashboard__checklist-progress">
                         {{ completedChecklistItems }} /
                         {{ checklistItems.length }}
                     </span>
                 </header>
-                <ul class="nxp-dashboard__checklist-list">
+                <ul class="nxp-ec-dashboard__checklist-list">
                     <li
                         v-for="item in checklistItems"
                         :key="item.id"
                         :class="{ 'is-complete': item.completed }"
                     >
                         <span
-                            class="nxp-dashboard__checklist-icon"
+                            class="nxp-ec-dashboard__checklist-icon"
                             aria-hidden="true"
                         >
                             <span
@@ -186,13 +186,13 @@
                             ></span>
                             <span v-else class="fa-regular fa-circle"></span>
                         </span>
-                        <span class="nxp-dashboard__checklist-label">
+                        <span class="nxp-ec-dashboard__checklist-label">
                             {{ __(item.label, fallbackLabel(item.label)) }}
                         </span>
                         <a
                             v-if="item.link"
                             :href="item.link"
-                            class="nxp-link-button"
+                            class="nxp-ec-link-button"
                         >
                             {{
                                 __(
@@ -280,43 +280,43 @@ const fallbackLabel = (key) => {
 </script>
 
 <style scoped>
-.nxp-dashboard {
+.nxp-ec-dashboard {
     display: grid;
     gap: 2rem;
 }
 
-.nxp-dashboard__metrics {
+.nxp-ec-dashboard__metrics {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
-.nxp-dashboard__card {
-    background: var(--nxp-surface, #fff);
+.nxp-ec-dashboard__card {
+    background: var(--nxp-ec-surface, #fff);
     border-radius: 0.75rem;
     padding: 1.25rem;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
 }
 
-.nxp-dashboard__card h3 {
+.nxp-ec-dashboard__card h3 {
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
     color: #475467;
 }
 
-.nxp-dashboard__value {
+.nxp-ec-dashboard__value {
     font-size: 1.75rem;
     font-weight: 600;
     margin: 0;
 }
 
-.nxp-dashboard__hint {
+.nxp-ec-dashboard__hint {
     margin: 0;
     color: #667085;
     font-size: 0.85rem;
 }
 
-.nxp-dashboard__checklist-list {
+.nxp-ec-dashboard__checklist-list {
     list-style: none !important;
     padding: 0;
     margin: 0;
@@ -324,7 +324,7 @@ const fallbackLabel = (key) => {
     gap: 0.75rem;
 }
 
-.nxp-dashboard__checklist-header {
+.nxp-ec-dashboard__checklist-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -332,7 +332,7 @@ const fallbackLabel = (key) => {
     margin-bottom: 0.5rem;
 }
 
-.nxp-dashboard__checklist-list li {
+.nxp-ec-dashboard__checklist-list li {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -341,11 +341,11 @@ const fallbackLabel = (key) => {
     background: rgba(69, 98, 255, 0.04);
 }
 
-.nxp-dashboard__checklist-list li.is-complete {
+.nxp-ec-dashboard__checklist-list li.is-complete {
     background: rgba(16, 185, 129, 0.08);
 }
 
-.nxp-dashboard__checklist-icon {
+.nxp-ec-dashboard__checklist-icon {
     display: inline-flex;
     width: 1.5rem;
     height: 1.5rem;
@@ -355,18 +355,18 @@ const fallbackLabel = (key) => {
     color: #6366f1;
 }
 
-.nxp-dashboard__checklist-list li.is-complete .nxp-dashboard__checklist-icon {
+.nxp-ec-dashboard__checklist-list li.is-complete .nxp-ec-dashboard__checklist-icon {
     color: #10b981;
 }
 
-.nxp-dashboard__checklist-icon {
+.nxp-ec-dashboard__checklist-icon {
     font-size: 1.2rem;
     width: 1.5rem;
     text-align: center;
     color: #111827;
 }
 
-.nxp-dashboard__checklist-label {
+.nxp-ec-dashboard__checklist-label {
     flex: 1;
 }
 </style>

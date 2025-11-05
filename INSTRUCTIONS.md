@@ -238,7 +238,7 @@ Notes
 
 **Mount**
 
--   Admin layout view `administrator/components/com_nxpeasycart/tmpl/app/default.php` with a `<div id="nxp-admin-app">` \+ token meta.
+-   Admin layout view `administrator/components/com_nxpeasycart/tmpl/app/default.php` with a `<div id="nxp-ec-admin-app">` \+ token meta.
 
 **API (admin)**
 

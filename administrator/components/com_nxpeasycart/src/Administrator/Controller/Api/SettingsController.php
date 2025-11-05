@@ -12,6 +12,7 @@ use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 use RuntimeException;
 
 class SettingsController extends AbstractJsonController
@@ -59,6 +60,14 @@ class SettingsController extends AbstractJsonController
                 'configured' => (bool) $service->get('payments.configured', false),
             ],
             'base_currency' => ConfigHelper::getBaseCurrency(),
+            'visual' => [
+                'primary_color' => (string) $service->get('visual.primary_color', ''),
+                'text_color'    => (string) $service->get('visual.text_color', ''),
+                'surface_color' => (string) $service->get('visual.surface_color', ''),
+                'border_color'  => (string) $service->get('visual.border_color', ''),
+                'muted_color'   => (string) $service->get('visual.muted_color', ''),
+            ],
+            'visual_defaults' => $this->getTemplateDefaults(),
         ];
 
         return $this->respond(['settings' => $settings]);
@@ -73,6 +82,7 @@ class SettingsController extends AbstractJsonController
 
         $store             = isset($payload['store'])    && \is_array($payload['store']) ? $payload['store'] : [];
         $payments          = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
+        $visual            = isset($payload['visual'])   && \is_array($payload['visual']) ? $payload['visual'] : [];
         $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
         unset($store['base_currency']);
 
@@ -106,24 +116,48 @@ class SettingsController extends AbstractJsonController
 
         $service = $this->getService();
 
-        $service->set('store.name', $name);
-        $service->set('store.email', $email);
-        $service->set('store.phone', $phone);
-        $service->set('payments.configured', $paymentsConfigured);
+        // Only update store settings if provided in payload
+        if (!empty($store)) {
+            $service->set('store.name', $name);
+            $service->set('store.email', $email);
+            $service->set('store.phone', $phone);
+        }
+
+        // Only update payments settings if provided in payload
+        if (!empty($payments)) {
+            $service->set('payments.configured', $paymentsConfigured);
+        }
+
+        // Handle visual customization settings
+        foreach (['primary_color', 'text_color', 'surface_color', 'border_color', 'muted_color'] as $colorKey) {
+            if (isset($visual[$colorKey])) {
+                $colorValue = trim((string) $visual[$colorKey]);
+                $service->set('visual.' . $colorKey, $colorValue);
+            }
+        }
 
         $baseCurrency = ConfigHelper::getBaseCurrency();
 
+        // Always return current values from database (not just what was sent)
         return $this->respond([
             'settings' => [
                 'store' => [
-                    'name'  => $name,
-                    'email' => $email,
-                    'phone' => $phone,
+                    'name'  => (string) $service->get('store.name', ''),
+                    'email' => (string) $service->get('store.email', ''),
+                    'phone' => (string) $service->get('store.phone', ''),
                 ],
                 'payments' => [
-                    'configured' => $paymentsConfigured,
+                    'configured' => (bool) $service->get('payments.configured', false),
                 ],
                 'base_currency' => $baseCurrency,
+                'visual' => [
+                    'primary_color' => (string) $service->get('visual.primary_color', ''),
+                    'text_color'    => (string) $service->get('visual.text_color', ''),
+                    'surface_color' => (string) $service->get('visual.surface_color', ''),
+                    'border_color'  => (string) $service->get('visual.border_color', ''),
+                    'muted_color'   => (string) $service->get('visual.muted_color', ''),
+                ],
+                'visual_defaults' => $this->getTemplateDefaults(),
             ],
         ]);
     }
@@ -157,6 +191,64 @@ class SettingsController extends AbstractJsonController
         }
 
         return $container->get(SettingsService::class);
+    }
+
+    /**
+     * Get template color defaults without user overrides.
+     */
+    private function getTemplateDefaults(): array
+    {
+        try {
+            // Temporarily switch to site app to resolve template
+            $currentApp = Factory::getApplication();
+
+            // Get template defaults by calling resolve WITHOUT applying user overrides
+            // We need to replicate the logic but skip applyUserOverrides
+            $resolved = TemplateAdapter::resolveWithoutOverrides();
+
+            $cssVars = $resolved['css_vars'] ?? [];
+
+            return [
+                'primary_color' => $this->extractColor($cssVars['--nxp-ec-color-primary'] ?? '#4f6d7a'),
+                'text_color'    => $this->extractColor($cssVars['--nxp-ec-color-text'] ?? '#1f2933'),
+                'surface_color' => $this->extractColor($cssVars['--nxp-ec-color-surface'] ?? '#ffffff'),
+                'border_color'  => $this->extractColor($cssVars['--nxp-ec-color-border'] ?? '#e4e7ec'),
+                'muted_color'   => $this->extractColor($cssVars['--nxp-ec-color-muted'] ?? '#6b7280'),
+            ];
+        } catch (\Throwable $e) {
+            // Return hardcoded defaults on error
+            return [
+                'primary_color' => '#4f6d7a',
+                'text_color'    => '#1f2933',
+                'surface_color' => '#ffffff',
+                'border_color'  => '#e4e7ec',
+                'muted_color'   => '#6b7280',
+            ];
+        }
+    }
+
+    /**
+     * Extract a simple hex color from CSS value (handles var() fallbacks).
+     */
+    private function extractColor(string $value): string
+    {
+        // If it's already a hex color, return it
+        if (preg_match('/^#[0-9a-f]{6}$/i', $value)) {
+            return strtolower($value);
+        }
+
+        // If it's rgba, convert to hex (simplified - just use fallback)
+        if (str_starts_with($value, 'rgba(')) {
+            return '#e4e7ec'; // Default for borders
+        }
+
+        // If it's a CSS var, try to extract the fallback
+        if (preg_match('/var\([^,]+,\s*([#0-9a-f]+)\)/i', $value, $matches)) {
+            return strtolower($matches[1]);
+        }
+
+        // Default fallback
+        return '#4f6d7a';
     }
 
     private function debug(string $message): void

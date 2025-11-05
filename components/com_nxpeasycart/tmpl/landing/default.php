@@ -10,11 +10,11 @@ use Joomla\CMS\Router\Route;
 $payload = $this->getLandingPayload();
 
 $theme            = $this->theme ?? [];
-$containerClass   = trim('component-content nxp-landing__inner ' . ($theme['container_class'] ?? ''));
-$primaryBtnClass  = trim('nxp-btn nxp-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
-$secondaryBtnClass = trim('nxp-btn nxp-btn--ghost ' . ($theme['button_secondary_extra'] ?? ''));
-$sectionLinkClass = trim('nxp-landing__section-link ' . ($theme['section_link_class'] ?? ''));
-$categoryClass    = trim('nxp-landing__category ' . ($theme['category_tile_class'] ?? ''));
+$containerClass   = trim('component-content nxp-ec-landing__inner ' . ($theme['container_class'] ?? ''));
+$primaryBtnClass  = trim('nxp-ec-btn nxp-ec-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
+$secondaryBtnClass = trim('nxp-ec-btn nxp-ec-btn--ghost ' . ($theme['button_secondary_extra'] ?? ''));
+$sectionLinkClass = trim('nxp-ec-landing__section-link ' . ($theme['section_link_class'] ?? ''));
+$categoryClass    = trim('nxp-ec-landing__category ' . ($theme['category_tile_class'] ?? ''));
 
 $cssVars = '';
 foreach (($theme['css_vars'] ?? []) as $var => $value) {
@@ -39,39 +39,39 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
 ?>
 
 <section
-    class="nxp-landing"
+    class="nxp-ec-landing"
     data-nxp-island="landing"
     data-nxp-landing="<?php echo $payloadJson; ?>"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <div class="<?php echo htmlspecialchars($containerClass, ENT_QUOTES, 'UTF-8'); ?>">
-            <header class="nxp-landing__hero">
-                <div class="nxp-landing__hero-copy">
+            <header class="nxp-ec-landing__hero">
+                <div class="nxp-ec-landing__hero-copy">
                     <?php if (!empty($hero['eyebrow'])) : ?>
-                        <p class="nxp-landing__eyebrow">
+                        <p class="nxp-ec-landing__eyebrow">
                             <?php echo htmlspecialchars($hero['eyebrow'], ENT_QUOTES, 'UTF-8'); ?>
                         </p>
                     <?php endif; ?>
-                    <h1 class="nxp-landing__title">
+                    <h1 class="nxp-ec-landing__title">
                         <?php echo htmlspecialchars($hero['title'] ?? Text::_('COM_NXPEASYCART_LANDING_PAGE_TITLE'), ENT_QUOTES, 'UTF-8'); ?>
                     </h1>
                     <?php if (!empty($hero['subtitle'])) : ?>
-                        <p class="nxp-landing__subtitle">
+                        <p class="nxp-ec-landing__subtitle">
                             <?php echo htmlspecialchars($hero['subtitle'], ENT_QUOTES, 'UTF-8'); ?>
                         </p>
                     <?php endif; ?>
-                    <div class="nxp-landing__actions">
+                    <div class="nxp-ec-landing__actions">
                         <a class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($ctaLink, ENT_QUOTES, 'UTF-8'); ?>">
                             <?php echo htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                     </div>
                 </div>
-                <form class="nxp-landing__search" action="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>" method="get">
-                    <label class="sr-only" for="nxp-landing-search">
+                <form class="nxp-ec-landing__search" action="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>" method="get">
+                    <label class="sr-only" for="nxp-ec-landing-search">
                         <?php echo Text::_('COM_NXPEASYCART_LANDING_SEARCH_LABEL'); ?>
                     </label>
                     <input
-                        id="nxp-landing-search"
+                        id="nxp-ec-landing-search"
                         name="q"
                         type="search"
                         placeholder="<?php echo htmlspecialchars($searchPlaceholder, ENT_QUOTES, 'UTF-8'); ?>"
@@ -83,10 +83,10 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
             </header>
 
             <?php if (!empty($categories)) : ?>
-                <section class="nxp-landing__categories" aria-label="<?php echo Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'); ?>">
+                <section class="nxp-ec-landing__categories" aria-label="<?php echo Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'); ?>">
                     <?php foreach ($categories as $category) : ?>
                         <a class="<?php echo htmlspecialchars($categoryClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($category['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <span class="nxp-landing__category-title">
+                            <span class="nxp-ec-landing__category-title">
                                 <?php echo htmlspecialchars($category['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </a>
@@ -99,20 +99,20 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                 <?php if (empty($items)) : ?>
                     <?php continue; ?>
                 <?php endif; ?>
-                <section class="nxp-landing__section">
-                    <header class="nxp-landing__section-header">
-                        <h2 class="nxp-landing__section-title">
+                <section class="nxp-ec-landing__section">
+                    <header class="nxp-ec-landing__section-header">
+                        <h2 class="nxp-ec-landing__section-title">
                             <?php echo htmlspecialchars($section['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                         </h2>
                         <a class="<?php echo htmlspecialchars($sectionLinkClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>">
                             <?php echo Text::_('COM_NXPEASYCART_LANDING_VIEW_ALL'); ?>
                         </a>
                     </header>
-                    <div class="nxp-landing__grid">
+                    <div class="nxp-ec-landing__grid">
                         <?php foreach ($items as $item) : ?>
-                            <article class="nxp-landing__card">
+                            <article class="nxp-ec-landing__card">
                                 <?php if (!empty($item['images'][0])) : ?>
-                                    <figure class="nxp-landing__card-media">
+                                    <figure class="nxp-ec-landing__card-media">
                                         <img
                                             src="<?php echo htmlspecialchars($item['images'][0], ENT_QUOTES, 'UTF-8'); ?>"
                                             alt="<?php echo htmlspecialchars($item['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
@@ -120,19 +120,19 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                                         />
                                     </figure>
                                 <?php endif; ?>
-                                <div class="nxp-landing__card-body">
-                                    <h3 class="nxp-landing__card-title">
+                                <div class="nxp-ec-landing__card-body">
+                                    <h3 class="nxp-ec-landing__card-title">
                                         <a href="<?php echo htmlspecialchars($item['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php echo htmlspecialchars($item['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                         </a>
                                     </h3>
                                     <?php if (!empty($item['short_desc'])) : ?>
-                                        <p class="nxp-landing__card-intro">
+                                        <p class="nxp-ec-landing__card-intro">
                                             <?php echo htmlspecialchars($item['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
                                         </p>
                                     <?php endif; ?>
                                     <?php if (!empty($item['price_label'])) : ?>
-                                        <p class="nxp-landing__card-price">
+                                        <p class="nxp-ec-landing__card-price">
                                             <?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?>
                                         </p>
                                     <?php endif; ?>
@@ -147,8 +147,8 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
             <?php endforeach; ?>
 
             <?php if (!empty($trustBadge)) : ?>
-                <aside class="nxp-landing__trust">
-                    <p class="nxp-landing__trust-text">
+                <aside class="nxp-ec-landing__trust">
+                    <p class="nxp-ec-landing__trust-text">
                         <?php echo htmlspecialchars($trustBadge, ENT_QUOTES, 'UTF-8'); ?>
                     </p>
                 </aside>

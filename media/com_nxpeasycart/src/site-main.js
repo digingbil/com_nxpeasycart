@@ -60,29 +60,29 @@ const mountLandingIsland = (el) => {
 
     const app = createApp({
         template: `
-      <div class="nxp-landing__inner" v-cloak>
-        <header class="nxp-landing__hero">
-          <div class="nxp-landing__hero-copy">
-            <p v-if="hero.eyebrow" class="nxp-landing__eyebrow">{{ hero.eyebrow }}</p>
-            <h1 class="nxp-landing__title">{{ hero.title }}</h1>
-            <p v-if="hero.subtitle" class="nxp-landing__subtitle">{{ hero.subtitle }}</p>
-            <div class="nxp-landing__actions">
-              <a class="nxp-btn nxp-btn--primary" :href="cta.link">
+      <div class="nxp-ec-landing__inner" v-cloak>
+        <header class="nxp-ec-landing__hero">
+          <div class="nxp-ec-landing__hero-copy">
+            <p v-if="hero.eyebrow" class="nxp-ec-landing__eyebrow">{{ hero.eyebrow }}</p>
+            <h1 class="nxp-ec-landing__title">{{ hero.title }}</h1>
+            <p v-if="hero.subtitle" class="nxp-ec-landing__subtitle">{{ hero.subtitle }}</p>
+            <div class="nxp-ec-landing__actions">
+              <a class="nxp-ec-btn nxp-ec-btn--primary" :href="cta.link">
                 {{ cta.label }}
               </a>
             </div>
           </div>
-          <form class="nxp-landing__search" @submit.prevent="submitSearch">
-            <label class="sr-only" for="nxp-landing-search-input">
+          <form class="nxp-ec-landing__search" @submit.prevent="submitSearch">
+            <label class="sr-only" for="nxp-ec-landing-search-input">
               {{ labels.search_label }}
             </label>
             <input
-              id="nxp-landing-search-input"
+              id="nxp-ec-landing-search-input"
               type="search"
               v-model="term"
               :placeholder="searchPlaceholder"
             />
-            <button type="submit" class="nxp-btn nxp-btn--ghost">
+            <button type="submit" class="nxp-ec-btn nxp-ec-btn--ghost">
               {{ labels.search_button }}
             </button>
           </form>
@@ -90,50 +90,50 @@ const mountLandingIsland = (el) => {
 
         <section
           v-if="categoryTiles.length"
-          class="nxp-landing__categories"
+          class="nxp-ec-landing__categories"
           :aria-label="labels.categories_aria"
         >
           <a
             v-for="category in categoryTiles"
             :key="category.id || category.slug || category.title"
-            class="nxp-landing__category"
+            class="nxp-ec-landing__category"
             :href="category.link"
           >
-            <span class="nxp-landing__category-title">{{ category.title }}</span>
+            <span class="nxp-ec-landing__category-title">{{ category.title }}</span>
           </a>
         </section>
 
         <section
           v-for="section in visibleSections"
           :key="section.key"
-          class="nxp-landing__section"
+          class="nxp-ec-landing__section"
         >
-          <header class="nxp-landing__section-header">
-            <h2 class="nxp-landing__section-title">{{ section.title }}</h2>
-            <a class="nxp-landing__section-link" :href="searchAction">
+          <header class="nxp-ec-landing__section-header">
+            <h2 class="nxp-ec-landing__section-title">{{ section.title }}</h2>
+            <a class="nxp-ec-landing__section-link" :href="searchAction">
               {{ labels.view_all }}
             </a>
           </header>
-          <div class="nxp-landing__grid">
+          <div class="nxp-ec-landing__grid">
             <article
               v-for="item in section.items"
               :key="item.id || item.slug || item.title"
-              class="nxp-landing__card"
+              class="nxp-ec-landing__card"
             >
-              <figure v-if="item.images && item.images.length" class="nxp-landing__card-media">
+              <figure v-if="item.images && item.images.length" class="nxp-ec-landing__card-media">
                 <img :src="item.images[0]" :alt="item.title" loading="lazy" />
               </figure>
-              <div class="nxp-landing__card-body">
-                <h3 class="nxp-landing__card-title">
+              <div class="nxp-ec-landing__card-body">
+                <h3 class="nxp-ec-landing__card-title">
                   <a :href="item.link">{{ item.title }}</a>
                 </h3>
-                <p v-if="item.short_desc" class="nxp-landing__card-intro">
+                <p v-if="item.short_desc" class="nxp-ec-landing__card-intro">
                   {{ item.short_desc }}
                 </p>
-                <p v-if="item.price_label" class="nxp-landing__card-price">
+                <p v-if="item.price_label" class="nxp-ec-landing__card-price">
                   {{ item.price_label }}
                 </p>
-                <a class="nxp-btn nxp-btn--ghost" :href="item.link">
+                <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="item.link">
                   {{ labels.view_product }}
                 </a>
               </div>
@@ -141,8 +141,8 @@ const mountLandingIsland = (el) => {
           </div>
         </section>
 
-        <aside v-if="trust.text" class="nxp-landing__trust">
-          <p class="nxp-landing__trust-text">{{ trust.text }}</p>
+        <aside v-if="trust.text" class="nxp-ec-landing__trust">
+          <p class="nxp-ec-landing__trust-text">{{ trust.text }}</p>
         </aside>
       </div>
     `,
@@ -233,40 +233,40 @@ const mountCategoryIsland = (el) => {
 
     const app = createApp({
         template: `
-      <div class="nxp-category" v-cloak>
-        <header class="nxp-category__header">
-          <h1 class="nxp-category__title">{{ title }}</h1>
-          <div class="nxp-category__search">
+      <div class="nxp-ec-category" v-cloak>
+        <header class="nxp-ec-category__header">
+          <h1 class="nxp-ec-category__title">{{ title }}</h1>
+          <div class="nxp-ec-category__search">
             <input
               type="search"
-              class="nxp-admin-search"
+              class="nxp-ec-admin-search"
               v-model="search"
               :placeholder="searchPlaceholder"
             />
           </div>
         </header>
 
-        <p v-if="filteredProducts.length === 0" class="nxp-category__empty">
+        <p v-if="filteredProducts.length === 0" class="nxp-ec-category__empty">
           {{ emptyCopy }}
         </p>
 
-        <div v-else class="nxp-category__grid">
+        <div v-else class="nxp-ec-category__grid">
           <article
             v-for="product in filteredProducts"
             :key="product.id"
-            class="nxp-product-card"
+            class="nxp-ec-product-card"
           >
-            <figure v-if="product.images && product.images.length" class="nxp-product-card__media">
+            <figure v-if="product.images && product.images.length" class="nxp-ec-product-card__media">
               <img :src="product.images[0]" :alt="product.title" loading="lazy" />
             </figure>
-            <div class="nxp-product-card__body">
-              <h2 class="nxp-product-card__title">
+            <div class="nxp-ec-product-card__body">
+              <h2 class="nxp-ec-product-card__title">
                 <a :href="product.link">{{ product.title }}</a>
               </h2>
-              <p v-if="product.short_desc" class="nxp-product-card__intro">
+              <p v-if="product.short_desc" class="nxp-ec-product-card__intro">
                 {{ product.short_desc }}
               </p>
-              <a class="nxp-btn nxp-btn--ghost" :href="product.link">
+              <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
                 {{ viewCopy }}
               </a>
             </div>
@@ -316,37 +316,37 @@ const mountCartIsland = (el) => {
 
     const app = createApp({
         template: `
-      <div class="nxp-cart" v-cloak>
-        <header class="nxp-cart__header">
-          <h1 class="nxp-cart__title">Your cart</h1>
-          <p class="nxp-cart__lead">
+      <div class="nxp-ec-cart" v-cloak>
+        <header class="nxp-ec-cart__header">
+          <h1 class="nxp-ec-cart__title">Your cart</h1>
+          <p class="nxp-ec-cart__lead">
             Review your items and proceed to checkout.
           </p>
         </header>
 
-        <div v-if="items.length === 0" class="nxp-cart__empty">
+        <div v-if="items.length === 0" class="nxp-ec-cart__empty">
           <p>Your cart is currently empty.</p>
-          <a class="nxp-btn" href="index.php?option=com_nxpeasycart&view=category">
+          <a class="nxp-ec-btn" href="index.php?option=com_nxpeasycart&view=category">
             Continue browsing
           </a>
         </div>
 
-        <div v-else class="nxp-cart__content">
-          <table class="nxp-cart__table">
+        <div v-else class="nxp-ec-cart__content">
+          <table class="nxp-ec-cart__table">
             <thead>
               <tr>
                 <th scope="col">Product</th>
                 <th scope="col">Price</th>
                 <th scope="col">Qty</th>
                 <th scope="col">Total</th>
-                <th scope="col" class="nxp-cart__actions"></th>
+                <th scope="col" class="nxp-ec-cart__actions"></th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in items" :key="item.id">
                 <td data-label="Product">
                   <strong>{{ item.product_title || item.title }}</strong>
-                  <ul v-if="item.options && item.options.length" class="nxp-cart__options">
+                  <ul v-if="item.options && item.options.length" class="nxp-ec-cart__options">
                     <li v-for="(option, index) in item.options" :key="index">
                       <span>{{ option.name }}:</span> {{ option.value }}
                     </li>
@@ -362,8 +362,8 @@ const mountCartIsland = (el) => {
                   />
                 </td>
                 <td data-label="Total">{{ format(item.total_cents) }}</td>
-                <td class="nxp-cart__actions">
-                  <button type="button" class="nxp-link-button" @click="remove(item)">
+                <td class="nxp-ec-cart__actions">
+                  <button type="button" class="nxp-ec-link-button" @click="remove(item)">
                     Remove
                   </button>
                 </td>
@@ -371,7 +371,7 @@ const mountCartIsland = (el) => {
             </tbody>
           </table>
 
-          <aside class="nxp-cart__summary">
+          <aside class="nxp-ec-cart__summary">
             <h2>Summary</h2>
             <dl>
               <div>
@@ -384,11 +384,11 @@ const mountCartIsland = (el) => {
               </div>
               <div>
                 <dt>Total</dt>
-                <dd class="nxp-cart__summary-total">{{ format(summary.total_cents) }}</dd>
+                <dd class="nxp-ec-cart__summary-total">{{ format(summary.total_cents) }}</dd>
               </div>
             </dl>
 
-            <a class="nxp-btn nxp-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
+            <a class="nxp-ec-btn nxp-ec-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
               Proceed to checkout
             </a>
           </aside>
@@ -456,57 +456,57 @@ const mountCheckoutIsland = (el) => {
 
     const app = createApp({
         template: `
-      <div class="nxp-checkout" v-cloak>
-        <header class="nxp-checkout__header">
-          <h1 class="nxp-checkout__title">Checkout</h1>
-          <p class="nxp-checkout__lead">
+      <div class="nxp-ec-checkout" v-cloak>
+        <header class="nxp-ec-checkout__header">
+          <h1 class="nxp-ec-checkout__title">Checkout</h1>
+          <p class="nxp-ec-checkout__lead">
             Enter your details to complete the order.
           </p>
         </header>
 
-        <div class="nxp-checkout__layout" v-if="!success">
-          <form class="nxp-checkout__form" @submit.prevent="submit">
+        <div class="nxp-ec-checkout__layout" v-if="!success">
+          <form class="nxp-ec-checkout__form" @submit.prevent="submit">
             <fieldset>
               <legend>Contact</legend>
-              <div class="nxp-checkout__field">
-                <label for="nxp-checkout-email">Email</label>
-                <input id="nxp-checkout-email" type="email" v-model="model.email" required />
+              <div class="nxp-ec-checkout__field">
+                <label for="nxp-ec-checkout-email">Email</label>
+                <input id="nxp-ec-checkout-email" type="email" v-model="model.email" required />
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Billing address</legend>
-              <div class="nxp-checkout__grid">
-                <div class="nxp-checkout__field">
-                  <label for="nxp-first-name">First name</label>
-                  <input id="nxp-first-name" type="text" v-model="model.billing.first_name" required />
+              <div class="nxp-ec-checkout__grid">
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-first-name">First name</label>
+                  <input id="nxp-ec-first-name" type="text" v-model="model.billing.first_name" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-last-name">Last name</label>
-                  <input id="nxp-last-name" type="text" v-model="model.billing.last_name" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-last-name">Last name</label>
+                  <input id="nxp-ec-last-name" type="text" v-model="model.billing.last_name" required />
                 </div>
-                <div class="nxp-checkout__field nxp-checkout__field--wide">
-                  <label for="nxp-address-line1">Address</label>
-                  <input id="nxp-address-line1" type="text" v-model="model.billing.address_line1" required />
+                <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
+                  <label for="nxp-ec-address-line1">Address</label>
+                  <input id="nxp-ec-address-line1" type="text" v-model="model.billing.address_line1" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-city">City</label>
-                  <input id="nxp-city" type="text" v-model="model.billing.city" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-city">City</label>
+                  <input id="nxp-ec-city" type="text" v-model="model.billing.city" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-postcode">Postcode</label>
-                  <input id="nxp-postcode" type="text" v-model="model.billing.postcode" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-postcode">Postcode</label>
+                  <input id="nxp-ec-postcode" type="text" v-model="model.billing.postcode" required />
                 </div>
-                <div class="nxp-checkout__field">
-                  <label for="nxp-country">Country</label>
-                  <input id="nxp-country" type="text" v-model="model.billing.country" required />
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-country">Country</label>
+                  <input id="nxp-ec-country" type="text" v-model="model.billing.country" required />
                 </div>
               </div>
             </fieldset>
 
             <fieldset>
               <legend>Shipping</legend>
-              <p class="nxp-checkout__radio-group">
+              <p class="nxp-ec-checkout__radio-group">
                 <label
                   v-for="rule in shippingRules"
                   :key="rule.id"
@@ -525,14 +525,14 @@ const mountCheckoutIsland = (el) => {
 
             <fieldset>
               <legend>Payment method</legend>
-              <p class="nxp-checkout__radio-group" v-if="gateways.length">
+              <p class="nxp-ec-checkout__radio-group" v-if="gateways.length">
                 <label
                   v-for="gateway in gateways"
                   :key="gateway.id"
                 >
                   <input
                     type="radio"
-                    name="nxp-checkout-gateway"
+                    name="nxp-ec-checkout-gateway"
                     :value="gateway.id"
                     v-model="selectedGateway"
                   />
@@ -544,29 +544,29 @@ const mountCheckoutIsland = (el) => {
               </p>
             </fieldset>
 
-            <div v-if="error" class="nxp-admin-alert nxp-admin-alert--error">
+            <div v-if="error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
               {{ error }}
             </div>
 
-            <button type="submit" class="nxp-btn nxp-btn--primary" :disabled="loading">
+            <button type="submit" class="nxp-ec-btn nxp-ec-btn--primary" :disabled="loading">
               <span v-if="loading">Processing…</span>
               <span v-else>Complete order</span>
             </button>
           </form>
 
-          <aside class="nxp-checkout__summary">
+          <aside class="nxp-ec-checkout__summary">
             <h2>Order summary</h2>
-            <div class="nxp-checkout__cart" v-if="cartItems.length">
+            <div class="nxp-ec-checkout__cart" v-if="cartItems.length">
               <ul>
                 <li v-for="item in cartItems" :key="item.id">
                   <div>
                     <strong>{{ item.product_title || item.title }}</strong>
-                    <span class="nxp-checkout__qty">× {{ item.qty }}</span>
+                    <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
                   </div>
-                  <div class="nxp-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                  <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
                 </li>
               </ul>
-              <div class="nxp-checkout__totals">
+              <div class="nxp-ec-checkout__totals">
                 <div>
                   <span>Subtotal</span>
                   <strong>{{ formatMoney(subtotal) }}</strong>
@@ -585,10 +585,10 @@ const mountCheckoutIsland = (el) => {
           </aside>
         </div>
 
-        <div v-else class="nxp-order-confirmation__summary">
+        <div v-else class="nxp-ec-order-confirmation__summary">
           <h2>Thank you!</h2>
           <p>Your order <strong>{{ orderNumber }}</strong> was created successfully.</p>
-          <a class="nxp-btn" :href="orderUrl">View order summary</a>
+          <a class="nxp-ec-btn" :href="orderUrl">View order summary</a>
         </div>
       </div>
     `,
