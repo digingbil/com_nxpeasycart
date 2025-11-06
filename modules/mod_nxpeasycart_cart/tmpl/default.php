@@ -1,0 +1,119 @@
+<?php
+
+\defined('_JEXEC') or die;
+
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+
+$items   = isset($cart['items']) && \is_array($cart['items']) ? $cart['items'] : [];
+$summary = \is_array($cart['summary'] ?? null) ? $cart['summary'] : [];
+
+$currency   = strtoupper((string) ($summary['currency'] ?? ConfigHelper::getBaseCurrency()));
+$totalCents = (int) ($summary['total_cents'] ?? 0);
+
+$itemCount = 0;
+
+foreach ($items as $item) {
+    $itemCount += (int) ($item['qty'] ?? 0);
+}
+
+$language = Factory::getApplication()->getLanguage();
+$locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
+
+$formatMoney = static function (int $cents) use ($currency, $locale): string {
+    $amount = $cents / 100;
+
+    if (class_exists('NumberFormatter', false)) {
+        try {
+            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+            $formatted = $formatter->formatCurrency($amount, $currency);
+
+            if ($formatted !== false) {
+                return (string) $formatted;
+            }
+        } catch (\Throwable $exception) {
+            // Continue to fallback.
+        }
+    }
+
+    return sprintf('%s %.2f', $currency, $amount);
+};
+
+$formattedTotal = $formatMoney($totalCents);
+$cartLink       = Route::_('index.php?option=com_nxpeasycart&view=cart');
+$checkoutLink   = Route::_('index.php?option=com_nxpeasycart&view=checkout');
+
+$payload = [
+    'count'      => $itemCount,
+    'total_cents' => $totalCents,
+    'currency'   => $currency,
+    'links'      => [
+        'cart'     => $cartLink,
+        'checkout' => $checkoutLink,
+    ],
+    'labels'     => [
+        'title'        => Text::_('MOD_NXPEASYCART_CART_TITLE'),
+        'empty'        => Text::_('MOD_NXPEASYCART_CART_EMPTY'),
+        'items_single' => Text::_('MOD_NXPEASYCART_CART_ITEM_SINGLE'),
+        'items_plural' => Text::_('MOD_NXPEASYCART_CART_ITEM_PLURAL'),
+        'total_label'  => Text::_('MOD_NXPEASYCART_CART_TOTAL_LABEL'),
+        'view_cart'    => Text::_('MOD_NXPEASYCART_CART_VIEW_CART'),
+        'checkout'     => Text::_('MOD_NXPEASYCART_CART_CHECKOUT'),
+    ],
+    'endpoints'  => [
+        'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
+    ],
+];
+
+$payloadJson = htmlspecialchars(
+    json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$countLabel = $itemCount === 1
+    ? Text::_('MOD_NXPEASYCART_CART_ITEM_SINGLE')
+    : Text::sprintf('MOD_NXPEASYCART_CART_ITEM_PLURAL', $itemCount);
+?>
+
+<section
+    class="nxp-ec-cart-summary"
+    data-nxp-island="cart-summary"
+    data-nxp-cart-summary="<?php echo $payloadJson; ?>"
+>
+    <noscript>
+        <div class="nxp-ec-cart-summary__inner">
+            <strong class="nxp-ec-cart-summary__title">
+                <?php echo Text::_('MOD_NXPEASYCART_CART_TITLE'); ?>
+            </strong>
+
+            <?php if ($itemCount === 0) : ?>
+                <p class="nxp-ec-cart-summary__empty">
+                    <?php echo Text::_('MOD_NXPEASYCART_CART_EMPTY'); ?>
+                </p>
+            <?php else : ?>
+                <dl class="nxp-ec-cart-summary__meta">
+                    <div>
+                        <dt><?php echo Text::_('MOD_NXPEASYCART_CART_ITEM_LABEL'); ?></dt>
+                        <dd><?php echo htmlspecialchars($countLabel, ENT_QUOTES, 'UTF-8'); ?></dd>
+                    </div>
+                    <div>
+                        <dt><?php echo Text::_('MOD_NXPEASYCART_CART_TOTAL_LABEL'); ?></dt>
+                        <dd><?php echo htmlspecialchars($formattedTotal, ENT_QUOTES, 'UTF-8'); ?></dd>
+                    </div>
+                </dl>
+
+                <div class="nxp-ec-cart-summary__actions">
+                    <a class="nxp-ec-btn nxp-ec-btn--ghost" href="<?php echo htmlspecialchars($cartLink, ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php echo Text::_('MOD_NXPEASYCART_CART_VIEW_CART'); ?>
+                    </a>
+                    <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars($checkoutLink, ENT_QUOTES, 'UTF-8'); ?>">
+                        <?php echo Text::_('MOD_NXPEASYCART_CART_CHECKOUT'); ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+        </div>
+    </noscript>
+</section>

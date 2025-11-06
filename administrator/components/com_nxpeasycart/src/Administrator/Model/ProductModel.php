@@ -290,7 +290,24 @@ class ProductModel extends AdminModel
         }
 
         if (\is_string($input)) {
-            $input = preg_split('/[\r\n,]+/', $input) ?: [];
+            $trimmed = trim($input);
+
+            // If a JSON array was provided as a string, decode it first.
+            if ($trimmed !== '' && ($trimmed[0] === '[')) {
+                try {
+                    $decoded = json_decode($trimmed, true, 512, JSON_THROW_ON_ERROR);
+                    if (\is_array($decoded)) {
+                        $input = $decoded;
+                    }
+                } catch (JsonException $exception) {
+                    // Fall back to delimiter split below
+                    $input = null; // force split path
+                }
+            }
+
+            if ($input === null || \is_string($input)) {
+                $input = preg_split('/[\r\n,]+/', (string) $input) ?: [];
+            }
         }
 
         if (!\is_array($input)) {
@@ -908,7 +925,8 @@ class ProductModel extends AdminModel
                 $db->quoteName('c.slug'),
             ])
             ->from($db->quoteName('#__nxp_easycart_categories', 'c'))
-            ->innerJoin(
+            ->join(
+                'INNER',
                 $db->quoteName('#__nxp_easycart_product_categories', 'pc') .
                 ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('pc.category_id')
             )

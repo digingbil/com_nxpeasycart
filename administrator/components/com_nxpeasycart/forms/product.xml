@@ -58,4 +58,21 @@
         <option value="1">JYES</option>
         <option value="0">JNO</option>
     </field>
+
+    <!-- Hidden carrier fields used by the SPA JSON API; validated and normalised in ProductModel::validate() -->
+    <field
+        name="images"
+        type="hidden"
+        filter="raw"
+    />
+    <field
+        name="variants"
+        type="hidden"
+        filter="raw"
+    />
+    <field
+        name="categories"
+        type="hidden"
+        filter="raw"
+    />
 </form>

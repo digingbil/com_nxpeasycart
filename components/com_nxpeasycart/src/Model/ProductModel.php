@@ -266,7 +266,10 @@ class ProductModel extends BaseDatabaseModel
 
         if (class_exists(\NumberFormatter::class, false)) {
             try {
-                $formatter = new \NumberFormatter(null, \NumberFormatter::CURRENCY);
+                $language = Factory::getApplication()->getLanguage();
+                $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
+
+                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
 
                 $formatted = $formatter->formatCurrency($amount, $currency);
 

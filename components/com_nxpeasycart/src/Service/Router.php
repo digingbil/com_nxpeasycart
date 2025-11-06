@@ -61,7 +61,58 @@ class Router extends RouterView
      */
     public function build(&$query)
     {
-        $segments = parent::build($query);
+        $segments = [];
+
+        if (isset($query['view'])) {
+            $view = (string) $query['view'];
+
+            switch ($view) {
+                case 'product':
+                    $segments[] = 'product';
+
+                    if (!empty($query['slug'])) {
+                        $segments[] = rawurlencode((string) $query['slug']);
+                        unset($query['slug']);
+                    }
+
+                    unset($query['view']);
+                    break;
+
+                case 'category':
+                    $segments[] = 'category';
+
+                    if (!empty($query['slug'])) {
+                        $segments[] = rawurlencode((string) $query['slug']);
+                        unset($query['slug']);
+                    }
+
+                    unset($query['view']);
+                    break;
+
+                case 'cart':
+                case 'checkout':
+                    $segments[] = $view;
+                    unset($query['view']);
+                    break;
+
+                case 'order':
+                    $segments[] = 'order';
+
+                    if (!empty($query['no'])) {
+                        $segments[] = rawurlencode((string) $query['no']);
+                        unset($query['no']);
+                    }
+
+                    unset($query['view']);
+                    break;
+            }
+        }
+
+        $parentSegments = parent::build($query);
+
+        if (!empty($parentSegments)) {
+            $segments = array_merge($segments, $parentSegments);
+        }
 
         if (isset($query['Itemid'], $query['view'])) {
             $menuItem = $this->menu->getItem((int) $query['Itemid']);
@@ -72,5 +123,59 @@ class Router extends RouterView
         }
 
         return $segments;
+    }
+
+    /**
+     * Map SEF segments back to Joomla query parameters.
+     */
+    public function parse(&$segments)
+    {
+        if (empty($segments)) {
+            return parent::parse($segments);
+        }
+
+        $vars  = [];
+        $first = array_shift($segments);
+
+        switch ($first) {
+            case 'product':
+                $vars['view'] = 'product';
+
+                if (!empty($segments)) {
+                    $vars['slug'] = urldecode((string) array_shift($segments));
+                }
+                break;
+
+            case 'category':
+                $vars['view'] = 'category';
+
+                if (!empty($segments)) {
+                    $vars['slug'] = urldecode((string) array_shift($segments));
+                }
+                break;
+
+            case 'cart':
+                $vars['view'] = 'cart';
+                break;
+
+            case 'checkout':
+                $vars['view'] = 'checkout';
+                break;
+
+            case 'order':
+                $vars['view'] = 'order';
+
+                if (!empty($segments)) {
+                    $vars['no'] = urldecode((string) array_shift($segments));
+                }
+                break;
+
+            default:
+                array_unshift($segments, $first);
+
+                return parent::parse($segments);
+        }
+
+        return $vars;
     }
 }

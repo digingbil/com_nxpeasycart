@@ -5,6 +5,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Document\HtmlDocument;
 use Joomla\Registry\Registry;
 
 /**
@@ -12,6 +13,47 @@ use Joomla\Registry\Registry;
  */
 class TemplateAdapter
 {
+    /**
+     * Inject rendered HTML into templates that override the component buffer (e.g. T4).
+     */
+    public static function injectIntoT4(HtmlDocument $document, string $html): void
+    {
+        // Attempt to delegate to template helpers when available.
+        foreach ([
+            '\\Helix\\T4\\Helper\\T4Helper',
+            '\\HelixUltimate\\Framework\\Helper',
+        ] as $helperClass) {
+            if (class_exists($helperClass)) {
+                try {
+                    // Known helpers expose a "set" or "setBuffer" style API.
+                    if (method_exists($helperClass, 'set')) {
+                        $helperClass::set('component', $html);
+                        return;
+                    }
+
+                    if (method_exists($helperClass, 'setBuffer')) {
+                        $helperClass::setBuffer('component', $html);
+                        return;
+                    }
+                } catch (\Throwable $exception) {
+                    // Fall back to manual echo below.
+                }
+            }
+        }
+
+        // For templates that honour Joomla's buffer we mirror the default behaviour.
+        if (method_exists($document, 'setBuffer')) {
+            try {
+                $document->setBuffer($html, 'component');
+                return;
+            } catch (\Throwable $exception) {
+                // Rendering falls back to direct output.
+            }
+        }
+
+        echo $html;
+    }
+
     /**
      * Resolve adapter tokens for the active template.
      *

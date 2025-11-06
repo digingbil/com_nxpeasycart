@@ -1348,9 +1348,21 @@ const ensureMediaPickerField = async () => {
             value = pendingMediaValue;
         }
 
+        if (value === "" && window.Joomla?.selectedMediaFile) {
+            const fallbackUrl = normaliseMediaValue(
+                window.Joomla.selectedMediaFile.url ?? ""
+            );
+            const fallbackPath = normaliseMediaValue(
+                window.Joomla.selectedMediaFile.path ?? ""
+            );
+            value = fallbackUrl || fallbackPath;
+        }
+
         if (import.meta?.env?.DEV) {
             console.debug("[ProductEditor] media change", {
                 value,
+                rawValue,
+                pending: pendingMediaValue,
                 index: mediaPickerIndex,
                 detail: event.detail,
             });
@@ -1358,7 +1370,11 @@ const ensureMediaPickerField = async () => {
 
         if (mediaPickerIndex !== null && value !== "") {
             ensureImagesArray();
-            form.images.splice(mediaPickerIndex, 1, value);
+            if (mediaPickerIndex >= form.images.length) {
+                form.images.push(value);
+            } else {
+                form.images[mediaPickerIndex] = value;
+            }
         }
 
         mediaPickerIndex = null;
@@ -1366,7 +1382,11 @@ const ensureMediaPickerField = async () => {
     });
 
     mediaPickerField.addEventListener("joomla-dialog:close", () => {
+        if (import.meta?.env?.DEV) {
+            console.debug("[ProductEditor] dialog closed, index:", mediaPickerIndex);
+        }
         mediaPickerIndex = null;
+        pendingMediaValue = "";
     });
 
     if (mediaPickerInput) {
@@ -1375,21 +1395,44 @@ const ensureMediaPickerField = async () => {
                 return;
             }
 
-        let value = normaliseMediaValue(mediaPickerInput.value ?? "");
+            let value = normaliseMediaValue(mediaPickerInput.value ?? "");
 
         if (value === "" && pendingMediaValue !== "") {
             value = pendingMediaValue;
         }
 
-        if (value === "") {
-            return;
+        if (value === "" && window.Joomla?.selectedMediaFile) {
+            const fallbackUrl = normaliseMediaValue(
+                window.Joomla.selectedMediaFile.url ?? ""
+            );
+            const fallbackPath = normaliseMediaValue(
+                window.Joomla.selectedMediaFile.path ?? ""
+            );
+            value = fallbackUrl || fallbackPath;
         }
 
-        ensureImagesArray();
-        form.images.splice(mediaPickerIndex, 1, value);
-        mediaPickerIndex = null;
-        pendingMediaValue = "";
-    });
+            if (import.meta?.env?.DEV) {
+                console.debug("[ProductEditor] input change", {
+                    value,
+                    pending: pendingMediaValue,
+                    index: mediaPickerIndex,
+                });
+            }
+
+            if (value === "") {
+                return;
+            }
+
+            ensureImagesArray();
+            if (mediaPickerIndex >= form.images.length) {
+                form.images.push(value);
+            } else {
+                form.images[mediaPickerIndex] = value;
+            }
+
+            mediaPickerIndex = null;
+            pendingMediaValue = "";
+        });
     }
 
     return mediaPickerField;
@@ -1407,18 +1450,38 @@ const handleMediaFileSelected = (event) => {
 
     const resolved = url || path;
 
+    if (import.meta?.env?.DEV) {
+        console.debug("[ProductEditor] media file selected", {
+            resolved,
+            path,
+            url,
+            detail,
+            currentIndex: mediaPickerIndex,
+        });
+    }
+
     if (resolved === "") {
         return;
     }
 
-    if (import.meta?.env?.DEV) {
-        console.debug("[ProductEditor] media file selected", {
-            resolved,
-            detail,
-        });
-    }
-
     pendingMediaValue = resolved;
+
+    // Try to apply immediately if we have an active index
+    if (mediaPickerIndex !== null && resolved !== "") {
+        ensureImagesArray();
+        if (mediaPickerIndex >= form.images.length) {
+            form.images.push(resolved);
+        } else {
+            form.images[mediaPickerIndex] = resolved;
+        }
+
+        if (import.meta?.env?.DEV) {
+            console.debug("[ProductEditor] Applied image immediately", {
+                index: mediaPickerIndex,
+                value: resolved,
+            });
+        }
+    }
 };
 
 if (typeof document !== "undefined") {

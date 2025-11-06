@@ -1,4 +1,4 @@
-import { createApp, reactive, computed, ref } from "vue";
+import { createApp, reactive, computed, ref, watch } from "vue";
 
 const formatMoney = (cents, currency) => {
     const amount = (cents || 0) / 100;
@@ -224,6 +224,478 @@ const mountLandingIsland = (el) => {
     app.mount(el);
 };
 
+const mountProductIsland = (el) => {
+    const payload = parsePayload(el.dataset.nxpProduct, {});
+    const product = payload.product || {};
+    const rawVariants = Array.isArray(payload.variants) ? payload.variants : [];
+    const variants = rawVariants
+        .map((variant) => ({
+            ...variant,
+            id: Number(variant.id || 0),
+            stock:
+                variant.stock === null || variant.stock === undefined
+                    ? null
+                    : Number(variant.stock),
+        }))
+        .filter((variant) => Number.isFinite(variant.id) && variant.id > 0);
+
+    const labels = {
+        add_to_cart: payload.labels?.add_to_cart || "Add to cart",
+        select_variant: payload.labels?.select_variant || "Select a variant",
+        out_of_stock: payload.labels?.out_of_stock || "Out of stock",
+        added: payload.labels?.added || "Added to cart",
+        view_cart: payload.labels?.view_cart || "View cart",
+        qty_label: payload.labels?.qty_label || "Quantity",
+        error_generic:
+            payload.labels?.error_generic ||
+            "We couldn't add this item to your cart. Please try again.",
+        variants_heading:
+            payload.labels?.variants_heading || "Variants",
+        variant_sku:
+            payload.labels?.variant_sku || "SKU",
+        variant_price:
+            payload.labels?.variant_price || "Price",
+        variant_stock:
+            payload.labels?.variant_stock || "Stock",
+        variant_options:
+            payload.labels?.variant_options || "Options",
+        variant_none: payload.labels?.variant_none || "—",
+    };
+
+    const endpoints = payload.endpoints || {};
+    const links = payload.links || {};
+    const token = payload.token || "";
+
+    const images = Array.isArray(product.images) ? product.images : [];
+    const primaryImage = images.length ? images[0] : "";
+    const primaryAlt =
+        payload.primary_alt || product.title || labels.add_to_cart;
+
+    el.innerHTML = "";
+
+    const app = createApp({
+        template: `
+      <div v-cloak>
+        <div class="nxp-ec-product__media">
+          <figure v-if="primaryImage" class="nxp-ec-product__figure">
+            <img :src="primaryImage" :alt="primaryAlt" loading="lazy" />
+          </figure>
+        </div>
+
+        <div class="nxp-ec-product__summary">
+          <h1 class="nxp-ec-product__title">{{ product.title }}</h1>
+
+          <ul
+            v-if="product.categories && product.categories.length"
+            class="nxp-ec-product__categories"
+          >
+            <li
+              v-for="category in product.categories"
+              :key="category.id || category.slug || category.title"
+            >
+              {{ category.title }}
+            </li>
+          </ul>
+
+          <div v-if="displayPrice" class="nxp-ec-product__price">
+            {{ displayPrice }}
+          </div>
+
+          <p v-if="product.short_desc" class="nxp-ec-product__intro">
+            {{ product.short_desc }}
+          </p>
+
+          <div class="nxp-ec-product__actions" v-if="variants.length">
+            <div
+              v-if="variants.length > 1"
+              class="nxp-ec-product__field"
+            >
+              <label :for="variantSelectId" class="nxp-ec-product__label">
+                {{ labels.select_variant }}
+              </label>
+              <select
+                :id="variantSelectId"
+                class="nxp-ec-product__select"
+                v-model.number="state.variantId"
+              >
+                <option value="">{{ labels.select_variant }}</option>
+                <option
+                  v-for="variant in variants"
+                  :key="variant.id"
+                  :value="variant.id"
+                  :disabled="variant.stock !== null && variant.stock <= 0"
+                >
+                  {{ variant.sku }}
+                  <template v-if="variant.price_label">
+                    — {{ variant.price_label }}
+                  </template>
+                </option>
+              </select>
+            </div>
+
+            <div class="nxp-ec-product__field">
+              <label :for="qtyInputId" class="nxp-ec-product__label">
+                {{ labels.qty_label }}
+              </label>
+              <input
+                :id="qtyInputId"
+                class="nxp-ec-product__qty-input"
+                type="number"
+                min="1"
+                :max="maxQty"
+                v-model.number="state.qty"
+              />
+            </div>
+
+            <button
+              type="button"
+              class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy"
+              :disabled="isDisabled"
+              @click="add"
+            >
+              <span
+                v-if="state.loading"
+                class="nxp-ec-product__spinner"
+                aria-hidden="true"
+              ></span>
+              {{ labels.add_to_cart }}
+            </button>
+
+            <p
+              v-if="isOutOfStock"
+              class="nxp-ec-product__message nxp-ec-product__message--muted"
+            >
+              {{ labels.out_of_stock }}
+            </p>
+
+            <p
+              v-if="state.error"
+              class="nxp-ec-product__message nxp-ec-product__message--error"
+            >
+              {{ state.error }}
+            </p>
+
+            <p
+              v-if="state.success"
+              class="nxp-ec-product__message nxp-ec-product__message--success"
+            >
+              {{ state.successMessage || labels.added }}
+              <template v-if="links.cart">
+                · <a :href="links.cart">{{ labels.view_cart }}</a>
+              </template>
+            </p>
+          </div>
+        </div>
+
+        <section
+          v-if="product.long_desc_html"
+          class="nxp-ec-product__description"
+          v-html="product.long_desc_html"
+        ></section>
+
+        <section
+          v-if="variants.length"
+          class="nxp-ec-product__variants"
+        >
+          <h2 class="nxp-ec-product__variants-title">
+            {{ labels.variants_heading }}
+          </h2>
+
+          <table class="nxp-ec-product__variants-table">
+            <thead>
+              <tr>
+                <th scope="col">{{ labels.variant_sku }}</th>
+                <th scope="col">{{ labels.variant_price }}</th>
+                <th scope="col">{{ labels.variant_stock }}</th>
+                <th scope="col">{{ labels.variant_options }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="variant in variants" :key="'row-' + variant.id">
+                <td>{{ variant.sku }}</td>
+                <td>{{ variant.price_label }}</td>
+                <td>
+                  <template v-if="variant.stock !== null">
+                    {{ variant.stock }}
+                  </template>
+                  <template v-else>
+                    {{ labels.variant_none }}
+                  </template>
+                </td>
+                <td>
+                  <ul
+                    v-if="variant.options && variant.options.length"
+                    class="nxp-ec-product__variant-options"
+                  >
+                    <li
+                      v-for="(option, index) in variant.options"
+                      :key="index"
+                    >
+                      <strong>{{ option.name }}:</strong>
+                      {{ option.value }}
+                    </li>
+                  </ul>
+                  <span
+                    v-else
+                    class="nxp-ec-product__variant-none"
+                  >
+                    {{ labels.variant_none }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+    `,
+        setup() {
+            const variantSelectId = `nxp-ec-variant-${product.id || "0"}`;
+            const qtyInputId = `nxp-ec-qty-${product.id || "0"}`;
+
+            const state = reactive({
+                variantId: variants.length === 1 ? variants[0].id : null,
+                qty: 1,
+                loading: false,
+                success: false,
+                successMessage: "",
+                error: "",
+            });
+
+            const selectedVariant = computed(() => {
+                if (!variants.length) {
+                    return null;
+                }
+
+                if (state.variantId) {
+                    return (
+                        variants.find(
+                            (variant) => variant.id === state.variantId
+                        ) || null
+                    );
+                }
+
+                return variants.length === 1 ? variants[0] : null;
+            });
+
+            const maxQty = computed(() => {
+                const variant = selectedVariant.value;
+
+                if (!variant) {
+                    return undefined;
+                }
+
+                if (
+                    variant.stock === null ||
+                    variant.stock === undefined ||
+                    !Number.isFinite(variant.stock)
+                ) {
+                    return undefined;
+                }
+
+                const numericStock = Number(variant.stock);
+
+                if (!Number.isFinite(numericStock) || numericStock <= 0) {
+                    return undefined;
+                }
+
+                return numericStock;
+            });
+
+            const clampQty = (value) => {
+                let qty = Number(value);
+
+                if (!Number.isFinite(qty) || qty < 1) {
+                    qty = 1;
+                }
+
+                const cap = maxQty.value;
+
+                if (Number.isFinite(cap)) {
+                    qty = Math.min(qty, cap);
+                }
+
+                return qty;
+            };
+
+            watch(
+                () => state.qty,
+                (value) => {
+                    const next = clampQty(value);
+
+                    if (next !== value) {
+                        state.qty = next;
+                    }
+                }
+            );
+
+            watch(
+                () => state.variantId,
+                () => {
+                    state.error = "";
+                    state.success = false;
+                    state.successMessage = "";
+
+                    const next = clampQty(state.qty);
+
+                    if (next !== state.qty) {
+                        state.qty = next;
+                    }
+                }
+            );
+
+            const displayPrice = computed(() => {
+                if (
+                    selectedVariant.value &&
+                    selectedVariant.value.price_label
+                ) {
+                    return selectedVariant.value.price_label;
+                }
+
+                return product.price?.label || "";
+            });
+
+            const isOutOfStock = computed(() => {
+                const variant = selectedVariant.value;
+
+                if (!variant) {
+                    return false;
+                }
+
+                if (
+                    variant.stock === null ||
+                    variant.stock === undefined
+                ) {
+                    return false;
+                }
+
+                return Number(variant.stock) <= 0;
+            });
+
+            const isDisabled = computed(() => {
+                if (state.loading) {
+                    return true;
+                }
+
+                if (!variants.length) {
+                    return true;
+                }
+
+                if (!selectedVariant.value) {
+                    return true;
+                }
+
+                if (isOutOfStock.value) {
+                    return true;
+                }
+
+                return false;
+            });
+
+            const add = async () => {
+                state.error = "";
+                state.success = false;
+                state.successMessage = "";
+
+                if (!endpoints.add) {
+                    state.error = labels.error_generic;
+                    return;
+                }
+
+                const variant = selectedVariant.value;
+
+                if (variants.length && !variant) {
+                    state.error = labels.select_variant;
+                    return;
+                }
+
+                if (isOutOfStock.value) {
+                    state.error = labels.out_of_stock;
+                    return;
+                }
+
+                state.loading = true;
+
+                try {
+                    const formData = new FormData();
+
+                    if (token) {
+                        formData.append(token, "1");
+                    }
+
+                    formData.append(
+                        "product_id",
+                        String(product.id || "")
+                    );
+                    formData.append("qty", String(clampQty(state.qty)));
+
+                    if (variant) {
+                        formData.append("variant_id", String(variant.id));
+                    }
+
+                    let json = null;
+
+                    const response = await fetch(endpoints.add, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            Accept: "application/json",
+                        },
+                    });
+
+                    try {
+                        json = await response.json();
+                    } catch (error) {
+                        // Non-JSON payloads fall through to the failure branch.
+                    }
+
+                    if (!response.ok || !json || json.success === false) {
+                        const message =
+                            (json && json.message) || labels.error_generic;
+                        throw new Error(message);
+                    }
+
+                    const cart = json.data?.cart || null;
+
+                    state.success = true;
+                    state.successMessage = json.message || labels.added;
+
+                    if (cart) {
+                        window.dispatchEvent(
+                            new CustomEvent("nxp-cart:updated", {
+                                detail: cart,
+                            })
+                        );
+                    }
+                } catch (error) {
+                    state.error =
+                        (error && error.message) || labels.error_generic;
+                } finally {
+                    state.loading = false;
+                }
+            };
+
+            return {
+                product,
+                variants,
+                labels,
+                links,
+                primaryImage,
+                primaryAlt,
+                state,
+                add,
+                displayPrice,
+                isDisabled,
+                isOutOfStock,
+                maxQty,
+                variantSelectId,
+                qtyInputId,
+            };
+        },
+    });
+
+    app.mount(el);
+};
+
 const mountCategoryIsland = (el) => {
     const category = parsePayload(el.dataset.nxpCategory, {});
     const products = parsePayload(el.dataset.nxpProducts, []);
@@ -435,6 +907,102 @@ const mountCartIsland = (el) => {
                 remove,
                 updateQty,
                 format: (cents) => formatMoney(cents, currency),
+            };
+        },
+    });
+
+    app.mount(el);
+};
+
+const mountCartSummaryIsland = (el) => {
+    const payload = parsePayload(el.dataset.nxpCartSummary, {});
+    const labels = payload.labels || {};
+    const links = payload.links || {};
+
+    el.innerHTML = "";
+
+    const app = createApp({
+        template: `
+      <div class="nxp-ec-cart-summary__inner" v-cloak>
+        <p v-if="state.count === 0" class="nxp-ec-cart-summary__empty">
+          {{ labels.empty || "Your cart is empty." }}
+        </p>
+        <div v-else class="nxp-ec-cart-summary__content">
+          <a :href="links.cart || '#'" class="nxp-ec-cart-summary__link">
+            <span class="nxp-ec-cart-summary__count">{{ countLabel }}</span>
+            <span class="nxp-ec-cart-summary__total">
+              {{ (labels.total_label || "Total") + ": " + totalLabel }}
+            </span>
+          </a>
+          <div class="nxp-ec-cart-summary__actions">
+            <a
+              v-if="links.cart"
+              class="nxp-ec-btn nxp-ec-btn--ghost"
+              :href="links.cart"
+            >
+              {{ labels.view_cart || "View cart" }}
+            </a>
+            <a
+              v-if="links.checkout"
+              class="nxp-ec-btn nxp-ec-btn--primary"
+              :href="links.checkout"
+            >
+              {{ labels.checkout || "Checkout" }}
+            </a>
+          </div>
+        </div>
+      </div>
+    `,
+        setup() {
+            const state = reactive({
+                count: Number(payload.count || 0),
+                total_cents: Number(payload.total_cents || 0),
+                currency: payload.currency || "USD",
+            });
+
+            const countLabel = computed(() => {
+                if (state.count === 1) {
+                    return labels.items_single || "1 item";
+                }
+
+                const template = labels.items_plural || "%d items";
+                return template.replace("%d", state.count);
+            });
+
+            const totalLabel = computed(() =>
+                formatMoney(state.total_cents, state.currency || "USD")
+            );
+
+            const applyCart = (cart) => {
+                if (!cart) {
+                    return;
+                }
+
+                const items = Array.isArray(cart.items) ? cart.items : [];
+                let qty = 0;
+
+                items.forEach((item) => {
+                    qty += Number(item.qty || 0);
+                });
+
+                state.count = qty;
+                state.total_cents = Number(
+                    cart.summary?.total_cents || state.total_cents
+                );
+                state.currency =
+                    cart.summary?.currency || state.currency || "USD";
+            };
+
+            window.addEventListener("nxp-cart:updated", (event) => {
+                applyCart(event.detail);
+            });
+
+            return {
+                state,
+                labels,
+                links,
+                countLabel,
+                totalLabel,
             };
         },
     });
@@ -805,9 +1373,11 @@ const mountCheckoutIsland = (el) => {
 };
 
 const islandRegistry = {
+    product: mountProductIsland,
     category: mountCategoryIsland,
     landing: mountLandingIsland,
     cart: mountCartIsland,
+    "cart-summary": mountCartSummaryIsland,
     checkout: mountCheckoutIsland,
 };
 

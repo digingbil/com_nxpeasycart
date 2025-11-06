@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Category listing view.
