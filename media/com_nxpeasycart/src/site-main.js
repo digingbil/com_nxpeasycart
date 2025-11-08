@@ -698,8 +698,167 @@ const mountProductIsland = (el) => {
 
 const mountCategoryIsland = (el) => {
     const category = parsePayload(el.dataset.nxpCategory, {});
-    const products = parsePayload(el.dataset.nxpProducts, []);
-    const initialSearch = el.dataset.nxpSearch || "";
+    const productsPayload = parsePayload(el.dataset.nxpProducts, []);
+    const categoriesPayload = parsePayload(el.dataset.nxpCategories, []);
+    const labelsPayload = parsePayload(el.dataset.nxpLabels, {});
+    const linksPayload = parsePayload(el.dataset.nxpLinks, {});
+    const initialSearch = (el.dataset.nxpSearch || "").trim();
+
+    const normaliseCents = (value) => {
+        if (value === null || value === undefined || value === "") {
+            return null;
+        }
+
+        const numeric = Number.parseInt(value, 10);
+
+        return Number.isFinite(numeric) ? numeric : null;
+    };
+
+    const labels = {
+        filters: labelsPayload.filters || "Categories",
+        filter_all: labelsPayload.filter_all || "All",
+        empty:
+            labelsPayload.empty ||
+            "No products found in this category yet.",
+        view_product: labelsPayload.view_product || "View product",
+        search_placeholder:
+            labelsPayload.search_placeholder || "Search products",
+        search_label:
+            labelsPayload.search_label ||
+            labelsPayload.search_placeholder ||
+            "Search products",
+    };
+
+    const links = {
+        all:
+            typeof linksPayload.all === "string" && linksPayload.all !== ""
+                ? linksPayload.all
+                : "index.php?option=com_nxpeasycart&view=category",
+        search:
+            typeof linksPayload.search === "string" &&
+            linksPayload.search !== ""
+                ? linksPayload.search
+                : "index.php?option=com_nxpeasycart&view=category",
+    };
+
+    const products = Array.isArray(productsPayload)
+        ? productsPayload
+        : [];
+    const categories = Array.isArray(categoriesPayload)
+        ? categoriesPayload
+        : [];
+
+    const activeSlug =
+        category && typeof category.slug === "string"
+            ? category.slug
+            : "";
+    const searchId = `nxp-ec-category-search-${category?.id || "all"}`;
+
+    const enrichedProducts = products
+        .filter((item) => item && typeof item === "object")
+        .map((item) => {
+            const price =
+                item.price && typeof item.price === "object"
+                    ? item.price
+                    : {};
+            const min = normaliseCents(price.min_cents);
+            const max = normaliseCents(price.max_cents);
+            const currency =
+                typeof price.currency === "string" && price.currency !== ""
+                    ? price.currency
+                    : "USD";
+
+            let priceLabel =
+                typeof item.price_label === "string"
+                    ? item.price_label
+                    : "";
+
+            if (!priceLabel && min !== null && max !== null) {
+                if (min === max) {
+                    priceLabel = formatMoney(min, currency);
+                } else {
+                    priceLabel = `${formatMoney(min, currency)} - ${formatMoney(
+                        max,
+                        currency
+                    )}`;
+                }
+            }
+
+            const images = Array.isArray(item.images)
+                ? item.images
+                      .filter(
+                          (image) =>
+                              typeof image === "string" &&
+                              image.trim() !== ""
+                      )
+                      .map((image) => image.trim())
+                : [];
+
+            return {
+                ...item,
+                title:
+                    typeof item.title === "string"
+                        ? item.title
+                        : "",
+                short_desc:
+                    typeof item.short_desc === "string"
+                        ? item.short_desc
+                        : "",
+                link:
+                    typeof item.link === "string" && item.link !== ""
+                        ? item.link
+                        : "#",
+                images,
+                price: {
+                    currency,
+                    min_cents: min,
+                    max_cents: max,
+                },
+                price_label: priceLabel,
+            };
+        });
+
+    const filters = categories
+        .filter((item) => item && typeof item === "object")
+        .map((item, index) => ({
+            ...item,
+            title:
+                typeof item.title === "string" && item.title !== ""
+                    ? item.title
+                    : index === 0
+                      ? labels.filter_all
+                      : "",
+            slug:
+                typeof item.slug === "string" ? item.slug : "",
+            link:
+                typeof item.link === "string" && item.link !== ""
+                    ? item.link
+                    : links.all,
+        }));
+
+    const updateUrl = (value) => {
+        if (
+            typeof window === "undefined" ||
+            !window.history ||
+            typeof window.history.replaceState !== "function"
+        ) {
+            return;
+        }
+
+        try {
+            const url = new URL(window.location.href);
+
+            if (value) {
+                url.searchParams.set("q", value);
+            } else {
+                url.searchParams.delete("q");
+            }
+
+            window.history.replaceState({}, "", url.toString());
+        } catch (error) {
+            // Ignore URL parsing failures.
+        }
+    };
 
     el.innerHTML = "";
 
@@ -708,27 +867,52 @@ const mountCategoryIsland = (el) => {
       <div class="nxp-ec-category" v-cloak>
         <header class="nxp-ec-category__header">
           <h1 class="nxp-ec-category__title">{{ title }}</h1>
-          <div class="nxp-ec-category__search">
+          <form
+            class="nxp-ec-category__search"
+            method="get"
+            :action="links.search"
+            @submit.prevent="submitSearch"
+          >
+            <label class="sr-only" :for="searchId">{{ labels.search_label }}</label>
             <input
+              :id="searchId"
               type="search"
-              class="nxp-ec-admin-search"
+              name="q"
               v-model="search"
-              :placeholder="searchPlaceholder"
+              :placeholder="labels.search_placeholder"
             />
-          </div>
+          </form>
+          <nav
+            v-if="filters.length"
+            class="nxp-ec-category__filters"
+            :aria-label="labels.filters"
+          >
+            <a
+              v-for="filter in filters"
+              :key="filter.slug || filter.id || filter.title"
+              class="nxp-ec-category__filter"
+              :class="{ 'is-active': isActive(filter) }"
+              :href="filter.link"
+            >
+              {{ filter.title }}
+            </a>
+          </nav>
         </header>
 
-        <p v-if="filteredProducts.length === 0" class="nxp-ec-category__empty">
-          {{ emptyCopy }}
+        <p
+          v-if="filteredProducts.length === 0"
+          class="nxp-ec-category__empty"
+        >
+          {{ labels.empty }}
         </p>
 
         <div v-else class="nxp-ec-category__grid">
           <article
             v-for="product in filteredProducts"
-            :key="product.id"
+            :key="product.id || product.slug || product.title"
             class="nxp-ec-product-card"
           >
-            <figure v-if="product.images && product.images.length" class="nxp-ec-product-card__media">
+            <figure v-if="product.images.length" class="nxp-ec-product-card__media">
               <img :src="product.images[0]" :alt="product.title" loading="lazy" />
             </figure>
             <div class="nxp-ec-product-card__body">
@@ -738,8 +922,11 @@ const mountCategoryIsland = (el) => {
               <p v-if="product.short_desc" class="nxp-ec-product-card__intro">
                 {{ product.short_desc }}
               </p>
+              <p v-if="product.price_label" class="nxp-ec-product-card__price">
+                {{ product.price_label }}
+              </p>
               <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
-                {{ viewCopy }}
+                {{ labels.view_product }}
               </a>
             </div>
           </article>
@@ -747,30 +934,64 @@ const mountCategoryIsland = (el) => {
       </div>
     `,
         setup() {
-            const title = category?.title || "Products";
+            const title =
+                (category &&
+                    typeof category.title === "string" &&
+                    category.title) ||
+                "Products";
             const search = ref(initialSearch);
 
             const filteredProducts = computed(() => {
-                if (!search.value) {
-                    return products;
+                const term = search.value.trim().toLowerCase();
+
+                if (!term) {
+                    return enrichedProducts;
                 }
 
-                const query = search.value.toLowerCase();
+                return enrichedProducts.filter((product) => {
+                    const haystack = `${product.title} ${
+                        product.short_desc || ""
+                    }`.toLowerCase();
 
-                return products.filter((product) => {
-                    const haystack =
-                        `${product.title} ${product.short_desc || ""}`.toLowerCase();
-                    return haystack.includes(query);
+                    return haystack.includes(term);
                 });
             });
+
+            watch(
+                search,
+                (value, previous) => {
+                    const next = value.trim();
+
+                    if (previous !== undefined && previous.trim() === next) {
+                        return;
+                    }
+
+                    updateUrl(next);
+                },
+                { immediate: true }
+            );
+
+            const submitSearch = () => {
+                updateUrl(search.value.trim());
+            };
+
+            const isActive = (filter) => {
+                const slug =
+                    typeof filter.slug === "string" ? filter.slug : "";
+
+                return slug === activeSlug;
+            };
 
             return {
                 title,
                 search,
+                searchId,
                 filteredProducts,
-                searchPlaceholder: "Search products",
-                emptyCopy: "No products found in this category yet.",
-                viewCopy: "View product",
+                submitSearch,
+                labels,
+                filters,
+                links,
+                isActive,
             };
         },
     });

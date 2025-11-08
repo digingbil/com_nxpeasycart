@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Router\Route;
 use Joomla\Database\ParameterType;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 /**
  * Frontend category model.
@@ -147,8 +148,25 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.short_desc'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
+                'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
+                'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_max'),
+                'MAX(' . $db->quoteName('v.currency') . ') AS ' . $db->quoteName('price_currency'),
             ])
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
+            ->leftJoin(
+                $db->quoteName('#__nxp_easycart_variants', 'v')
+                . ' ON ' . $db->quoteName('v.product_id') . ' = ' . $db->quoteName('p.id')
+                . ' AND ' . $db->quoteName('v.active') . ' = 1'
+            )
+            ->leftJoin(
+                $db->quoteName('#__nxp_easycart_product_categories', 'pc_all')
+                . ' ON ' . $db->quoteName('pc_all.product_id') . ' = ' . $db->quoteName('p.id')
+            )
+            ->leftJoin(
+                $db->quoteName('#__nxp_easycart_categories', 'c_all')
+                . ' ON ' . $db->quoteName('c_all.id') . ' = ' . $db->quoteName('pc_all.category_id')
+            )
+            ->select('MIN(' . $db->quoteName('c_all.slug') . ') AS ' . $db->quoteName('primary_category_slug'))
             ->where($db->quoteName('p.active') . ' = 1')
             ->order($db->quoteName('p.title') . ' ASC')
             ->group($db->quoteName('p.id'));
@@ -168,9 +186,10 @@ class CategoryModel extends BaseDatabaseModel
                 $placeholders = [];
 
                 foreach ($rootIds as $index => $rootId) {
-                    $placeholder    = ':rootCat' . $index;
-                    $placeholders[] = $placeholder;
-                    $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
+                    $placeholder     = ':rootCat' . $index;
+                    $placeholders[]  = $placeholder;
+                    $rootIdParameter = (int) $rootId;
+                    $query->bind($placeholder, $rootIdParameter, ParameterType::INTEGER);
                 }
 
                 $query->innerJoin(
@@ -206,6 +225,30 @@ class CategoryModel extends BaseDatabaseModel
                 }
             }
 
+            $minCents = $row->price_min !== null ? (int) $row->price_min : null;
+            $maxCents = $row->price_max !== null ? (int) $row->price_max : null;
+            $currency = strtoupper((string) ($row->price_currency ?? ConfigHelper::getBaseCurrency()));
+            $price    = [
+                'currency'  => $currency,
+                'min_cents' => $minCents,
+                'max_cents' => $maxCents,
+                'label'     => $this->formatPriceLabel($minCents, $maxCents, $currency),
+            ];
+
+            $linkCategorySlug = '';
+
+            if (!empty($category['slug'])) {
+                $linkCategorySlug = (string) $category['slug'];
+            } elseif (!empty($row->primary_category_slug)) {
+                $linkCategorySlug = (string) $row->primary_category_slug;
+            }
+
+            $link = 'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug);
+
+            if ($linkCategorySlug !== '') {
+                $link .= '&category_slug=' . rawurlencode($linkCategorySlug);
+            }
+
             $products[] = [
                 'id'         => (int) $row->id,
                 'title'      => (string) $row->title,
@@ -213,9 +256,10 @@ class CategoryModel extends BaseDatabaseModel
                 'short_desc' => (string) ($row->short_desc ?? ''),
                 'images'     => $images,
                 'featured'   => (bool) ($row->featured ?? 0),
-                'link'       => Route::_(
-                    'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
-                ),
+                'price'      => $price,
+                'price_label' => $price['label'],
+                'category_slug' => $linkCategorySlug,
+                'link'       => Route::_($link),
             ];
         }
 
@@ -248,9 +292,10 @@ class CategoryModel extends BaseDatabaseModel
             $placeholders = [];
 
             foreach ($rootIds as $index => $rootId) {
-                $placeholder    = ':navRoot' . $index;
-                $placeholders[] = $placeholder;
-                $query->bind($placeholder, (int) $rootId, ParameterType::INTEGER);
+                $placeholder     = ':navRoot' . $index;
+                $placeholders[]  = $placeholder;
+                $rootIdParameter = (int) $rootId;
+                $query->bind($placeholder, $rootIdParameter, ParameterType::INTEGER);
             }
 
             $query->where(
@@ -282,5 +327,51 @@ class CategoryModel extends BaseDatabaseModel
         }
 
         return $categories;
+    }
+
+    /**
+     * Format a money amount using the current locale.
+     */
+    private function formatMoney(int $cents, string $currency): string
+    {
+        $amount = $cents / 100;
+
+        if (class_exists(\NumberFormatter::class, false)) {
+            try {
+                $language = Factory::getApplication()->getLanguage();
+                $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
+
+                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+                $formatted = $formatter->formatCurrency($amount, $currency);
+
+                if ($formatted !== false) {
+                    return (string) $formatted;
+                }
+            } catch (\Throwable $exception) {
+                // Fall back to default formatting below.
+            }
+        }
+
+        return sprintf('%s %.2f', $currency, $amount);
+    }
+
+    /**
+     * Build a human readable price label for product cards.
+     */
+    private function formatPriceLabel(?int $minCents, ?int $maxCents, string $currency): string
+    {
+        if ($minCents === null || $maxCents === null) {
+            return '';
+        }
+
+        if ($minCents === $maxCents) {
+            return $this->formatMoney($minCents, $currency);
+        }
+
+        return Text::sprintf(
+            'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
+            $this->formatMoney($minCents, $currency),
+            $this->formatMoney($maxCents, $currency)
+        );
     }
 }

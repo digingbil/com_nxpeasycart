@@ -68,7 +68,15 @@ class Router extends RouterView
 
             switch ($view) {
                 case 'product':
-                    $segments[] = 'product';
+                    $hasCategory = !empty($query['category_slug']);
+
+                    if ($hasCategory) {
+                        $segments[] = 'category';
+                        $segments[] = rawurlencode((string) $query['category_slug']);
+                        unset($query['category_slug']);
+                    } else {
+                        $segments[] = 'product';
+                    }
 
                     if (!empty($query['slug'])) {
                         $segments[] = rawurlencode((string) $query['slug']);
@@ -147,10 +155,19 @@ class Router extends RouterView
                 break;
 
             case 'category':
-                $vars['view'] = 'category';
-
                 if (!empty($segments)) {
-                    $vars['slug'] = urldecode((string) array_shift($segments));
+                    $categorySlug = urldecode((string) array_shift($segments));
+
+                    if (!empty($segments)) {
+                        $vars['view']          = 'product';
+                        $vars['category_slug'] = $categorySlug;
+                        $vars['slug']          = urldecode((string) array_shift($segments));
+                    } else {
+                        $vars['view'] = 'category';
+                        $vars['slug'] = $categorySlug;
+                    }
+                } else {
+                    $vars['view'] = 'category';
                 }
                 break;
 

@@ -142,98 +142,98 @@ $payloadJson = htmlspecialchars(
     data-nxp-island="product"
     data-nxp-product="<?php echo $payloadJson; ?>"
 >
-    <noscript>
-        <div class="nxp-ec-product__media">
-            <?php if ($primaryImage) : ?>
-                <figure class="nxp-ec-product__figure">
-                    <img
-                        src="<?php echo htmlspecialchars($primaryImage, ENT_QUOTES, 'UTF-8'); ?>"
-                        alt="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
-                        loading="lazy"
-                    />
-                </figure>
-            <?php endif; ?>
-        </div>
+    <div class="nxp-ec-product__media">
+        <?php if ($primaryImage) : ?>
+            <figure class="nxp-ec-product__figure">
+                <img
+                    src="<?php echo htmlspecialchars($primaryImage, ENT_QUOTES, 'UTF-8'); ?>"
+                    alt="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
+                    loading="lazy"
+                />
+            </figure>
+        <?php endif; ?>
+    </div>
 
-        <div class="nxp-ec-product__summary">
-            <h1 class="nxp-ec-product__title">
-                <?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>
-            </h1>
+    <div class="nxp-ec-product__summary">
+        <h1 class="nxp-ec-product__title">
+            <?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>
+        </h1>
 
-            <?php if (!empty($categories)) : ?>
-                <ul class="nxp-ec-product__categories">
-                    <?php foreach ($categories as $category) : ?>
-                        <li>
-                            <?php echo htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8'); ?>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-
-            <div class="nxp-ec-product__price">
-                <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
-            </div>
-
-            <?php if (!empty($product['short_desc'])) : ?>
-                <p class="nxp-ec-product__intro">
-                    <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
-                </p>
-            <?php endif; ?>
-
-            <button class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy" type="button">
-                <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
-            </button>
-        </div>
-
-        <?php if ($preparedLongDescription !== '') : ?>
-            <section class="nxp-ec-product__description">
-                <?php echo $preparedLongDescription; ?>
-            </section>
+        <?php if (!empty($categories)) : ?>
+            <ul class="nxp-ec-product__categories">
+                <?php foreach ($categories as $category) : ?>
+                    <li>
+                        <?php echo htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8'); ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         <?php endif; ?>
 
-        <?php if (!empty($variants)) : ?>
-            <section class="nxp-ec-product__variants">
-                <h2 class="nxp-ec-product__variants-title">
-                    <?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANTS_HEADING'); ?>
-                </h2>
+        <div class="nxp-ec-product__price">
+            <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
+        </div>
 
-                <table class="nxp-ec-product__variants-table">
-                    <thead>
+        <?php if (!empty($product['short_desc'])) : ?>
+            <p class="nxp-ec-product__intro">
+                <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
+            </p>
+        <?php endif; ?>
+
+        <button class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy" type="button">
+            <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
+        </button>
+    </div>
+
+    <?php if ($preparedLongDescription !== '') : ?>
+        <section class="nxp-ec-product__description">
+            <?php echo $preparedLongDescription; ?>
+        </section>
+    <?php endif; ?>
+
+    <?php if (!empty($variants)) : ?>
+        <section class="nxp-ec-product__variants">
+            <h2 class="nxp-ec-product__variants-title">
+                <?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANTS_HEADING'); ?>
+            </h2>
+
+            <table class="nxp-ec-product__variants-table">
+                <thead>
+                    <tr>
+                        <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_SKU_LABEL'); ?></th>
+                        <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_PRICE_LABEL'); ?></th>
+                        <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_STOCK_LABEL'); ?></th>
+                        <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_OPTIONS_LABEL'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($variants as $variant) : ?>
                         <tr>
-                            <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_SKU_LABEL'); ?></th>
-                            <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_PRICE_LABEL'); ?></th>
-                            <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_STOCK_LABEL'); ?></th>
-                            <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_OPTIONS_LABEL'); ?></th>
+                            <td><?php echo htmlspecialchars($variant['sku'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($formatMoney((int) $variant['price_cents'], $variant['currency']), ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo (int) $variant['stock']; ?></td>
+                            <td>
+                                <?php if (!empty($variant['options'])) : ?>
+                                    <ul class="nxp-ec-product__variant-options">
+                                        <?php foreach ($variant['options'] as $option) : ?>
+                                            <?php if (!isset($option['name'], $option['value'])) : ?>
+                                                <?php continue; ?>
+                                            <?php endif; ?>
+                                            <li>
+                                                <strong><?php echo htmlspecialchars((string) $option['name'], ENT_QUOTES, 'UTF-8'); ?>:</strong>
+                                                <?php echo htmlspecialchars((string) $option['value'], ENT_QUOTES, 'UTF-8'); ?>
+                                            </li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php else : ?>
+                                    <span class="nxp-ec-product__variant-none">
+                                        <?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_NONE'); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($variants as $variant) : ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($variant['sku'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo htmlspecialchars($formatMoney((int) $variant['price_cents'], $variant['currency']), ENT_QUOTES, 'UTF-8'); ?></td>
-                                <td><?php echo (int) $variant['stock']; ?></td>
-                                <td>
-                                    <?php if (!empty($variant['options'])) : ?>
-                                        <ul class="nxp-ec-product__variant-options">
-                                            <?php foreach ($variant['options'] as $option) : ?>
-                                                <?php if (!isset($option['name'], $option['value'])) : ?>
-                                                    <?php continue; ?>
-                                                <?php endif; ?>
-                                                <li>
-                                                    <strong><?php echo htmlspecialchars((string) $option['name'], ENT_QUOTES, 'UTF-8'); ?>:</strong>
-                                                    <?php echo htmlspecialchars((string) $option['value'], ENT_QUOTES, 'UTF-8'); ?>
-                                                </li>
-                                            <?php endforeach; ?>
-                                        </ul>
-                                    <?php else : ?>
-                                        <span class="nxp-ec-product__variant-none">—</span>
-                                    <?php endif; ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </section>
-        <?php endif; ?>
-    </noscript>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </section>
+    <?php endif; ?>
 </article>

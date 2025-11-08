@@ -8,7 +8,6 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Uri\Uri;
-use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Category listing view.
@@ -52,29 +51,33 @@ class HtmlView extends BaseHtmlView
             ['version' => 'auto', 'relative' => true]
         );
 
-        $siteBundleAsset = 'com_nxpeasycart.site.bundle';
-        $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+        $assetManifest = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
 
-        if (!$wa->assetExists('script', $siteBundleAsset)) {
-            $wa->registerScript(
-                $siteBundleAsset,
-                $siteScriptUri,
-                [],
-                ['defer' => true]
-            );
+        if (is_file($assetManifest)) {
+            $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
+            $wa->useScript('com_nxpeasycart.site');
+        } else {
+            $siteBundleAsset = 'com_nxpeasycart.site.bundle';
+            $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+
+            if (!$wa->assetExists('script', $siteBundleAsset)) {
+                $wa->registerScript(
+                    $siteBundleAsset,
+                    $siteScriptUri,
+                    [],
+                    ['defer' => true]
+                );
+            }
+
+            $wa->useScript($siteBundleAsset);
         }
-
-        $wa->useScript($siteBundleAsset);
 
         if (!$this->category) {
             $document->setTitle(Text::_('COM_NXPEASYCART_CATEGORY_NOT_FOUND'));
             $this->products = [];
             $this->searchTerm = trim($app->input->getString('q', ''));
 
-            ob_start();
             parent::display($tpl);
-            TemplateAdapter::injectIntoT4($document, ob_get_clean() ?: '');
-
             return;
         }
 
@@ -89,8 +92,6 @@ class HtmlView extends BaseHtmlView
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);
         $document->addHeadLink($canonical, 'canonical');
 
-        ob_start();
         parent::display($tpl);
-        TemplateAdapter::injectIntoT4($document, ob_get_clean() ?: '');
     }
 }

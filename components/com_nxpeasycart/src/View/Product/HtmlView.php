@@ -45,8 +45,27 @@ class HtmlView extends BaseHtmlView
             'media/com_nxpeasycart/css/site.css',
             ['version' => 'auto', 'relative' => true]
         );
-        $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
-        $wa->useScript('com_nxpeasycart.site');
+
+        $assetManifest = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
+
+        if (is_file($assetManifest)) {
+            $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
+            $wa->useScript('com_nxpeasycart.site');
+        } else {
+            $siteBundleAsset = 'com_nxpeasycart.site.bundle';
+            $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+
+            if (!$wa->assetExists('script', $siteBundleAsset)) {
+                $wa->registerScript(
+                    $siteBundleAsset,
+                    $siteScriptUri,
+                    [],
+                    ['defer' => true]
+                );
+            }
+
+            $wa->useScript($siteBundleAsset);
+        }
 
         $model   = $this->getModel();
         $product = $model ? $model->getItem() : null;
@@ -58,7 +77,6 @@ class HtmlView extends BaseHtmlView
             $document->setTitle(Text::_('COM_NXPEASYCART_PRODUCT_PLACEHOLDER'));
 
             parent::display($tpl);
-
             return;
         }
 
