@@ -33,6 +33,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Site\Service\Router as EasyCartRouter;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Router\LandingAliasRule;
 
 $autoloadCandidates = [
     __DIR__ . '/../vendor/autoload.php',
@@ -197,5 +198,38 @@ return new class () implements ServiceProviderInterface {
                 $container->get(DatabaseInterface::class)
             )
         );
+
+        $this->attachLandingAliasRule($container);
+    }
+
+    /**
+     * Attach the landing alias router rule immediately so template routers can't bypass it.
+     */
+    private function attachLandingAliasRule(Container $container): void
+    {
+        static $attached = false;
+
+        if ($attached) {
+            return;
+        }
+
+        $app = $container->has(CMSApplicationInterface::class)
+            ? $container->get(CMSApplicationInterface::class)
+            : JoomlaFactory::getApplication();
+
+        if (!method_exists($app, 'isClient') || !$app->isClient('site')) {
+            return;
+        }
+
+        $router = $app->getRouter();
+
+        if (!$router instanceof SiteRouter) {
+            return;
+        }
+
+        $rule = new LandingAliasRule($app->getMenu());
+        $router->attachParseRule([$rule, '__invoke'], SiteRouter::PROCESS_BEFORE);
+
+        $attached = true;
     }
 };

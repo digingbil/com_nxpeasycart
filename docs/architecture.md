@@ -4,6 +4,7 @@
 
 -   `administrator/components/com_nxpeasycart`
     -   `services/provider.php`: registers the component, custom MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
+        -   Also attaches the storefront `LandingAliasRule` during `onAfterInitialise` so menu aliases such as `/shop-landing` resolve even when a template swaps in its own site router (JA Purity IV, Helix, etc.).
     -   `src/Administrator/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Joomla\Component\Nxpeasycart\Site` namespace while keeping administrator and API traffic on `Joomla\Component\Nxpeasycart\Administrator`.
     -   `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
     -   `src/Administrator/`: PSR-4 namespaced administrator classes (`Joomla\Component\Nxpeasycart\Administrator\…`).
