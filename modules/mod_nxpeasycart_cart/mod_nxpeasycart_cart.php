@@ -9,20 +9,34 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use GuzzleHttp\ClientInterface;
+use Ramsey\Uuid\Uuid;
 
-// Load Composer only in dev contexts where Joomla core is not present
-$loadVendor = !defined('JPATH_LIBRARIES') || !is_file(JPATH_LIBRARIES . '/src/Layout/FileLayout.php');
-if ($loadVendor) {
-    $autoloadCandidates = [
-        JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php',
-        JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
-        dirname(__DIR__, 2) . '/vendor/autoload.php',
-    ];
+$needsVendor = !class_exists(ClientInterface::class, false) || !class_exists(Uuid::class, false);
+$runningInsideJoomla = \defined('JPATH_LIBRARIES') && is_file(JPATH_LIBRARIES . '/src/Layout/FileLayout.php');
 
-    foreach ($autoloadCandidates as $autoload) {
+if ($needsVendor) {
+    $autoloadCandidates = [];
+
+    if (\defined('JPATH_SITE')) {
+        $autoloadCandidates[] = JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php';
+    }
+
+    if (\defined('JPATH_ADMINISTRATOR')) {
+        $autoloadCandidates[] = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php';
+    }
+
+    if (!$runningInsideJoomla) {
+        $autoloadCandidates[] = dirname(__DIR__, 2) . '/vendor/autoload.php';
+    }
+
+    foreach (array_unique($autoloadCandidates) as $autoload) {
         if (is_file($autoload)) {
             require_once $autoload;
-            break;
+
+            if (class_exists(ClientInterface::class, false) && class_exists(Uuid::class, false)) {
+                break;
+            }
         }
     }
 }

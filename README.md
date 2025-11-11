@@ -64,14 +64,18 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
     ```bash
     composer install
     ```
-3. Install Node dependencies for the admin SPA toolchain:
+3. Build the trimmed runtime vendor that Joomla should load (prevents the dev autoloader from hijacking the CMS):
+    ```bash
+    php tools/build-runtime-vendor.php
+    ```
+4. Install Node dependencies for the admin SPA toolchain:
     ```bash
     npm install
     ```
-4. Install the component through the Joomla extension manager or via `Discover`.
-5. After installation, access the admin menu entry **NXP Easy Cart** to verify the placeholder dashboard renders.
-6. Open **System → Manage → Extensions → NXP Easy Cart → Options** and set the store base currency (default `USD`); product variants are validated against this single-currency guardrail.
-7. The component bootstrapper now falls back to the repository root for `vendor/autoload.php`, so you only need to copy the optimised `vendor/` directory when preparing a distributable package.
+5. Install the component through the Joomla extension manager or via `Discover`.
+6. After installation, access the admin menu entry **NXP Easy Cart** to verify the placeholder dashboard renders.
+7. Open **System → Manage → Extensions → NXP Easy Cart → Options** and set the store base currency (default `USD`); product variants are validated against this single-currency guardrail.
+8. Joomla loads runtime dependencies from `administrator/components/com_nxpeasycart/vendor`. Rebuild this folder whenever composer.json changes by re-running `php tools/build-runtime-vendor.php`; avoid pointing Joomla at the repo-root `vendor/` (it includes dev-only packages like `joomla/joomla-cms`).
 
 ## Tooling & dependencies
 
@@ -87,7 +91,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 
 ## Packaging / deployment
 
-- Local development uses the root `vendor/` directory directly; runtime bootstraps the autoloader automatically. When packaging for release, copy the trimmed `vendor/` tree into the bundle alongside the component files.
+- Local development uses the root `vendor/` directory directly for tooling, but Joomla should load the trimmed runtime tree under `administrator/components/com_nxpeasycart/vendor` (generated via `php tools/build-runtime-vendor.php`). When packaging for release, copy that trimmed `vendor/` folder into the bundle alongside the component files.
 - To produce an installable ZIP, run `composer install --no-dev --optimize-autoloader` in a clean workspace, build frontend assets (`npm run build:admin`), and include the trimmed `vendor/` directory plus component files in the package.
 - Do **not** run Composer inside the live Joomla tree; copy or mirror the prepared `vendor/` folder alongside the component when deploying.
 - The manifest living at `administrator/components/com_nxpeasycart/nxpeasycart.xml` follows Joomla’s discovery convention (no `com_` prefix in the filename). After copying the component into a site, use **System → Discover** or `php cli/joomla.php extension:discover` to register it, then complete the install from that screen. Joomla 5’s DI bootstrapping means no administrator entry script is required.

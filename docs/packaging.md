@@ -3,6 +3,7 @@
 1. **Install dependencies**
    - `composer install --no-dev --optimize-autoloader`
    - `npm install && npm run build:admin && npm run build:site`
+   - `php tools/build-runtime-vendor.php` (ensures `administrator/components/com_nxpeasycart/vendor/` contains only runtime deps)
 
 2. **Prune development artefacts**
    - Remove `node_modules/`, `tests/`, `.github/`, local config overrides
@@ -15,7 +16,7 @@
    - Copy `administrator/components/com_nxpeasycart`
    - Copy `components/com_nxpeasycart`
    - Copy `media/com_nxpeasycart`
-   - Include `vendor/` (runtime dependencies only)
+   - Include `vendor/` (runtime dependencies only – generated via `tools/build-runtime-vendor.php`)
 
 5. **Generate manifest zip**
    - `zip -r com_nxpeasycart.zip administrator components media vendor`
