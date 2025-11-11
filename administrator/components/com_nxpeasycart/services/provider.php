@@ -35,18 +35,26 @@ use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Router\LandingAliasRule;
 
-$autoloadCandidates = [
-    __DIR__ . '/../vendor/autoload.php',
-    JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
-    dirname(__DIR__, 4) . '/vendor/autoload.php',
-];
+// Only load vendor autoloader if we're NOT running in a Joomla installation
+// (i.e., during unit tests or standalone dev)
+$loadVendor = !defined('JPATH_LIBRARIES') || !is_file(JPATH_LIBRARIES .
+        '/src/Layout/FileLayout.php');
 
-foreach ($autoloadCandidates as $autoload) {
-    if (is_file($autoload)) {
-        require_once $autoload;
-        break;
+if ($loadVendor) {
+    $autoloadCandidates = [
+        __DIR__ . '/../vendor/autoload.php',
+        JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
+        dirname(__DIR__, 4) . '/vendor/autoload.php',
+    ];
+
+    foreach ($autoloadCandidates as $autoload) {
+        if (is_file($autoload)) {
+            require_once $autoload;
+            break;
+        }
     }
 }
+
 
 return new class () implements ServiceProviderInterface {
     /**

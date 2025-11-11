@@ -10,16 +10,20 @@ use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
-$autoloadCandidates = [
-    JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php',
-    JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
-    dirname(__DIR__, 2) . '/vendor/autoload.php',
-];
+// Load Composer only in dev contexts where Joomla core is not present
+$loadVendor = !defined('JPATH_LIBRARIES') || !is_file(JPATH_LIBRARIES . '/src/Layout/FileLayout.php');
+if ($loadVendor) {
+    $autoloadCandidates = [
+        JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php',
+        JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
+        dirname(__DIR__, 2) . '/vendor/autoload.php',
+    ];
 
-foreach ($autoloadCandidates as $autoload) {
-    if (is_file($autoload)) {
-        require_once $autoload;
-        break;
+    foreach ($autoloadCandidates as $autoload) {
+        if (is_file($autoload)) {
+            require_once $autoload;
+            break;
+        }
     }
 }
 
