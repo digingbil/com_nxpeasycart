@@ -4,7 +4,6 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Helper\ModuleHelper;
-use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
@@ -41,29 +40,23 @@ if ($needsVendor) {
     }
 }
 
-\JLoader::registerNamespace(
-    'Joomla\\Component\\Nxpeasycart\\Site',
-    JPATH_SITE . '/components/com_nxpeasycart/src',
-    false,
-    false,
-    'psr4'
-);
-\JLoader::registerNamespace(
-    'Joomla\\Component\\Nxpeasycart\\Administrator',
-    JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src/Administrator',
-    false,
-    false,
-    'psr4'
-);
+foreach (
+    [
+        'Joomla\\Component\\Nxpeasycart\\Site' => JPATH_SITE . '/components/com_nxpeasycart/src',
+        'Joomla\\Component\\Nxpeasycart\\Administrator' => JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src/Administrator',
+    ] as $namespace => $path
+) {
+    \JLoader::registerNamespace($namespace, $path, false, false, 'psr4');
+}
 
+$app = Factory::getApplication();
 $container = Factory::getContainer();
 
-$document = Factory::getApplication()->getDocument();
-$wa       = $document->getWebAssetManager();
-$language = Factory::getApplication()->getLanguage();
+$language = $app->getLanguage();
 $language->load('mod_nxpeasycart_cart', JPATH_SITE);
 $language->load('mod_nxpeasycart_cart', __DIR__);
 
+$wa = $app->getDocument()->getWebAssetManager();
 $wa->registerAndUseStyle(
     'com_nxpeasycart.site.css',
     'media/com_nxpeasycart/css/site.css',

@@ -776,21 +776,6 @@ const emit = defineEmits([
 
 const __ = props.translate;
 
-const formatWithPlaceholders = (text, replacements = []) => {
-    if (!replacements.length) {
-        return text;
-    }
-
-    if (typeof window !== "undefined" && window?.Joomla?.sprintf) {
-        return window.Joomla.sprintf(text, ...replacements);
-    }
-
-    return replacements.reduce(
-        (accumulator, value) => accumulator.replace("%s", value),
-        text
-    );
-};
-
 const selections = reactive({});
 const bulkState = ref("");
 const noteDraft = ref("");
@@ -874,9 +859,11 @@ const itemsLabel = (count) => {
         return __("COM_NXPEASYCART_ORDERS_BADGE_ITEM", "1 item");
     }
 
-    const template = __("COM_NXPEASYCART_ORDERS_BADGE_ITEMS", "%s items");
-
-    return formatWithPlaceholders(template, [String(count)]);
+    return __(
+        "COM_NXPEASYCART_ORDERS_BADGE_ITEMS",
+        "%s items",
+        [String(count)]
+    );
 };
 
 const stateLabel = (state) => {
@@ -984,14 +971,11 @@ const emitAddNote = () => {
 };
 
 const selectionSummary = computed(() =>
-    formatWithPlaceholders(
-        __(
-            "COM_NXPEASYCART_ORDERS_SELECTED_COUNT",
-            "%s selected",
-            [],
-            "ordersSelectedCount"
-        ),
-        [String(selectedIds.value.length)]
+    __(
+        "COM_NXPEASYCART_ORDERS_SELECTED_COUNT",
+        "%s selected",
+        [String(selectedIds.value.length)],
+        "ordersSelectedCount"
     )
 );
 
@@ -1011,17 +995,14 @@ const historyLabel = (entry) => {
         case "order.state.transitioned": {
             const from = stateLabel(entry.context?.from ?? "");
             const to = stateLabel(entry.context?.to ?? "");
-            return formatWithPlaceholders(
-                __(
-                    "COM_NXPEASYCART_ORDERS_TIMELINE_STATE",
-                    "State changed from %s to %s",
-                    [],
-                    "ordersTimelineState"
-                ),
+            return __(
+                "COM_NXPEASYCART_ORDERS_TIMELINE_STATE",
+                "State changed from %s to %s",
                 [
                     from || entry.context?.from || "",
                     to || entry.context?.to || "",
-                ]
+                ],
+                "ordersTimelineState"
             );
         }
         case "order.note":
@@ -1048,14 +1029,11 @@ const historyLabel = (entry) => {
                 state.activeOrder.currency
             );
 
-            return formatWithPlaceholders(
-                __(
-                    "COM_NXPEASYCART_ORDERS_TIMELINE_PAYMENT_RECORDED",
-                    "%s recorded (%s)",
-                    [],
-                    "ordersTimelinePaymentRecorded"
-                ),
-                [gateway, amount]
+            return __(
+                "COM_NXPEASYCART_ORDERS_TIMELINE_PAYMENT_RECORDED",
+                "%s recorded (%s)",
+                [gateway, amount],
+                "ordersTimelinePaymentRecorded"
             );
         }
         default:

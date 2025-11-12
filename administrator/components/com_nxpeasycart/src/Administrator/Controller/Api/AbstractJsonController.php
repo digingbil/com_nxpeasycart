@@ -45,21 +45,40 @@ class AbstractJsonController extends BaseController
      */
     protected function respond($data, int $code = 200): JsonResponse
     {
-        if ($this->app && \method_exists($this->app, 'setHeader')) {
-            $this->app->setHeader('status', $code);
-        }
-
-        http_response_code($code);
-
         $hasError = $code >= 400;
 
         $response = new JsonResponse($data, '', $hasError);
+        $body     = (string) $response;
 
-        if ($this->app && \method_exists($this->app, 'setHeader')) {
-            $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        if (\method_exists($response, 'setHttpStatusCode')) {
+            $response->setHttpStatusCode($code);
         }
 
-        echo $response;
+        if ($this->app && \method_exists($this->app, 'setHeader')) {
+            $this->app->setHeader('status', $code);
+            $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        } else {
+            http_response_code($code);
+        }
+
+        if ($this->app && \method_exists($this->app, 'allowCache')) {
+            $this->app->allowCache(false);
+        }
+
+        if ($this->app && \method_exists($this->app, 'setBody')) {
+            $this->app->setBody($body);
+        }
+
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            http_response_code($code);
+        }
+
+        echo $body;
+
+        if (PHP_SAPI !== 'cli' && $this->app && \method_exists($this->app, 'close')) {
+            $this->app->close();
+        }
 
         return $response;
     }

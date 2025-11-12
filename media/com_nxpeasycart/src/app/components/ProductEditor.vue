@@ -13,17 +13,66 @@
                             : __("COM_NXPEASYCART_PRODUCTS_ADD", "Add product")
                     }}
                 </h2>
-                <button
-                    type="button"
-                    class="nxp-ec-modal__close"
-                    @click="cancel"
-                    :aria-label="__('JCLOSE', 'Close')"
-                >
-                    &times;
-                </button>
+
+                <div class="nxp-ec-modal__header-actions">
+                    <button
+                        type="button"
+                        class="nxp-ec-btn nxp-ec-btn--icon"
+                        @click="cancel"
+                        :disabled="saving"
+                        :title="__('JCANCEL', 'Cancel')"
+                        :aria-label="__('JCANCEL', 'Cancel')"
+                    >
+                        <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                        <span class="nxp-ec-sr-only">
+                            {{ __("JCANCEL", "Cancel") }}
+                        </span>
+                    </button>
+                    <button
+                        type="submit"
+                        class="nxp-ec-btn nxp-ec-btn--icon nxp-ec-btn--primary"
+                        :disabled="saving"
+                        :form="formId"
+                        :title="
+                            saving
+                                ? __('JPROCESSING_REQUEST', 'Saving…')
+                                : __('JSAVE', 'Save')
+                        "
+                        :aria-label="
+                            saving
+                                ? __('JPROCESSING_REQUEST', 'Saving…')
+                                : __('JSAVE', 'Save')
+                        "
+                    >
+                        <i
+                            class="fa-solid fa-floppy-disk"
+                            :class="{ 'fa-spin': saving }"
+                            aria-hidden="true"
+                        ></i>
+                        <span class="nxp-ec-sr-only">
+                            {{
+                                saving
+                                    ? __("JPROCESSING_REQUEST", "Saving…")
+                                    : __("JSAVE", "Save")
+                            }}
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        class="nxp-ec-modal__close"
+                        @click="cancel"
+                        :aria-label="__('JCLOSE', 'Close')"
+                    >
+                        &times;
+                    </button>
+                </div>
             </header>
 
-            <form class="nxp-ec-form" @submit.prevent="submit">
+            <form
+                :id="formId"
+                class="nxp-ec-form"
+                @submit.prevent="submit"
+            >
                 <div
                     v-if="errors.length"
                     class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
@@ -666,7 +715,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch, onBeforeUnmount } from "vue";
+import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({
     open: {
@@ -706,6 +755,7 @@ const props = defineProps({
 const emit = defineEmits(["submit", "cancel"]);
 
 const __ = props.translate;
+const formId = "product-editor-form";
 
 const baseCurrency = computed(() =>
     (props.baseCurrency || "USD").toUpperCase()
@@ -1191,6 +1241,56 @@ const normaliseMediaValue = (value) => {
     return result.trim();
 };
 
+const applyImageSelection = (
+    rawValue,
+    { keepIndex = false, appendWhenNoIndex = false, targetIndex = null } = {}
+) => {
+    const value = normaliseMediaValue(rawValue);
+
+    if (value === "") {
+        return false;
+    }
+
+    ensureImagesArray();
+
+    const indexToUse =
+        targetIndex !== null && targetIndex >= 0 ? targetIndex : mediaPickerIndex;
+
+    if (
+        indexToUse === null ||
+        indexToUse === undefined ||
+        Number.isNaN(indexToUse)
+    ) {
+        if (!appendWhenNoIndex) {
+            return false;
+        }
+
+        form.images.push(value);
+
+        if (!keepIndex) {
+            mediaPickerIndex = null;
+            pendingMediaValue = "";
+        }
+
+        return true;
+    }
+
+    if (indexToUse >= form.images.length) {
+        form.images.push(value);
+    } else {
+        form.images[indexToUse] = value;
+    }
+
+    pendingMediaValue = keepIndex ? value : "";
+
+    if (!keepIndex) {
+        mediaPickerIndex = null;
+        pendingMediaValue = "";
+    }
+
+    return true;
+};
+
 const addImage = () => {
     ensureImagesArray();
     form.images.push("");
@@ -1234,11 +1334,7 @@ const promptForImage = (index) => {
         current
     );
 
-    const normalised = normaliseMediaValue(value ?? "");
-
-    if (normalised !== "") {
-        form.images[index] = normalised;
-    }
+    applyImageSelection(value ?? "", { targetIndex: index });
 };
 
 const buildMediaModalUrl = () => {
@@ -1368,17 +1464,7 @@ const ensureMediaPickerField = async () => {
             });
         }
 
-        if (mediaPickerIndex !== null && value !== "") {
-            ensureImagesArray();
-            if (mediaPickerIndex >= form.images.length) {
-                form.images.push(value);
-            } else {
-                form.images[mediaPickerIndex] = value;
-            }
-        }
-
-        mediaPickerIndex = null;
-        pendingMediaValue = "";
+        applyImageSelection(value);
     });
 
     mediaPickerField.addEventListener("joomla-dialog:close", () => {
@@ -1397,8 +1483,8 @@ const ensureMediaPickerField = async () => {
 
             let value = normaliseMediaValue(mediaPickerInput.value ?? "");
 
-        if (value === "" && pendingMediaValue !== "") {
-            value = pendingMediaValue;
+            if (value === "" && pendingMediaValue !== "") {
+                value = pendingMediaValue;
         }
 
         if (value === "" && window.Joomla?.selectedMediaFile) {
@@ -1423,15 +1509,7 @@ const ensureMediaPickerField = async () => {
                 return;
             }
 
-            ensureImagesArray();
-            if (mediaPickerIndex >= form.images.length) {
-                form.images.push(value);
-            } else {
-                form.images[mediaPickerIndex] = value;
-            }
-
-            mediaPickerIndex = null;
-            pendingMediaValue = "";
+            applyImageSelection(value);
         });
     }
 
@@ -1460,33 +1538,30 @@ const handleMediaFileSelected = (event) => {
         });
     }
 
-    if (resolved === "") {
+    if (resolved === "" || mediaPickerIndex === null) {
         return;
     }
 
     pendingMediaValue = resolved;
 
-    // Try to apply immediately if we have an active index
-    if (mediaPickerIndex !== null && resolved !== "") {
-        ensureImagesArray();
-        if (mediaPickerIndex >= form.images.length) {
-            form.images.push(resolved);
-        } else {
-            form.images[mediaPickerIndex] = resolved;
-        }
-
-        if (import.meta?.env?.DEV) {
-            console.debug("[ProductEditor] Applied image immediately", {
-                index: mediaPickerIndex,
-                value: resolved,
-            });
-        }
+    if (
+        applyImageSelection(resolved, {
+            keepIndex: true,
+        }) &&
+        import.meta?.env?.DEV
+    ) {
+        console.debug("[ProductEditor] Applied image immediately", {
+            index: mediaPickerIndex,
+            value: resolved,
+        });
     }
 };
 
-if (typeof document !== "undefined") {
-    document.addEventListener("onMediaFileSelected", handleMediaFileSelected);
-}
+onMounted(() => {
+    if (typeof document !== "undefined") {
+        document.addEventListener("onMediaFileSelected", handleMediaFileSelected);
+    }
+});
 
 const openMediaModal = async (index) => {
     ensureImagesArray();
@@ -1646,6 +1721,34 @@ watch(
 </script>
 
 <style scoped>
+.nxp-ec-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.nxp-ec-modal__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nxp-ec-btn--icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.nxp-ec-btn--icon i {
+    font-size: 1rem;
+}
+
 .nxp-ec-image-list {
     display: grid;
     gap: 0.75rem;
