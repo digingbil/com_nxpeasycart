@@ -148,6 +148,7 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.short_desc'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
+                'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_max'),
                 'MAX(' . $db->quoteName('v.currency') . ') AS ' . $db->quoteName('price_currency'),
@@ -259,6 +260,7 @@ class CategoryModel extends BaseDatabaseModel
                 'price'      => $price,
                 'price_label' => $price['label'],
                 'category_slug' => $linkCategorySlug,
+                'primary_variant_id' => $row->primary_variant_id !== null ? (int) $row->primary_variant_id : null,
                 'link'       => Route::_($link),
             ];
         }

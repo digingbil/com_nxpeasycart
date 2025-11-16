@@ -25,6 +25,7 @@ export function mountLandingIsland(el) {
         title: hero.title || "Shop",
         subtitle: hero.subtitle || "",
     };
+    const cart = payload.cart || {};
     const cta = {
         label: hero?.cta?.label || "Shop Best Sellers",
         link: hero?.cta?.link || searchAction,
@@ -52,5 +53,6 @@ export function mountLandingIsland(el) {
         searchAction,
         searchPlaceholder:
             search.placeholder || DEFAULT_PLACEHOLDER,
+        cart,
     }).mount(el);
 }

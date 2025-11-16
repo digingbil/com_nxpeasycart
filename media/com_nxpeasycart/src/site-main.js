@@ -521,6 +521,13 @@ const mountCategoryIsland = (el) => {
             labelsPayload.search_label ||
             labelsPayload.search_placeholder ||
             "Search products",
+        add_to_cart: labelsPayload.add_to_cart || "Add to cart",
+        added: labelsPayload.added || "Added to cart",
+        view_cart: labelsPayload.view_cart || "View cart",
+        out_of_stock: labelsPayload.out_of_stock || "Out of stock",
+        error_generic:
+            labelsPayload.error_generic ||
+            "We couldn't add this item to your cart. Please try again.",
     };
 
     const links = {
@@ -534,6 +541,11 @@ const mountCategoryIsland = (el) => {
                 ? linksPayload.search
                 : "index.php?option=com_nxpeasycart&view=category",
     };
+
+    const cartPayload = parsePayload(el.dataset.nxpCart, {});
+    const cartToken = cartPayload.token || "";
+    const cartEndpoints = cartPayload.endpoints || {};
+    const cartLinks = cartPayload.links || {};
 
     const products = Array.isArray(productsPayload)
         ? productsPayload
@@ -587,6 +599,10 @@ const mountCategoryIsland = (el) => {
                       )
                       .map((image) => image.trim())
                 : [];
+            const primaryVariantId = Number.parseInt(
+                item.primary_variant_id,
+                10
+            );
 
             return {
                 ...item,
@@ -609,6 +625,9 @@ const mountCategoryIsland = (el) => {
                     max_cents: max,
                 },
                 price_label: priceLabel,
+                primary_variant_id: Number.isFinite(primaryVariantId)
+                    ? primaryVariantId
+                    : null,
             };
         });
 
@@ -706,9 +725,14 @@ const mountCategoryIsland = (el) => {
             :key="product.id || product.slug || product.title"
             class="nxp-ec-product-card"
           >
-            <figure v-if="product.images.length" class="nxp-ec-product-card__media">
+            <a
+              v-if="product.images.length"
+              class="nxp-ec-product-card__media"
+              :href="product.link"
+              :aria-label="labels.view_product + ': ' + product.title"
+            >
               <img :src="product.images[0]" :alt="product.title" loading="lazy" />
-            </figure>
+            </a>
             <div class="nxp-ec-product-card__body">
               <h2 class="nxp-ec-product-card__title">
                 <a :href="product.link">{{ product.title }}</a>
@@ -719,9 +743,37 @@ const mountCategoryIsland = (el) => {
               <p v-if="product.price_label" class="nxp-ec-product-card__price">
                 {{ product.price_label }}
               </p>
-              <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
-                {{ labels.view_product }}
-              </a>
+              <div class="nxp-ec-product-card__actions">
+                <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
+                  {{ labels.view_product }}
+                </a>
+                <button
+                  v-if="canQuickAdd(product)"
+                  type="button"
+                  class="nxp-ec-btn nxp-ec-btn--icon"
+                  :aria-label="labels.add_to_cart + ': ' + product.title"
+                  :disabled="quickState[keyFor(product)]?.loading"
+                  @click="quickAdd(product)"
+                >
+                  <span aria-hidden="true">+</span>
+                  <span class="nxp-ec-sr-only">{{ labels.add_to_cart }}</span>
+                </button>
+              </div>
+              <p
+                v-if="quickState[keyFor(product)]?.error"
+                class="nxp-ec-product-card__hint nxp-ec-product-card__hint--error"
+              >
+                {{ quickState[keyFor(product)].error }}
+              </p>
+              <p
+                v-else-if="quickState[keyFor(product)]?.success"
+                class="nxp-ec-product-card__hint"
+              >
+                {{ labels.added }}
+                <template v-if="cartLinks.cart">
+                  · <a :href="cartLinks.cart">{{ labels.view_cart }}</a>
+                </template>
+              </p>
             </div>
           </article>
         </div>
@@ -776,6 +828,87 @@ const mountCategoryIsland = (el) => {
                 return slug === activeSlug;
             };
 
+            const quickState = reactive({});
+            const keyFor = (product) =>
+                product.id || product.slug || product.title || "product";
+
+            const ensureState = (key) => {
+                if (!quickState[key]) {
+                    quickState[key] = { loading: false, error: "", success: false };
+                }
+
+                return quickState[key];
+            };
+
+            const canQuickAdd = (product) =>
+                !!(cartEndpoints.add && product && product.primary_variant_id);
+
+            const quickAdd = async (product) => {
+                const key = keyFor(product);
+                const state = ensureState(key);
+
+                if (!canQuickAdd(product)) {
+                    window.location.href = product.link || links.search;
+                    return;
+                }
+
+                state.loading = true;
+                state.error = "";
+                state.success = false;
+
+                try {
+                    const formData = new FormData();
+
+                    if (cartToken) {
+                        formData.append(cartToken, "1");
+                    }
+
+                    formData.append("product_id", String(product.id || ""));
+                    formData.append(
+                        "variant_id",
+                        String(product.primary_variant_id)
+                    );
+                    formData.append("qty", "1");
+
+                    let json = null;
+
+                    const response = await fetch(cartEndpoints.add, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            Accept: "application/json",
+                        },
+                    });
+
+                    try {
+                        json = await response.json();
+                    } catch (error) {
+                        // Ignore non-JSON responses.
+                    }
+
+                    if (!response.ok || !json || json.success === false) {
+                        throw new Error(
+                            (json && json.message) || labels.error_generic
+                        );
+                    }
+
+                    const cart = json.data?.cart || null;
+
+                    if (cart) {
+                        window.dispatchEvent(
+                            new CustomEvent("nxp-cart:updated", { detail: cart })
+                        );
+                    }
+
+                    state.success = true;
+                } catch (error) {
+                    state.error =
+                        (error && error.message) || labels.error_generic;
+                } finally {
+                    state.loading = false;
+                }
+            };
+
             return {
                 title,
                 search,
@@ -786,6 +919,11 @@ const mountCategoryIsland = (el) => {
                 filters,
                 links,
                 isActive,
+                quickAdd,
+                canQuickAdd,
+                quickState,
+                keyFor,
+                cartLinks,
             };
         },
     });

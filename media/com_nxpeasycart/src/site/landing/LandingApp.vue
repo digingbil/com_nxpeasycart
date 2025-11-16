@@ -19,6 +19,7 @@
             :sections="visibleSections"
             :labels="labels"
             :search-action="searchAction"
+            :cart="cart"
         />
 
         <LandingTrust :trust="trustBlock" />
@@ -60,6 +61,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    cart: {
+        type: Object,
+        default: () => ({}),
+    },
     trust: {
         type: Object,
         default: () => ({ text: "" }),
@@ -89,6 +94,9 @@ const labels = computed(() => ({
     search_button: props.labels?.search_button || "Search",
     view_all: props.labels?.view_all || "View all",
     view_product: props.labels?.view_product || "View product",
+    add_to_cart: props.labels?.add_to_cart || "Add to cart",
+    added: props.labels?.added || "Added to cart",
+    view_cart: props.labels?.view_cart || "View cart",
     categories_aria:
         props.labels?.categories_aria || "Browse categories",
 }));
@@ -110,6 +118,8 @@ const searchAction = computed(
 const searchPlaceholder = computed(
     () => props.searchPlaceholder || "Search for shoes, laptops, gifts…"
 );
+
+const cart = computed(() => props.cart ?? {});
 
 const updateTerm = (value) => {
     term.value = value;

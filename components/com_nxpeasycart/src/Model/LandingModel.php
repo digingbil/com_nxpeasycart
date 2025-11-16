@@ -311,6 +311,7 @@ class LandingModel extends BaseDatabaseModel
                 $db->quoteName('p.images'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.created'),
+                'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('min_price_cents'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('max_price_cents'),
                 'MAX(' . $db->quoteName('v.currency') . ') AS ' . $db->quoteName('currency'),
@@ -398,6 +399,7 @@ class LandingModel extends BaseDatabaseModel
                 'images'      => $images,
                 'featured'    => (bool) $row->featured,
                 'price_label' => $priceLabel,
+                'primary_variant_id' => $row->primary_variant_id !== null ? (int) $row->primary_variant_id : null,
                 'link'        => Route::_(
                     'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
                 ),

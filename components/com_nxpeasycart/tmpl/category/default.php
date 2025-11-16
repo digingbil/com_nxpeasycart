@@ -4,6 +4,13 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
+
+$theme   = $this->theme ?? [];
+$cssVars = '';
+foreach (($theme['css_vars'] ?? []) as $var => $value) {
+    $cssVars .= $var . ':' . $value . ';';
+}
 
 /** @var array<string, mixed>|null $this->category */
 /** @var array<int, array<string, mixed>> $this->products */
@@ -38,6 +45,11 @@ $labels      = [
     'view_product'       => Text::_('COM_NXPEASYCART_CATEGORY_VIEW_PRODUCT'),
     'search_placeholder' => Text::_('COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER'),
     'search_label'       => Text::_('COM_NXPEASYCART_PRODUCTS_SEARCH_PLACEHOLDER'),
+    'add_to_cart'        => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'),
+    'added'              => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
+    'view_cart'          => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
+    'out_of_stock'       => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
+    'error_generic'      => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART_ERROR'),
 ];
 $labelsJson = htmlspecialchars(
     json_encode($labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -53,6 +65,23 @@ $linksJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+
+$cart = [
+    'token' => Session::getFormToken(),
+    'endpoints' => [
+        'add'     => Route::_('index.php?option=com_nxpeasycart&task=cart.add&format=json', false),
+        'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
+    ],
+    'links' => [
+        'cart'     => Route::_('index.php?option=com_nxpeasycart&view=cart'),
+        'checkout' => Route::_('index.php?option=com_nxpeasycart&view=checkout'),
+    ],
+];
+$cartJson = htmlspecialchars(
+    json_encode($cart, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ENT_QUOTES,
+    'UTF-8'
+);
 ?>
 
 <section
@@ -64,6 +93,8 @@ $linksJson = htmlspecialchars(
     data-nxp-labels="<?php echo $labelsJson; ?>"
     data-nxp-links="<?php echo $linksJson; ?>"
     data-nxp-search="<?php echo $searchValue; ?>"
+    data-nxp-cart="<?php echo $cartJson; ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <header class="nxp-ec-category__header">
         <h1 class="nxp-ec-category__title">
@@ -86,12 +117,6 @@ $linksJson = htmlspecialchars(
             class="nxp-ec-category__filters"
             aria-label="<?php echo htmlspecialchars($labels['filters'], ENT_QUOTES, 'UTF-8'); ?>"
         >
-            <a
-                class="nxp-ec-category__filter<?php echo $activeSlug === '' ? ' is-active' : ''; ?>"
-                href="<?php echo htmlspecialchars($links['all'], ENT_QUOTES, 'UTF-8'); ?>"
-            >
-                <?php echo htmlspecialchars($labels['filter_all'], ENT_QUOTES, 'UTF-8'); ?>
-            </a>
             <?php foreach ($categories as $cat) : ?>
                 <a
                     class="nxp-ec-category__filter<?php echo $activeSlug === ($cat['slug'] ?? '') ? ' is-active' : ''; ?>"
@@ -112,13 +137,17 @@ $linksJson = htmlspecialchars(
             <?php foreach ($products as $product) : ?>
                 <article class="nxp-ec-product-card">
                     <?php if (!empty($product['images'][0])) : ?>
-                        <figure class="nxp-ec-product-card__media">
+                        <a
+                            class="nxp-ec-product-card__media"
+                            href="<?php echo htmlspecialchars($product['link'], ENT_QUOTES, 'UTF-8'); ?>"
+                            aria-label="<?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                        >
                             <img
                                 src="<?php echo htmlspecialchars($product['images'][0], ENT_QUOTES, 'UTF-8'); ?>"
                                 alt="<?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>"
                                 loading="lazy"
                             />
-                        </figure>
+                        </a>
                     <?php endif; ?>
                     <div class="nxp-ec-product-card__body">
                         <h2 class="nxp-ec-product-card__title">

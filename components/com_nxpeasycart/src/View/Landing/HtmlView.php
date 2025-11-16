@@ -7,6 +7,8 @@ namespace Joomla\Component\Nxpeasycart\Site\View\Landing;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
@@ -121,6 +123,8 @@ class HtmlView extends BaseHtmlView
      */
     public function getLandingPayload(): array
     {
+        $token = Session::getFormToken();
+
         return [
             'hero' => $this->hero,
             'search' => $this->search,
@@ -147,10 +151,23 @@ class HtmlView extends BaseHtmlView
                 'search_button'   => Text::_('COM_NXPEASYCART_LANDING_SEARCH_SUBMIT'),
                 'view_all'        => Text::_('COM_NXPEASYCART_LANDING_VIEW_ALL'),
                 'view_product'    => Text::_('COM_NXPEASYCART_LANDING_CARD_VIEW'),
+                'add_to_cart'     => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'),
+                'added'           => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
+                'view_cart'       => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
                 'categories_aria' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
             ],
             'trust' => [
                 'text' => $this->trustBadge,
+            ],
+            'cart' => [
+                'token' => $token,
+                'endpoints' => [
+                    'add' => Route::_('index.php?option=com_nxpeasycart&task=cart.add&format=json', false),
+                    'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
+                ],
+                'links' => [
+                    'cart' => Route::_('index.php?option=com_nxpeasycart&view=cart'),
+                ],
             ],
             'theme' => $this->theme,
         ];

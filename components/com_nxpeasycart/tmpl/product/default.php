@@ -8,6 +8,13 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 
+$theme          = $this->theme ?? [];
+$primaryBtnClass = trim('nxp-ec-btn nxp-ec-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
+$cssVars        = '';
+foreach (($theme['css_vars'] ?? []) as $var => $value) {
+    $cssVars .= $var . ':' . $value . ';';
+}
+
 /** @var array<string, mixed> $product */
 $product       = $this->product       ?? [];
 $isPlaceholder = $this->isPlaceholder ?? empty($product);
@@ -141,6 +148,7 @@ $payloadJson = htmlspecialchars(
     class="nxp-ec-product"
     data-nxp-island="product"
     data-nxp-product="<?php echo $payloadJson; ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <div class="nxp-ec-product__media">
         <?php if ($primaryImage) : ?>
@@ -179,7 +187,7 @@ $payloadJson = htmlspecialchars(
             </p>
         <?php endif; ?>
 
-        <button class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy" type="button">
+        <button class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?> nxp-ec-product__buy" type="button">
             <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
         </button>
     </div>

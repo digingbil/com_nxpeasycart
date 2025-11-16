@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Product frontend view.
@@ -15,6 +16,13 @@ use Joomla\CMS\Uri\Uri;
 
 class HtmlView extends BaseHtmlView
 {
+    /**
+     * Template styling tokens.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $theme = [];
+
     /**
      * Loaded product payload.
      *
@@ -69,6 +77,7 @@ class HtmlView extends BaseHtmlView
 
         $model   = $this->getModel();
         $product = $model ? $model->getItem() : null;
+        $this->theme = TemplateAdapter::resolve();
 
         if (!$product) {
             $this->product       = [];

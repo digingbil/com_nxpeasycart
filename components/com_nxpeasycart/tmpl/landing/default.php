@@ -112,13 +112,17 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                         <?php foreach ($items as $item) : ?>
                             <article class="nxp-ec-landing__card">
                                 <?php if (!empty($item['images'][0])) : ?>
-                                    <figure class="nxp-ec-landing__card-media">
+                                    <a
+                                        class="nxp-ec-landing__card-media"
+                                        href="<?php echo htmlspecialchars($item['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                        aria-label="<?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_LANDING_CARD_VIEW'), ENT_QUOTES, 'UTF-8'); ?>"
+                                    >
                                         <img
                                             src="<?php echo htmlspecialchars($item['images'][0], ENT_QUOTES, 'UTF-8'); ?>"
                                             alt="<?php echo htmlspecialchars($item['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                             loading="lazy"
                                         />
-                                    </figure>
+                                    </a>
                                 <?php endif; ?>
                                 <div class="nxp-ec-landing__card-body">
                                     <h3 class="nxp-ec-landing__card-title">

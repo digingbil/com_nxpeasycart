@@ -8,12 +8,20 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Category listing view.
  */
 class HtmlView extends BaseHtmlView
 {
+    /**
+     * Template styling tokens.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $theme = [];
+
     /**
      * @var array<string, mixed>|null
      */
@@ -43,6 +51,7 @@ class HtmlView extends BaseHtmlView
         $this->category   = $model ? $model->getItem() : null;
         $this->products   = $model ? $model->getProducts() : [];
         $this->categories = $model ? $model->getCategories() : [];
+        $this->theme      = TemplateAdapter::resolve();
 
         $wa = $document->getWebAssetManager();
         $wa->registerAndUseStyle(
