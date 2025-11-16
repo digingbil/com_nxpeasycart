@@ -68,12 +68,9 @@ class ProductsController extends AbstractJsonController
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
 
-        $items        = [];
         $productModel = $this->getProductModel();
-
-        foreach ($model->getItems() as $item) {
-            $items[] = $this->transformProduct($productModel->hydrateItem($item));
-        }
+        $items        = $productModel->hydrateItems($model->getItems());
+        $items        = array_map(fn ($item) => $this->transformProduct($item), $items);
 
         $pagination = $model->getPagination();
 

@@ -11,6 +11,7 @@
 3. **Warm cache + assets**
    - `php cli/joomla.php extension:discover`
    - Verify cached shipping/tax datasets via CacheService (`cache:clear` prior to snapshot)
+   - Ensure the latest `media/com_nxpeasycart/.vite/manifest.json` entries are reflected in `media/com_nxpeasycart/joomla.asset.json` (hashed site bundle paths + `version: auto`)
 
 4. **Assemble package tree**
    - Copy `administrator/components/com_nxpeasycart`

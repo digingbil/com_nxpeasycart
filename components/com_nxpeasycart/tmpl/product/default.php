@@ -3,10 +3,12 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Filter\InputFilter;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 
 $theme          = $this->theme ?? [];
 $primaryBtnClass = trim('nxp-ec-btn nxp-ec-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
@@ -43,38 +45,34 @@ $categories = $product['categories'] ?? [];
 $language = Factory::getApplication()->getLanguage();
 $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
 
-$formatMoney = static function (int $cents, string $currency) use ($locale): string {
-    $amount = $cents / 100;
-
-    if (class_exists('NumberFormatter', false)) {
-        try {
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $formatted = $formatter->formatCurrency($amount, $currency);
-
-            if ($formatted !== false) {
-                return (string) $formatted;
-            }
-        } catch (\Throwable $exception) {
-            // Fallback below.
-        }
-    }
-
-    return sprintf('%s %.2f', $currency, $amount);
-};
-
 $primaryImage = $images[0] ?? '';
 $priceMin     = (int) ($price['min_cents'] ?? 0);
 $priceMax     = (int) ($price['max_cents'] ?? 0);
 $priceLabel   = $priceMin === $priceMax
-    ? $formatMoney($priceMin, $currency)
-    : Text::sprintf('COM_NXPEASYCART_PRODUCT_PRICE_RANGE', $formatMoney($priceMin, $currency), $formatMoney($priceMax, $currency));
+    ? MoneyHelper::format($priceMin, $currency, $locale)
+    : Text::sprintf(
+        'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
+        MoneyHelper::format($priceMin, $currency, $locale),
+        MoneyHelper::format($priceMax, $currency, $locale)
+    );
 
-$preparedLongDescription = $product['long_desc'] !== ''
-    ? HTMLHelper::_('content.prepare', $product['long_desc'], '', 'com_nxpeasycart.product')
-    : '';
+$preparedLongDescription = '';
+
+if ($product['long_desc'] !== '') {
+    $rawLongDescription = HTMLHelper::_('content.prepare', $product['long_desc'], '', 'com_nxpeasycart.product');
+
+    $safeHtmlFilter        = InputFilter::getInstance(
+        ['a', 'p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote'],
+        ['href', 'title', 'target', 'rel'],
+        1,
+        1,
+        1
+    );
+    $preparedLongDescription = $safeHtmlFilter->clean($rawLongDescription);
+}
 
 $variantPayload = array_map(
-    static function (array $variant) use ($formatMoney): array {
+    static function (array $variant) use ($locale): array {
         $priceCents = (int) ($variant['price_cents'] ?? 0);
         $currency   = strtoupper((string) ($variant['currency'] ?? 'USD'));
 
@@ -83,7 +81,7 @@ $variantPayload = array_map(
             'sku'          => (string) ($variant['sku'] ?? ''),
             'price_cents'  => $priceCents,
             'currency'     => $currency,
-            'price_label'  => $formatMoney($priceCents, $currency),
+            'price_label'  => MoneyHelper::format($priceCents, $currency, $locale),
             'stock'        => (int) ($variant['stock'] ?? 0),
             'options'      => $variant['options'] ?? [],
             'weight'       => $variant['weight'] ?? null,
@@ -94,19 +92,17 @@ $variantPayload = array_map(
 
 $payload = [
     'product' => [
-        'id'          => (int) ($product['id'] ?? 0),
-        'slug'        => (string) ($product['slug'] ?? ''),
-        'title'       => (string) ($product['title'] ?? ''),
-        'short_desc'  => (string) ($product['short_desc'] ?? ''),
-        'long_desc'   => (string) ($product['long_desc'] ?? ''),
+        'id'             => (int) ($product['id'] ?? 0),
+        'title'          => (string) ($product['title'] ?? ''),
+        'short_desc'     => (string) ($product['short_desc'] ?? ''),
         'long_desc_html' => $preparedLongDescription,
-        'images'      => $images,
-        'categories'  => $categories,
-        'price'       => [
-            'currency'   => $currency,
-            'min_cents'  => $priceMin,
-            'max_cents'  => $priceMax,
-            'label'      => $priceLabel,
+        'images'         => $images,
+        'categories'     => $categories,
+        'price'          => [
+            'currency'  => $currency,
+            'min_cents' => $priceMin,
+            'max_cents' => $priceMax,
+            'label'     => $priceLabel,
         ],
     ],
     'variants' => $variantPayload,
@@ -137,17 +133,12 @@ $payload = [
     'primary_alt' => Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']),
 ];
 
-$payloadJson = htmlspecialchars(
-    json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-    ENT_QUOTES,
-    'UTF-8'
-);
+$payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
 ?>
 
 <article
     class="nxp-ec-product"
-    data-nxp-island="product"
-    data-nxp-product="<?php echo $payloadJson; ?>"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <div class="nxp-ec-product__media">
@@ -187,9 +178,17 @@ $payloadJson = htmlspecialchars(
             </p>
         <?php endif; ?>
 
-        <button class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?> nxp-ec-product__buy" type="button">
-            <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
-        </button>
+        <div
+            class="nxp-ec-product__actions"
+            data-nxp-island="cart-button"
+            data-nxp-product="<?php echo $payloadJsonAttr; ?>"
+            data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
+            data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
+        >
+            <button class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?> nxp-ec-product__buy" type="button">
+                <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
+            </button>
+        </div>
     </div>
 
     <?php if ($preparedLongDescription !== '') : ?>
@@ -217,7 +216,7 @@ $payloadJson = htmlspecialchars(
                     <?php foreach ($variants as $variant) : ?>
                         <tr>
                             <td><?php echo htmlspecialchars($variant['sku'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars($formatMoney((int) $variant['price_cents'], $variant['currency']), ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars(MoneyHelper::format((int) $variant['price_cents'], $variant['currency'], $locale), ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo (int) $variant['stock']; ?></td>
                             <td>
                                 <?php if (!empty($variant['options'])) : ?>

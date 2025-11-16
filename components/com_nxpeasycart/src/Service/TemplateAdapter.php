@@ -29,9 +29,16 @@ class TemplateAdapter
      */
     public static function resolveWithoutOverrides(): array
     {
+        static $cache = [];
+
         $app      = Factory::getApplication();
         $template = $app->getTemplate(true);
         $name     = strtolower((string) ($template->template ?? ''));
+        $cacheKey = $name . ':' . md5(json_encode($template->params ?? []));
+
+        if (isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
 
         $defaults = [
             'container_class'        => 'container',
@@ -103,10 +110,11 @@ class TemplateAdapter
                 $params = new Registry();
             }
 
-            return self::resolveHelix($defaults, $params);
+            $cache[$cacheKey] = self::resolveHelix($defaults, $params);
+            return $cache[$cacheKey];
         }
 
-        return $defaults;
+        return $cache[$cacheKey] = $defaults;
     }
 
     /**

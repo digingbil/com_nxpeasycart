@@ -7,6 +7,7 @@
             "name": "com_nxpeasycart.admin",
             "type": "script",
             "uri": "com_nxpeasycart/js/admin.iife.js",
+            "uri.min": "com_nxpeasycart/js/admin.iife.min.js",
             "dependencies": [
                 "core"
             ],
@@ -17,12 +18,13 @@
         {
             "name": "com_nxpeasycart.site",
             "type": "script",
-            "uri": "com_nxpeasycart/js/site.iife.js",
+            "uri": "com_nxpeasycart/js/site.D3a5uTEH.js",
             "dependencies": [
                 "core"
             ],
             "attributes": {
-                "defer": true
+                "defer": true,
+                "version": "auto"
             }
         }
     ]

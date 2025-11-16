@@ -18,12 +18,16 @@ $cartJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
+$currency = strtoupper((string) ($summary['currency'] ?? 'USD'));
 ?>
 
 <section
     class="nxp-ec-cart"
     data-nxp-island="cart"
     data-nxp-cart="<?php echo $cartJson; ?>"
+    data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
+    data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
 >
     <noscript>
         <header class="nxp-ec-cart__header">

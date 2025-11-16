@@ -40,7 +40,7 @@ class AssetRegistrar
                 self::SITE_SCRIPT_ASSET,
                 rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js',
                 [],
-                ['defer' => true]
+                ['defer' => true, 'version' => 'auto']
             );
         }
 

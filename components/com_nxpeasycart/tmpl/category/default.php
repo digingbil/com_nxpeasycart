@@ -82,6 +82,8 @@ $cartJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$locale   = $this->locale ?? \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
+$currency = $this->currency ?? 'USD';
 ?>
 
 <section
@@ -94,6 +96,8 @@ $cartJson = htmlspecialchars(
     data-nxp-links="<?php echo $linksJson; ?>"
     data-nxp-search="<?php echo $searchValue; ?>"
     data-nxp-cart="<?php echo $cartJson; ?>"
+    data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
+    data-nxp-currency="<?php echo htmlspecialchars(strtoupper($currency), ENT_QUOTES, 'UTF-8'); ?>"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <header class="nxp-ec-category__header">

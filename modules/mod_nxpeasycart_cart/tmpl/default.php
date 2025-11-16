@@ -82,6 +82,8 @@ $countLabel = $itemCount === 1
     class="nxp-ec-cart-summary"
     data-nxp-island="cart-summary"
     data-nxp-cart-summary="<?php echo $payloadJson; ?>"
+    data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
+    data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
 >
     <noscript>
         <div class="nxp-ec-cart-summary__inner">

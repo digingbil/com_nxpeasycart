@@ -12,6 +12,13 @@ The admin component loading experience has been enhanced with:
 4. **Prefetch utilities** for adjacent panels (optional optimization)
 5. **Last-updated timestamps** to show data freshness
 
+## Storefront performance (islands)
+
+- **Lazy-mounted islands**: Product, category, cart, cart-summary, and checkout islands mount via `IntersectionObserver` with a prefetch margin to defer hydration until they near the viewport. Environments without the API fall back to immediate mount.
+- **Dynamic imports**: Each island is code-split and loaded on demand from `site-main.js`, so pages that only render one island don’t pay the parse/execute cost for the rest.
+- **Shared site utilities**: A CSRF-aware API client handles `X-CSRF-Token` + form tokens, retries transient 5xxs once, and normalises JSON/form requests; a locale-aware money formatter keeps PHP/JS output aligned using server-provided `data-nxp-locale`/`data-nxp-currency`.
+- **Template adapter memoization**: Template palette detection is cached per request, preventing repeated parsing when multiple views request defaults in the same request lifecycle.
+
 ## Implementation
 
 ### 1. Performance Tracking (`usePerformance.js`)

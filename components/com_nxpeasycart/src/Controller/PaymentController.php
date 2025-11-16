@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
@@ -23,6 +24,10 @@ class PaymentController extends BaseController
     {
         $app   = Factory::getApplication();
         $input = $app->input;
+
+        if (!$this->hasValidToken()) {
+            $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
+        }
 
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
         $gateway = isset($payload['gateway']) ? strtolower((string) $payload['gateway']) : 'stripe';
@@ -139,5 +144,21 @@ class PaymentController extends BaseController
         $app->setBody($response->toString());
         $app->sendResponse();
         $app->close();
+    }
+
+    /**
+     * Verify a CSRF token via header or request payload.
+     */
+    private function hasValidToken(): bool
+    {
+        $input       = Factory::getApplication()->getInput();
+        $headerToken = (string) $input->server->getString('HTTP_X_CSRF_TOKEN', '');
+        $sessionToken = Session::getFormToken();
+
+        if ($headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
+            return true;
+        }
+
+        return Session::checkToken('post');
     }
 }

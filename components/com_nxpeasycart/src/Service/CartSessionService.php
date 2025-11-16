@@ -15,6 +15,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 class CartSessionService
 {
     private const SESSION_KEY = 'com_nxpeasycart.cart_id';
+    private const SESSION_HARDENED = 'com_nxpeasycart.session_hardened';
 
     /**
      * @var CartService
@@ -45,6 +46,8 @@ class CartSessionService
      */
     public function current(): array
     {
+        $this->regenerateOnAuthentication();
+
         $cartId = (string) $this->session->get(self::SESSION_KEY, '');
         $cart   = $cartId !== '' ? $this->carts->load($cartId) : null;
 
@@ -84,5 +87,33 @@ class CartSessionService
         $input->set('com_nxpeasycart.cart', $cart);
 
         return $cart;
+    }
+
+    /**
+     * Regenerate the session ID once a user is authenticated to prevent fixation.
+     */
+    private function regenerateOnAuthentication(): void
+    {
+        if ($this->session->get(self::SESSION_HARDENED, false)) {
+            return;
+        }
+
+        try {
+            $user = Factory::getApplication()->getIdentity();
+        } catch (\Throwable $exception) {
+            return;
+        }
+
+        if (!$user || $user->guest) {
+            return;
+        }
+
+        try {
+            if ($this->session->fork()) {
+                $this->session->set(self::SESSION_HARDENED, true);
+            }
+        } catch (\Throwable $exception) {
+            // Non-fatal: keep the current session but avoid blocking cart access.
+        }
     }
 }

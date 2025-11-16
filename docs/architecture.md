@@ -18,6 +18,9 @@
     -   `forms/product.xml`: Joomla form definition used to validate API payloads.
 -   `components/com_nxpeasycart`
     -   `src/`: storefront controllers/views in the `Joomla\Component\Nxpeasycart\Site\…` namespace; the default `DisplayController` now renders product detail pages populated from the database with SEO-aware metadata.
+    -   `tmpl/`: server-rendered storefront layouts (product, category, cart, checkout, landing) that expose Vue "island" mount points and pass locale/currency into the islands for consistent money formatting.
+    -   `media/com_nxpeasycart`: built assets (hashed JS/CSS) + `joomla.asset.json` pointing to the hashed site/admin bundles; Vite emits `media/com_nxpeasycart/.vite/manifest.json` for registry updates.
+    -   `modules/mod_nxpeasycart_cart`: header cart summary module that consumes the cart island payload.
 
 The admin view exposes a `<div id="nxp-ec-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
 
@@ -63,6 +66,13 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 -   Admin endpoints are emitted as absolute Joomla administrator URLs and the API client merges query parameters onto those URLs, preventing accidental site-app routing. Translation helpers now run placeholder strings through `Joomla.sprintf`, so labels like “0 items” render correctly even when the core translations supply `%s` placeholders.
 -   On the storefront, the product view detects missing/invalid slugs and renders the onboarding placeholder copy instead of raising a 404, allowing `/index.php?option=com_nxpeasycart` to remain functional while catalog data is still being seeded.
 -   `administrator/components/com_nxpeasycart/script.php` ensures the base schema is applied for installs, updates, and discover installs so environments never miss the `#__nxp_easycart_*` tables.
+
+## Storefront build & islands
+
+-   `build/vite.config.site.js` emits hashed site bundles + manifest (`media/com_nxpeasycart/.vite/manifest.json`); `media/com_nxpeasycart/joomla.asset.json` references the hashed entry with `version: auto` for cache-busting.
+-   The storefront JS is split into per-island modules (product/cart-button, category, cart, cart-summary, checkout, landing) loaded on demand via dynamic `import()` and lazy-mounted via `IntersectionObserver`.
+-   Shared site utilities provide CSRF-aware API client, locale-aware money formatting, and payload parsing; locale/currency are passed from server-rendered templates via `data-nxp-*` attributes to keep PHP/JS output in sync.
+-   Template theme tokens are resolved through `TemplateAdapter` and memoised per request to avoid re-parsing template params when multiple views request defaults.
 
 ### Categories & product editing refresh
 

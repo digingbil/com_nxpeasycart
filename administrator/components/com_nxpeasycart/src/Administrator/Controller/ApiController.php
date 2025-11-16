@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Controller;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\Component\Nxpeasycart\Administrator\Controller\Api\AbstractJsonController;
+use Joomla\CMS\Session\Session;
 use RuntimeException;
 
 /**
@@ -51,6 +52,8 @@ class ApiController extends BaseController
 
         $this->debug(sprintf('Loaded controller %s', get_class($controller)));
 
+        $this->assertTokenForUnsafeRequests();
+
         return $controller->execute($action);
     }
 
@@ -86,6 +89,21 @@ class ApiController extends BaseController
         }
 
         return new $class($config, $this->factory, $this->app, $this->input);
+    }
+
+    /**
+     * Enforce CSRF protection for non-idempotent HTTP verbs so stateful endpoints
+     * cannot be hit without a valid token.
+     */
+    private function assertTokenForUnsafeRequests(): void
+    {
+        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+
+        if (\in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+            if (!Session::checkToken('request')) {
+                throw new RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+            }
+        }
     }
 
     private function debug(string $message): void

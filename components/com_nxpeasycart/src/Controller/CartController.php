@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
@@ -24,6 +25,8 @@ class CartController extends BaseController
      * Append a product or variant to the active cart session.
      *
      * @return void
+     *
+     * @throws \Throwable When persistence fails mid-transaction.
      */
     public function add(): void
     {
@@ -58,7 +61,14 @@ class CartController extends BaseController
                 $app->close();
             }
 
-            $productId = (int) $variant->product_id;
+            $variantProductId = (int) $variant->product_id;
+
+            if ($productId > 0 && $productId !== $variantProductId) {
+                echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_INVALID_REQUEST'), true);
+                $app->close();
+            }
+
+            $productId = $variantProductId;
             $product   = $this->loadProduct($db, $productId);
 
             if (!$product) {
@@ -102,7 +112,12 @@ class CartController extends BaseController
                 Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART')
             );
         } catch (\Throwable $exception) {
-            echo new JsonResponse(null, $exception->getMessage(), true);
+            Log::add($exception->getMessage(), Log::ERROR, 'com_nxpeasycart.cart');
+            $message = (defined('JDEBUG') && JDEBUG)
+                ? $exception->getMessage()
+                : Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC');
+
+            echo new JsonResponse(null, $message, true);
         }
 
         $app->close();
@@ -112,6 +127,8 @@ class CartController extends BaseController
      * Return the current cart summary for the active visitor.
      *
      * @return void
+     *
+     * @throws \Throwable When cart retrieval fails.
      */
     public function summary(): void
     {
@@ -126,7 +143,12 @@ class CartController extends BaseController
 
             echo new JsonResponse(['cart' => $cart]);
         } catch (\Throwable $exception) {
-            echo new JsonResponse(null, $exception->getMessage(), true);
+            Log::add($exception->getMessage(), Log::ERROR, 'com_nxpeasycart.cart');
+            $message = (defined('JDEBUG') && JDEBUG)
+                ? $exception->getMessage()
+                : Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC');
+
+            echo new JsonResponse(null, $message, true);
         }
 
         $app->close();
@@ -134,6 +156,11 @@ class CartController extends BaseController
 
     /**
      * Fetch a single variant row ensuring it is active.
+     *
+     * @param DatabaseInterface $db        Database connector
+     * @param int               $variantId Variant identifier
+     *
+     * @return object|null Active variant row or null when missing
      */
     private function loadVariant(DatabaseInterface $db, int $variantId): ?object
     {
@@ -155,6 +182,11 @@ class CartController extends BaseController
 
     /**
      * Fetch the associated product ensuring it is published.
+     *
+     * @param DatabaseInterface $db        Database connector
+     * @param int               $productId Product identifier
+     *
+     * @return object|null Active product row or null when missing
      */
     private function loadProduct(DatabaseInterface $db, int $productId): ?object
     {

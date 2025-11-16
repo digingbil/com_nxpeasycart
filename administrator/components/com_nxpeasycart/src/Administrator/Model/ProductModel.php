@@ -225,13 +225,43 @@ class ProductModel extends AdminModel
      */
     public function hydrateItem(object $item): object
     {
-        $item->active     = (bool) $item->active;
-        $item->featured   = (bool) $item->featured;
-        $item->images     = $this->decodeImages($item->images ?? null);
-        $item->variants   = $this->loadVariants((int) $item->id);
-        $item->categories = $this->loadCategories((int) $item->id);
+        return $this->hydrateItems([$item])[0];
+    }
 
-        return $item;
+    /**
+     * Hydrate a collection of products with images, variants, and categories in bulk.
+     *
+     * @param array<int, object> $items
+     *
+     * @return array<int, object>
+     */
+    public function hydrateItems(array $items): array
+    {
+        if (empty($items)) {
+            return [];
+        }
+
+        $productIds = array_values(
+            array_filter(
+                array_map(static fn ($item) => (int) ($item->id ?? 0), $items),
+                static fn ($id) => $id > 0
+            )
+        );
+
+        $variants   = $this->loadVariantsForProducts($productIds);
+        $categories = $this->loadCategoriesForProducts($productIds);
+
+        foreach ($items as $index => $item) {
+            $id                = (int) ($item->id ?? 0);
+            $item->active      = (bool) $item->active;
+            $item->featured    = (bool) $item->featured;
+            $item->images      = $this->decodeImages($item->images ?? null);
+            $item->variants    = $variants[$id]   ?? [];
+            $item->categories  = $categories[$id] ?? [];
+            $items[$index]     = $item;
+        }
+
+        return $items;
     }
 
     /**
@@ -907,6 +937,66 @@ class ProductModel extends AdminModel
     }
 
     /**
+     * Load variants for multiple products in a single query.
+     *
+     * @param array<int> $productIds
+     *
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    private function loadVariantsForProducts(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $db    = $this->getDbo();
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('product_id'),
+                $db->quoteName('id'),
+                $db->quoteName('sku'),
+                $db->quoteName('price_cents'),
+                $db->quoteName('currency'),
+                $db->quoteName('stock'),
+                $db->quoteName('options'),
+                $db->quoteName('weight'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->where($db->quoteName('product_id') . ' IN (' . implode(',', array_fill(0, \count($productIds), '?')) . ')')
+            ->order([$db->quoteName('product_id') . ' ASC', $db->quoteName('id') . ' ASC']);
+
+        foreach ($productIds as $index => $productId) {
+            $query->bind($index + 1, $productId, ParameterType::INTEGER);
+        }
+
+        $db->setQuery($query);
+        $rows         = (array) $db->loadObjectList();
+        $variantsById = [];
+
+        foreach ($rows as $row) {
+            $productId = (int) $row->product_id;
+
+            $variantsById[$productId] ??= [];
+            $variantsById[$productId][] = [
+                'id'          => (int) $row->id,
+                'sku'         => (string) $row->sku,
+                'price_cents' => (int) $row->price_cents,
+                'price'       => $this->formatPriceCents((int) $row->price_cents),
+                'currency'    => (string) $row->currency,
+                'stock'       => (int) $row->stock,
+                'options'     => $this->decodeOptions($row->options ?? null),
+                'weight'      => $row->weight !== null ? (string) $row->weight : null,
+                'active'      => (bool) $row->active,
+            ];
+        }
+
+        return $variantsById;
+    }
+
+    /**
      * Load categories assigned to the product.
      *
      * @return array<int, array<string, mixed>>
@@ -947,6 +1037,64 @@ class ProductModel extends AdminModel
         }
 
         return $categories;
+    }
+
+    /**
+     * Load categories for multiple products in one query.
+     *
+     * @param array<int> $productIds
+     *
+     * @return array<int, array<int, array<string, mixed>>>
+     */
+    private function loadCategoriesForProducts(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $db    = $this->getDbo();
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('pc.product_id'),
+                $db->quoteName('c.id'),
+                $db->quoteName('c.title'),
+                $db->quoteName('c.slug'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_product_categories', 'pc'))
+            ->join(
+                'INNER',
+                $db->quoteName('#__nxp_easycart_categories', 'c') .
+                ' ON ' . $db->quoteName('c.id') . ' = ' . $db->quoteName('pc.category_id')
+            )
+            ->where($db->quoteName('pc.product_id') . ' IN (' . implode(',', array_fill(0, \count($productIds), '?')) . ')')
+            ->order([
+                $db->quoteName('pc.product_id') . ' ASC',
+                $db->quoteName('c.sort') . ' ASC',
+                $db->quoteName('c.title') . ' ASC',
+            ]);
+
+        foreach ($productIds as $index => $productId) {
+            $query->bind($index + 1, $productId, ParameterType::INTEGER);
+        }
+
+        $db->setQuery($query);
+        $rows            = (array) $db->loadObjectList();
+        $categoriesById  = [];
+
+        foreach ($rows as $row) {
+            $productId = (int) $row->product_id;
+
+            $categoriesById[$productId] ??= [];
+            $categoriesById[$productId][] = [
+                'id'    => (int) $row->id,
+                'title' => (string) $row->title,
+                'slug'  => (string) $row->slug,
+            ];
+        }
+
+        return $categoriesById;
     }
 
     /**

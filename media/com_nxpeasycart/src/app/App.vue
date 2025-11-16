@@ -1,5 +1,6 @@
 <template>
-    <section class="nxp-ec-admin-app__shell">
+    <ErrorBoundary>
+        <section class="nxp-ec-admin-app__shell">
         <header class="nxp-ec-admin-app__header">
             <div>
                 <h1 class="nxp-ec-admin-app__title">
@@ -179,10 +180,12 @@
         @close="dismissOnboarding"
         @navigate="navigateOnboarding"
     />
+    </ErrorBoundary>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import ErrorBoundary from "./components/ErrorBoundary.vue";
 import DashboardPanel from "./components/DashboardPanel.vue";
 import ProductPanel from "./components/ProductPanel.vue";
 import CategoryPanel from "./components/CategoryPanel.vue";

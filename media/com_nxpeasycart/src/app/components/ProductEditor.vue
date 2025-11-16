@@ -1382,7 +1382,7 @@ const ensureMediaPickerField = async () => {
     }
 
     const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
-    const rootFull = systemPaths.rootFull || window.location.origin;
+    const rootFull = systemPaths.rootFull || systemPaths.root || "";
     const mediaParams = window.Joomla?.getOptions?.("com_media", {}) ?? {};
     const rootFolder = mediaParams?.file_path || "images";
     const supported =
