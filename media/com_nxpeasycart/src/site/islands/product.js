@@ -83,7 +83,6 @@ export default function mountProductIsland(el) {
             v-model.number="state.qty"
           />
         </div>
-
         <button
           type="button"
           class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy"

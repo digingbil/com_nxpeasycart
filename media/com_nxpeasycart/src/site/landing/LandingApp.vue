@@ -97,6 +97,8 @@ const labels = computed(() => ({
     add_to_cart: props.labels?.add_to_cart || "Add to cart",
     added: props.labels?.added || "Added to cart",
     view_cart: props.labels?.view_cart || "View cart",
+    select_variant:
+        props.labels?.select_variant || "Choose a variant to continue",
     categories_aria:
         props.labels?.categories_aria || "Browse categories",
 }));

@@ -148,6 +148,7 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.short_desc'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
+                'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_max'),
@@ -250,6 +251,11 @@ class CategoryModel extends BaseDatabaseModel
                 $link .= '&category_slug=' . rawurlencode($linkCategorySlug);
             }
 
+            $variantCount = $row->variant_count !== null ? (int) $row->variant_count : 0;
+            $primaryVariantId = ($variantCount === 1 && $row->primary_variant_id !== null)
+                ? (int) $row->primary_variant_id
+                : null;
+
             $products[] = [
                 'id'         => (int) $row->id,
                 'title'      => (string) $row->title,
@@ -260,7 +266,8 @@ class CategoryModel extends BaseDatabaseModel
                 'price'      => $price,
                 'price_label' => $price['label'],
                 'category_slug' => $linkCategorySlug,
-                'primary_variant_id' => $row->primary_variant_id !== null ? (int) $row->primary_variant_id : null,
+                'primary_variant_id' => $primaryVariantId,
+                'variant_count' => $variantCount,
                 'link'       => Route::_($link),
             ];
         }

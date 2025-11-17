@@ -5,6 +5,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
@@ -23,17 +24,17 @@ class CartSessionService
     private CartService $carts;
 
     /**
-     * @var SessionInterface
+     * @var SessionInterface|Session
      */
-    private SessionInterface $session;
+    private $session;
 
     /**
      * CartSessionService constructor.
      *
-     * @param CartService       $carts   Persistent cart service
-     * @param SessionInterface  $session Joomla session
+     * @param CartService               $carts   Persistent cart service
+     * @param SessionInterface|Session  $session Joomla session
      */
-    public function __construct(CartService $carts, SessionInterface $session)
+    public function __construct(CartService $carts, $session)
     {
         $this->carts   = $carts;
         $this->session = $session;
@@ -46,12 +47,29 @@ class CartSessionService
      */
     public function current(): array
     {
+        $this->ensureAutoload();
         $this->regenerateOnAuthentication();
 
-        $cartId = (string) $this->session->get(self::SESSION_KEY, '');
-        $cart   = $cartId !== '' ? $this->carts->load($cartId) : null;
+        $app = Factory::getApplication();
 
         $sessionId = $this->session->getId();
+        $cookieCartId = $app->input->cookie->getString('nxp_cart_id', '');
+        $sessionCartId = (string) $this->session->get(self::SESSION_KEY, '');
+
+        // Prefer the cookie-stored cart ID to keep carts across session changes.
+        $cart = $cookieCartId !== '' ? $this->carts->load($cookieCartId) : null;
+        $cartId = $cart['id'] ?? $cookieCartId;
+
+        if (!$cart && $sessionCartId !== '') {
+            $cart = $this->carts->load($sessionCartId);
+            $cartId = $cart['id'] ?? $sessionCartId;
+        }
+
+        // Fallback: reuse a cart linked to this session.
+        if (!$cart) {
+            $cart = $this->carts->loadBySession($sessionId);
+            $cartId = $cart['id'] ?? '';
+        }
 
         if (!$cart) {
             $cart = $this->carts->persist([
@@ -72,8 +90,45 @@ class CartSessionService
         }
 
         $this->session->set(self::SESSION_KEY, $cart['id']);
+        $app->input->cookie->set('nxp_cart_id', $cart['id'], time() + 60 * 60 * 24 * 30, '/');
 
         return $cart;
+    }
+
+    /**
+     * Ensure vendor autoload is available when DI bootstrapping did not load it.
+     */
+    private function ensureAutoload(): void
+    {
+        if (class_exists(\Ramsey\Uuid\Uuid::class, false)) {
+            return;
+        }
+
+        $candidates = [];
+
+        if (\defined('JPATH_SITE')) {
+            $candidates[] = JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php';
+        }
+
+        if (\defined('JPATH_ADMINISTRATOR')) {
+            $candidates[] = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php';
+        }
+
+        if (\defined('JPATH_ROOT')) {
+            $candidates[] = JPATH_ROOT . '/vendor/autoload.php';
+        }
+
+        $candidates[] = dirname(__DIR__, 4) . '/vendor/autoload.php';
+
+        foreach (array_unique($candidates) as $autoload) {
+            if (is_file($autoload)) {
+                require_once $autoload;
+
+                if (class_exists(\Ramsey\Uuid\Uuid::class, false)) {
+                    break;
+                }
+            }
+        }
     }
 
     /**

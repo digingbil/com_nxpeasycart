@@ -10,11 +10,13 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
+use Joomla\DI\Container;
 
 /**
  * AJAX controller handling cart mutations on the storefront.
@@ -48,9 +50,13 @@ class CartController extends BaseController
         }
 
         $container = Factory::getContainer();
+        $this->ensureCartServices($container);
         $db        = $container->get(DatabaseInterface::class);
         $carts     = $container->get(CartService::class);
-        $session   = $container->get(CartSessionService::class);
+        $session   = new CartSessionService(
+            $carts,
+            Factory::getApplication()->getSession()
+        );
         $presenter = $container->get(CartPresentationService::class);
 
         try {
@@ -113,11 +119,11 @@ class CartController extends BaseController
             );
         } catch (\Throwable $exception) {
             Log::add($exception->getMessage(), Log::ERROR, 'com_nxpeasycart.cart');
-            $message = (defined('JDEBUG') && JDEBUG)
-                ? $exception->getMessage()
-                : Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC');
-
-            echo new JsonResponse(null, $message, true);
+            echo new JsonResponse(
+                null,
+                $exception->getMessage(),
+                true
+            );
         }
 
         $app->close();
@@ -134,9 +140,13 @@ class CartController extends BaseController
     {
         $app       = Factory::getApplication();
         $container = Factory::getContainer();
+        $this->ensureCartServices($container);
 
         try {
-            $session   = $container->get(CartSessionService::class);
+            $session   = new CartSessionService(
+                $container->get(CartService::class),
+                Factory::getApplication()->getSession()
+            );
             $presenter = $container->get(CartPresentationService::class);
 
             $cart = $presenter->hydrate($session->current());
@@ -204,6 +214,64 @@ class CartController extends BaseController
         $db->setQuery($query);
 
         return $db->loadObject() ?: null;
+    }
+
+    /**
+     * Ensure cart-related services are registered when the provider was not executed.
+     */
+    private function ensureCartServices(Container $container): void
+    {
+        $this->ensureUuidAutoload();
+
+        if (!$container->has(CartService::class)) {
+            $container->set(
+                CartService::class,
+                static fn (Container $container): CartService => new CartService(
+                    $container->get(DatabaseInterface::class)
+                )
+            );
+        }
+
+        if (!$container->has(CartPresentationService::class)) {
+            $container->set(
+                CartPresentationService::class,
+                static fn (Container $container): CartPresentationService => new CartPresentationService(
+                    $container->get(DatabaseInterface::class)
+                )
+            );
+        }
+    }
+
+    /**
+     * Ensure the Ramsey UUID autoloader is available for CartService.
+     */
+    private function ensureUuidAutoload(): void
+    {
+        if (class_exists(\Ramsey\Uuid\Uuid::class, false)) {
+            return;
+        }
+
+        $candidates = [
+            // Local repository vendor (development)
+            dirname(__DIR__, 4) . '/vendor/autoload.php',
+            // Joomla component paths (site/admin, packaged)
+            JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
+            JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php',
+            // Fallbacks relative to this file / Joomla root
+            dirname(__DIR__, 3) . '/vendor/autoload.php',
+            __DIR__ . '/../../vendor/autoload.php',
+            JPATH_ROOT . '/vendor/autoload.php',
+        ];
+
+        foreach ($candidates as $autoload) {
+            if (is_file($autoload)) {
+                require_once $autoload;
+
+                if (class_exists(\Ramsey\Uuid\Uuid::class, false)) {
+                    return;
+                }
+            }
+        }
     }
 
     /**

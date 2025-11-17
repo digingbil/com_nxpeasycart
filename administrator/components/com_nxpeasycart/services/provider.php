@@ -14,7 +14,7 @@ use Joomla\CMS\Form\FormFactoryInterface;
 use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Router\SiteRouter;
-use Joomla\Session\SessionInterface;
+use Joomla\CMS\Session\SessionInterface;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Database\DatabaseInterface;
 use Joomla\DI\Container;

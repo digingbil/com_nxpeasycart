@@ -64,6 +64,7 @@ components/com_nxpeasycart/vendor/
 var/
 JOOMLA_MIGRATION_GUIDELINE.md
 joomla_component_symlinking.sh
+/node_local
 
 # Generated frontend assets
 media/com_nxpeasyforms/css/admin-*.css

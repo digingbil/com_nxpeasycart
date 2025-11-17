@@ -9,11 +9,15 @@ $cart = $this->cart ?? ['items' => [], 'summary' => []];
 
 $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
+$summaryEndpoint = \Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
 
 $cartJson = htmlspecialchars(
     json_encode([
         'items'   => $items,
         'summary' => $summary,
+        'endpoints' => [
+            'summary' => $summaryEndpoint,
+        ],
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
     'UTF-8'

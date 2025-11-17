@@ -311,6 +311,7 @@ class LandingModel extends BaseDatabaseModel
                 $db->quoteName('p.images'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.created'),
+                'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('min_price_cents'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('max_price_cents'),
@@ -391,6 +392,11 @@ class LandingModel extends BaseDatabaseModel
                 }
             }
 
+            $variantCount = $row->variant_count !== null ? (int) $row->variant_count : 0;
+            $primaryVariantId = ($variantCount === 1 && $row->primary_variant_id !== null)
+                ? (int) $row->primary_variant_id
+                : null;
+
             $products[] = [
                 'id'          => (int) $row->id,
                 'title'       => (string) $row->title,
@@ -399,7 +405,8 @@ class LandingModel extends BaseDatabaseModel
                 'images'      => $images,
                 'featured'    => (bool) $row->featured,
                 'price_label' => $priceLabel,
-                'primary_variant_id' => $row->primary_variant_id !== null ? (int) $row->primary_variant_id : null,
+                'primary_variant_id' => $primaryVariantId,
+                'variant_count' => $variantCount,
                 'link'        => Route::_(
                     'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
                 ),

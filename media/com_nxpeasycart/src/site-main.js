@@ -53,6 +53,7 @@ const runMount = (el, key) => {
 };
 
 const bootIslands = () => {
+    console.log("Booting NXP Islands");
     const observerSupported = typeof window !== "undefined" && "IntersectionObserver" in window;
     const observer = observerSupported
         ? new IntersectionObserver(
@@ -85,8 +86,29 @@ const bootIslands = () => {
     });
 };
 
+const mountOnInteraction = (event) => {
+    const target =
+        typeof event.target?.closest === "function"
+            ? event.target.closest("[data-nxp-island]")
+            : null;
+
+    if (!target) {
+        return;
+    }
+
+    const key = target.dataset.nxpIsland;
+
+    if (!key) {
+        return;
+    }
+
+    runMount(target, key);
+};
+
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootIslands);
 } else {
     bootIslands();
 }
+
+document.addEventListener("click", mountOnInteraction, true);

@@ -79,9 +79,25 @@ class HtmlView extends BaseHtmlView
             ['version' => 'auto', 'relative' => true]
         );
 
-        if (is_file(JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json')) {
+        $assetManifest = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
+
+        if (is_file($assetManifest)) {
             $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
             $wa->useScript('com_nxpeasycart.site');
+        } else {
+            $siteBundleAsset = 'com_nxpeasycart.site.bundle';
+            $siteScriptUri   = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+
+            if (!$wa->assetExists('script', $siteBundleAsset)) {
+                $wa->registerScript(
+                    $siteBundleAsset,
+                    $siteScriptUri,
+                    [],
+                    ['defer' => true]
+                );
+            }
+
+            $wa->useScript($siteBundleAsset);
         }
 
         $model       = $this->getModel();
@@ -154,6 +170,7 @@ class HtmlView extends BaseHtmlView
                 'add_to_cart'     => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'),
                 'added'           => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
                 'view_cart'       => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
+                'select_variant'  => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
                 'categories_aria' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
             ],
             'trust' => [

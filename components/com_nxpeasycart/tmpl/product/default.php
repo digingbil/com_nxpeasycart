@@ -8,6 +8,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 
 $theme          = $this->theme ?? [];
@@ -135,6 +136,30 @@ $payload = [
 
 $payloadJson = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
+
+$siteScript = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
+$assetFile  = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
+
+if (is_file($assetFile)) {
+    $decoded = json_decode((string) file_get_contents($assetFile), true);
+
+    if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
+        foreach ($decoded['assets'] ?? [] as $asset) {
+            if (($asset['name'] ?? '') === 'com_nxpeasycart.site' && !empty($asset['uri'])) {
+                $uri = (string) $asset['uri'];
+
+                if (str_contains($uri, 'com_nxpeasycart/')) {
+                    $uri = 'media/' . ltrim($uri, '/');
+                } else {
+                    $uri = 'media/' . ltrim($uri, '/');
+                }
+
+                $siteScript = rtrim(Uri::root(), '/') . '/' . $uri;
+                break;
+            }
+        }
+    }
+}
 ?>
 
 <article
@@ -177,10 +202,9 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
                 <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
             </p>
         <?php endif; ?>
-
         <div
             class="nxp-ec-product__actions"
-            data-nxp-island="cart-button"
+            data-nxp-island="product"
             data-nxp-product="<?php echo $payloadJsonAttr; ?>"
             data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
             data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
@@ -244,3 +268,4 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
         </section>
     <?php endif; ?>
 </article>
+<script defer src="<?php echo htmlspecialchars($siteScript, ENT_QUOTES, 'UTF-8'); ?>"></script>

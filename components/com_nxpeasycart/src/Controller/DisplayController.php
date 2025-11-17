@@ -25,8 +25,26 @@ class DisplayController extends BaseController
      */
     public function display($cachable = false, $urlparams = [])
     {
+        $container = Factory::getContainer();
+
+        if (!$container->has(CartSessionService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $provider = require $providerPath;
+                $container->registerServiceProvider($provider);
+            }
+        }
+
+        if (!$container->has(\Joomla\CMS\Session\SessionInterface::class)) {
+            $container->set(
+                \Joomla\CMS\Session\SessionInterface::class,
+                Factory::getApplication()->getSession()
+            );
+        }
+
         try {
-            Factory::getContainer()
+            $container
                 ->get(CartSessionService::class)
                 ->attachToApplication();
         } catch (\Throwable $exception) {

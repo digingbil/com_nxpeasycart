@@ -2,8 +2,9 @@
 
 1. **Install dependencies**
    - `composer install --no-dev --optimize-autoloader`
-   - `npm install && npm run build:admin && npm run build:site`
-   - `php tools/build-runtime-vendor.php` (ensures `administrator/components/com_nxpeasycart/vendor/` contains only runtime deps)
+- `npm install && npm run build:admin && npm run build:site`
+- `php tools/build-runtime-vendor.php` (ensures `administrator/components/com_nxpeasycart/vendor/` contains only runtime deps)
+   - The `postbuild:site` hook runs `npm run sync:assets` to point `media/com_nxpeasycart/joomla.asset.json` at the latest hashed site bundle. If you rebuild assets manually, run `npm run sync:assets` before packaging.
 
 2. **Prune development artefacts**
    - Remove `node_modules/`, `tests/`, `.github/`, local config overrides

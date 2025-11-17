@@ -6,7 +6,9 @@
     "dev:admin": "vite --config build/vite.config.admin.js",
     "build:admin": "vite build --config build/vite.config.admin.js",
     "dev:site": "vite --config build/vite.config.site.js",
-    "build:site": "vite build --config build/vite.config.site.js"
+    "build:site": "vite build --config build/vite.config.site.js",
+    "sync:assets": "node tools/sync-asset-manifest.js",
+    "postbuild:site": "npm run sync:assets"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

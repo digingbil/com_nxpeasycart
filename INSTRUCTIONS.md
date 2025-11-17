@@ -378,6 +378,11 @@ Notes
 -   **Credentials:**
     **Stored securely in `configuration.php` (already present in local Joomla setup).**
     **⚠️ Do not expose or hardcode credentials elsewhere.**
+    **⚠️ Never alter `#__users` (passwords, groups, ACL) unless the user explicitly instructs you to.**
+
+-   **Node tooling:** when building site assets locally, run with the bundled binary
+    (`PATH="$PWD/node_local/bin:$PATH" npm run build:site`) instead of system-wide
+    installs.
 
 **Working scope**
 

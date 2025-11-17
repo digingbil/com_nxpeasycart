@@ -70,6 +70,25 @@ class ProductsController extends AbstractJsonController
 
         $productModel = $this->getProductModel();
         $items        = $productModel->hydrateItems($model->getItems());
+
+        // Ensure relations are always available; if bulk hydration missed them, reload the product.
+        foreach ($items as $index => $item) {
+            $hasVariants   = !empty($item->variants);
+            $hasCategories = !empty($item->categories);
+
+            if ($hasVariants && $hasCategories) {
+                continue;
+            }
+
+            $id = isset($item->id) ? (int) $item->id : 0;
+
+            if ($id <= 0) {
+                continue;
+            }
+
+            $items[$index] = $productModel->getItem($id);
+        }
+
         $items        = array_map(fn ($item) => $this->transformProduct($item), $items);
 
         $pagination = $model->getPagination();

@@ -28,7 +28,24 @@ class CartModel extends BaseDatabaseModel
             return $this->cart;
         }
 
-        $container   = Factory::getContainer();
+        $container = Factory::getContainer();
+
+        if (!$container->has(CartSessionService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $provider = require $providerPath;
+                $container->registerServiceProvider($provider);
+            }
+        }
+
+        if (!$container->has(\Joomla\CMS\Session\SessionInterface::class)) {
+            $container->set(
+                \Joomla\CMS\Session\SessionInterface::class,
+                Factory::getApplication()->getSession()
+            );
+        }
+
         $cartService = $container->get(CartSessionService::class);
         $cart        = $cartService->current();
         $cart        = $this->getPresentationService()->hydrate($cart);

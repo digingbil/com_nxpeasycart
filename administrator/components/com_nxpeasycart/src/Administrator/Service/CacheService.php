@@ -34,6 +34,12 @@ class CacheService
         $controller = $this->factory->createCacheController('callback', ['defaultgroup' => $group]);
         $controller->setLifeTime($ttlSeconds);
 
+        // If the returned controller does not support ->call (misconfigured factories),
+        // bypass caching rather than fatalling.
+        if (!\is_object($controller) || !method_exists($controller, 'call')) {
+            return $callback();
+        }
+
         return $controller->call(static function () use ($callback) {
             return $callback();
         }, [], $key);

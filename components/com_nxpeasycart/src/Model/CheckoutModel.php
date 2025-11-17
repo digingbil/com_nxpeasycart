@@ -34,6 +34,22 @@ class CheckoutModel extends BaseDatabaseModel
 
         $container = Factory::getContainer();
 
+        if (!$container->has(CartSessionService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $provider = require $providerPath;
+                $container->registerServiceProvider($provider);
+            }
+        }
+
+        if (!$container->has(\Joomla\CMS\Session\SessionInterface::class)) {
+            $container->set(
+                \Joomla\CMS\Session\SessionInterface::class,
+                Factory::getApplication()->getSession()
+            );
+        }
+
         $cartSession  = $container->get(CartSessionService::class);
         $presentation = $this->getPresentationService();
 

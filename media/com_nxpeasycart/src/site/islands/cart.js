@@ -9,6 +9,7 @@ export default function mountCartIsland(el) {
         items: [],
         summary: {},
     });
+    const summaryEndpoint = (payload.endpoints?.summary || "").trim();
 
     el.innerHTML = "";
 
@@ -126,6 +127,52 @@ export default function mountCartIsland(el) {
                 item.total_cents = qty * (item.unit_price_cents || 0);
                 recalcSummary();
             };
+
+            const applyCart = (cart) => {
+                const nextItems = Array.isArray(cart?.items) ? cart.items : [];
+                items.splice(0, items.length, ...nextItems);
+
+                summary.subtotal_cents = Number(
+                    cart?.summary?.subtotal_cents || 0
+                );
+                summary.total_cents = Number(cart?.summary?.total_cents || 0);
+            };
+
+            const refresh = async () => {
+                if (!summaryEndpoint) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(summaryEndpoint, {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    });
+
+                    const json = await response.json().catch(() => null);
+                    const cart =
+                        json?.data?.cart ||
+                        json?.cart ||
+                        json?.data ||
+                        null;
+
+                    if (cart) {
+                        applyCart(cart);
+                    }
+                } catch (error) {
+                    // Non-fatal; keep existing state.
+                }
+            };
+
+            window.addEventListener("nxp-cart:updated", (event) => {
+                applyCart(event?.detail || {});
+            });
+
+            refresh();
 
             return {
                 items,

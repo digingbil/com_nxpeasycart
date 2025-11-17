@@ -52,6 +52,16 @@ foreach (
 $app = Factory::getApplication();
 $container = Factory::getContainer();
 
+// Ensure component services are registered even when the module is rendered standalone.
+if (!$container->has(CartSessionService::class)) {
+    $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+    if (is_file($providerPath)) {
+        $provider = require $providerPath;
+        $container->registerServiceProvider($provider);
+    }
+}
+
 $language = $app->getLanguage();
 $language->load('mod_nxpeasycart_cart', JPATH_SITE);
 $language->load('mod_nxpeasycart_cart', __DIR__);

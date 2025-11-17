@@ -132,6 +132,10 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 - SPA endpoints now use absolute admin URLs plus scoped query merging, avoiding `Invalid controller class` errors and keeping detail panels in sync with preloaded data.
 - The component’s product view uses the existing placeholder copy whenever a specific product cannot be resolved, so hitting `/index.php?option=com_nxpeasycart` stays within the guided onboarding flow.
 
+## Asset builds
+
+- Site/admin bundles are built with Vite from `media/com_nxpeasycart/src`. After `npm run build:site`, the hashed filename must be written to `media/com_nxpeasycart/joomla.asset.json` so Joomla loads the newest bundle. This is automated via the `postbuild:site` hook, which runs `npm run sync:assets` (see `tools/sync-asset-manifest.js`). If you copy files manually or skip the hook, run `npm run sync:assets` to avoid stale scripts.
+
 ## Testing
 
 - See `docs/testing.md` for the current automation blueprint covering PHPUnit (unit/integration), API contract runs, Vue unit tests, and Playwright E2E journeys.

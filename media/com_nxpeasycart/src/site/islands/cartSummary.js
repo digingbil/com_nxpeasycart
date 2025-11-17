@@ -1,4 +1,4 @@
-import { createApp, computed, reactive } from "vue";
+import { createApp, computed, onMounted, reactive } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 
@@ -8,6 +8,7 @@ export default function mountCartSummaryIsland(el) {
     const payload = parsePayload(el.dataset.nxpCartSummary, {});
     const labels = payload.labels || {};
     const links = payload.links || {};
+    const summaryEndpoint = (payload.endpoints?.summary || "").trim();
 
     el.innerHTML = "";
 
@@ -61,6 +62,46 @@ export default function mountCartSummaryIsland(el) {
                 state.currency = cart.summary?.currency || state.currency;
             };
 
+            const refresh = async () => {
+                if (!summaryEndpoint) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(summaryEndpoint, {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    });
+
+                    const json = await response.json().catch(() => null);
+                    const cart =
+                        json?.data?.cart ||
+                        json?.cart ||
+                        json?.data ||
+                        null;
+
+                    if (!cart) {
+                        return;
+                    }
+
+                    const items = Array.isArray(cart.items) ? cart.items : [];
+                    state.count = items.reduce(
+                        (total, item) => total + (item.qty || 0),
+                        0
+                    );
+                    state.total_cents = Number(
+                        cart.summary?.total_cents || 0
+                    );
+                    state.currency = cart.summary?.currency || state.currency;
+                } catch (error) {
+                    // Non-fatal: keep existing state.
+                }
+            };
+
             const countLabel = computed(
                 () =>
                     state.count +
@@ -75,6 +116,7 @@ export default function mountCartSummaryIsland(el) {
             );
 
             window.addEventListener("nxp-cart:updated", update);
+            onMounted(refresh);
 
             return {
                 labels,

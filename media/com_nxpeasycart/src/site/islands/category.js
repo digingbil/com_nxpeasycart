@@ -41,6 +41,8 @@ export default function mountCategoryIsland(el) {
         error_generic:
             labelsPayload.error_generic ||
             "We couldn't add this item to your cart. Please try again.",
+        select_variant:
+            labelsPayload.select_variant || "Choose a variant to continue",
     };
 
     const links = {
@@ -120,6 +122,7 @@ export default function mountCategoryIsland(el) {
                 item.primary_variant_id,
                 10
             );
+            const variantCount = Number.parseInt(item.variant_count, 10);
 
             return {
                 ...item,
@@ -144,6 +147,9 @@ export default function mountCategoryIsland(el) {
                 price_label: priceLabel,
                 primary_variant_id: Number.isFinite(primaryVariantId)
                     ? primaryVariantId
+                    : null,
+                variant_count: Number.isFinite(variantCount)
+                    ? variantCount
                     : null,
             };
         });
@@ -234,14 +240,45 @@ export default function mountCategoryIsland(el) {
             :key="product.id || product.slug || product.title"
             class="nxp-ec-product-card"
           >
-            <a
-              v-if="product.images.length"
-              class="nxp-ec-product-card__media"
-              :href="product.link"
-              :aria-label="labels.view_product + ': ' + product.title"
-            >
-              <img :src="product.images[0]" :alt="product.title" loading="lazy" />
-            </a>
+            <div class="nxp-ec-product-card__media">
+              <a
+                v-if="product.images.length"
+                class="nxp-ec-product-card__image-link"
+                :href="product.link"
+                :aria-label="labels.view_product + ': ' + product.title"
+              >
+                <img :src="product.images[0]" :alt="product.title" loading="lazy" />
+              </a>
+              <button
+                type="button"
+                class="nxp-ec-quick-add"
+                :aria-label="labels.add_to_cart + ': ' + product.title"
+                :disabled="quickState[keyFor(product)]?.loading"
+                @click="quickAdd(product)"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="nxp-ec-quick-add__icon"
+                  aria-hidden="true"
+                >
+                  <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                  <path d="M4 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                  <path d="M12.5 17h-6.5v-14h-2" />
+                  <path d="M6 5l14 1l-.86 6.017m-2.64 .983h-10.5" />
+                  <path d="M16 19h6" />
+                  <path d="M19 16v6" />
+                </svg>
+                <span class="nxp-ec-sr-only">{{ labels.add_to_cart }}</span>
+              </button>
+            </div>
             <div class="nxp-ec-product-card__body">
               <h2 class="nxp-ec-product-card__title">
                 <a :href="product.link">{{ product.title }}</a>
@@ -256,17 +293,6 @@ export default function mountCategoryIsland(el) {
                 <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
                   {{ labels.view_product }}
                 </a>
-                <button
-                  v-if="canQuickAdd(product)"
-                  type="button"
-                  class="nxp-ec-btn nxp-ec-btn--icon"
-                  :aria-label="labels.add_to_cart + ': ' + product.title"
-                  :disabled="quickState[keyFor(product)]?.loading"
-                  @click="quickAdd(product)"
-                >
-                  <span aria-hidden="true">+</span>
-                  <span class="nxp-ec-sr-only">{{ labels.add_to_cart }}</span>
-                </button>
               </div>
               <p
                 v-if="quickState[keyFor(product)]?.error"
@@ -341,6 +367,19 @@ export default function mountCategoryIsland(el) {
             const keyFor = (product) =>
                 product.id || product.slug || product.title || "product";
 
+            const hasSingleVariant = (product) => {
+                const count = Number.parseInt(
+                    product && product.variant_count,
+                    10
+                );
+
+                if (Number.isFinite(count)) {
+                    return count === 1;
+                }
+
+                return !!(product && product.primary_variant_id);
+            };
+
             const ensureState = (key) => {
                 if (!quickState[key]) {
                     quickState[key] = { loading: false, error: "", success: false };
@@ -349,21 +388,30 @@ export default function mountCategoryIsland(el) {
                 return quickState[key];
             };
 
-            const canQuickAdd = (product) =>
-                !!(cartEndpoints.add && product && product.primary_variant_id);
-
             const quickAdd = async (product) => {
                 const key = keyFor(product);
                 const state = ensureState(key);
+                state.loading = false;
+                state.error = "";
+                state.success = false;
 
-                if (!canQuickAdd(product)) {
+                if (!cartEndpoints.add) {
                     window.location.href = product.link || links.search;
                     return;
                 }
 
+                if (!hasSingleVariant(product)) {
+                    state.error = labels.select_variant;
+                    window.location.href = product.link || links.search;
+                    return;
+                }
+
+                if (!product || !product.primary_variant_id) {
+                    state.error = labels.error_generic;
+                    return;
+                }
+
                 state.loading = true;
-                state.error = "";
-                state.success = false;
 
                 try {
                     const json = await api.postForm(cartEndpoints.add, {
@@ -403,7 +451,6 @@ export default function mountCategoryIsland(el) {
                 filteredProducts,
                 submitSearch,
                 isActive,
-                canQuickAdd,
                 quickAdd,
                 quickState,
                 keyFor,
