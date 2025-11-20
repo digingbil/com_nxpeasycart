@@ -5,7 +5,6 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
-use Joomla\CMS\Uri\Uri;
 
 $theme   = $this->theme ?? [];
 $cssVars = '';
@@ -86,30 +85,6 @@ $cartJson = htmlspecialchars(
 );
 $locale   = $this->locale ?? \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
 $currency = $this->currency ?? 'USD';
-
-$siteScript = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
-$assetFile  = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
-
-if (is_file($assetFile)) {
-    $decoded = json_decode((string) file_get_contents($assetFile), true);
-
-    if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
-        foreach ($decoded['assets'] ?? [] as $asset) {
-            if (($asset['name'] ?? '') === 'com_nxpeasycart.site' && !empty($asset['uri'])) {
-                $uri = (string) $asset['uri'];
-
-                if (str_contains($uri, 'com_nxpeasycart/')) {
-                    $uri = 'media/' . ltrim($uri, '/');
-                } else {
-                    $uri = 'media/' . ltrim($uri, '/');
-                }
-
-                $siteScript = rtrim(Uri::root(), '/') . '/' . $uri;
-                break;
-            }
-        }
-    }
-}
 ?>
 
 <section
@@ -204,4 +179,3 @@ if (is_file($assetFile)) {
         </div>
     <?php endif; ?>
 </section>
-<script defer src="<?php echo htmlspecialchars($siteScript, ENT_QUOTES, 'UTF-8'); ?>"></script>

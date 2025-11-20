@@ -4,7 +4,6 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
 
 /** @var Joomla\Component\Nxpeasycart\Site\View\Landing\HtmlView $this */
 
@@ -37,31 +36,6 @@ $searchRoute = isset($search['action']) ? Route::_($search['action']) : Route::_
 $searchPlaceholder = $search['placeholder'] ?? Text::_('COM_NXPEASYCART_LANDING_SEARCH_PLACEHOLDER_DEFAULT');
 $ctaLink     = Route::_($hero['cta']['link'] ?? 'index.php?option=com_nxpeasycart&view=category');
 $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CTA_LABEL_DEFAULT');
-
-$siteScript = rtrim(Uri::root(), '/') . '/media/com_nxpeasycart/js/site.iife.js';
-$assetFile  = JPATH_ROOT . '/media/com_nxpeasycart/joomla.asset.json';
-
-if (is_file($assetFile)) {
-    $decoded = json_decode((string) file_get_contents($assetFile), true);
-
-    if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
-        foreach ($decoded['assets'] ?? [] as $asset) {
-            if (($asset['name'] ?? '') === 'com_nxpeasycart.site' && !empty($asset['uri'])) {
-                $uri = (string) $asset['uri'];
-
-                if (str_contains($uri, 'com_nxpeasycart/')) {
-                    $uri = 'media/' . ltrim($uri, '/');
-                } else {
-                    $uri = ltrim($uri, '/');
-                    $uri = 'media/' . $uri;
-                }
-
-                $siteScript = rtrim(Uri::root(), '/') . '/' . $uri;
-                break;
-            }
-        }
-    }
-}
 ?>
 
 <section
@@ -185,4 +159,3 @@ if (is_file($assetFile)) {
             <?php endif; ?>
     </div>
 </section>
-<script defer src="<?php echo htmlspecialchars($siteScript, ENT_QUOTES, 'UTF-8'); ?>"></script>

@@ -53,7 +53,6 @@ const runMount = (el, key) => {
 };
 
 const bootIslands = () => {
-    console.log("Booting NXP Islands");
     const observerSupported = typeof window !== "undefined" && "IntersectionObserver" in window;
     const observer = observerSupported
         ? new IntersectionObserver(
@@ -87,6 +86,7 @@ const bootIslands = () => {
 };
 
 const mountOnInteraction = (event) => {
+    // If the island isn't mounted yet, mount it and replay the click so the first tap still works.
     const target =
         typeof event.target?.closest === "function"
             ? event.target.closest("[data-nxp-island]")
@@ -102,7 +102,21 @@ const mountOnInteraction = (event) => {
         return;
     }
 
+    const alreadyMounted = target.dataset.nxpMounted === "1";
     runMount(target, key);
+
+    if (!alreadyMounted) {
+        // Re-dispatch a click on the newly mounted element so the initial tap triggers handlers.
+        queueMicrotask(() => {
+            target.dispatchEvent(
+                new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                })
+            );
+        });
+    }
 };
 
 if (document.readyState === "loading") {

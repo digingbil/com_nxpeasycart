@@ -4,9 +4,9 @@ namespace Joomla\Component\Nxpeasycart\Site\View\Cart;
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 
 /**
  * Cart view for storefront.
@@ -25,14 +25,7 @@ class HtmlView extends BaseHtmlView
     {
         $document = $this->getDocument();
 
-        $wa = $document->getWebAssetManager();
-        $wa->registerAndUseStyle(
-            'com_nxpeasycart.site.css',
-            'media/com_nxpeasycart/css/site.css',
-            ['version' => 'auto', 'relative' => true]
-        );
-        $wa->getRegistry()->addRegistryFile('media/com_nxpeasycart/joomla.asset.json');
-        $wa->useScript('com_nxpeasycart.site');
+        SiteAssetHelper::useSiteAssets($document);
 
         $model      = $this->getModel();
         $this->cart = $model ? $model->getCart() : ['items' => [], 'summary' => []];
