@@ -123,6 +123,19 @@
     text-decoration: underline;
 }
 
+.nxp-ec-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(17, 24, 39, 0.9);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    box-shadow: var(--nxp-ec-shadow-hover);
+    z-index: 30;
+    font-size: 0.95rem;
+}
+
 .nxp-ec-product {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -502,43 +515,6 @@
         display: block;
     }
 
-    .nxp-ec-quick-add {
-        position: absolute;
-        top: 0.75rem;
-        right: 0.75rem;
-        background: var(--nxp-ec-color-surface);
-        border: 1px solid var(--nxp-ec-color-border);
-        border-radius: var(--nxp-ec-radius-pill);
-        width: 2.75rem;
-        height: 2.75rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--nxp-ec-color-primary);
-        box-shadow: var(--nxp-ec-shadow-card);
-        transition:
-            transform 0.15s ease,
-            box-shadow 0.15s ease,
-            color 0.15s ease;
-
-        &:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--nxp-ec-shadow-hover);
-            color: var(--nxp-ec-color-primary);
-        }
-
-        &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        &__icon {
-            width: 1.25rem;
-            height: 1.25rem;
-        }
-    }
-
     &__body {
         padding: 1.5rem;
         display: flex;
@@ -585,6 +561,44 @@
     }
 }
 
+.nxp-ec-quick-add {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: var(--nxp-ec-color-surface);
+    border: 1px solid var(--nxp-ec-color-border);
+    border-radius: var(--nxp-ec-radius-pill);
+    width: 2.75rem;
+    height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--nxp-ec-color-primary);
+    box-shadow: var(--nxp-ec-shadow-card);
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        color 0.15s ease;
+    z-index: 2;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--nxp-ec-shadow-hover);
+        color: var(--nxp-ec-color-primary);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}
+
+.nxp-ec-quick-add__icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
 .nxp-ec-cart {
     margin: 3rem 0;
     display: flex;
@@ -611,10 +625,9 @@
     }
 
     &__content {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 2rem;
-        align-items: start;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
     }
 
     &__table {
@@ -646,14 +659,70 @@
         font-size: 0.85rem;
     }
 
+    &__qty {
+        width: 8ch;
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    &__qty-input {
+        width: 5.5rem;
+        text-align: center;
+    }
+
+    &__actions {
+        text-align: right;
+        min-width: 3.5rem;
+        width: 3.5rem;
+    }
+
+    td.nxp-ec-cart__actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    &__remove {
+        background: none;
+        border: none;
+        box-sizing: border-box;
+        width: 2.4rem;
+        min-width: 2.4rem;
+        height: auto;
+        min-height: 2.4rem;
+        aspect-ratio: 1 / 1;
+        padding: 0;
+        line-height: 1;
+        color: var(--nxp-ec-color-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        cursor: pointer;
+        transition:
+            color 0.15s ease,
+            background 0.15s ease;
+
+        &:hover {
+            color: var(--nxp-ec-color-primary);
+            background: rgba(15, 23, 42, 0.08);
+        }
+    }
+
+    &__remove svg {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
     &__summary {
         @include card-shell;
-        padding: 2rem;
+        padding: 1.5rem;
         display: flex;
         flex-direction: column;
-        gap: 1.25rem;
+        gap: 1rem;
         border: 1px solid var(--nxp-ec-color-border);
         background: var(--nxp-ec-color-surface);
+        width: 100%;
 
         h2 {
             margin: 0;

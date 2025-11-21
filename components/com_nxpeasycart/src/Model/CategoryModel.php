@@ -8,6 +8,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
@@ -216,14 +217,35 @@ class CategoryModel extends BaseDatabaseModel
                 $decoded = json_decode($row->images, true);
 
                 if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
-                    $images = array_values(
-                        array_filter(
-                            array_map(
-                                static fn ($url) => \is_string($url) ? trim($url) : null,
-                                $decoded
-                            )
-                        )
-                    );
+                    $images = array_values(array_filter(array_map(
+                        static function ($url) {
+                            if (!\is_string($url)) {
+                                return null;
+                            }
+
+                            $trimmed = trim($url);
+
+                            if ($trimmed === '') {
+                                return null;
+                            }
+
+                            // Ensure relative media paths resolve correctly in nested routes.
+                            if (
+                                !str_starts_with($trimmed, 'http://')
+                                && !str_starts_with($trimmed, 'https://')
+                                && !str_starts_with($trimmed, '//')
+                            ) {
+                                $base    = rtrim(Uri::root(true), '/');
+                                $relative = '/' . ltrim($trimmed, '/');
+
+                                // Uri::root(true) can return an empty string when site lives at web root.
+                                $trimmed = ($base === '' ? '' : $base) . $relative;
+                            }
+
+                            return $trimmed;
+                        },
+                        $decoded
+                    )));
                 }
             }
 

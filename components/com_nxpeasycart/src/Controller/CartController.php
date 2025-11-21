@@ -130,6 +130,85 @@ class CartController extends BaseController
     }
 
     /**
+     * Remove a line item from the active cart session.
+     *
+     * @return void
+     */
+    public function remove(): void
+    {
+        $app = Factory::getApplication();
+
+        if (!Session::checkToken('post')) {
+            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+            $app->close();
+        }
+
+        $input     = $app->input;
+        $variantId = $input->getInt('variant_id');
+        $productId = $input->getInt('product_id');
+
+        if ($variantId <= 0 && $productId <= 0) {
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_INVALID_REQUEST'), true);
+            $app->close();
+        }
+
+        $container = Factory::getContainer();
+        $this->ensureCartServices($container);
+
+        $carts   = $container->get(CartService::class);
+        $session = new CartSessionService(
+            $carts,
+            Factory::getApplication()->getSession()
+        );
+        $presenter = $container->get(CartPresentationService::class);
+
+        try {
+            $cart    = $session->current();
+            $payload = $cart['data'] ?? [];
+            $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
+
+            $items = array_values(array_filter($items, function ($item) use ($variantId, $productId) {
+                $itemVariantId = (int) ($item['variant_id'] ?? 0);
+                $itemProductId = (int) ($item['product_id'] ?? 0);
+
+                if ($variantId > 0 && $itemVariantId === $variantId) {
+                    return false;
+                }
+
+                if ($productId > 0 && $itemProductId === $productId) {
+                    return false;
+                }
+
+                return true;
+            }));
+
+            $payload['items'] = $items;
+
+            $joomlaSession = Factory::getApplication()->getSession();
+
+            $persisted = $carts->persist([
+                'id'         => $cart['id']         ?? null,
+                'session_id' => $cart['session_id'] ?? $joomlaSession->getId(),
+                'user_id'    => $cart['user_id']    ?? null,
+                'data'       => $payload,
+            ]);
+
+            $hydrated = $presenter->hydrate($persisted);
+
+            echo new JsonResponse(['cart' => $hydrated]);
+        } catch (\Throwable $exception) {
+            Log::add($exception->getMessage(), Log::ERROR, 'com_nxpeasycart.cart');
+            echo new JsonResponse(
+                null,
+                $exception->getMessage(),
+                true
+            );
+        }
+
+        $app->close();
+    }
+
+    /**
      * Return the current cart summary for the active visitor.
      *
      * @return void
@@ -251,10 +330,9 @@ class CartController extends BaseController
             return;
         }
 
+        $runningInsideJoomla = \defined('JPATH_LIBRARIES');
+
         $candidates = [
-            // Local repository vendor (development)
-            dirname(__DIR__, 4) . '/vendor/autoload.php',
-            // Joomla component paths (site/admin, packaged)
             JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/vendor/autoload.php',
             JPATH_SITE . '/components/com_nxpeasycart/vendor/autoload.php',
             // Fallbacks relative to this file / Joomla root
@@ -262,6 +340,11 @@ class CartController extends BaseController
             __DIR__ . '/../../vendor/autoload.php',
             JPATH_ROOT . '/vendor/autoload.php',
         ];
+
+        if (!$runningInsideJoomla) {
+            // Local repository vendor (development) when not booted inside Joomla.
+            $candidates[] = dirname(__DIR__, 4) . '/vendor/autoload.php';
+        }
 
         foreach ($candidates as $autoload) {
             if (is_file($autoload)) {

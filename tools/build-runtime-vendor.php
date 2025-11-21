@@ -111,10 +111,13 @@ if (is_dir($targetDir)) {
     removeDirectory($targetDir);
 }
 
-if (!rename($builtVendor, $targetDir)) {
-    fwrite(STDERR, "Failed to move vendor directory into {$targetDir}.\n");
-    cleanup($tempDir);
-    exit(1);
+if (!@rename($builtVendor, $targetDir)) {
+    // Cross-device moves require a manual copy; fall back gracefully.
+    if (!copyDirectory($builtVendor, $targetDir)) {
+        fwrite(STDERR, "Failed to move vendor directory into {$targetDir}.\n");
+        cleanup($tempDir);
+        exit(1);
+    }
 }
 
 cleanup($tempDir);
@@ -158,4 +161,40 @@ function cleanup(string $path): void
     }
 
     removeDirectory($path);
+}
+
+/**
+ * Recursively copy a directory (used when rename() cannot cross devices).
+ */
+function copyDirectory(string $source, string $destination): bool
+{
+    if (!is_dir($source)) {
+        return false;
+    }
+
+    if (!mkdir($destination, 0777, true) && !is_dir($destination)) {
+        return false;
+    }
+
+    $items = new \RecursiveIteratorIterator(
+        new \RecursiveDirectoryIterator($source, \FilesystemIterator::SKIP_DOTS),
+        \RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($items as $item) {
+        $targetPath = $destination . DIRECTORY_SEPARATOR . $items->getSubPathName();
+
+        if ($item->isDir()) {
+            if (!is_dir($targetPath) && !mkdir($targetPath, 0777, true) && !is_dir($targetPath)) {
+                return false;
+            }
+            continue;
+        }
+
+        if (!copy($item->getPathname(), $targetPath)) {
+            return false;
+        }
+    }
+
+    return true;
 }

@@ -572,12 +572,15 @@ class ApiClient {
      * Delete products.
      */
     async deleteProducts({ endpoint, ids }) {
-        const payload = await this.delete(endpoint, {
-            body: JSON.stringify({ ids }),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+        const payload = await this.post(
+            endpoint,
+            { ids },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
 
         return payload.data?.deleted ?? [];
     }

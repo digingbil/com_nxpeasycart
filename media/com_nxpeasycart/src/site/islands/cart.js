@@ -9,7 +9,38 @@ export default function mountCartIsland(el) {
         items: [],
         summary: {},
     });
+    const labelsPayload = parsePayload(el.dataset.nxpLabels, {});
+    const cartToken = payload.token || "";
+    const cartEndpoints = payload.endpoints || {};
+    const linksPayload = payload.links || {};
     const summaryEndpoint = (payload.endpoints?.summary || "").trim();
+
+    const labels = {
+        title: labelsPayload.title || "Your cart",
+        lead:
+            labelsPayload.lead || "Review your items and proceed to checkout.",
+        empty: labelsPayload.empty || "Your cart is currently empty.",
+        continue: labelsPayload.continue || "Continue browsing",
+        product: labelsPayload.product || "Product",
+        price: labelsPayload.price || "Price",
+        qty: labelsPayload.qty || "Qty",
+        total: labelsPayload.total || "Total",
+        actions: labelsPayload.actions || "Actions",
+        remove: labelsPayload.remove || "Remove",
+        summary: labelsPayload.summary || "Summary",
+        subtotal: labelsPayload.subtotal || "Subtotal",
+        shipping: labelsPayload.shipping || "Shipping",
+        shipping_note:
+            labelsPayload.shipping_note || "Calculated at checkout",
+        total_label: labelsPayload.total_label || "Total",
+        checkout: labelsPayload.checkout || "Proceed to checkout",
+    };
+    const links = {
+        browse:
+            typeof linksPayload.browse === "string" && linksPayload.browse !== ""
+                ? linksPayload.browse
+                : "index.php?option=com_nxpeasycart&view=landing",
+    };
 
     el.innerHTML = "";
 
@@ -17,16 +48,16 @@ export default function mountCartIsland(el) {
         template: `
       <div class="nxp-ec-cart" v-cloak>
         <header class="nxp-ec-cart__header">
-          <h1 class="nxp-ec-cart__title">Your cart</h1>
+          <h1 class="nxp-ec-cart__title">{{ labels.title }}</h1>
           <p class="nxp-ec-cart__lead">
-            Review your items and proceed to checkout.
+            {{ labels.lead }}
           </p>
         </header>
 
         <div v-if="items.length === 0" class="nxp-ec-cart__empty">
-          <p>Your cart is currently empty.</p>
-          <a class="nxp-ec-btn" href="index.php?option=com_nxpeasycart&view=category">
-            Continue browsing
+          <p>{{ labels.empty }}</p>
+          <a class="nxp-ec-btn" :href="links.browse">
+            {{ labels.continue }}
           </a>
         </div>
 
@@ -34,16 +65,18 @@ export default function mountCartIsland(el) {
           <table class="nxp-ec-cart__table">
             <thead>
               <tr>
-                <th scope="col">Product</th>
-                <th scope="col">Price</th>
-                <th scope="col">Qty</th>
-                <th scope="col">Total</th>
-                <th scope="col" class="nxp-ec-cart__actions"></th>
+                <th scope="col">{{ labels.product }}</th>
+                <th scope="col">{{ labels.price }}</th>
+                <th scope="col" class="nxp-ec-cart__qty">{{ labels.qty }}</th>
+                <th scope="col">{{ labels.total }}</th>
+                <th scope="col" class="nxp-ec-cart__actions">
+                  <span class="nxp-ec-sr-only">{{ labels.actions }}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in items" :key="item.id">
-                <td data-label="Product">
+                <td :data-label="labels.product">
                   <strong>{{ item.product_title || item.title }}</strong>
                   <ul v-if="item.options && item.options.length" class="nxp-ec-cart__options">
                     <li v-for="(option, index) in item.options" :key="index">
@@ -51,19 +84,36 @@ export default function mountCartIsland(el) {
                     </li>
                   </ul>
                 </td>
-                <td data-label="Price">{{ format(item.unit_price_cents) }}</td>
-                <td data-label="Qty">
+                <td :data-label="labels.price">{{ format(item.unit_price_cents) }}</td>
+                <td class="nxp-ec-cart__qty" :data-label="labels.qty">
                   <input
+                    class="nxp-ec-cart__qty-input"
                     type="number"
                     min="1"
                     :value="item.qty"
                     @input="updateQty(item, $event.target.value)"
                   />
                 </td>
-                <td data-label="Total">{{ format(item.total_cents) }}</td>
+                <td :data-label="labels.total">{{ format(item.total_cents) }}</td>
                 <td class="nxp-ec-cart__actions">
-                  <button type="button" class="nxp-ec-link-button" @click="remove(item)">
-                    Remove
+                  <button type="button" class="nxp-ec-cart__remove" @click="remove(item)">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M4 7h16"></path>
+                      <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"></path>
+                      <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"></path>
+                      <path d="M10 12l4 4m0 -4l-4 4"></path>
+                    </svg>
+                    <span class="nxp-ec-sr-only">{{ labels.remove }}</span>
                   </button>
                 </td>
               </tr>
@@ -71,24 +121,24 @@ export default function mountCartIsland(el) {
           </table>
 
           <aside class="nxp-ec-cart__summary">
-            <h2>Summary</h2>
+            <h2>{{ labels.summary }}</h2>
             <dl>
               <div>
-                <dt>Subtotal</dt>
+                <dt>{{ labels.subtotal }}</dt>
                 <dd>{{ format(summary.subtotal_cents) }}</dd>
               </div>
               <div>
-                <dt>Shipping</dt>
-                <dd>Calculated at checkout</dd>
+                <dt>{{ labels.shipping }}</dt>
+                <dd>{{ labels.shipping_note }}</dd>
               </div>
               <div>
-                <dt>Total</dt>
+                <dt>{{ labels.total_label }}</dt>
                 <dd class="nxp-ec-cart__summary-total">{{ format(summary.total_cents) }}</dd>
               </div>
             </dl>
 
             <a class="nxp-ec-btn nxp-ec-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
-              Proceed to checkout
+              {{ labels.checkout }}
             </a>
           </aside>
         </div>
@@ -112,13 +162,57 @@ export default function mountCartIsland(el) {
                 summary.total_cents = subtotal;
             };
 
-            const remove = (item) => {
+            const remove = async (item) => {
                 const index = items.indexOf(item);
 
-                if (index >= 0) {
-                    items.splice(index, 1);
-                    recalcSummary();
+                if (index < 0) {
+                    return;
                 }
+
+                if (cartEndpoints.remove) {
+                    try {
+                        const formData = new FormData();
+
+                        if (cartToken) {
+                            formData.append(cartToken, "1");
+                        }
+
+                        formData.append(
+                            "variant_id",
+                            String(item.variant_id || item.id || "")
+                        );
+                        formData.append(
+                            "product_id",
+                            String(item.product_id || item.id || "")
+                        );
+
+                        const response = await fetch(cartEndpoints.remove, {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                Accept: "application/json",
+                            },
+                            credentials: "same-origin",
+                        });
+
+                        const json = await response.json().catch(() => null);
+                        const cart =
+                            json?.data?.cart ||
+                            json?.cart ||
+                            json?.data ||
+                            null;
+
+                        if (cart) {
+                            applyCart(cart);
+                            return;
+                        }
+                    } catch (error) {
+                        // Fall back to client-side removal.
+                    }
+                }
+
+                items.splice(index, 1);
+                recalcSummary();
             };
 
             const updateQty = (item, value) => {
@@ -175,6 +269,8 @@ export default function mountCartIsland(el) {
             refresh();
 
             return {
+                labels,
+                links,
                 items,
                 summary,
                 remove,

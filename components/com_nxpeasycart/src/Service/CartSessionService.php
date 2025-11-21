@@ -104,6 +104,8 @@ class CartSessionService
             return;
         }
 
+        $runningInsideJoomla = \defined('JPATH_LIBRARIES');
+
         $candidates = [];
 
         if (\defined('JPATH_SITE')) {
@@ -118,7 +120,10 @@ class CartSessionService
             $candidates[] = JPATH_ROOT . '/vendor/autoload.php';
         }
 
-        $candidates[] = dirname(__DIR__, 4) . '/vendor/autoload.php';
+        // Only use the repo-root vendor during CLI/dev (when not inside Joomla).
+        if (!$runningInsideJoomla) {
+            $candidates[] = dirname(__DIR__, 4) . '/vendor/autoload.php';
+        }
 
         foreach (array_unique($candidates) as $autoload) {
             if (is_file($autoload)) {

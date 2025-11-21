@@ -43,6 +43,9 @@ export default function mountProductIsland(el) {
     const app = createApp({
         template: `
       <div v-cloak class="nxp-ec-product__actions">
+        <div v-if="state.toast" class="nxp-ec-toast">
+          {{ state.toast }}
+        </div>
         <div
           v-if="variants.length > 1"
           class="nxp-ec-product__field"
@@ -125,6 +128,7 @@ export default function mountProductIsland(el) {
         setup() {
             const variantSelectId = `nxp-ec-variant-${product.id || "0"}`;
             const qtyInputId = `nxp-ec-qty-${product.id || "0"}`;
+            let toastTimer = null;
 
             const state = reactive({
                 variantId: variants.length === 1 ? variants[0].id : null,
@@ -133,6 +137,7 @@ export default function mountProductIsland(el) {
                 success: false,
                 successMessage: "",
                 error: "",
+                toast: "",
             });
 
             const selectedVariant = computed(() => {
@@ -234,30 +239,18 @@ export default function mountProductIsland(el) {
                 return Number(variant.stock) <= 0;
             });
 
-            const isDisabled = computed(() => {
-                if (state.loading) {
-                    return true;
-                }
-
-                if (!variants.length) {
-                    return true;
-                }
-
-                if (!selectedVariant.value) {
-                    return true;
-                }
-
-                if (isOutOfStock.value) {
-                    return true;
-                }
-
-                return false;
-            });
+            const isDisabled = computed(
+                () =>
+                    state.loading ||
+                    !endpoints.add ||
+                    isOutOfStock.value
+            );
 
             const add = async () => {
                 state.error = "";
                 state.success = false;
                 state.successMessage = "";
+                state.toast = "";
 
                 if (!endpoints.add) {
                     state.error = labels.error_generic;
@@ -268,6 +261,20 @@ export default function mountProductIsland(el) {
 
                 if (variants.length && !variant) {
                     state.error = labels.select_variant;
+
+                    if (toastTimer) {
+                        clearTimeout(toastTimer);
+                    }
+
+                    state.toast = labels.select_variant;
+                    toastTimer = window.setTimeout(() => {
+                        state.toast = "";
+                    }, 2500);
+
+                    if (typeof window !== "undefined" && typeof window.alert === "function") {
+                        window.alert(labels.select_variant);
+                    }
+
                     return;
                 }
 

@@ -69,10 +69,13 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
     ```bash
     composer install
     ```
-3. Build the trimmed runtime vendor that Joomla should load (prevents the dev autoloader from hijacking the CMS):
+3. Build the trimmed runtime vendor that Joomla should load (prevents the dev autoloader from hijacking the CMS) and keep dev stubs out of Joomla:
     ```bash
     php tools/build-runtime-vendor.php
     ```
+   - Never copy the repo root `vendor/` into `administrator/components/com_nxpeasycart` or the site component. The root vendor contains `joomla/joomla-cms` for dev tooling only.
+   - Keep the repo-root vendor intact for IDE/PHPStan/PHPUnit, but **only** the trimmed/runtime vendor should live under the Joomla component paths.
+   - Run `php tools/guard-runtime-vendor.php` to verify no `joomla/joomla-cms` stubs slipped into the component vendor paths.
 4. Install Node dependencies for the admin SPA toolchain:
     ```bash
     npm install
@@ -97,6 +100,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 ## Packaging / deployment
 
 - Local development uses the root `vendor/` directory directly for tooling, but Joomla should load the trimmed runtime tree under `administrator/components/com_nxpeasycart/vendor` (generated via `php tools/build-runtime-vendor.php`). When packaging for release, copy that trimmed `vendor/` folder into the bundle alongside the component files.
+- Before packaging or copying files into Joomla, run `php tools/guard-runtime-vendor.php` to ensure no `joomla/joomla-cms` stubs are present in the runtime vendor.
 - To produce an installable ZIP, run `composer install --no-dev --optimize-autoloader` in a clean workspace, build frontend assets (`npm run build:admin`), and include the trimmed `vendor/` directory plus component files in the package.
 - Do **not** run Composer inside the live Joomla tree; copy or mirror the prepared `vendor/` folder alongside the component when deploying.
 - The manifest living at `administrator/components/com_nxpeasycart/nxpeasycart.xml` follows Joomla’s discovery convention (no `com_` prefix in the filename). After copying the component into a site, use **System → Discover** or `php cli/joomla.php extension:discover` to register it, then complete the install from that screen. Joomla 5’s DI bootstrapping means no administrator entry script is required.
@@ -116,6 +120,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 - Component configuration exposes the single-currency guardrail; the admin editor reflects the configured currency and server-side validation ensures every variant uses it.
 - Payments tab manages Stripe/PayPal credentials via the `usePayments` composable, persisting masked secrets through `PaymentGatewayService` and validating against the webhook-capable gateway manager.
 - Vue SPA assets are registered via `media/com_nxpeasycart/joomla.asset.json`; ensure the manifest is discovered (`Joomla\CMS\Helper\WebAssetHelper::getRegistry()->addRegistryFile(...)`) or manually import it to avoid "Unknown asset" errors during development.
+- Runtime autoload guardrails (production safety): inside Joomla we do **not** fall back to the repo-root `vendor/` (which contains dev-only `joomla/joomla-cms` stubs) when bootstrapping cart services. `CartSessionService` and `CartController` only load autoloaders from the packaged component vendors (admin/site) or `JPATH_ROOT/vendor`; the repo vendor is used only in CLI/dev contexts when Joomla isn’t running. This prevents T4/template breakage caused by loading dev stubs in production.
 
 ## Storefront cart
 
