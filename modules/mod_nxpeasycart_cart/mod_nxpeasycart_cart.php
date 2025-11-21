@@ -8,6 +8,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 use GuzzleHttp\ClientInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -97,9 +98,10 @@ try {
         'summary' => [
             'currency'       => ConfigHelper::getBaseCurrency(),
             'subtotal_cents' => 0,
-            'total_cents'    => 0,
-        ],
-    ];
+        'total_cents'    => 0,
+    ],
+];
 }
+$theme = TemplateAdapter::resolve();
 
 require ModuleHelper::getLayoutPath('mod_nxpeasycart_cart', $params->get('layout', 'default'));

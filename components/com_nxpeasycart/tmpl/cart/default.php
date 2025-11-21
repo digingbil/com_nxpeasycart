@@ -6,6 +6,7 @@ use Joomla\CMS\Language\Text;
 
 /** @var array<string, mixed> $this->cart */
 $cart = $this->cart ?? ['items' => [], 'summary' => []];
+$theme = $this->theme ?? [];
 
 $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
@@ -24,6 +25,10 @@ $cartJson = htmlspecialchars(
 );
 $locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
 $currency = strtoupper((string) ($summary['currency'] ?? 'USD'));
+$cssVars = '';
+foreach (($theme['css_vars'] ?? []) as $var => $value) {
+    $cssVars .= $var . ':' . $value . ';';
+}
 ?>
 
 <section
@@ -32,6 +37,7 @@ $currency = strtoupper((string) ($summary['currency'] ?? 'USD'));
     data-nxp-cart="<?php echo $cartJson; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <noscript>
         <header class="nxp-ec-cart__header">

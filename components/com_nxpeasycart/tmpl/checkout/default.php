@@ -8,6 +8,7 @@ use Joomla\CMS\Session\Session;
 
 /** @var array<string, mixed> $this->checkout */
 $checkout = $this->checkout ?? [];
+$theme    = $this->theme ?? [];
 
 $cart          = $checkout['cart']           ?? ['items' => [], 'summary' => []];
 $shippingRules = $checkout['shipping_rules'] ?? [];
@@ -35,6 +36,10 @@ $payload = htmlspecialchars(
 );
 $locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
 $currency = strtoupper((string) ($cart['summary']['currency'] ?? 'USD'));
+$cssVars = '';
+foreach (($theme['css_vars'] ?? []) as $var => $value) {
+    $cssVars .= $var . ':' . $value . ';';
+}
 ?>
 
 <section
@@ -43,6 +48,7 @@ $currency = strtoupper((string) ($cart['summary']['currency'] ?? 'USD'));
     data-nxp-checkout="<?php echo $payload; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <header class="nxp-ec-checkout__header">
         <h1 class="nxp-ec-checkout__title"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_TITLE'); ?></h1>

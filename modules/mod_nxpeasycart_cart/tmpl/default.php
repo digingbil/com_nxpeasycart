@@ -72,6 +72,12 @@ $payloadJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$cssVars = '';
+if (!empty($theme['css_vars']) && \is_array($theme['css_vars'])) {
+    foreach ($theme['css_vars'] as $var => $value) {
+        $cssVars .= $var . ':' . $value . ';';
+    }
+}
 
 $countLabel = $itemCount === 1
     ? Text::_('MOD_NXPEASYCART_CART_ITEM_SINGLE')
@@ -84,6 +90,7 @@ $countLabel = $itemCount === 1
     data-nxp-cart-summary="<?php echo $payloadJson; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <noscript>
         <div class="nxp-ec-cart-summary__inner">

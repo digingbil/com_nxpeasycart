@@ -36,24 +36,25 @@ const runMount = (el, key) => {
 
     const mountPromise = getMount(key);
 
-        if (!mountPromise) {
-            return;
-        }
+    if (!mountPromise) {
+        return;
+    }
 
-        mountPromise
-            .then((mount) => {
-                if (typeof mount === "function") {
-                    mount(el);
-                    el.dataset.nxpMounted = "1";
-                }
-            })
-            .catch(() => {
-                // Swallow mount errors to avoid breaking other islands.
-            });
+    mountPromise
+        .then((mount) => {
+            if (typeof mount === "function") {
+                mount(el);
+                el.dataset.nxpMounted = "1";
+            }
+        })
+        .catch(() => {
+            // Swallow mount errors to avoid breaking other islands.
+        });
 };
 
 const bootIslands = () => {
-    const observerSupported = typeof window !== "undefined" && "IntersectionObserver" in window;
+    const observerSupported =
+        typeof window !== "undefined" && "IntersectionObserver" in window;
     const observer = observerSupported
         ? new IntersectionObserver(
               (entries) => {
