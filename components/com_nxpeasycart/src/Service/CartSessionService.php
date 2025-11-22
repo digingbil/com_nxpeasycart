@@ -6,8 +6,8 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Session\Session;
-use Joomla\CMS\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 
 /**

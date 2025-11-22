@@ -105,7 +105,7 @@ class LandingModel extends BaseDatabaseModel
 
         return [
             'placeholder' => $placeholder,
-            'action'      => RouteHelper::getCategoryBaseRoute(),
+            'action'      => RouteHelper::getCategoryRoute(),
         ];
     }
 
@@ -176,7 +176,7 @@ class LandingModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
-                'link'  => 'index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug),
+                'link'  => RouteHelper::getCategoryRoute((string) $row->slug),
             ];
         }
 
@@ -407,7 +407,7 @@ class LandingModel extends BaseDatabaseModel
                 'price_label' => $priceLabel,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'        => 'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug),
+                'link'        => RouteHelper::getProductRoute((string) $row->slug),
             ];
         }
 

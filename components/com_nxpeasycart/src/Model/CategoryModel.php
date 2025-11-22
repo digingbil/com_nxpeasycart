@@ -11,6 +11,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
  * Frontend category model.
@@ -282,12 +283,6 @@ class CategoryModel extends BaseDatabaseModel
                 $linkCategorySlug = (string) $row->primary_category_slug;
             }
 
-            $link = 'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug);
-
-            if ($linkCategorySlug !== '') {
-                $link .= '&category_slug=' . rawurlencode($linkCategorySlug);
-            }
-
             $variantCount = $row->variant_count !== null ? (int) $row->variant_count : 0;
             $primaryVariantId = ($variantCount === 1 && $row->primary_variant_id !== null)
                 ? (int) $row->primary_variant_id
@@ -305,7 +300,7 @@ class CategoryModel extends BaseDatabaseModel
                 'category_slug' => $linkCategorySlug,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'       => Route::_($link),
+                'link'       => RouteHelper::getProductRoute((string) $row->slug, $linkCategorySlug ?: null),
             ];
         }
 
@@ -360,7 +355,7 @@ class CategoryModel extends BaseDatabaseModel
             'id'    => null,
             'title' => Text::_('COM_NXPEASYCART_CATEGORY_FILTER_ALL'),
             'slug'  => '',
-            'link'  => Route::_('index.php?option=com_nxpeasycart&view=category'),
+            'link'  => RouteHelper::getCategoryRoute(),
         ]];
 
         foreach ($rows as $row) {
@@ -368,7 +363,7 @@ class CategoryModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
-                'link'  => Route::_('index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug)),
+                'link'  => RouteHelper::getCategoryRoute((string) $row->slug),
             ];
         }
 

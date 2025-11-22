@@ -134,6 +134,49 @@ class Router extends RouterView
     }
 
     /**
+     * Get the segment for a category view.
+     *
+     * Required by Joomla's MenuRules to properly resolve Itemid for views with keys.
+     * Without this method, getPath() returns boolean true for keyed views,
+     * causing MenuRules to assign the lookup array as Itemid instead of an integer.
+     *
+     * @param string $slug   The category slug
+     * @param array  $query  The request query
+     *
+     * @return array  Segment array keyed by ID
+     */
+    public function getCategorySegment($slug, $query): array
+    {
+        return !empty($slug) ? [$slug => $slug] : [];
+    }
+
+    /**
+     * Get the segment for a product view.
+     *
+     * @param string $slug   The product slug
+     * @param array  $query  The request query
+     *
+     * @return array  Segment array keyed by ID
+     */
+    public function getProductSegment($slug, $query): array
+    {
+        return !empty($slug) ? [$slug => $slug] : [];
+    }
+
+    /**
+     * Get the segment for an order view.
+     *
+     * @param string $no     The order number
+     * @param array  $query  The request query
+     *
+     * @return array  Segment array keyed by ID
+     */
+    public function getOrderSegment($no, $query): array
+    {
+        return !empty($no) ? [$no => $no] : [];
+    }
+
+    /**
      * Map SEF segments back to Joomla query parameters.
      */
     public function parse(&$segments)

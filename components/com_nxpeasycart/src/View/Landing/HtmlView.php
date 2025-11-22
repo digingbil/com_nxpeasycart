@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
@@ -157,7 +158,7 @@ class HtmlView extends BaseHtmlView
                     'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
                 ],
                 'links' => [
-                    'cart' => Route::_('index.php?option=com_nxpeasycart&view=cart'),
+                    'cart' => RouteHelper::getCartRoute(),
                 ],
             ],
             'theme' => $this->theme,

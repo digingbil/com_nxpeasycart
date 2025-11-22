@@ -16,8 +16,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Database\DatabaseInterface;
-use Joomla\CMS\Session\SessionInterface;
-use Joomla\CMS\Session\Session;
+use Joomla\Session\SessionInterface;
 use RuntimeException;
 
 /**
@@ -205,11 +204,11 @@ class PaymentController extends BaseController
 
     private function respond(array $payload, int $code = 200): void
     {
-        $app      = Factory::getApplication();
-        $response = new JsonResponse($payload, $code);
+        $app = Factory::getApplication();
         $app->setHeader('Content-Type', 'application/json', true);
-        $app->setBody($response->toString());
-        $app->sendResponse();
+        $app->setHeader('Status', (string) $code, true);
+
+        echo new JsonResponse($payload);
         $app->close();
     }
 

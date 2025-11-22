@@ -4,6 +4,7 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed>|null $this->order */
 $order = $this->order ?? null;
@@ -14,7 +15,7 @@ $order = $this->order ?? null;
         <header>
             <h1><?php echo Text::_('COM_NXPEASYCART_ORDER_NOT_FOUND'); ?></h1>
             <p>
-                <a href="<?php echo htmlspecialchars(Route::_('index.php?option=com_nxpeasycart&view=cart'), ENT_QUOTES, 'UTF-8'); ?>">
+                <a href="<?php echo htmlspecialchars(RouteHelper::getCartRoute(), ENT_QUOTES, 'UTF-8'); ?>">
                     <?php echo Text::_('COM_NXPEASYCART_ORDER_RETURN_TO_CART'); ?>
                 </a>
             </p>

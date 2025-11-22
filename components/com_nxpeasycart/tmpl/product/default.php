@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $theme          = $this->theme ?? [];
 $primaryBtnClass = trim('nxp-ec-btn nxp-ec-btn--primary ' . ($theme['button_primary_extra'] ?? ''));
@@ -143,8 +144,8 @@ $payload = [
         'variant_none'     => Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_NONE'),
     ],
     'links' => [
-        'cart'     => Route::_('index.php?option=com_nxpeasycart&view=cart'),
-        'checkout' => Route::_('index.php?option=com_nxpeasycart&view=checkout'),
+        'cart'     => RouteHelper::getCartRoute(),
+        'checkout' => RouteHelper::getCheckoutRoute(),
     ],
     'endpoints' => [
         'add'      => Route::_('index.php?option=com_nxpeasycart&task=cart.add&format=json', false),

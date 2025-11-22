@@ -10,7 +10,7 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Session\Session;
-use Joomla\CMS\Session\SessionInterface;
+use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;

@@ -65,9 +65,14 @@ var/
 JOOMLA_MIGRATION_GUIDELINE.md
 joomla_component_symlinking.sh
 /node_local
+/.php-cs-fixer.cache
 
 # Generated frontend assets
 media/com_nxpeasyforms/css/admin-*.css
+
+# Vite build outputs for the site entry
+media/com_nxpeasycart/js/site.*.js
+media/com_nxpeasycart/js/site.*.js.map
 
 # Temporary files
 *~

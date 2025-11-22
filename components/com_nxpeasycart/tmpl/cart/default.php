@@ -4,6 +4,7 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed> $this->cart */
 $cart = $this->cart ?? ['items' => [], 'summary' => []];
@@ -13,8 +14,8 @@ $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
 $summaryEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
 $removeEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.remove&format=json', false);
-$browseLink     = Route::_('index.php?option=com_nxpeasycart&view=landing', false, Route::TLS_IGNORE, true);
-$checkoutLink   = Route::_('index.php?option=com_nxpeasycart&view=checkout', false, Route::TLS_IGNORE, true);
+$browseLink     = RouteHelper::getLandingRoute(false);
+$checkoutLink   = RouteHelper::getCheckoutRoute(false);
 
 $cartJson = htmlspecialchars(
     json_encode([

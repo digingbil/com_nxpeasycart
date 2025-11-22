@@ -43,9 +43,9 @@ class CheckoutModel extends BaseDatabaseModel
             }
         }
 
-        if (!$container->has(\Joomla\CMS\Session\SessionInterface::class)) {
+        if (!$container->has(\Joomla\Session\SessionInterface::class)) {
             $container->set(
-                \Joomla\CMS\Session\SessionInterface::class,
+                \Joomla\Session\SessionInterface::class,
                 Factory::getApplication()->getSession()
             );
         }

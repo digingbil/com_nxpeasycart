@@ -58,10 +58,10 @@ $labelsJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
-$categoryRoute = RouteHelper::getCategoryBaseRoute();
+$categoryRoute = RouteHelper::getCategoryRoute();
 $links = [
-    'all'    => Route::_($categoryRoute),
-    'search' => Route::_($categoryRoute),
+    'all'    => $categoryRoute,
+    'search' => $categoryRoute,
 ];
 $linksJson = htmlspecialchars(
     json_encode($links, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -76,8 +76,8 @@ $cart = [
         'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
     ],
     'links' => [
-        'cart'     => Route::_('index.php?option=com_nxpeasycart&view=cart'),
-        'checkout' => Route::_('index.php?option=com_nxpeasycart&view=checkout'),
+        'cart'     => RouteHelper::getCartRoute(),
+        'checkout' => RouteHelper::getCheckoutRoute(),
     ],
 ];
 $cartJson = htmlspecialchars(
