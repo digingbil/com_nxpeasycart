@@ -40,6 +40,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 - **Storefront islands refactor**: the monolithic site bundle is split into per-island modules, lazy-mounted via `IntersectionObserver`, and backed by a shared API client + utilities (CSRF injection, money formatting, retries) to reduce TTI on pages that only need one island.
 - **TemplateAdapter caching**: template token resolution is memoised per request to avoid repeated palette parsing when multiple views touch template defaults.
 - **Hashed site bundle**: Vite now emits hashed JS/CSS with a manifest; `joomla.asset.json` points at the hashed entry with `version: auto` for reliable cache-busting in production.
+- **Cart module asset loading fix**: `mod_nxpeasycart_cart` now uses the centralised `SiteAssetHelper` to register site JS/CSS, ensuring the cart summary island hydrates correctly on non-component pages (e.g. homepage) where only the module is present.
 
 ### Performance Optimizations (Admin SPA)
 
