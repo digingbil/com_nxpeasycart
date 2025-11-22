@@ -92,6 +92,10 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                         <input type="text" name="billing[postcode]" id="nxp-ec-checkout-postcode" required />
                     </div>
                     <div class="nxp-ec-checkout__field">
+                        <label for="nxp-ec-checkout-region"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_REGION'); ?></label>
+                        <input type="text" name="billing[region]" id="nxp-ec-checkout-region" />
+                    </div>
+                    <div class="nxp-ec-checkout__field">
                         <label for="nxp-ec-checkout-country"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_COUNTRY'); ?></label>
                         <input type="text" name="billing[country]" id="nxp-ec-checkout-country" required />
                     </div>
@@ -156,6 +160,15 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                 <?php echo number_format(((int) ($cart['summary']['subtotal_cents'] ?? 0)) / 100, 2); ?>
                             </strong>
                         </div>
+                        <?php if (!empty($cart['summary']['tax_cents'])) : ?>
+                            <div>
+                                <span><?php echo Text::_('COM_NXPEASYCART_CART_TAX'); ?></span>
+                                <strong>
+                                    <?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php echo number_format(((int) ($cart['summary']['tax_cents'] ?? 0)) / 100, 2); ?>
+                                </strong>
+                            </div>
+                        <?php endif; ?>
                         <div>
                             <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_TOTAL'); ?></span>
                             <strong data-nxp-checkout-total>

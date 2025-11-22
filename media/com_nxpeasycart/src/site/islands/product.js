@@ -2,6 +2,194 @@ import { createApp, reactive, computed, ref, watch } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import { createApiClient } from "../utils/apiClient.js";
 
+const normaliseImages = (raw = []) =>
+    Array.isArray(raw)
+        ? raw
+              .filter((src) => typeof src === "string" && src.trim() !== "")
+              .map((src) => src.trim())
+        : [];
+
+const clampIndex = (index, length) => {
+    if (!Number.isFinite(index) || length <= 0) {
+        return 0;
+    }
+
+    const max = length - 1;
+
+    if (index < 0) {
+        return max;
+    }
+
+    if (index > max) {
+        return 0;
+    }
+
+    return index;
+};
+
+const createLightbox = () => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "nxp-ec-lightbox";
+    wrapper.innerHTML = `
+      <div class="nxp-ec-lightbox__backdrop" data-nxp-lightbox-close></div>
+      <div class="nxp-ec-lightbox__dialog" role="dialog" aria-modal="true">
+        <button type="button" class="nxp-ec-lightbox__close" data-nxp-lightbox-close aria-label="Close gallery">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="nxp-ec-lightbox__stage">
+          <button type="button" class="nxp-ec-lightbox__nav is-prev" data-nxp-lightbox-prev aria-label="Previous image">&#8249;</button>
+          <img class="nxp-ec-lightbox__image" data-nxp-lightbox-image alt="" />
+          <button type="button" class="nxp-ec-lightbox__nav is-next" data-nxp-lightbox-next aria-label="Next image">&#8250;</button>
+        </div>
+        <p class="nxp-ec-lightbox__counter" data-nxp-lightbox-counter></p>
+      </div>
+    `;
+
+    document.body.appendChild(wrapper);
+
+    return wrapper;
+};
+
+const setupGallery = (el, images = [], title = "") => {
+    const galleryRoot =
+        el?.closest(".nxp-ec-product")?.querySelector("[data-nxp-gallery]") ||
+        el?.closest("[data-nxp-gallery]");
+    const imageList = normaliseImages(images);
+
+    if (!galleryRoot || imageList.length === 0 || galleryRoot.dataset.nxpGalleryReady === "1") {
+        return;
+    }
+
+    galleryRoot.dataset.nxpGalleryReady = "1";
+
+    const trigger = galleryRoot.querySelector("[data-nxp-gallery-trigger]");
+    const mainImage = galleryRoot.querySelector("[data-nxp-gallery-main]");
+    const thumbs = Array.from(
+        galleryRoot.querySelectorAll("[data-nxp-gallery-thumb]")
+    );
+    const lightbox = createLightbox();
+    const lightboxImage = lightbox.querySelector("[data-nxp-lightbox-image]");
+    const lightboxCounter = lightbox.querySelector("[data-nxp-lightbox-counter]");
+    const btnPrev = lightbox.querySelector("[data-nxp-lightbox-prev]");
+    const btnNext = lightbox.querySelector("[data-nxp-lightbox-next]");
+    const closeEls = lightbox.querySelectorAll("[data-nxp-lightbox-close]");
+
+    let current = 0;
+    let keyListener = null;
+
+    const markActiveThumb = (index) => {
+        thumbs.forEach((thumb) => {
+            const thumbIndex = Number.parseInt(
+                thumb.dataset.nxpGalleryThumb,
+                10
+            );
+            thumb.classList.toggle(
+                "is-active",
+                Number.isFinite(thumbIndex) && thumbIndex === index
+            );
+        });
+    };
+
+    const setActive = (index) => {
+        current = clampIndex(index, imageList.length);
+        const src = imageList[current];
+
+        if (mainImage && src) {
+            mainImage.src = src;
+        }
+
+        markActiveThumb(current);
+    };
+
+    const renderLightbox = (index) => {
+        current = clampIndex(index, imageList.length);
+        const src = imageList[current];
+
+        if (lightboxImage && src) {
+            lightboxImage.src = src;
+            lightboxImage.alt = title ? `${title} (${current + 1}/${imageList.length})` : "";
+        }
+
+        if (lightboxCounter) {
+            lightboxCounter.textContent = `${current + 1} / ${imageList.length}`;
+        }
+
+        markActiveThumb(current);
+    };
+
+    const closeLightbox = () => {
+        lightbox.classList.remove("is-open");
+        document.body.classList.remove("nxp-ec-lightbox-open");
+
+        if (keyListener) {
+            window.removeEventListener("keydown", keyListener);
+            keyListener = null;
+        }
+    };
+
+    const openLightbox = (index = current) => {
+        renderLightbox(index);
+        lightbox.classList.add("is-open");
+        document.body.classList.add("nxp-ec-lightbox-open");
+
+        keyListener = (event) => {
+            if (event.key === "Escape") {
+                closeLightbox();
+            } else if (event.key === "ArrowRight") {
+                renderLightbox(current + 1);
+            } else if (event.key === "ArrowLeft") {
+                renderLightbox(current - 1);
+            }
+        };
+
+        window.addEventListener("keydown", keyListener);
+    };
+
+    closeEls.forEach((button) => {
+        button.addEventListener("click", closeLightbox);
+    });
+
+    if (btnPrev) {
+        btnPrev.addEventListener("click", () => renderLightbox(current - 1));
+    }
+
+    if (btnNext) {
+        btnNext.addEventListener("click", () => renderLightbox(current + 1));
+    }
+
+    lightbox.addEventListener("click", (event) => {
+        if (event.target?.closest("[data-nxp-lightbox-close]")) {
+            closeLightbox();
+        }
+    });
+
+    thumbs.forEach((thumb) => {
+        thumb.addEventListener("click", () => {
+            const thumbIndex = Number.parseInt(
+                thumb.dataset.nxpGalleryThumb,
+                10
+            );
+
+            if (Number.isFinite(thumbIndex)) {
+                setActive(thumbIndex);
+                openLightbox(thumbIndex);
+            }
+        });
+    });
+
+    if (trigger) {
+        trigger.addEventListener("click", () => openLightbox(current));
+        trigger.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openLightbox(current);
+            }
+        });
+    }
+
+    setActive(0);
+};
+
 export default function mountProductIsland(el) {
     const locale = el.dataset.nxpLocale || undefined;
     const currencyAttr = (el.dataset.nxpCurrency || "").trim() || undefined;
@@ -329,4 +517,6 @@ export default function mountProductIsland(el) {
     });
 
     app.mount(el);
+
+    setupGallery(el, normaliseImages(product.images || []), product.title || "");
 }

@@ -14,6 +14,10 @@ const defaultConfig = () => ({
         webhook_id: "",
         mode: "sandbox",
     },
+    cod: {
+        enabled: true,
+        label: "Cash on delivery",
+    },
 });
 
 export function usePayments({ endpoints = {}, token = "" }) {
@@ -82,6 +86,10 @@ export function usePayments({ endpoints = {}, token = "" }) {
             paypal: {
                 ...template.paypal,
                 ...(raw.paypal ?? {}),
+            },
+            cod: {
+                ...template.cod,
+                ...(raw.cod ?? {}),
             },
         };
     };

@@ -8,9 +8,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
  * Model powering the shop landing page.
@@ -103,7 +105,7 @@ class LandingModel extends BaseDatabaseModel
 
         return [
             'placeholder' => $placeholder,
-            'action'      => 'index.php?option=com_nxpeasycart&view=category',
+            'action'      => RouteHelper::getCategoryBaseRoute(),
         ];
     }
 
@@ -174,9 +176,7 @@ class LandingModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
-                'link'  => Route::_(
-                    'index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug)
-                ),
+                'link'  => 'index.php?option=com_nxpeasycart&view=category&slug=' . rawurlencode((string) $row->slug),
             ];
         }
 
@@ -407,9 +407,7 @@ class LandingModel extends BaseDatabaseModel
                 'price_label' => $priceLabel,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'        => Route::_(
-                    'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug)
-                ),
+                'link'        => 'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode((string) $row->slug),
             ];
         }
 
@@ -442,7 +440,22 @@ class LandingModel extends BaseDatabaseModel
 
                     $trimmed = trim($value);
 
-                    return $trimmed !== '' ? $trimmed : null;
+                    if ($trimmed === '') {
+                        return null;
+                    }
+
+                    if (
+                        !str_starts_with($trimmed, 'http://')
+                        && !str_starts_with($trimmed, 'https://')
+                        && !str_starts_with($trimmed, '//')
+                    ) {
+                        $base     = rtrim(Uri::root(true), '/');
+                        $relative = '/' . ltrim($trimmed, '/');
+
+                        $trimmed = ($base === '' ? '' : $base) . $relative;
+                    }
+
+                    return $trimmed;
                 },
                 $decoded
             )

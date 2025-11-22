@@ -65,6 +65,9 @@ class CategoriesController extends AbstractJsonController
             function ($item) use ($usage, $parents) {
                 $id       = (int) $item->id;
                 $parentId = $item->parent_id !== null ? (int) $item->parent_id : null;
+                $usageCount = isset($item->product_count)
+                    ? (int) $item->product_count
+                    : ($usage[$id] ?? 0);
 
                 return [
                     'id'           => $id,
@@ -73,7 +76,7 @@ class CategoriesController extends AbstractJsonController
                     'parent_id'    => $parentId,
                     'parent_title' => $parentId ? ($parents[$parentId] ?? null) : null,
                     'sort'         => (int) $item->sort,
-                    'usage'        => $usage[$id] ?? 0,
+                    'usage'        => $usageCount,
                 ];
             },
             $items
@@ -297,8 +300,12 @@ class CategoriesController extends AbstractJsonController
             $payload['parent_title'] = null;
         }
 
-        $usage            = $this->getUsageCounts([$payload['id']]);
-        $payload['usage'] = $usage[$payload['id']] ?? 0;
+        if (isset($item->product_count)) {
+            $payload['usage'] = (int) $item->product_count;
+        } else {
+            $usage            = $this->getUsageCounts([$payload['id']]);
+            $payload['usage'] = $usage[$payload['id']] ?? 0;
+        }
 
         return $payload;
     }

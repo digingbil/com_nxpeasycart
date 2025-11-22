@@ -3,6 +3,7 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 
 /** @var array<string, mixed> $this->cart */
 $cart = $this->cart ?? ['items' => [], 'summary' => []];
@@ -10,9 +11,10 @@ $theme = $this->theme ?? [];
 
 $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
-$summaryEndpoint = \Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
-$removeEndpoint = \Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&task=cart.remove&format=json', false);
-$browseLink     = \Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=landing');
+$summaryEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
+$removeEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.remove&format=json', false);
+$browseLink     = Route::_('index.php?option=com_nxpeasycart&view=landing', false, Route::TLS_IGNORE, true);
+$checkoutLink   = Route::_('index.php?option=com_nxpeasycart&view=checkout', false, Route::TLS_IGNORE, true);
 
 $cartJson = htmlspecialchars(
     json_encode([
@@ -24,6 +26,7 @@ $cartJson = htmlspecialchars(
         ],
         'links' => [
             'browse' => $browseLink,
+            'checkout' => $checkoutLink,
         ],
         'token' => \Joomla\CMS\Session\Session::getFormToken(),
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -43,6 +46,7 @@ $labels = [
     'remove'        => Text::_('COM_NXPEASYCART_CART_REMOVE'),
     'summary'       => Text::_('COM_NXPEASYCART_CART_SUMMARY'),
     'subtotal'      => Text::_('COM_NXPEASYCART_CART_SUBTOTAL'),
+    'tax'           => Text::_('COM_NXPEASYCART_CART_TAX'),
     'shipping'      => Text::_('COM_NXPEASYCART_CART_SHIPPING'),
     'shipping_note' => Text::_('COM_NXPEASYCART_CART_CALCULATED_AT_CHECKOUT'),
     'total_label'   => Text::_('COM_NXPEASYCART_CART_TOTAL'),
@@ -177,6 +181,15 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                 <?php echo Text::_('COM_NXPEASYCART_CART_CALCULATED_AT_CHECKOUT'); ?>
                             </dd>
                         </div>
+                        <?php if (!empty($summary['tax_cents'])) : ?>
+                            <div>
+                                <dt><?php echo Text::_('COM_NXPEASYCART_CART_TAX'); ?></dt>
+                                <dd>
+                                    <?php echo htmlspecialchars($summary['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php echo number_format(((int) ($summary['tax_cents'] ?? 0)) / 100, 2); ?>
+                                </dd>
+                            </div>
+                        <?php endif; ?>
                         <div>
                             <dt><?php echo Text::_('COM_NXPEASYCART_CART_TOTAL'); ?></dt>
                             <dd class="nxp-ec-cart__summary-total">
@@ -186,7 +199,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                         </div>
                     </dl>
 
-                    <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars(\Joomla\CMS\Router\Route::_('index.php?option=com_nxpeasycart&view=checkout'), ENT_QUOTES, 'UTF-8'); ?>">
+                    <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars($checkoutLink, ENT_QUOTES, 'UTF-8'); ?>">
                         <?php echo Text::_('COM_NXPEASYCART_CART_TO_CHECKOUT'); ?>
                     </a>
                 </aside>

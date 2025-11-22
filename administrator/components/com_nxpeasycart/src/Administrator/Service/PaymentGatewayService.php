@@ -39,6 +39,12 @@ class PaymentGatewayService
                 'webhook_id'    => $this->maskSecret($raw['paypal']['webhook_id'] ?? ''),
                 'mode'          => $raw['paypal']['mode'] ?? 'sandbox',
             ],
+            'cod' => [
+                'enabled' => array_key_exists('cod', $raw)
+                    ? (bool) ($raw['cod']['enabled'] ?? false)
+                    : true,
+                'label'   => $raw['cod']['label'] ?? 'Cash on delivery',
+            ],
         ];
     }
 
@@ -63,6 +69,7 @@ class PaymentGatewayService
         $normalised = [
             'stripe' => $this->normaliseStripe($payload['stripe'] ?? [], $existing['stripe'] ?? []),
             'paypal' => $this->normalisePaypal($payload['paypal'] ?? [], $existing['paypal'] ?? []),
+            'cod'    => $this->normaliseCod($payload['cod'] ?? [], $existing['cod'] ?? []),
         ];
 
         $this->settings->set(self::SETTINGS_KEY, $normalised);
@@ -121,11 +128,29 @@ class PaymentGatewayService
             'client_id'     => $clientId         !== '' ? $clientId : ($existing['client_id'] ?? ''),
             'client_secret' => $clientSecret !== '' && strpos($clientSecret, '•') === false
                 ? $clientSecret
-                : ($existing['client_secret'] ?? ''),
+            : ($existing['client_secret'] ?? ''),
             'webhook_id' => $webhookId !== '' && strpos($webhookId, '•') === false
                 ? $webhookId
                 : ($existing['webhook_id'] ?? ''),
             'mode' => $mode,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $existing
+     */
+    private function normaliseCod(array $input, array $existing): array
+    {
+        $enabled = isset($input['enabled'])
+            ? (bool) $input['enabled']
+            : ($existing['enabled'] ?? true);
+
+        $label = trim((string) ($input['label'] ?? ''));
+
+        return [
+            'enabled' => $enabled,
+            'label'   => $label !== '' ? $label : ($existing['label'] ?? 'Cash on delivery'),
         ];
     }
 }

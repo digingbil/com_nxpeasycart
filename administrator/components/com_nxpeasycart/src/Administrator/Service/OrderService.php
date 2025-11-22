@@ -436,6 +436,7 @@ class OrderService
             'tax_cents'      => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
             'shipping_cents' => $this->toNonNegativeInt($payload['shipping_cents'] ?? 0),
             'discount_cents' => $this->toNonNegativeInt($payload['discount_cents'] ?? 0),
+            'tax_inclusive'  => isset($payload['tax_inclusive']) ? (bool) $payload['tax_inclusive'] : false,
         ];
     }
 
@@ -506,11 +507,12 @@ class OrderService
             $subtotal += $item['unit_price_cents'] * $item['qty'];
         }
 
-        $tax      = $order['tax_cents'];
-        $shipping = $order['shipping_cents'];
-        $discount = $order['discount_cents'];
+        $tax        = $order['tax_cents'];
+        $shipping   = $order['shipping_cents'];
+        $discount   = $order['discount_cents'];
+        $inclusive  = !empty($order['tax_inclusive']);
 
-        $total = max(0, $subtotal + $tax + $shipping - $discount);
+        $total = max(0, $subtotal + ($inclusive ? 0 : $tax) + $shipping - $discount);
 
         return [
             'subtotal_cents' => $subtotal,

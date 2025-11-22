@@ -12,7 +12,12 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use Joomla\Database\DatabaseInterface;
+use Joomla\CMS\Session\SessionInterface;
+use Joomla\CMS\Session\Session;
 use RuntimeException;
 
 /**
@@ -32,11 +37,33 @@ class PaymentController extends BaseController
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
         $gateway = isset($payload['gateway']) ? strtolower((string) $payload['gateway']) : 'stripe';
 
-        if (!in_array($gateway, ['stripe', 'paypal'], true)) {
+        if (!in_array($gateway, ['stripe', 'paypal', 'cod'], true)) {
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
         }
 
         $container   = Factory::getContainer();
+
+        if (!$container->has(SessionInterface::class)) {
+            $container->share(
+                SessionInterface::class,
+                static function (): SessionInterface {
+                    if (method_exists(Factory::class, 'getSession')) {
+                        return Factory::getSession();
+                    }
+
+                    return Factory::getApplication()->getSession();
+                }
+            );
+        }
+
+        if (!$container->has(CartSessionService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $container->registerServiceProvider(require $providerPath);
+            }
+        }
+
         $cartService = $container->get(CartSessionService::class);
         $cart        = $cartService->current();
 
@@ -47,9 +74,49 @@ class PaymentController extends BaseController
         /** @var OrderService $orders */
         $orders       = $container->get(OrderService::class);
         $orderPayload = $this->buildOrderPayload($cart, $payload);
-        $order        = $orders->create($orderPayload);
+
+        $shippingCents = $this->resolveShippingAmount(
+            isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
+            (int) ($cart['summary']['subtotal_cents'] ?? 0)
+        );
+        $tax = $this->calculateTaxAmount($payload, (int) ($orderPayload['subtotal_cents'] ?? 0));
+
+        $orderPayload['shipping_cents'] = $shippingCents;
+        $orderPayload['tax_cents']      = $tax['amount'];
+        $orderPayload['discount_cents'] = $orderPayload['discount_cents'] ?? 0;
+        $orderPayload['tax_inclusive']  = $tax['inclusive'];
+        $orderPayload['items']          = $this->applyTaxRateToItems(
+            $orderPayload['items'] ?? [],
+            $tax['rate']
+        );
+        $orderPayload['state'] = $gateway === 'cod' ? 'pending' : $orderPayload['state'];
+
+        $order = $orders->create($orderPayload);
 
         /** @var PaymentGatewayManager $manager */
+        if ($gateway === 'cod') {
+            $orders->recordTransaction((int) $order['id'], [
+                'gateway'      => 'cod',
+                'status'       => 'pending',
+                'amount_cents' => (int) $order['total_cents'],
+                'payload'      => ['method' => 'cash_on_delivery'],
+            ]);
+
+            $orderUrl = $this->buildOrderUrl($order['order_no']);
+
+            $this->respond([
+                'order' => [
+                    'id'       => $order['id'],
+                    'order_no' => $order['order_no'],
+                ],
+                'checkout' => [
+                    'mode'     => 'cod',
+                    'redirect' => $orderUrl,
+                    'url'      => $orderUrl,
+                ],
+            ]);
+        }
+
         $manager = $container->get(PaymentGatewayManager::class);
 
         $preferences = [
@@ -160,5 +227,158 @@ class PaymentController extends BaseController
         }
 
         return Session::checkToken('post');
+    }
+
+    /**
+     * Calculate tax amount based on configured rates and billing address.
+     *
+     * @return array{amount: int, rate: float, inclusive: bool}
+     */
+    private function calculateTaxAmount(array $payload, int $subtotal): array
+    {
+        $billing = $payload['billing'] ?? [];
+        $country = strtoupper(trim((string) ($billing['country'] ?? '')));
+        $region  = strtolower(trim((string) ($billing['region'] ?? '')));
+
+        try {
+            $service = $this->getTaxService();
+            $result  = $service->paginate([], 100, 0);
+            $rates   = $result['items'] ?? [];
+        } catch (\Throwable $exception) {
+            $rates = [];
+        }
+
+        usort(
+            $rates,
+            static fn ($a, $b) => ($a['priority'] ?? 0) <=> ($b['priority'] ?? 0)
+        );
+
+        $matches = array_values(array_filter($rates, static function ($rate) use ($country, $region) {
+            $rateCountry = strtoupper((string) ($rate['country'] ?? ''));
+            $rateRegion  = strtolower((string) ($rate['region'] ?? ''));
+
+            if ($rateCountry !== '' && $country !== '' && $rateCountry !== $country) {
+                return false;
+            }
+
+            if ($rateRegion !== '') {
+                return $region !== '' && $rateRegion === $region;
+            }
+
+            if ($rateCountry !== '' && $country === '') {
+                return false;
+            }
+
+            return true;
+        }));
+
+        $globalRates = array_values(array_filter($rates, static function ($rate) {
+            $rateCountry = strtoupper((string) ($rate['country'] ?? ''));
+            $rateRegion  = strtolower((string) ($rate['region'] ?? ''));
+
+            return $rateCountry === '' && $rateRegion === '';
+        }));
+
+        $selected = $matches[0] ?? ($globalRates[0] ?? null);
+
+        if (!$selected || empty($selected['rate'])) {
+            return [
+                'amount'    => 0,
+                'rate'      => 0.0,
+                'inclusive' => false,
+            ];
+        }
+
+        $percentage = (float) $selected['rate'];
+        $inclusive  = !empty($selected['inclusive']);
+
+        $tax = $inclusive
+            ? (int) round($subtotal - ($subtotal / (1 + ($percentage / 100))))
+            : (int) round($subtotal * ($percentage / 100));
+
+        return [
+            'amount'    => $tax,
+            'rate'      => $percentage,
+            'inclusive' => $inclusive,
+        ];
+    }
+
+    /**
+     * Resolve shipping amount from configured rules.
+     */
+    private function resolveShippingAmount(?int $ruleId, int $subtotal): int
+    {
+        if (!$ruleId) {
+            return 0;
+        }
+
+        try {
+            $service = $this->getShippingService();
+            $rule    = $service->get($ruleId);
+        } catch (\Throwable $exception) {
+            return 0;
+        }
+
+        if (!$rule || (isset($rule['active']) && !$rule['active'])) {
+            return 0;
+        }
+
+        if (
+            ($rule['type'] ?? '') === 'free_over'
+            && isset($rule['threshold_cents'])
+            && $rule['threshold_cents'] !== null
+            && $subtotal >= (int) $rule['threshold_cents']
+        ) {
+            return 0;
+        }
+
+        return (int) ($rule['price_cents'] ?? 0);
+    }
+
+    /**
+     * Apply a tax rate to each order item.
+     *
+     * @param array<int, array<string, mixed>> $items
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function applyTaxRateToItems(array $items, float $rate): array
+    {
+        $formatted = $rate > 0 ? sprintf('%.2f', $rate) : '0.00';
+
+        return array_map(
+            static function ($item) use ($formatted) {
+                if (!\is_array($item)) {
+                    return $item;
+                }
+
+                $item['tax_rate'] = $item['tax_rate'] ?? $formatted;
+
+                return $item;
+            },
+            $items
+        );
+    }
+
+    private function getShippingService(): ShippingRuleService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(ShippingRuleService::class)) {
+            return $container->get(ShippingRuleService::class);
+        }
+
+        return new ShippingRuleService($container->get(DatabaseInterface::class));
+    }
+
+    private function getTaxService(): TaxService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(TaxService::class)) {
+            return $container->get(TaxService::class);
+        }
+
+        return new TaxService($container->get(DatabaseInterface::class));
     }
 }

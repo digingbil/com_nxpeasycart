@@ -38,7 +38,18 @@ if ($isPlaceholder) : ?>
 
 $price      = $product['price'] ?? ['currency' => 'USD', 'min_cents' => 0, 'max_cents' => 0];
 $currency   = strtoupper((string) ($price['currency'] ?? 'USD'));
-$images     = $product['images']     ?? [];
+$images     = array_values(array_filter(array_map(
+    static function ($image) {
+        if (!\is_string($image)) {
+            return null;
+        }
+
+        $trimmed = trim($image);
+
+        return $trimmed !== '' ? $trimmed : null;
+    },
+    $product['images'] ?? []
+)));
 $variants   = $product['variants']   ?? [];
 $categories = $product['categories'] ?? [];
 
@@ -70,6 +81,16 @@ if ($product['long_desc'] !== '') {
     );
     $preparedLongDescription = $safeHtmlFilter->clean($rawLongDescription);
 }
+
+$galleryPayload = [
+    'images' => $images,
+    'title'  => (string) ($product['title'] ?? ''),
+];
+$galleryJson = htmlspecialchars(
+    json_encode($galleryPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ENT_QUOTES,
+    'UTF-8'
+);
 
 $variantPayload = array_map(
     static function (array $variant) use ($locale): array {
@@ -141,15 +162,40 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
     class="nxp-ec-product"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
-    <div class="nxp-ec-product__media">
+    <div class="nxp-ec-product__media" data-nxp-gallery="<?php echo $galleryJson; ?>">
         <?php if ($primaryImage) : ?>
-            <figure class="nxp-ec-product__figure">
+            <button
+                type="button"
+                class="nxp-ec-product__figure"
+                data-nxp-gallery-trigger
+                aria-label="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
+            >
                 <img
                     src="<?php echo htmlspecialchars($primaryImage, ENT_QUOTES, 'UTF-8'); ?>"
                     alt="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
                     loading="lazy"
+                    data-nxp-gallery-main
                 />
-            </figure>
+            </button>
+        <?php endif; ?>
+
+        <?php if (count($images) > 1) : ?>
+            <div class="nxp-ec-product__thumbs" aria-label="<?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_PRODUCT_GALLERY_ARIA'), ENT_QUOTES, 'UTF-8'); ?>">
+                <?php foreach ($images as $index => $image) : ?>
+                    <button
+                        type="button"
+                        class="nxp-ec-product__thumb"
+                        data-nxp-gallery-thumb="<?php echo (int) $index; ?>"
+                        aria-label="<?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_PRODUCT_PRIMARY_IMAGE_ALT', $product['title']), ENT_QUOTES, 'UTF-8'); ?>"
+                    >
+                        <img
+                            src="<?php echo htmlspecialchars($image, ENT_QUOTES, 'UTF-8'); ?>"
+                            alt="<?php echo htmlspecialchars($product['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                            loading="lazy"
+                        />
+                    </button>
+                <?php endforeach; ?>
+            </div>
         <?php endif; ?>
     </div>
 

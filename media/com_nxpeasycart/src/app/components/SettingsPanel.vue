@@ -1360,6 +1360,55 @@
                     </div>
                 </fieldset>
 
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_PAYMENTS_COD",
+                                "Cash on delivery",
+                                [],
+                                "settingsPaymentsCod"
+                            )
+                        }}
+                    </legend>
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="nxp-ec-cod-enabled">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_COD_ENABLED",
+                                    "Enable cash on delivery",
+                                    [],
+                                    "settingsPaymentsCodEnabled"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="nxp-ec-cod-enabled"
+                            type="checkbox"
+                            v-model="paymentsDraft.cod.enabled"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-cod-label">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_COD_LABEL",
+                                    "Checkout label",
+                                    [],
+                                    "settingsPaymentsCodLabel"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="nxp-ec-cod-label"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="paymentsDraft.cod.label"
+                            placeholder="Cash on delivery"
+                        />
+                    </div>
+                </fieldset>
+
                 <div
                     v-if="paymentsState.message"
                     class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
@@ -1837,6 +1886,10 @@ const paymentsDraft = reactive({
         webhook_id: "",
         mode: "sandbox",
     },
+    cod: {
+        enabled: true,
+        label: "Cash on delivery",
+    },
 });
 
 const visualDraft = reactive({
@@ -1894,6 +1947,7 @@ const applySettings = (values = {}) => {
 const applyPayments = (config = {}) => {
     const stripe = config.stripe ?? {};
     const paypal = config.paypal ?? {};
+    const cod = config.cod ?? {};
 
     Object.assign(paymentsDraft.stripe, {
         publishable_key: stripe.publishable_key ?? "",
@@ -1907,6 +1961,14 @@ const applyPayments = (config = {}) => {
         client_secret: paypal.client_secret ?? "",
         webhook_id: paypal.webhook_id ?? "",
         mode: paypal.mode ?? "sandbox",
+    });
+
+    Object.assign(paymentsDraft.cod, {
+        enabled:
+            cod.enabled !== undefined
+                ? Boolean(cod.enabled)
+                : paymentsDraft.cod.enabled,
+        label: cod.label ?? paymentsDraft.cod.label ?? "Cash on delivery",
     });
 };
 

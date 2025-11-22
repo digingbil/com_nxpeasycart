@@ -9,6 +9,7 @@ export default function mountCheckoutIsland(el) {
     const payload = parsePayload(el.dataset.nxpCheckout, {});
     const cart = payload.cart || { items: [], summary: {} };
     const shippingRules = payload.shipping_rules || [];
+    const taxRates = payload.tax_rates || [];
     const settings = payload.settings || {};
     const payments = payload.payments || {};
     const endpoints = payload.endpoints || {};
@@ -59,6 +60,10 @@ export default function mountCheckoutIsland(el) {
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-postcode">Postcode</label>
                   <input id="nxp-ec-postcode" type="text" v-model="model.billing.postcode" required />
+                </div>
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-region">Region/State</label>
+                  <input id="nxp-ec-region" type="text" v-model="model.billing.region" />
                 </div>
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-country">Country</label>
@@ -138,6 +143,10 @@ export default function mountCheckoutIsland(el) {
                   <span>Shipping</span>
                   <strong>{{ formatMoney(selectedShippingCost) }}</strong>
                 </div>
+                <div v-if="showTax">
+                  <span>{{ taxLabel }}</span>
+                  <strong>{{ formatMoney(taxAmount) }}</strong>
+                </div>
                 <div>
                   <span>Total</span>
                   <strong>{{ formatMoney(total) }}</strong>
@@ -164,11 +173,41 @@ export default function mountCheckoutIsland(el) {
                 settings.base_currency ||
                 currencyAttr ||
                 "USD";
-            const shipping = shippingRules.map((rule, index) => ({
-                ...rule,
-                price_cents: rule.price_cents || 0,
-                default: index === 0,
-            }));
+            const shipping = (shippingRules || [])
+                .filter(
+                    (rule) => rule && (rule.active === undefined || rule.active)
+                )
+                .map((rule, index) => ({
+                    ...rule,
+                    id: rule.id ?? index,
+                    type: rule.type || "flat",
+                    price_cents: Number(rule.price_cents || 0),
+                    threshold_cents:
+                        rule.threshold_cents !== undefined &&
+                        rule.threshold_cents !== null
+                            ? Number(rule.threshold_cents)
+                            : null,
+                    default: index === 0,
+                }));
+            const normalisedTaxRates = (taxRates || [])
+                .filter((rate) => rate && rate.rate !== undefined)
+                .map((rate) => ({
+                    id:
+                        rate.id ??
+                        rate.country ??
+                        rate.region ??
+                        Math.random().toString(36),
+                    country: (rate.country || "").toUpperCase(),
+                    region: (rate.region || "").toLowerCase(),
+                    rate: Number(rate.rate || 0),
+                    inclusive: Boolean(rate.inclusive),
+                    priority: Number(rate.priority || 0),
+                }))
+                .sort(
+                    (a, b) =>
+                        (a.priority ?? 0) - (b.priority ?? 0) ||
+                        b.rate - a.rate
+                );
 
             const isConfigured = (config, keys = []) =>
                 keys.every((key) => {
@@ -202,6 +241,13 @@ export default function mountCheckoutIsland(el) {
                 });
             }
 
+            if ((payments.cod?.enabled ?? true) && cartItems.length > 0) {
+                gatewayOptions.push({
+                    id: "cod",
+                    label: payments.cod?.label || "Cash on delivery",
+                });
+            }
+
             const gateways = gatewayOptions;
             const selectedGateway = ref(gateways[0]?.id || "");
             const hostedCheckoutAvailable =
@@ -216,6 +262,7 @@ export default function mountCheckoutIsland(el) {
                     city: "",
                     postcode: "",
                     country: "",
+                    region: "",
                 },
                 shipping_rule_id: shipping[0]?.id || null,
             });
@@ -235,15 +282,112 @@ export default function mountCheckoutIsland(el) {
                 )
             );
 
-            const selectedShippingCost = computed(() => {
-                const selected = shipping.find(
+            const shippingCostForRule = (rule) => {
+                if (!rule) {
+                    return 0;
+                }
+
+                if (
+                    rule.type === "free_over" &&
+                    Number.isFinite(rule.threshold_cents) &&
+                    subtotal.value >= Number(rule.threshold_cents)
+                ) {
+                    return 0;
+                }
+
+                return Number(rule.price_cents || 0);
+            };
+
+            const selectedShippingRule = computed(() => {
+                const match = shipping.find(
                     (rule) => String(rule.id) === String(state.shipping_rule_id)
                 );
-                return selected ? selected.price_cents : 0;
+                return match || shipping[0] || null;
+            });
+
+            const selectedShippingCost = computed(() =>
+                shippingCostForRule(selectedShippingRule.value)
+            );
+
+            const billingCountry = computed(() =>
+                (state.billing.country || "").trim().toUpperCase()
+            );
+            const billingRegion = computed(() =>
+                (state.billing.region || "").trim().toLowerCase()
+            );
+
+            const activeTaxRate = computed(() => {
+                if (!normalisedTaxRates.length) {
+                    return null;
+                }
+
+                const matches = normalisedTaxRates.filter((rate) => {
+                    if (
+                        billingCountry.value &&
+                        rate.country &&
+                        rate.country !== billingCountry.value
+                    ) {
+                        return false;
+                    }
+
+                    if (rate.region) {
+                        return (
+                            billingRegion.value !== "" &&
+                            rate.region === billingRegion.value
+                        );
+                    }
+
+                    if (rate.country && billingCountry.value === "") {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                const globalRate =
+                    normalisedTaxRates.find(
+                        (rate) => !rate.country && !rate.region
+                    ) || null;
+
+                return matches[0] ?? globalRate;
+            });
+
+            const taxAmount = computed(() => {
+                const rate = activeTaxRate.value;
+
+                if (!rate || !rate.rate) {
+                    return 0;
+                }
+
+                const percent = Number(rate.rate) / 100;
+
+                return rate.inclusive
+                    ? Math.round(subtotal.value - subtotal.value / (1 + percent))
+                    : Math.round(subtotal.value * percent);
+            });
+
+            const taxLabel = computed(() => {
+                const rate = activeTaxRate.value;
+
+                if (!rate || !rate.rate) {
+                    return "Tax";
+                }
+
+                return rate.inclusive
+                    ? `Tax (${rate.rate}% incl.)`
+                    : `Tax (${rate.rate}%)`;
             });
 
             const total = computed(
-                () => subtotal.value + selectedShippingCost.value
+                () =>
+                    subtotal.value +
+                    selectedShippingCost.value +
+                    (activeTaxRate.value?.inclusive ? 0 : taxAmount.value)
+            );
+            const showTax = computed(
+                () =>
+                    Boolean(activeTaxRate.value?.rate) &&
+                    taxAmount.value > 0
             );
 
             const submit = async () => {
@@ -257,11 +401,24 @@ export default function mountCheckoutIsland(el) {
                 ui.loading = true;
 
                 const gateway = selectedGateway.value || gateways[0]?.id || "";
+                const appliedTaxRate = activeTaxRate.value;
+                const taxRateValue = appliedTaxRate?.rate
+                    ? Number(appliedTaxRate.rate)
+                    : 0;
+                const taxRateString = taxRateValue
+                    ? taxRateValue.toFixed(2)
+                    : "0.00";
+                const shippingCost = selectedShippingCost.value;
+                const taxCents = taxAmount.value;
 
                 const payloadBody = {
                     email: state.email,
                     billing: state.billing,
                     shipping_rule_id: state.shipping_rule_id,
+                    shipping_cents: shippingCost,
+                    tax_cents: taxCents,
+                    tax_rate: taxRateString,
+                    tax_inclusive: Boolean(appliedTaxRate?.inclusive),
                     items: cartItems.map((item) => ({
                         sku: item.sku,
                         qty: item.qty,
@@ -271,11 +428,13 @@ export default function mountCheckoutIsland(el) {
                         total_cents: item.total_cents,
                         currency,
                         title: item.title,
+                        tax_rate: taxRateString,
                     })),
                     currency,
                     totals: {
                         subtotal_cents: subtotal.value,
-                        shipping_cents: selectedShippingCost.value,
+                        shipping_cents: shippingCost,
+                        tax_cents: taxCents,
                         total_cents: total.value,
                     },
                     gateway,
@@ -284,7 +443,8 @@ export default function mountCheckoutIsland(el) {
                 try {
                     if (hostedCheckoutAvailable && gateway) {
                         const data = await api.postJson(endpoints.payment, payloadBody);
-                        const redirectUrl = data?.checkout?.url;
+                        const redirectUrl =
+                            data?.checkout?.url || data?.checkout?.redirect;
 
                         if (!redirectUrl) {
                             throw new Error(
@@ -321,6 +481,9 @@ export default function mountCheckoutIsland(el) {
                 shippingRules: shipping,
                 subtotal,
                 selectedShippingCost,
+                taxAmount,
+                taxLabel,
+                showTax,
                 total,
                 submit,
                 loading: computed(() => ui.loading),

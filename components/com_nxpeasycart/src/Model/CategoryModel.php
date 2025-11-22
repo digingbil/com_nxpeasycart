@@ -41,6 +41,7 @@ class CategoryModel extends BaseDatabaseModel
 
         $this->setState('category.id', $input->getInt('id'));
         $this->setState('category.slug', $input->getCmd('slug', ''));
+        $this->setState('filter.search', trim($input->getString('q', '')));
 
         $rootSelection = [];
 
@@ -173,6 +174,20 @@ class CategoryModel extends BaseDatabaseModel
             ->where($db->quoteName('p.active') . ' = 1')
             ->order($db->quoteName('p.title') . ' ASC')
             ->group($db->quoteName('p.id'));
+
+        $searchTerm = (string) $this->getState('filter.search', '');
+
+        if ($searchTerm !== '') {
+            $searchLike = '%' . $db->escape($searchTerm, true) . '%';
+            $query->where(
+                '(' .
+                $db->quoteName('p.title') . ' LIKE :productSearch' .
+                ' OR ' . $db->quoteName('p.short_desc') . ' LIKE :productSearch' .
+                ' OR ' . $db->quoteName('p.long_desc') . ' LIKE :productSearch' .
+                ' OR ' . $db->quoteName('v.sku') . ' LIKE :productSearch' .
+                ')'
+            )->bind(':productSearch', $searchLike, ParameterType::STRING);
+        }
 
         if (!empty($category['id'])) {
             $categoryIdFilter = (int) $category['id'];

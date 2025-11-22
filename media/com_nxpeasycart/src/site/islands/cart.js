@@ -32,6 +32,7 @@ export default function mountCartIsland(el) {
         shipping: labelsPayload.shipping || "Shipping",
         shipping_note:
             labelsPayload.shipping_note || "Calculated at checkout",
+        tax: labelsPayload.tax || "Tax",
         total_label: labelsPayload.total_label || "Total",
         checkout: labelsPayload.checkout || "Proceed to checkout",
     };
@@ -40,6 +41,11 @@ export default function mountCartIsland(el) {
             typeof linksPayload.browse === "string" && linksPayload.browse !== ""
                 ? linksPayload.browse
                 : "index.php?option=com_nxpeasycart&view=landing",
+        checkout:
+            typeof linksPayload.checkout === "string" &&
+            linksPayload.checkout !== ""
+                ? linksPayload.checkout
+                : "index.php?option=com_nxpeasycart&view=checkout",
     };
 
     el.innerHTML = "";
@@ -131,13 +137,17 @@ export default function mountCartIsland(el) {
                 <dt>{{ labels.shipping }}</dt>
                 <dd>{{ labels.shipping_note }}</dd>
               </div>
+              <div v-if="showTax">
+                <dt>{{ labels.tax }}</dt>
+                <dd>{{ format(summary.tax_cents) }}</dd>
+              </div>
               <div>
                 <dt>{{ labels.total_label }}</dt>
                 <dd class="nxp-ec-cart__summary-total">{{ format(summary.total_cents) }}</dd>
               </div>
             </dl>
 
-            <a class="nxp-ec-btn nxp-ec-btn--primary" href="index.php?option=com_nxpeasycart&view=checkout">
+            <a class="nxp-ec-btn nxp-ec-btn--primary" :href="links.checkout">
               {{ labels.checkout }}
             </a>
           </aside>
@@ -147,11 +157,34 @@ export default function mountCartIsland(el) {
         setup() {
             const items = reactive(payload.items || []);
             const currency = payload.summary?.currency || currencyAttr || "USD";
+            let taxRate = Number(payload.summary?.tax_rate ?? 0);
+            let taxInclusive = Boolean(payload.summary?.tax_inclusive);
+
+            const computeTax = (subtotal) => {
+                if (!taxRate) {
+                    return 0;
+                }
+
+                const rate = Number(taxRate) / 100;
+
+                return taxInclusive
+                    ? Math.round(subtotal - subtotal / (1 + rate))
+                    : Math.round(subtotal * rate);
+            };
 
             const summary = reactive({
                 subtotal_cents: payload.summary?.subtotal_cents || 0,
-                total_cents: payload.summary?.total_cents || 0,
+                tax_cents:
+                    payload.summary?.tax_cents ??
+                    computeTax(payload.summary?.subtotal_cents || 0) ??
+                    0,
+                total_cents: payload.summary?.total_cents ?? 0,
             });
+            const showTax = computed(
+                () =>
+                    Number(summary.tax_cents) > 0 ||
+                    Number(taxRate) > 0
+            );
 
             const recalcSummary = () => {
                 const subtotal = items.reduce(
@@ -159,7 +192,9 @@ export default function mountCartIsland(el) {
                     0
                 );
                 summary.subtotal_cents = subtotal;
-                summary.total_cents = subtotal;
+                summary.tax_cents = computeTax(subtotal);
+                summary.total_cents =
+                    subtotal + (taxInclusive ? 0 : summary.tax_cents);
             };
 
             const remove = async (item) => {
@@ -226,10 +261,23 @@ export default function mountCartIsland(el) {
                 const nextItems = Array.isArray(cart?.items) ? cart.items : [];
                 items.splice(0, items.length, ...nextItems);
 
+                taxRate = Number(cart?.summary?.tax_rate ?? taxRate ?? 0);
+                taxInclusive = Boolean(
+                    cart?.summary?.tax_inclusive ?? taxInclusive
+                );
                 summary.subtotal_cents = Number(
                     cart?.summary?.subtotal_cents || 0
                 );
-                summary.total_cents = Number(cart?.summary?.total_cents || 0);
+                summary.tax_cents = Number(
+                    cart?.summary?.tax_cents ??
+                        computeTax(summary.subtotal_cents) ??
+                        0
+                );
+                summary.total_cents = Number(
+                    cart?.summary?.total_cents ??
+                        summary.subtotal_cents +
+                            (taxInclusive ? 0 : summary.tax_cents)
+                );
             };
 
             const refresh = async () => {
@@ -273,6 +321,7 @@ export default function mountCartIsland(el) {
                 links,
                 items,
                 summary,
+                showTax,
                 remove,
                 updateQty,
                 format: (cents) => formatMoney(cents, currency, locale),

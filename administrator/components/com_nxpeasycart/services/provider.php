@@ -15,6 +15,7 @@ use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Router\SiteRouter;
 use Joomla\CMS\Session\SessionInterface;
+use Joomla\CMS\Session\Session;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Database\DatabaseInterface;
 use Joomla\DI\Container;
@@ -86,6 +87,19 @@ return new class () implements ServiceProviderInterface {
 
         $container->registerServiceProvider(new ComponentDispatcherFactory($namespace));
         $container->registerServiceProvider(new ComponentRouterFactory('\\Joomla\\Component\\Nxpeasycart'));
+
+        if (!$container->has(SessionInterface::class)) {
+            $container->share(
+                SessionInterface::class,
+                static function (): SessionInterface {
+                    if (method_exists(JoomlaFactory::class, 'getSession')) {
+                        return JoomlaFactory::getSession();
+                    }
+
+                    return JoomlaFactory::getApplication()->getSession();
+                }
+            );
+        }
 
         $container->set(
             MVCFactoryInterface::class,

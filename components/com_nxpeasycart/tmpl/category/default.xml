@@ -4,20 +4,14 @@
         <message>COM_NXPEASYCART_MENU_CATEGORY_DESC</message>
     </layout>
     <fields name="request">
-        <fieldset name="basic">
+        <fieldset name="request" addfieldprefix="Joomla\Component\Nxpeasycart\Administrator\Field">
             <field
                 name="id"
-                type="number"
-                default=""
+                type="CategorySelect"
                 label="COM_NXPEASYCART_FIELD_CATEGORY_ID"
                 description="COM_NXPEASYCART_FIELD_CATEGORY_ID_DESC"
-            />
-            <field
-                name="slug"
-                type="text"
-                default=""
-                label="COM_NXPEASYCART_FIELD_CATEGORY_SLUG"
-                description="COM_NXPEASYCART_FIELD_CATEGORY_SLUG_DESC"
+                translate_default="true"
+                required="false"
             />
         </fieldset>
     </fields>
@@ -26,11 +20,19 @@
         <fieldset name="basic">
             <field
                 name="root_categories"
-                type="RootCategories"
+                type="sql"
                 multiple="true"
                 label="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES"
                 description="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES_DESC"
-            />
+                required="false"
+            >
+                <query>
+                    SELECT id AS value, title AS text
+                    FROM #__nxp_easycart_categories
+                    WHERE parent_id IS NULL OR parent_id = 0
+                    ORDER BY sort ASC, title ASC
+                </query>
+            </field>
         </fieldset>
     </fields>
 </metadata>

@@ -6,6 +6,8 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
+use Joomla\CMS\Uri\Uri;
 
 /**
  * Hydrates cart payloads with product and variant metadata for storefront views.
@@ -16,6 +18,13 @@ class CartPresentationService
      * @var DatabaseInterface
      */
     private DatabaseInterface $db;
+
+    /**
+     * Cached default tax rate.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $defaultTaxRate = null;
 
     /**
      * CartPresentationService constructor.
@@ -149,6 +158,17 @@ class CartPresentationService
 
                     if (\is_string($candidate) && trim($candidate) !== '') {
                         $image = trim($candidate);
+
+                        if (
+                            !str_starts_with($image, 'http://')
+                            && !str_starts_with($image, 'https://')
+                            && !str_starts_with($image, '//')
+                        ) {
+                            $base     = rtrim(Uri::root(true), '/');
+                            $relative = '/' . ltrim($image, '/');
+
+                            $image = ($base === '' ? '' : $base) . $relative;
+                        }
                     }
                 }
             }
@@ -226,13 +246,82 @@ class CartPresentationService
             }
         }
 
+        $tax      = $this->calculateTax($subtotal);
+        $taxValue = $tax['amount'];
+        $inclusive = $tax['inclusive'];
+        $total    = $subtotal + ($inclusive ? 0 : $taxValue);
+
         return [
             'subtotal_cents' => $subtotal,
-            'tax_cents'      => 0,
+            'tax_cents'      => $taxValue,
+            'tax_rate'       => $tax['rate'],
+            'tax_inclusive'  => $inclusive,
             'shipping_cents' => 0,
             'discount_cents' => 0,
-            'total_cents'    => $subtotal,
+            'total_cents'    => $total,
             'currency'       => $currency,
+        ];
+    }
+
+    /**
+     * Resolve default tax rate from configuration.
+     */
+    private function defaultTaxRate(): ?array
+    {
+        if ($this->defaultTaxRate !== null) {
+            return $this->defaultTaxRate;
+        }
+
+        try {
+            $service = new TaxService($this->db);
+            $rates   = $service->paginate([], 50, 0);
+            $items   = $rates['items'] ?? [];
+            $global  = array_values(array_filter(
+                $items,
+                static function ($rate) {
+                    $country = strtoupper((string) ($rate['country'] ?? ''));
+                    $region  = strtolower((string) ($rate['region'] ?? ''));
+
+                    return $country === '' && $region === '';
+                }
+            ));
+
+            $this->defaultTaxRate = $global[0] ?? null;
+        } catch (\Throwable $exception) {
+            $this->defaultTaxRate = null;
+        }
+
+        return $this->defaultTaxRate;
+    }
+
+    /**
+     * Calculate tax from the default rate.
+     *
+     * @return array{amount: int, rate: float, inclusive: bool}
+     */
+    private function calculateTax(int $subtotal): array
+    {
+        $rate = $this->defaultTaxRate();
+
+        if (!$rate || empty($rate['rate'])) {
+            return [
+                'amount'    => 0,
+                'rate'      => 0.0,
+                'inclusive' => false,
+            ];
+        }
+
+        $percentage = (float) $rate['rate'];
+        $inclusive  = !empty($rate['inclusive']);
+
+        $tax = $inclusive
+            ? (int) round($subtotal - ($subtotal / (1 + ($percentage / 100))))
+            : (int) round($subtotal * ($percentage / 100));
+
+        return [
+            'amount'    => $tax,
+            'rate'      => $percentage,
+            'inclusive' => $inclusive,
         ];
     }
 }

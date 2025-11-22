@@ -5,6 +5,7 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $theme   = $this->theme ?? [];
 $cssVars = '';
@@ -57,9 +58,10 @@ $labelsJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$categoryRoute = RouteHelper::getCategoryBaseRoute();
 $links = [
-    'all'    => Route::_('index.php?option=com_nxpeasycart&view=category'),
-    'search' => Route::_('index.php?option=com_nxpeasycart&view=category'),
+    'all'    => Route::_($categoryRoute),
+    'search' => Route::_($categoryRoute),
 ];
 $linksJson = htmlspecialchars(
     json_encode($links, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),

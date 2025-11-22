@@ -73,6 +73,7 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 -   The storefront JS is split into per-island modules (product/cart-button, category, cart, cart-summary, checkout, landing) loaded on demand via dynamic `import()` and lazy-mounted via `IntersectionObserver`.
 -   Shared site utilities provide CSRF-aware API client, locale-aware money formatting, and payload parsing; locale/currency are passed from server-rendered templates via `data-nxp-*` attributes to keep PHP/JS output in sync.
 -   Template theme tokens are resolved through `TemplateAdapter` and memoised per request to avoid re-parsing template params when multiple views request defaults.
+-   Menu usage: the Store Category menu type uses “Category” to target a single category (leave blank for all products). “Root Categories” only applies when Category is blank—it limits the “all products” listing and filter chips to those selected roots; otherwise it is ignored.
 
 ### Categories & product editing refresh
 

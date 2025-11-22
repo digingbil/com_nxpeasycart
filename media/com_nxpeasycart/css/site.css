@@ -33,6 +33,16 @@
   border: 0;
 }
 
+.nxp-ec-fade-enter-active,
+.nxp-ec-fade-leave-active {
+  transition: opacity 0.35s ease;
+}
+
+.nxp-ec-fade-enter-from,
+.nxp-ec-fade-leave-to {
+  opacity: 0;
+}
+
 .nxp-ec-btn {
   display: inline-flex;
   align-items: center;
@@ -102,12 +112,51 @@
 }
 .nxp-ec-product__figure {
   margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: block;
+  text-align: left;
+  width: 100%;
+  transition: transform 0.2s ease;
+}
+.nxp-ec-product__figure:focus-visible {
+  outline: 2px solid var(--nxp-ec-color-primary);
+  outline-offset: 4px;
 }
 .nxp-ec-product__figure img {
   width: 100%;
   height: auto;
   border-radius: 16px;
   box-shadow: var(--nxp-ec-shadow-card, 0 18px 48px rgba(15, 23, 42, 0.12));
+}
+.nxp-ec-product__thumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  flex-wrap: wrap;
+}
+.nxp-ec-product__thumb {
+  padding: 0;
+  border: 1px solid var(--nxp-ec-color-border);
+  background: var(--nxp-ec-color-surface);
+  border-radius: var(--nxp-ec-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--nxp-ec-shadow-card);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.nxp-ec-product__thumb.is-active {
+  border-color: var(--nxp-ec-color-primary);
+  box-shadow: var(--nxp-ec-shadow-hover);
+}
+.nxp-ec-product__thumb img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
 }
 .nxp-ec-product__summary {
   display: flex;
@@ -416,12 +465,16 @@
 .nxp-ec-product-card__media {
   display: block;
   position: relative;
+  overflow: hidden;
+  border-top-left-radius: var(--nxp-ec-radius-lg);
+  border-top-right-radius: var(--nxp-ec-radius-lg);
 }
 .nxp-ec-product-card__media img {
   width: 100%;
   display: block;
   aspect-ratio: 4/3;
   object-fit: cover;
+  transition: opacity 0.35s ease, transform 0.35s ease;
 }
 .nxp-ec-product-card__image-link, .nxp-ec-product-card__media a {
   display: block;
@@ -1094,6 +1147,92 @@
   margin: 0;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.nxp-ec-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.nxp-ec-lightbox.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.nxp-ec-lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(2px);
+}
+.nxp-ec-lightbox__dialog {
+  position: relative;
+  background: var(--nxp-ec-color-surface);
+  border-radius: var(--nxp-ec-radius-lg);
+  box-shadow: var(--nxp-ec-shadow-elevated);
+  padding: clamp(1rem, 3vw, 1.5rem);
+  max-width: min(960px, 95vw);
+  width: min(960px, 95vw);
+  z-index: 1;
+}
+.nxp-ec-lightbox__stage {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+.nxp-ec-lightbox__image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--nxp-ec-radius-md);
+  box-shadow: var(--nxp-ec-shadow-card);
+}
+.nxp-ec-lightbox__nav {
+  border: 1px solid var(--nxp-ec-color-border);
+  border-radius: var(--nxp-ec-radius-pill);
+  background: var(--nxp-ec-color-surface-alt);
+  color: var(--nxp-ec-color-text);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.nxp-ec-lightbox__nav:hover {
+  background: var(--nxp-ec-color-surface);
+  transform: translateY(-1px);
+  box-shadow: var(--nxp-ec-shadow-card);
+}
+.nxp-ec-lightbox__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--nxp-ec-color-muted);
+  font-size: 1.35rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+.nxp-ec-lightbox__counter {
+  margin: 0.85rem 0 0;
+  text-align: center;
+  color: var(--nxp-ec-color-muted);
+  font-size: 0.95rem;
+}
+
+.nxp-ec-lightbox-open {
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {

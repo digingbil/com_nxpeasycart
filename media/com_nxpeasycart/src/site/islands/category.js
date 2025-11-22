@@ -1,7 +1,8 @@
-import { createApp, reactive, computed, ref, watch } from "vue";
+import { createApp, reactive, computed, ref } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 import { createApiClient } from "../utils/apiClient.js";
+import { useImageRotator } from "../utils/useImageRotator.js";
 
 export default function mountCategoryIsland(el) {
     const category = parsePayload(el.dataset.nxpCategory, {});
@@ -164,30 +165,6 @@ export default function mountCategoryIsland(el) {
             link: item.link || links.all,
         }));
 
-    const updateUrl = (value) => {
-        if (
-            typeof window === "undefined" ||
-            !window.history ||
-            typeof window.history.replaceState !== "function"
-        ) {
-            return;
-        }
-
-        try {
-            const url = new URL(window.location.href);
-
-            if (value) {
-                url.searchParams.set("q", value);
-            } else {
-                url.searchParams.delete("q");
-            }
-
-            window.history.replaceState({}, "", url.toString());
-        } catch (error) {
-            // Ignore URL parsing failures.
-        }
-    };
-
     el.innerHTML = "";
 
     const app = createApp({
@@ -199,7 +176,6 @@ export default function mountCategoryIsland(el) {
             class="nxp-ec-category__search"
             method="get"
             :action="links.search"
-            @submit.prevent="submitSearch"
           >
             <label class="sr-only" :for="searchId">{{ labels.search_label }}</label>
             <input
@@ -240,14 +216,27 @@ export default function mountCategoryIsland(el) {
             :key="product.id || product.slug || product.title"
             class="nxp-ec-product-card"
           >
-            <div class="nxp-ec-product-card__media">
+            <div
+              class="nxp-ec-product-card__media"
+              @mouseenter="startCycle(product)"
+              @mouseleave="stopCycle(product)"
+              @focusin="startCycle(product)"
+              @focusout="stopCycle(product)"
+            >
               <a
                 v-if="product.images.length"
                 class="nxp-ec-product-card__image-link"
                 :href="product.link"
                 :aria-label="labels.view_product + ': ' + product.title"
               >
-                <img :src="product.images[0]" :alt="product.title" loading="lazy" />
+                <transition name="nxp-ec-fade" mode="out-in">
+                  <img
+                    :key="activeImage(product)"
+                    :src="activeImage(product)"
+                    :alt="product.title"
+                    loading="lazy"
+                  />
+                </transition>
               </a>
               <button
                 type="button"
@@ -322,39 +311,7 @@ export default function mountCategoryIsland(el) {
                 "Products";
             const search = ref(initialSearch);
 
-            const filteredProducts = computed(() => {
-                const term = search.value.trim().toLowerCase();
-
-                if (!term) {
-                    return enrichedProducts;
-                }
-
-                return enrichedProducts.filter((product) => {
-                    const haystack = `${product.title} ${
-                        product.short_desc || ""
-                    }`.toLowerCase();
-
-                    return haystack.includes(term);
-                });
-            });
-
-            watch(
-                search,
-                (value, previous) => {
-                    const next = value.trim();
-
-                    if (previous !== undefined && previous.trim() === next) {
-                        return;
-                    }
-
-                    updateUrl(next);
-                },
-                { immediate: true }
-            );
-
-            const submitSearch = () => {
-                updateUrl(search.value.trim());
-            };
+            const filteredProducts = computed(() => enrichedProducts);
 
             const isActive = (filter) => {
                 const slug =
@@ -366,6 +323,7 @@ export default function mountCategoryIsland(el) {
             const quickState = reactive({});
             const keyFor = (product) =>
                 product.id || product.slug || product.title || "product";
+            const { activeImage, startCycle, stopCycle } = useImageRotator(keyFor);
 
             const hasSingleVariant = (product) => {
                 const count = Number.parseInt(
@@ -449,11 +407,13 @@ export default function mountCategoryIsland(el) {
                 search,
                 searchId,
                 filteredProducts,
-                submitSearch,
                 isActive,
                 quickAdd,
                 quickState,
                 keyFor,
+                activeImage,
+                startCycle,
+                stopCycle,
             };
         },
     });

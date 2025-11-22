@@ -18,18 +18,27 @@
                 :key="item.id || item.slug || item.title"
                 class="nxp-ec-landing__card"
             >
-                <div class="nxp-ec-landing__card-media">
+                <div
+                    class="nxp-ec-landing__card-media"
+                    @mouseenter="startCycle(item)"
+                    @mouseleave="stopCycle(item)"
+                    @focusin="startCycle(item)"
+                    @focusout="stopCycle(item)"
+                >
                     <a
                         v-if="item.images && item.images.length"
                         class="nxp-ec-landing__card-link"
                         :href="item.link"
                         :aria-label="`${labels.view_product}: ${item.title}`"
                     >
-                        <img
-                            :src="item.images[0]"
-                            :alt="item.title"
-                            loading="lazy"
-                        />
+                        <transition name="nxp-ec-fade" mode="out-in">
+                            <img
+                                :key="activeImage(item)"
+                                :src="activeImage(item)"
+                                :alt="item.title"
+                                loading="lazy"
+                            />
+                        </transition>
                     </a>
                     <button
                         type="button"
@@ -100,6 +109,7 @@
 
 <script setup>
 import { reactive } from "vue";
+import { useImageRotator } from "../utils/useImageRotator.js";
 
 const props = defineProps({
     sections: {
@@ -127,10 +137,11 @@ const props = defineProps({
     },
 });
 
-const quickState = reactive({});
-
 const itemKey = (item) =>
     item.id || item.slug || item.title || Math.random().toString(36);
+
+const quickState = reactive({});
+const { activeImage, startCycle, stopCycle } = useImageRotator(itemKey);
 
 const hasSingleVariant = (item) => {
     const count = Number.parseInt(item?.variant_count, 10);

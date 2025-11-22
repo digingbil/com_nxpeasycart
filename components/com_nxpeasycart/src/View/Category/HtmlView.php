@@ -53,13 +53,14 @@ class HtmlView extends BaseHtmlView
         $this->products   = $model ? $model->getProducts() : [];
         $this->categories = $model ? $model->getCategories() : [];
         $this->theme      = TemplateAdapter::resolve();
+        $search           = $model ? (string) $model->getState('filter.search', '') : '';
+        $this->searchTerm = trim($search);
 
         SiteAssetHelper::useSiteAssets($document);
 
         if (!$this->category) {
             $document->setTitle(Text::_('COM_NXPEASYCART_CATEGORY_NOT_FOUND'));
             $this->products = [];
-            $this->searchTerm = trim($app->input->getString('q', ''));
 
             parent::display($tpl);
             return;
@@ -69,8 +70,6 @@ class HtmlView extends BaseHtmlView
         $title     = (string) $this->category['title'];
         $fullTitle = $sitename !== '' ? trim($title . ' | ' . $sitename, ' |') : $title;
         $document->setTitle($fullTitle);
-
-        $this->searchTerm = trim($app->input->getString('q', ''));
 
         $uri       = Uri::getInstance();
         $canonical = $uri->toString(['scheme', 'host', 'port', 'path', 'query']);

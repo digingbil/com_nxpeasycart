@@ -32,9 +32,13 @@ $search      = $payload['search'] ?? [];
 $categories  = $payload['categories'] ?? [];
 $sections    = $payload['sections'] ?? [];
 $trustBadge  = $payload['trust']['text'] ?? '';
-$searchRoute = isset($search['action']) ? Route::_($search['action']) : Route::_('index.php?option=com_nxpeasycart&view=category');
+$searchRoute = isset($search['action']) && \is_string($search['action'])
+    ? $search['action']
+    : 'index.php?option=com_nxpeasycart&view=category';
 $searchPlaceholder = $search['placeholder'] ?? Text::_('COM_NXPEASYCART_LANDING_SEARCH_PLACEHOLDER_DEFAULT');
-$ctaLink     = Route::_($hero['cta']['link'] ?? 'index.php?option=com_nxpeasycart&view=category');
+$ctaLink     = \is_string($hero['cta']['link'] ?? null)
+    ? $hero['cta']['link']
+    : 'index.php?option=com_nxpeasycart&view=category';
 $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CTA_LABEL_DEFAULT');
 ?>
 

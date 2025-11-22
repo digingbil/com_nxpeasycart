@@ -6,6 +6,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Model;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
@@ -118,7 +119,22 @@ class ProductModel extends BaseDatabaseModel
 
                     $trimmed = trim($url);
 
-                    return $trimmed !== '' ? $trimmed : null;
+                    if ($trimmed === '') {
+                        return null;
+                    }
+
+                    if (
+                        !str_starts_with($trimmed, 'http://')
+                        && !str_starts_with($trimmed, 'https://')
+                        && !str_starts_with($trimmed, '//')
+                    ) {
+                        $base     = rtrim(Uri::root(true), '/');
+                        $relative = '/' . ltrim($trimmed, '/');
+
+                        $trimmed = ($base === '' ? '' : $base) . $relative;
+                    }
+
+                    return $trimmed;
                 },
                 $decoded
             )
