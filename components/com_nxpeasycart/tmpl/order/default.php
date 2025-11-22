@@ -8,6 +8,43 @@ use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed>|null $this->order */
 $order = $this->order ?? null;
+
+$buildAddressLines = static function (array $address): array {
+    $lines = [];
+
+    $name = trim(($address['first_name'] ?? '') . ' ' . ($address['last_name'] ?? ''));
+
+    if ($name !== '') {
+        $lines[] = $name;
+    }
+
+    foreach (['address_line1', 'address_line2'] as $key) {
+        if (!empty($address[$key])) {
+            $lines[] = (string) $address[$key];
+        }
+    }
+
+    $cityParts = [];
+
+    foreach (['city', 'region', 'postcode'] as $partKey) {
+        if (!empty($address[$partKey])) {
+            $cityParts[] = (string) $address[$partKey];
+        }
+    }
+
+    if ($cityParts) {
+        $lines[] = implode(', ', $cityParts);
+    }
+
+    if (!empty($address['country'])) {
+        $lines[] = (string) $address['country'];
+    }
+
+    return $lines;
+};
+
+$billingLines  = $buildAddressLines($order['billing'] ?? []);
+$shippingLines = $buildAddressLines($order['shipping'] ?? []);
 ?>
 
 <section class="nxp-ec-order-confirmation">
@@ -71,11 +108,23 @@ $order = $this->order ?? null;
             <p><?php echo htmlspecialchars($order['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
 
             <h3><?php echo Text::_('COM_NXPEASYCART_ORDER_BILLING'); ?></h3>
-            <pre class="nxp-ec-order-confirmation__address"><?php echo htmlspecialchars(json_encode($order['billing'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?></pre>
+            <?php if (empty($billingLines)) : ?>
+                <p class="nxp-ec-order-confirmation__address"><?php echo Text::_('JNONE'); ?></p>
+            <?php else : ?>
+                <address class="nxp-ec-order-confirmation__address">
+                    <?php foreach ($billingLines as $line) : ?>
+                        <?php echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8'); ?><br />
+                    <?php endforeach; ?>
+                </address>
+            <?php endif; ?>
 
-            <?php if (!empty($order['shipping'])) : ?>
+            <?php if (!empty($shippingLines)) : ?>
                 <h3><?php echo Text::_('COM_NXPEASYCART_ORDER_SHIPPING'); ?></h3>
-                <pre class="nxp-ec-order-confirmation__address"><?php echo htmlspecialchars(json_encode($order['shipping'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?></pre>
+                <address class="nxp-ec-order-confirmation__address">
+                    <?php foreach ($shippingLines as $line) : ?>
+                        <?php echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8'); ?><br />
+                    <?php endforeach; ?>
+                </address>
             <?php endif; ?>
         </section>
     </div>

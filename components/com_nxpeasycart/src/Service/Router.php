@@ -20,6 +20,11 @@ use Joomla\Database\DatabaseInterface;
 class Router extends RouterView
 {
     /**
+     * @var DatabaseInterface|null
+     */
+    private ?DatabaseInterface $db = null;
+
+    /**
      * Constructor aligning with Joomla's router factory expectations.
      */
     public function __construct(
@@ -49,6 +54,7 @@ class Router extends RouterView
         $order->setKey('no');
         $this->registerView($order);
 
+        $this->db = $db;
         parent::__construct($app, $menu);
 
         $this->attachRule(new MenuRules($this));
@@ -89,11 +95,22 @@ class Router extends RouterView
                 case 'category':
                     $segments[] = 'category';
 
-                    if (!empty($query['slug'])) {
-                        $segments[] = rawurlencode((string) $query['slug']);
-                        unset($query['slug']);
+                    $slug = isset($query['slug']) ? (string) $query['slug'] : '';
+                    $categoryId = isset($query['id']) ? (int) $query['id'] : 0;
+
+                    if ($slug === '' && $categoryId > 0) {
+                        $slug = $this->resolveCategorySlug($categoryId);
                     }
 
+                    if ($slug === '0') {
+                        $slug = '';
+                    }
+
+                    if ($slug !== '') {
+                        $segments[] = rawurlencode($slug);
+                    }
+
+                    unset($query['slug'], $query['id']);
                     unset($query['view']);
                     break;
 
@@ -201,13 +218,20 @@ class Router extends RouterView
                 if (!empty($segments)) {
                     $categorySlug = urldecode((string) array_shift($segments));
 
+                    if (strcasecmp($categorySlug, 'all') === 0) {
+                        $categorySlug = '';
+                    }
+
                     if (!empty($segments)) {
                         $vars['view']          = 'product';
                         $vars['category_slug'] = $categorySlug;
                         $vars['slug']          = urldecode((string) array_shift($segments));
                     } else {
                         $vars['view'] = 'category';
-                        $vars['slug'] = $categorySlug;
+
+                        if ($categorySlug !== '') {
+                            $vars['slug'] = $categorySlug;
+                        }
                     }
                 } else {
                     $vars['view'] = 'category';
@@ -237,5 +261,32 @@ class Router extends RouterView
         }
 
         return $vars;
+    }
+
+    /**
+     * Resolve a slug for the given category ID so menu items using the ID field
+     * don't leak empty slug placeholders into the URL.
+     */
+    private function resolveCategorySlug(int $categoryId): string
+    {
+        if ($categoryId <= 0 || !$this->db) {
+            return '';
+        }
+
+        try {
+            $query = $this->db->getQuery(true)
+                ->select($this->db->quoteName('slug'))
+                ->from($this->db->quoteName('#__nxp_easycart_categories'))
+                ->where($this->db->quoteName('id') . ' = :categoryId')
+                ->bind(':categoryId', $categoryId, \Joomla\Database\ParameterType::INTEGER);
+
+            $this->db->setQuery($query);
+
+            $slug = (string) $this->db->loadResult();
+
+            return trim($slug);
+        } catch (\Throwable $exception) {
+            return '';
+        }
     }
 }

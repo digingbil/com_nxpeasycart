@@ -142,7 +142,8 @@ class LandingModel extends BaseDatabaseModel
             foreach ($ids as $index => $id) {
                 $placeholder    = ':landingRoot' . $index;
                 $placeholders[] = $placeholder;
-                $query->bind($placeholder, (int) $id, ParameterType::INTEGER);
+                $boundId        = (int) $id;
+                $query->bind($placeholder, $boundId, ParameterType::INTEGER);
             }
 
             $query->where(

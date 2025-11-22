@@ -41,9 +41,13 @@ class AuditService
             ->from($this->db->quoteName('#__nxp_easycart_audit'))
             ->where($this->db->quoteName('entity_type') . ' = :type')
             ->where($this->db->quoteName('entity_id') . ' = :id')
-            ->order($this->db->quoteName('created') . ' DESC')
-            ->bind(':type', 'order', ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER);
+            ->order($this->db->quoteName('created') . ' DESC');
+
+        $typeValue  = 'order';
+        $orderValue = (int) $orderId;
+
+        $query->bind(':type', $typeValue, ParameterType::STRING)
+            ->bind(':id', $orderValue, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
 

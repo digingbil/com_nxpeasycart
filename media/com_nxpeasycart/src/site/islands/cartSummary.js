@@ -10,8 +10,6 @@ export default function mountCartSummaryIsland(el) {
     const links = payload.links || {};
     const summaryEndpoint = (payload.endpoints?.summary || "").trim();
 
-    el.innerHTML = "";
-
     const app = createApp({
         template: `
       <div class="nxp-ec-cart-summary__inner" v-cloak>
@@ -78,25 +76,35 @@ export default function mountCartSummaryIsland(el) {
                     });
 
                     const json = await response.json().catch(() => null);
-                    const cart =
-                        json?.data?.cart ||
-                        json?.cart ||
-                        json?.data ||
-                        null;
+                    const cart = json?.data?.cart || json?.cart || json?.data;
 
-                    if (!cart) {
+                    if (!cart || !cart.summary) {
                         return;
                     }
 
                     const items = Array.isArray(cart.items) ? cart.items : [];
-                    state.count = items.reduce(
+                    const nextCount = items.reduce(
                         (total, item) => total + (item.qty || 0),
                         0
                     );
-                    state.total_cents = Number(
-                        cart.summary?.total_cents || 0
-                    );
-                    state.currency = cart.summary?.currency || state.currency;
+                    const nextTotal = Number(cart.summary.total_cents || 0);
+                    const nextCurrency =
+                        cart.summary.currency || state.currency;
+
+                    // If the API returns an empty cart but we already have a non-zero
+                    // payload (e.g., module cache vs. session timing), keep the
+                    // current state instead of clobbering it.
+                    if (
+                        nextCount === 0 &&
+                        nextTotal === 0 &&
+                        state.count > 0
+                    ) {
+                        return;
+                    }
+
+                    state.count = nextCount;
+                    state.total_cents = nextTotal;
+                    state.currency = nextCurrency;
                 } catch (error) {
                     // Non-fatal: keep existing state.
                 }

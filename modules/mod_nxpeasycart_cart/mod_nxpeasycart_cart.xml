@@ -11,4 +11,20 @@
     <languages>
         <language tag="en-GB">language/en-GB/mod_nxpeasycart_cart.ini</language>
     </languages>
+    <config>
+        <fields name="params">
+            <fieldset name="advanced">
+                <field
+                    name="cache"
+                    type="hidden"
+                    default="0"
+                />
+                <field
+                    name="cache_time"
+                    type="hidden"
+                    default="0"
+                />
+            </fieldset>
+        </fields>
+    </config>
 </extension>

@@ -442,9 +442,15 @@ export default function mountCheckoutIsland(el) {
 
                 try {
                     if (hostedCheckoutAvailable && gateway) {
-                        const data = await api.postJson(endpoints.payment, payloadBody);
+                        const response = await api.postJson(
+                            endpoints.payment,
+                            payloadBody
+                        );
+                        const envelope = response?.data ?? response ?? {};
+                        const checkout =
+                            envelope?.checkout ?? envelope?.data?.checkout ?? null;
                         const redirectUrl =
-                            data?.checkout?.url || data?.checkout?.redirect;
+                            checkout?.url || checkout?.redirect || "";
 
                         if (!redirectUrl) {
                             throw new Error(
@@ -460,12 +466,17 @@ export default function mountCheckoutIsland(el) {
                         throw new Error("Checkout endpoint unavailable.");
                     }
 
-                    const data = await api.postJson(endpoints.checkout, payloadBody);
-                    const order = data?.order || {};
+                    const response = await api.postJson(
+                        endpoints.checkout,
+                        payloadBody
+                    );
+                    const envelope = response?.data ?? response ?? {};
+                    const order = envelope?.order ?? envelope?.data?.order ?? {};
 
                     ui.success = true;
                     ui.orderNumber = order.order_no || "";
                     ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
+                    ui.error = "";
                 } catch (error) {
                     ui.error =
                         error.message ||

@@ -53,6 +53,8 @@ foreach (
 $app = Factory::getApplication();
 $container = Factory::getContainer();
 
+$module->cache = false;
+
 // Ensure component services are registered even when the module is rendered standalone.
 if (!$container->has(CartSessionService::class)) {
     $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';

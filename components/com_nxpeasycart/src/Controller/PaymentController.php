@@ -11,10 +11,13 @@ use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
+use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Session\SessionInterface;
 use RuntimeException;
@@ -63,8 +66,9 @@ class PaymentController extends BaseController
             }
         }
 
-        $cartService = $container->get(CartSessionService::class);
-        $cart        = $cartService->current();
+        $cartSession = $container->get(CartSessionService::class);
+        $presenter   = $this->getCartPresenter();
+        $cart        = $presenter->hydrate($cartSession->current());
 
         if (empty($cart['items'])) {
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_CART_EMPTY')], 400);
@@ -103,6 +107,8 @@ class PaymentController extends BaseController
 
             $orderUrl = $this->buildOrderUrl($order['order_no']);
 
+            $this->clearCart($cartSession, $cart);
+
             $this->respond([
                 'order' => [
                     'id'       => $order['id'],
@@ -114,6 +120,7 @@ class PaymentController extends BaseController
                     'url'      => $orderUrl,
                 ],
             ]);
+
         }
 
         $manager = $container->get(PaymentGatewayManager::class);
@@ -199,7 +206,14 @@ class PaymentController extends BaseController
 
     private function buildOrderUrl(string $orderNo): string
     {
-        return Uri::root() . 'index.php?option=com_nxpeasycart&view=order&no=' . rawurlencode($orderNo);
+        $route = RouteHelper::getOrderRoute($orderNo, false);
+
+        // Ensure absolute URL for redirects.
+        if (str_starts_with($route, 'http://') || str_starts_with($route, 'https://')) {
+            return $route;
+        }
+
+        return Uri::root() . ltrim($route, '/');
     }
 
     private function respond(array $payload, int $code = 200): void
@@ -357,6 +371,44 @@ class PaymentController extends BaseController
             },
             $items
         );
+    }
+
+    /**
+     * Reset the cart after a cash-on-delivery checkout completes.
+     */
+    private function clearCart(CartSessionService $session, array $cart): void
+    {
+        try {
+            $container = Factory::getContainer();
+            $store     = $container->has(CartService::class) ? $container->get(CartService::class) : null;
+
+            if ($store) {
+                $store->persist([
+                    'id'         => $cart['id']         ?? null,
+                    'session_id' => $cart['session_id'] ?? Factory::getApplication()->getSession()->getId(),
+                    'user_id'    => $cart['user_id']    ?? null,
+                    'data'       => [
+                        'currency' => $cart['summary']['currency'] ?? 'USD',
+                        'items'    => [],
+                    ],
+                ]);
+            }
+
+            $session->attachToApplication();
+        } catch (\Throwable $exception) {
+            // Non-fatal: leave the cart intact if reset fails.
+        }
+    }
+
+    private function getCartPresenter(): CartPresentationService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(CartPresentationService::class)) {
+            return $container->get(CartPresentationService::class);
+        }
+
+        return new CartPresentationService($container->get(DatabaseInterface::class));
     }
 
     private function getShippingService(): ShippingRuleService

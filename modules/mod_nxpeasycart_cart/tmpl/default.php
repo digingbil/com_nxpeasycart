@@ -5,7 +5,9 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $items   = isset($cart['items']) && \is_array($cart['items']) ? $cart['items'] : [];
 $summary = \is_array($cart['summary'] ?? null) ? $cart['summary'] : [];
@@ -42,8 +44,13 @@ $formatMoney = static function (int $cents) use ($currency, $locale): string {
 };
 
 $formattedTotal = $formatMoney($totalCents);
-$cartLink       = Route::_('index.php?option=com_nxpeasycart&view=cart');
-$checkoutLink   = Route::_('index.php?option=com_nxpeasycart&view=checkout');
+$cartLink       = RouteHelper::getCartRoute();
+$checkoutLink   = RouteHelper::getCheckoutRoute();
+$summaryLink    = Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
+
+if (!str_starts_with($summaryLink, 'http://') && !str_starts_with($summaryLink, 'https://')) {
+    $summaryLink = rtrim(Uri::root(), '/') . '/' . ltrim($summaryLink, '/');
+}
 
 $payload = [
     'count'      => $itemCount,
@@ -63,7 +70,7 @@ $payload = [
         'checkout'     => Text::_('MOD_NXPEASYCART_CART_CHECKOUT'),
     ],
     'endpoints'  => [
-        'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
+        'summary' => $summaryLink,
     ],
 ];
 
