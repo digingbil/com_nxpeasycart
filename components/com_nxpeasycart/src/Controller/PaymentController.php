@@ -20,6 +20,7 @@ use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Session\SessionInterface;
 use RuntimeException;
 
@@ -83,6 +84,8 @@ class PaymentController extends BaseController
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_CART_EMPTY')], 400);
         }
 
+        $this->assertStockAvailable($cart['items'] ?? [], $container->get(DatabaseInterface::class));
+
         /** @var OrderService $orders */
         $orders       = $container->get(OrderService::class);
         $orderPayload = $this->buildOrderPayload($cart, $payload);
@@ -103,7 +106,15 @@ class PaymentController extends BaseController
         );
         $orderPayload['state'] = $gateway === 'cod' ? 'pending' : $orderPayload['state'];
 
-        $order = $orders->create($orderPayload);
+        try {
+            $order = $orders->create($orderPayload);
+        } catch (\Throwable $exception) {
+            $message = $exception->getMessage() ?: Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_UNAVAILABLE');
+            $code    = $exception instanceof RuntimeException ? 400 : 500;
+
+            $this->respond(['message' => $message], $code);
+            return;
+        }
 
         /** @var MailService $mailer */
         $mailer = $container->get(MailService::class);
@@ -133,7 +144,7 @@ class PaymentController extends BaseController
                     'url'      => $orderUrl,
                 ],
             ]);
-
+            return;
         }
 
         $manager = $container->get(PaymentGatewayManager::class);
@@ -142,6 +153,8 @@ class PaymentController extends BaseController
             'success_url' => $payload['success_url'] ?? ($this->buildOrderUrl($order['order_no']) . '&status=success'),
             'cancel_url'  => $payload['cancel_url']  ?? (Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'),
         ];
+
+        $orderUrl = $this->buildOrderUrl($order['order_no']);
 
         $checkout = $manager->createHostedCheckout($gateway, [
             'id'       => $order['id'],
@@ -153,6 +166,19 @@ class PaymentController extends BaseController
                 'total_cents' => $order['total_cents'],
             ],
         ], $preferences);
+
+        $redirectUrl = '';
+
+        if (\is_array($checkout)) {
+            $redirectUrl = (string) ($checkout['url'] ?? $checkout['redirect'] ?? '');
+        }
+
+        // Fallback to order confirmation URL if the gateway does not provide one.
+        if ($redirectUrl === '') {
+            $redirectUrl        = $orderUrl;
+            $checkout['url']    = $orderUrl;
+            $checkout['redirect'] = $orderUrl;
+        }
 
         $this->respond([
             'order' => [
@@ -232,10 +258,16 @@ class PaymentController extends BaseController
     private function respond(array $payload, int $code = 200): void
     {
         $app = Factory::getApplication();
+        $hasError = $code >= 400;
+
+        if (\function_exists('http_response_code')) {
+            http_response_code($code);
+        }
+
         $app->setHeader('Content-Type', 'application/json', true);
         $app->setHeader('Status', (string) $code, true);
 
-        echo new JsonResponse($payload);
+        echo new JsonResponse($payload, '', $hasError);
         $app->close();
     }
 
@@ -444,5 +476,79 @@ class PaymentController extends BaseController
         }
 
         return new TaxService($container->get(DatabaseInterface::class));
+    }
+
+    /**
+     * Ensure requested quantities are available before starting checkout.
+     *
+     * @param array<int, array<string, mixed>> $items
+     */
+    private function assertStockAvailable(array $items, DatabaseInterface $db): void
+    {
+        $variantIds = [];
+
+        foreach ($items as $item) {
+            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
+
+            if ($variantId > 0) {
+                $variantIds[] = $variantId;
+            }
+        }
+
+        if (empty($variantIds)) {
+            return;
+        }
+
+        $variantIds = array_values(array_unique(array_filter($variantIds)));
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('id'),
+                $db->quoteName('sku'),
+                $db->quoteName('stock'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->where($db->quoteName('id') . ' IN (' . implode(',', array_fill(0, \count($variantIds), '?')) . ')');
+
+        foreach ($variantIds as $index => $variantId) {
+            $boundVariantId = (int) $variantId;
+            $query->bind($index + 1, $boundVariantId, ParameterType::INTEGER);
+        }
+
+        $db->setQuery($query);
+
+        $rows = $db->loadObjectList() ?: [];
+        $lookup = [];
+
+        foreach ($rows as $row) {
+            $lookup[(int) $row->id] = $row;
+        }
+
+        foreach ($items as $item) {
+            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
+
+            if ($variantId <= 0) {
+                continue;
+            }
+
+            $row = $lookup[$variantId] ?? null;
+
+            if (!$row || !(bool) $row->active) {
+                $this->respond(
+                    ['message' => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK')],
+                    400
+                );
+            }
+
+            $requestedQty = max(1, (int) ($item['qty'] ?? 1));
+
+            if ((int) ($row->stock ?? 0) < $requestedQty) {
+                $this->respond(
+                    ['message' => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK')],
+                    400
+                );
+            }
+        }
     }
 }

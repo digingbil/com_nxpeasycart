@@ -86,6 +86,25 @@ class CartController extends BaseController
             $payload = $cart['data'] ?? [];
             $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
 
+            $existingQty = 0;
+
+            foreach ($items as $existing) {
+                if ((int) ($existing['variant_id'] ?? 0) === $variantId) {
+                    $existingQty += (int) ($existing['qty'] ?? 0);
+                }
+            }
+
+            $desiredQty = $existingQty + $qty;
+
+            if ((int) ($variant->stock ?? 0) < $desiredQty) {
+                echo new JsonResponse(
+                    null,
+                    Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
+                    true
+                );
+                $app->close();
+            }
+
             $items = $this->upsertCartItem(
                 $items,
                 $product,

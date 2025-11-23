@@ -94,6 +94,9 @@ class OrderService
         $this->db->transactionStart();
 
         try {
+            // Lock and reserve stock to prevent overselling.
+            $this->reserveStockForItems($items);
+
             $order = (object) [
                 'order_no'       => $normalised['order_no'],
                 'user_id'        => $normalised['user_id'],
@@ -133,7 +136,8 @@ class OrderService
             $this->db->transactionCommit();
         } catch (Throwable $exception) {
             $this->db->transactionRollback();
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_CREATE_FAILED'), 0, $exception);
+            // Surface the original failure message so callers can render it.
+            throw $exception;
         }
 
         $this->getAuditService()->record(
@@ -962,7 +966,7 @@ class OrderService
 
         if ($shouldMarkPaid && $order['state'] !== 'paid' && $order['state'] !== 'fulfilled') {
             $this->transitionState($orderId, 'paid');
-            $this->decrementInventory($orderId);
+            // Inventory already reserved on creation; avoid double decrement.
         }
 
         $this->getAuditService()->record(
@@ -1013,9 +1017,12 @@ class OrderService
 
     private function decrementInventory(int $orderId): void
     {
+        $affectedProducts = [];
+
         $query = $this->db->getQuery(true)
             ->select([
                 $this->db->quoteName('variant_id'),
+                $this->db->quoteName('product_id'),
                 $this->db->quoteName('qty'),
             ])
             ->from($this->db->quoteName('#__nxp_easycart_order_items'))
@@ -1034,6 +1041,8 @@ class OrderService
                 continue;
             }
 
+            $affectedProducts[] = (int) ($row->product_id ?? 0);
+
             $update = $this->db->getQuery(true)
                 ->update($this->db->quoteName('#__nxp_easycart_variants'))
                 ->set($this->db->quoteName('stock') . ' = GREATEST(' . $this->db->quoteName('stock') . ' - :qty, 0)')
@@ -1044,6 +1053,103 @@ class OrderService
             $this->db->setQuery($update);
             $this->db->execute();
         }
+
+        $this->autoDisableDepletedProducts(array_unique(array_filter($affectedProducts)));
+    }
+
+    /**
+     * Disable products that have no remaining stock across active variants.
+     *
+     * @param array<int> $productIds
+     */
+    private function autoDisableDepletedProducts(array $productIds): void
+    {
+        if (empty($productIds)) {
+            return;
+        }
+
+        foreach ($productIds as $productId) {
+            if ($productId <= 0) {
+                continue;
+            }
+
+            $stockQuery = $this->db->getQuery(true)
+                ->select('SUM(' . $this->db->quoteName('stock') . ')')
+                ->from($this->db->quoteName('#__nxp_easycart_variants'))
+                ->where($this->db->quoteName('product_id') . ' = :productId')
+                ->where($this->db->quoteName('active') . ' = 1')
+                ->bind(':productId', $productId, ParameterType::INTEGER);
+
+            $this->db->setQuery($stockQuery);
+
+            $remaining = (int) $this->db->loadResult();
+
+            if ($remaining > 0) {
+                continue;
+            }
+
+            $disable = $this->db->getQuery(true)
+                ->update($this->db->quoteName('#__nxp_easycart_products'))
+                ->set($this->db->quoteName('active') . ' = 0')
+                ->where($this->db->quoteName('id') . ' = :productId')
+                ->bind(':productId', $productId, ParameterType::INTEGER);
+
+            $this->db->setQuery($disable);
+            $this->db->execute();
+        }
+    }
+
+    /**
+     * Lock variants, validate availability, decrement stock, and auto-disable depleted products.
+     *
+     * @param array<int, array<string, mixed>> $items
+     */
+    private function reserveStockForItems(array $items): void
+    {
+        $variantTotals = [];
+        $productIds    = [];
+
+        foreach ($items as $item) {
+            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
+            $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
+            $qty       = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;
+
+            if ($variantId > 0) {
+                $variantTotals[$variantId] = ($variantTotals[$variantId] ?? 0) + $qty;
+            }
+
+            if ($productId > 0) {
+                $productIds[] = $productId;
+            }
+        }
+
+        if (empty($variantTotals)) {
+            return;
+        }
+
+        // Atomic decrements with guard to prevent oversell (works across drivers).
+        foreach ($variantTotals as $variantId => $requestedQty) {
+            $qty        = (int) $requestedQty;
+            $variantKey = (int) $variantId;
+
+            $update = $this->db->getQuery(true)
+                ->update($this->db->quoteName('#__nxp_easycart_variants'))
+                ->set($this->db->quoteName('stock') . ' = ' . $this->db->quoteName('stock') . ' - :qty')
+                ->where($this->db->quoteName('id') . ' = :variantId')
+                ->where($this->db->quoteName('active') . ' = 1')
+                ->where($this->db->quoteName('stock') . ' >= :qty')
+                ->bind(':qty', $qty, ParameterType::INTEGER)
+                ->bind(':variantId', $variantKey, ParameterType::INTEGER);
+
+            $this->db->setQuery($update);
+            $this->db->execute();
+
+            if ((int) $this->db->getAffectedRows() === 0) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'));
+            }
+        }
+
+        $this->autoDisableDepletedProducts(array_unique($productIds));
     }
 
     /**

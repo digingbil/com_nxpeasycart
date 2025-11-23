@@ -28,6 +28,9 @@
                     }}
                 </th>
                 <th scope="col">
+                    {{ __("COM_NXPEASYCART_PRODUCTS_TABLE_STOCK", "Stock") }}
+                </th>
+                <th scope="col">
                     {{
                         __(
                             "COM_NXPEASYCART_PRODUCTS_TABLE_CATEGORIES",
@@ -88,6 +91,38 @@
                 </td>
                 <td>
                     {{ variantCountLabel(item) }}
+                </td>
+                <td>
+                    <span
+                        :class="[
+                            'nxp-ec-status',
+                            item.summary?.variants?.stock_zero
+                                ? 'nxp-ec-status--danger'
+                                : item.summary?.variants?.stock_low
+                                  ? 'nxp-ec-status--warning'
+                                  : 'nxp-ec-status--muted',
+                        ]"
+                    >
+                        <template
+                            v-if="item.summary?.variants?.stock_zero || item.summary?.variants?.stock_total === 0"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_PRODUCTS_STOCK_UNAVAILABLE",
+                                    "Unavailable"
+                                )
+                            }}
+                        </template>
+                        <template v-else>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_PRODUCTS_STOCK_COUNT",
+                                    "%s in stock",
+                                    [String(item.summary?.variants?.stock_total ?? 0)]
+                                )
+                            }}
+                        </template>
+                    </span>
                 </td>
                 <td>
                     <span v-if="item.categories?.length">

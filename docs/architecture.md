@@ -21,6 +21,11 @@
     -   `tmpl/`: server-rendered storefront layouts (product, category, cart, checkout, landing) that expose Vue "island" mount points and pass locale/currency into the islands for consistent money formatting.
     -   `media/com_nxpeasycart`: built assets (hashed JS/CSS) + `joomla.asset.json` pointing to the hashed site/admin bundles; Vite emits `media/com_nxpeasycart/.vite/manifest.json` for registry updates.
     -   `modules/mod_nxpeasycart_cart`: header cart summary module that consumes the cart island payload.
+-   Stock management & checkout guards (latest work)
+    -   Orders reserve/decrement stock atomically when created; products auto-disable when remaining stock is zero.
+    -   Admin products API exposes stock aggregates in summaries; admin list shows stock with low/unavailable warnings.
+    -   Storefront add-to-cart and checkout validate requested quantities against variant stock; out-of-stock flows are surfaced to the user instead of silently failing.
+    -   Order locking is implemented via guarded `UPDATE … WHERE stock >= :qty` to avoid overselling and stay DB-driver agnostic.
 
 The admin view exposes a `<div id="nxp-ec-admin-app">` mount target for the upcoming Vue IIFE bundle as defined in the instructions.
 

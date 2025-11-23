@@ -553,8 +553,22 @@ export default function mountCheckoutIsland(el) {
                         const envelope = response?.data ?? response ?? {};
                         const checkout =
                             envelope?.checkout ?? envelope?.data?.checkout ?? null;
-                        const redirectUrl =
+                        let redirectUrl =
                             checkout?.url || checkout?.redirect || "";
+
+                        if (!redirectUrl) {
+                            const orderNo =
+                                envelope?.order?.order_no ||
+                                checkout?.order_no ||
+                                envelope?.order_no ||
+                                "";
+
+                            if (orderNo) {
+                                redirectUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(
+                                    orderNo
+                                )}`;
+                            }
+                        }
 
                         if (!redirectUrl) {
                             throw new Error(
@@ -582,8 +596,10 @@ export default function mountCheckoutIsland(el) {
                     ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
                     ui.error = "";
                 } catch (error) {
+                    const serverMessage =
+                        error?.details?.message || error?.message || "";
                     ui.error =
-                        error.message ||
+                        serverMessage ||
                         "Unable to complete checkout right now.";
                 } finally {
                     ui.loading = false;

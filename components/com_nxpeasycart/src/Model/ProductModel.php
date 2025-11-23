@@ -65,6 +65,19 @@ class ProductModel extends BaseDatabaseModel
         $db->setQuery($query);
         $product = $db->loadObject();
 
+        // Fallback to allow rendering an unavailable product page when explicitly requested.
+        if (!$product && $slug !== '') {
+            $fallbackQuery = $db->getQuery(true)
+                ->select('p.*')
+                ->from($db->quoteName('#__nxp_easycart_products', 'p'))
+                ->where($db->quoteName('p.slug') . ' = :productSlug')
+                ->bind(':productSlug', $slug, ParameterType::STRING)
+                ->setLimit(1);
+
+            $db->setQuery($fallbackQuery);
+            $product = $db->loadObject();
+        }
+
         if (!$product) {
             return null;
         }
@@ -73,6 +86,8 @@ class ProductModel extends BaseDatabaseModel
         $variants     = $this->fetchVariants((int) $product->id);
         $categories   = $this->fetchCategories((int) $product->id);
         $priceSummary = $this->summarisePrices($variants);
+        $stockTotals  = $this->summariseStock($variants);
+        $available    = ((bool) $product->active) && $stockTotals['total'] > 0;
 
         $this->item = [
             'id'         => (int) $product->id,
@@ -86,6 +101,8 @@ class ProductModel extends BaseDatabaseModel
             'variants'   => $variants,
             'categories' => $categories,
             'price'      => $priceSummary,
+            'stock'      => $stockTotals,
+            'available'  => $available,
             'created'    => (string) ($product->created ?? ''),
             'modified'   => $product->modified !== null ? (string) $product->modified : null,
         ];
@@ -192,6 +209,26 @@ class ProductModel extends BaseDatabaseModel
         }
 
         return $variants;
+    }
+
+    /**
+     * Summarise variant stock totals.
+     *
+     * @param array<int, array<string, mixed>> $variants
+     */
+    private function summariseStock(array $variants): array
+    {
+        $total = 0;
+
+        foreach ($variants as $variant) {
+            $total += (int) ($variant['stock'] ?? 0);
+        }
+
+        return [
+            'total' => $total,
+            'low'   => $total > 0 && $total <= 5,
+            'zero'  => $total <= 0,
+        ];
     }
 
     /**

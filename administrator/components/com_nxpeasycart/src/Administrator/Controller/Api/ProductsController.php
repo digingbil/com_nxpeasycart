@@ -17,6 +17,8 @@ use RuntimeException;
  */
 class ProductsController extends AbstractJsonController
 {
+    private const LOW_STOCK_THRESHOLD = 5;
+
     /**
      * Constructor.
      *
@@ -327,6 +329,9 @@ class ProductsController extends AbstractJsonController
                 'price_max_cents'     => null,
                 'price_min'           => null,
                 'price_max'           => null,
+                'stock_total'         => 0,
+                'stock_low'           => false,
+                'stock_zero'          => true,
             ];
         }
 
@@ -334,15 +339,18 @@ class ProductsController extends AbstractJsonController
         $currencies = [];
         $min        = null;
         $max        = null;
+        $stockTotal = 0;
 
         foreach ($variants as $variant) {
             $currency              = (string) ($variant['currency'] ?? '');
             $currencies[$currency] = true;
 
             $price = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
+            $stock = isset($variant['stock']) ? (int) $variant['stock'] : 0;
 
             $min = $min === null ? $price : min($min, $price);
             $max = $max === null ? $price : max($max, $price);
+            $stockTotal += $stock;
         }
 
         $currencyKeys       = array_keys(array_filter($currencies));
@@ -357,6 +365,9 @@ class ProductsController extends AbstractJsonController
             'price_max_cents'     => $max,
             'price_min'           => $min !== null ? $this->formatPrice($min) : null,
             'price_max'           => $max !== null ? $this->formatPrice($max) : null,
+            'stock_total'         => $stockTotal,
+            'stock_low'           => $stockTotal > 0 && $stockTotal <= self::LOW_STOCK_THRESHOLD,
+            'stock_zero'          => $stockTotal <= 0,
         ];
     }
 
