@@ -268,9 +268,26 @@ export function useOrders({
             return;
         }
 
-        const detailed = await fetchOrder(order.id, order.order_no);
+        try {
+            const detailed = await fetchOrder(order.id, order.order_no);
 
-        state.activeOrder = detailed || order;
+            state.activeOrder = detailed || {
+                ...order,
+                items: Array.isArray(order.items) ? order.items : [],
+                transactions: order.transactions ?? [],
+                timeline: order.timeline ?? [],
+                billing: order.billing ?? {},
+            };
+        } catch (error) {
+            state.transitionError = error?.message ?? "Unknown error";
+            state.activeOrder = {
+                ...order,
+                items: Array.isArray(order.items) ? order.items : [],
+                transactions: order.transactions ?? [],
+                timeline: order.timeline ?? [],
+                billing: order.billing ?? {},
+            };
+        }
     };
 
     const closeOrder = () => {

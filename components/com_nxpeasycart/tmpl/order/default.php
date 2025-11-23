@@ -71,16 +71,46 @@ $shippingLines = $buildAddressLines($order['shipping'] ?? []);
     <div class="nxp-ec-order-confirmation__grid">
         <section class="nxp-ec-order-confirmation__summary">
             <h2><?php echo Text::_('COM_NXPEASYCART_ORDER_SUMMARY'); ?></h2>
-            <ul>
+            <ul class="nxp-ec-order-confirmation__items">
                 <?php foreach ($order['items'] ?? [] as $item) : ?>
-                    <li>
-                        <div>
-                            <strong><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                            <span>× <?php echo (int) $item['qty']; ?></span>
+                    <?php
+                        $title        = trim((string) ($item['title'] ?? ''));
+                        $productTitle = trim((string) ($item['product_title'] ?? ''));
+                        $variantLabel = trim((string) ($item['variant_label'] ?? ''));
+                        $sku          = trim((string) ($item['sku'] ?? ''));
+                        $image        = $item['image'] ?? null;
+                        $qty          = (int) ($item['qty'] ?? 1);
+
+                        if ($title === '' && $productTitle !== '') {
+                            $title = $productTitle;
+                        }
+                    ?>
+                    <li class="nxp-ec-order-confirmation__item">
+                        <div class="nxp-ec-order-confirmation__item-left">
+                            <?php if ($image) : ?>
+                                <span class="nxp-ec-order-confirmation__thumb">
+                                    <img src="<?php echo htmlspecialchars($image, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($title !== '' ? $title : $sku, ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+                                </span>
+                            <?php endif; ?>
+                            <div class="nxp-ec-order-confirmation__item-text">
+                                <strong><?php echo htmlspecialchars($title !== '' ? $title : $sku, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <?php if ($variantLabel !== '') : ?>
+                                    <span class="nxp-ec-order-confirmation__variant"><?php echo htmlspecialchars($variantLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                                <?php endif; ?>
+                                <?php if ($sku !== '') : ?>
+                                    <span class="nxp-ec-order-confirmation__sku">
+                                        <?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_SKU_LABEL'); ?>:
+                                        <?php echo htmlspecialchars($sku, ENT_QUOTES, 'UTF-8'); ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <div>
-                            <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                            <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
+                        <div class="nxp-ec-order-confirmation__item-price">
+                            <span class="nxp-ec-order-confirmation__qty">× <?php echo $qty; ?></span>
+                            <span class="nxp-ec-order-confirmation__amount">
+                                <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo number_format(((int) ($item['total_cents'] ?? 0)) / 100, 2); ?>
+                            </span>
                         </div>
                     </li>
                 <?php endforeach; ?>

@@ -13,6 +13,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -66,6 +67,14 @@ class PaymentController extends BaseController
             }
         }
 
+        if (!$container->has(MailService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $container->registerServiceProvider(require $providerPath);
+            }
+        }
+
         $cartSession = $container->get(CartSessionService::class);
         $presenter   = $this->getCartPresenter();
         $cart        = $presenter->hydrate($cartSession->current());
@@ -96,6 +105,9 @@ class PaymentController extends BaseController
 
         $order = $orders->create($orderPayload);
 
+        /** @var MailService $mailer */
+        $mailer = $container->get(MailService::class);
+
         /** @var PaymentGatewayManager $manager */
         if ($gateway === 'cod') {
             $orders->recordTransaction((int) $order['id'], [
@@ -107,6 +119,7 @@ class PaymentController extends BaseController
 
             $orderUrl = $this->buildOrderUrl($order['order_no']);
 
+            $mailer->sendOrderConfirmation($order);
             $this->clearCart($cartSession, $cart);
 
             $this->respond([

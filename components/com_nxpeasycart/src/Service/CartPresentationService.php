@@ -84,7 +84,7 @@ class CartPresentationService
 
         return array_values(
             array_map(
-                static function ($item) use ($products, $variants, $baseCurrency) {
+                function ($item) use ($products, $variants, $baseCurrency) {
                     $productId = isset($item['product_id']) ? (int) $item['product_id'] : null;
                     $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : null;
                     $qty       = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;
@@ -100,16 +100,24 @@ class CartPresentationService
                         ? strtoupper((string) $item['currency'])
                         : ($variant['currency'] ?? $baseCurrency);
 
-                    $title = isset($item['title'])
-                        ? (string) $item['title']
-                        : ($variant['title'] ?? ($product['title'] ?? ''));
+                    $variantLabel = $this->buildVariantLabel($variant);
+                    $baseTitle    = $product['title'] ?? ($item['title'] ?? '');
+
+                    $displayTitle = $baseTitle !== ''
+                        ? (string) $baseTitle
+                        : ($item['title'] ?? ($variant['sku'] ?? ''));
+
+                    if ($variantLabel !== '' && $baseTitle !== '') {
+                        $displayTitle = $baseTitle . ' (' . $variantLabel . ')';
+                    }
 
                     return [
                         'id'               => $variantId ?? $productId ?? spl_object_id((object) $item),
                         'product_id'       => $productId,
                         'variant_id'       => $variantId,
-                        'title'            => $title,
-                        'product_title'    => $product['title'] ?? $title,
+                        'title'            => $displayTitle,
+                        'product_title'    => $product['title'] ?? $displayTitle,
+                        'variant_label'    => $variantLabel !== '' ? $variantLabel : null,
                         'qty'              => $qty,
                         'unit_price_cents' => $priceCents,
                         'currency'         => $currency,
@@ -181,6 +189,41 @@ class CartPresentationService
         }
 
         return $products;
+    }
+
+    /**
+     * Build a human-readable variant label from options/sku.
+     */
+    private function buildVariantLabel(?array $variant): string
+    {
+        if (!$variant) {
+            return '';
+        }
+
+        $labels = [];
+
+        if (!empty($variant['options']) && \is_array($variant['options'])) {
+            foreach ($variant['options'] as $option) {
+                if (!\is_array($option)) {
+                    continue;
+                }
+
+                $name  = isset($option['name']) ? trim((string) $option['name']) : '';
+                $value = isset($option['value']) ? trim((string) $option['value']) : '';
+
+                if ($name !== '' && $value !== '') {
+                    $labels[] = $name . ': ' . $value;
+                } elseif ($value !== '') {
+                    $labels[] = $value;
+                }
+            }
+        }
+
+        if (!$labels && !empty($variant['sku'])) {
+            return (string) $variant['sku'];
+        }
+
+        return implode(', ', $labels);
     }
 
     /**

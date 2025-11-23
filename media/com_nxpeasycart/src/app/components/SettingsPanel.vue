@@ -606,10 +606,10 @@
                         >
                             {{
                                 __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_CANCEL",
+                                    "COM_NXPEASYCART_TAX_FORM_CANCEL",
                                     "Cancel",
                                     [],
-                                    "couponsFormCancel"
+                                    "taxFormCancel"
                                 )
                             }}
                         </button>
@@ -622,10 +622,10 @@
                                 taxState.saving
                                     ? __("JPROCESSING_REQUEST", "Saving…")
                                     : __(
-                                          "COM_NXPEASYCART_COUPONS_FORM_SAVE",
-                                          "Save coupon",
+                                          "COM_NXPEASYCART_TAX_FORM_SAVE",
+                                          "Save tax rate",
                                           [],
-                                          "couponsFormSave"
+                                          "taxFormSave"
                                       )
                             }}
                         </button>
@@ -1024,10 +1024,10 @@
                         >
                             {{
                                 __(
-                                    "COM_NXPEASYCART_COUPONS_FORM_CANCEL",
+                                    "COM_NXPEASYCART_SHIPPING_FORM_CANCEL",
                                     "Cancel",
                                     [],
-                                    "couponsFormCancel"
+                                    "shippingFormCancel"
                                 )
                             }}
                         </button>
@@ -1040,10 +1040,10 @@
                                 shippingState.saving
                                     ? __("JPROCESSING_REQUEST", "Saving…")
                                     : __(
-                                          "COM_NXPEASYCART_COUPONS_FORM_SAVE",
-                                          "Save coupon",
+                                          "COM_NXPEASYCART_SHIPPING_FORM_SAVE",
+                                          "Save shipping rule",
                                           [],
-                                          "couponsFormSave"
+                                          "shippingFormSave"
                                       )
                             }}
                         </button>

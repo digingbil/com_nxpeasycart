@@ -326,7 +326,12 @@
                             <td>
                                 <div>{{ order.email }}</div>
                                 <div class="nxp-ec-admin-table__meta">
-                                    {{ itemsLabel(order.items?.length ?? 0) }}
+                                    {{
+                                        itemsLabel(
+                                            order.items_count ??
+                                                (order.items?.length ?? 0)
+                                        )
+                                    }}
                                 </div>
                             </td>
                             <td>
@@ -1026,7 +1031,7 @@ const historyLabel = (entry) => {
                 );
             const amount = formatCurrency(
                 entry.context?.amount_cents ?? 0,
-                state.activeOrder.currency
+                props.state?.activeOrder?.currency
             );
 
             return __(

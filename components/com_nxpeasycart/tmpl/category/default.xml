@@ -3,8 +3,8 @@
     <layout title="COM_NXPEASYCART_SITE_MENU_CATEGORY">
         <message>COM_NXPEASYCART_MENU_CATEGORY_DESC</message>
     </layout>
-    <fields name="request">
-        <fieldset name="request" addfieldprefix="Joomla\Component\Nxpeasycart\Administrator\Field">
+    <fields name="request" addfieldprefix="Joomla\Component\Nxpeasycart\Site\Field">
+        <fieldset name="request">
             <field
                 name="id"
                 type="CategorySelect"
@@ -16,23 +16,17 @@
         </fieldset>
     </fields>
 
-    <fields name="params">
+    <fields name="params" addfieldprefix="Joomla\Component\Nxpeasycart\Site\Field">
         <fieldset name="basic">
             <field
                 name="root_categories"
-                type="sql"
+                type="RootCategories"
                 multiple="true"
                 label="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES"
                 description="COM_NXPEASYCART_FIELD_ROOT_CATEGORIES_DESC"
                 required="false"
-            >
-                <query>
-                    SELECT id AS value, title AS text
-                    FROM #__nxp_easycart_categories
-                    WHERE parent_id IS NULL OR parent_id = 0
-                    ORDER BY sort ASC, title ASC
-                </query>
-            </field>
+                filter="array"
+            />
         </fieldset>
     </fields>
 </metadata>

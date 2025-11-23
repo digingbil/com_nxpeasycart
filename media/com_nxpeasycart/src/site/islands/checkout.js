@@ -1,7 +1,14 @@
-import { createApp, reactive, computed, ref } from "vue";
+import { createApp, reactive, computed, ref, watch } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 import { createApiClient } from "../utils/apiClient.js";
+import {
+    getCountries,
+    getRegions,
+    hasRegions,
+    getCountryName,
+    getRegionName,
+} from "../utils/countryRegionData.js";
 
 export default function mountCheckoutIsland(el) {
     const locale = el.dataset.nxpLocale || undefined;
@@ -14,6 +21,7 @@ export default function mountCheckoutIsland(el) {
     const payments = payload.payments || {};
     const endpoints = payload.endpoints || {};
     const token = payload.token || "";
+    const i18n = payload.i18n || {};
     const api = createApiClient(token);
 
     el.innerHTML = "";
@@ -34,7 +42,7 @@ export default function mountCheckoutIsland(el) {
               <legend>Contact</legend>
               <div class="nxp-ec-checkout__field">
                 <label for="nxp-ec-checkout-email">Email</label>
-                <input id="nxp-ec-checkout-email" type="email" v-model="model.email" required />
+                <input id="nxp-ec-checkout-email" type="email" v-model="model.email" required autocomplete="email" />
               </div>
             </fieldset>
 
@@ -43,31 +51,57 @@ export default function mountCheckoutIsland(el) {
               <div class="nxp-ec-checkout__grid">
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-first-name">First name</label>
-                  <input id="nxp-ec-first-name" type="text" v-model="model.billing.first_name" required />
+                  <input id="nxp-ec-first-name" type="text" v-model="model.billing.first_name" required autocomplete="given-name" />
                 </div>
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-last-name">Last name</label>
-                  <input id="nxp-ec-last-name" type="text" v-model="model.billing.last_name" required />
+                  <input id="nxp-ec-last-name" type="text" v-model="model.billing.last_name" required autocomplete="family-name" />
                 </div>
                 <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
                   <label for="nxp-ec-address-line1">Address</label>
-                  <input id="nxp-ec-address-line1" type="text" v-model="model.billing.address_line1" required />
+                  <input id="nxp-ec-address-line1" type="text" v-model="model.billing.address_line1" required autocomplete="street-address" />
                 </div>
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-city">City</label>
-                  <input id="nxp-ec-city" type="text" v-model="model.billing.city" required />
+                  <input id="nxp-ec-city" type="text" v-model="model.billing.city" required autocomplete="address-level2" />
                 </div>
                 <div class="nxp-ec-checkout__field">
                   <label for="nxp-ec-postcode">Postcode</label>
-                  <input id="nxp-ec-postcode" type="text" v-model="model.billing.postcode" required />
+                  <input id="nxp-ec-postcode" type="text" v-model="model.billing.postcode" required autocomplete="postal-code" />
                 </div>
                 <div class="nxp-ec-checkout__field">
-                  <label for="nxp-ec-region">Region/State</label>
-                  <input id="nxp-ec-region" type="text" v-model="model.billing.region" />
+                  <label for="nxp-ec-country">{{ t.country }}</label>
+                  <select
+                    id="nxp-ec-country"
+                    v-model="model.billing.country_code"
+                    required
+                    autocomplete="country"
+                    class="nxp-ec-checkout__select"
+                  >
+                    <option value="" disabled>{{ t.select_country }}</option>
+                    <option
+                      v-for="country in countries"
+                      :key="country.code"
+                      :value="country.code"
+                    >{{ country.name }}</option>
+                  </select>
                 </div>
-                <div class="nxp-ec-checkout__field">
-                  <label for="nxp-ec-country">Country</label>
-                  <input id="nxp-ec-country" type="text" v-model="model.billing.country" required />
+                <div class="nxp-ec-checkout__field" v-if="showRegionField">
+                  <label for="nxp-ec-region">{{ regionLabel }}</label>
+                  <select
+                    id="nxp-ec-region"
+                    v-model="model.billing.region_code"
+                    :required="regionRequired"
+                    autocomplete="address-level1"
+                    class="nxp-ec-checkout__select"
+                  >
+                    <option value="">{{ regionPlaceholder }}</option>
+                    <option
+                      v-for="region in availableRegions"
+                      :key="region.code"
+                      :value="region.code"
+                    >{{ region.name }}</option>
+                  </select>
                 </div>
               </div>
             </fieldset>
@@ -253,6 +287,9 @@ export default function mountCheckoutIsland(el) {
             const hostedCheckoutAvailable =
                 gateways.length > 0 && Boolean(endpoints.payment);
 
+            // Country/Region data
+            const countries = getCountries();
+
             const state = reactive({
                 email: "",
                 billing: {
@@ -261,11 +298,59 @@ export default function mountCheckoutIsland(el) {
                     address_line1: "",
                     city: "",
                     postcode: "",
-                    country: "",
-                    region: "",
+                    country_code: "",
+                    region_code: "",
                 },
                 shipping_rule_id: shipping[0]?.id || null,
             });
+
+            // Computed: available regions based on selected country
+            const availableRegions = computed(() => {
+                if (!state.billing.country_code) {
+                    return [];
+                }
+                return getRegions(state.billing.country_code);
+            });
+
+            // Show region field only if country has regions
+            const showRegionField = computed(() => {
+                return (
+                    state.billing.country_code &&
+                    hasRegions(state.billing.country_code)
+                );
+            });
+
+            // Dynamic label based on country (State for US, Province for CA, Region otherwise)
+            const regionLabel = computed(() => {
+                const code = state.billing.country_code;
+                if (code === "US") return i18n.region_state || "State";
+                if (code === "CA") return i18n.region_province || "Province";
+                if (code === "AU") return i18n.region_territory || "State/Territory";
+                if (code === "GB" || code === "UK") return i18n.region_county || "County";
+                return i18n.region || "Region/State";
+            });
+
+            const regionPlaceholder = computed(() => {
+                const code = state.billing.country_code;
+                if (code === "US") return i18n.select_state || "Select state...";
+                if (code === "CA") return i18n.select_province || "Select province...";
+                return i18n.select_region || "Select region...";
+            });
+
+            // Region is required for countries with subdivisions
+            const regionRequired = computed(() => {
+                const code = state.billing.country_code;
+                // Make region required for major countries with tax implications
+                return ["US", "CA", "AU", "IN", "BR", "MX"].includes(code);
+            });
+
+            // Clear region when country changes
+            watch(
+                () => state.billing.country_code,
+                () => {
+                    state.billing.region_code = "";
+                }
+            );
 
             const ui = reactive({
                 loading: false,
@@ -309,11 +394,12 @@ export default function mountCheckoutIsland(el) {
                 shippingCostForRule(selectedShippingRule.value)
             );
 
+            // Use country code for tax matching
             const billingCountry = computed(() =>
-                (state.billing.country || "").trim().toUpperCase()
+                (state.billing.country_code || "").trim().toUpperCase()
             );
             const billingRegion = computed(() =>
-                (state.billing.region || "").trim().toLowerCase()
+                (state.billing.region_code || "").trim().toLowerCase()
             );
 
             const activeTaxRate = computed(() => {
@@ -411,9 +497,27 @@ export default function mountCheckoutIsland(el) {
                 const shippingCost = selectedShippingCost.value;
                 const taxCents = taxAmount.value;
 
+                // Build billing object with resolved names for storage
+                const billingPayload = {
+                    first_name: state.billing.first_name,
+                    last_name: state.billing.last_name,
+                    address_line1: state.billing.address_line1,
+                    city: state.billing.city,
+                    postcode: state.billing.postcode,
+                    country_code: state.billing.country_code,
+                    country: getCountryName(state.billing.country_code),
+                    region_code: state.billing.region_code || "",
+                    region: state.billing.region_code
+                        ? getRegionName(
+                              state.billing.country_code,
+                              state.billing.region_code
+                          )
+                        : "",
+                };
+
                 const payloadBody = {
                     email: state.email,
-                    billing: state.billing,
+                    billing: billingPayload,
                     shipping_rule_id: state.shipping_rule_id,
                     shipping_cents: shippingCost,
                     tax_cents: taxCents,
@@ -486,10 +590,22 @@ export default function mountCheckoutIsland(el) {
                 }
             };
 
+            // Translation helper with fallbacks
+            const t = {
+                country: i18n.country || "Country",
+                select_country: i18n.select_country || "Select country...",
+            };
+
             return {
                 model: state,
                 cartItems,
                 shippingRules: shipping,
+                countries,
+                availableRegions,
+                showRegionField,
+                regionLabel,
+                regionPlaceholder,
+                regionRequired,
                 subtotal,
                 selectedShippingCost,
                 taxAmount,
@@ -505,6 +621,7 @@ export default function mountCheckoutIsland(el) {
                 formatMoney: (cents) => formatMoney(cents, currency, locale),
                 gateways,
                 selectedGateway,
+                t,
             };
         },
     });

@@ -28,6 +28,18 @@ $payload = htmlspecialchars(
                 'checkout' => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
                 'payment'  => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
             ],
+            'i18n'           => [
+                'country'             => Text::_('COM_NXPEASYCART_CHECKOUT_COUNTRY'),
+                'region'              => Text::_('COM_NXPEASYCART_CHECKOUT_REGION'),
+                'region_state'        => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE'),
+                'region_province'     => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_PROVINCE'),
+                'region_territory'    => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE_TERRITORY'),
+                'region_county'       => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_COUNTY'),
+                'select_country'      => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_COUNTRY'),
+                'select_region'       => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_REGION'),
+                'select_state'        => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_STATE'),
+                'select_province'     => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_PROVINCE'),
+            ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
     ),

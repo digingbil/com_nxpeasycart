@@ -10,6 +10,8 @@ use Joomla\CMS\Dispatcher\ComponentDispatcherFactoryInterface;
 use Joomla\CMS\Extension\ComponentInterface;
 use Joomla\CMS\Extension\Service\Provider\ComponentDispatcherFactory;
 use Joomla\CMS\Extension\Service\Provider\RouterFactory as ComponentRouterFactory;
+use Joomla\CMS\Form\Form;
+use Joomla\CMS\Form\FormHelper;
 use Joomla\CMS\Form\FormFactoryInterface;
 use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
@@ -81,6 +83,14 @@ return new class () implements ServiceProviderInterface {
     {
         \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Administrator', __DIR__ . '/../src/Administrator', false, false, 'psr4');
         \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Site', JPATH_SITE . '/components/com_nxpeasycart/src', false, false, 'psr4');
+
+        FormHelper::addFieldPrefix([
+            'Joomla\\Component\\Nxpeasycart\\Administrator\\Field',
+            'Joomla\\Component\\Nxpeasycart\\Site\\Field',
+        ]);
+
+        Form::addFieldPath(__DIR__ . '/../src/Administrator/Field');
+        Form::addFieldPath(JPATH_SITE . '/components/com_nxpeasycart/src/Field');
 
         $namespace = '\\Joomla\\Component\\Nxpeasycart\\Administrator';
 

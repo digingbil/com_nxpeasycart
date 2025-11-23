@@ -6,6 +6,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use JsonException;
@@ -328,7 +329,10 @@ class OrderService
         $start = $start >= 0 ? $start : 0;
 
         $query = $this->db->getQuery(true)
-            ->select('*')
+            ->select([
+                $this->db->quoteName('#__nxp_easycart_orders') . '.*',
+                '(SELECT COUNT(*) FROM ' . $this->db->quoteName('#__nxp_easycart_order_items') . ' oi WHERE oi.order_id = ' . $this->db->quoteName('#__nxp_easycart_orders.id') . ') AS ' . $this->db->quoteName('items_count'),
+            ])
             ->from($this->db->quoteName('#__nxp_easycart_orders'));
 
         $state = isset($filters['state']) ? strtolower(trim((string) $filters['state'])) : '';
@@ -533,6 +537,8 @@ class OrderService
 
         $transactions = $includeHistory ? $this->getTransactions($orderId) : [];
         $timeline     = $includeHistory ? $this->getAuditTrail($orderId) : [];
+        $itemsCount   = $row->items_count ?? null;
+        $itemsCount   = $itemsCount !== null ? (int) $itemsCount : (\is_array($items) ? \count($items) : 0);
 
         return [
             'id'             => $orderId,
@@ -551,6 +557,7 @@ class OrderService
             'locale'         => (string) $row->locale,
             'created'        => (string) $row->created,
             'modified'       => $row->modified !== null ? (string) $row->modified : null,
+            'items_count'    => $itemsCount,
             'items'          => $items,
             'transactions'   => $transactions,
             'timeline'       => $timeline,
@@ -628,8 +635,52 @@ class OrderService
         $rows = $this->db->loadObjectList() ?: [];
         $map  = [];
 
+        if (empty($rows)) {
+            return $map;
+        }
+
+        $productIds = [];
+        $variantIds = [];
+
+        foreach ($rows as $row) {
+            if ($row->product_id !== null) {
+                $productIds[] = (int) $row->product_id;
+            }
+
+            if ($row->variant_id !== null) {
+                $variantIds[] = (int) $row->variant_id;
+            }
+        }
+
+        $products = $productIds ? $this->fetchProducts($productIds) : [];
+        $variants = $variantIds ? $this->fetchVariants($variantIds) : [];
+
         foreach ($rows as $row) {
             $orderId = (int) $row->order_id;
+            $sku     = (string) $row->sku;
+
+            $product = $row->product_id !== null && isset($products[(int) $row->product_id])
+                ? $products[(int) $row->product_id]
+                : null;
+            $variant = $row->variant_id !== null && isset($variants[(int) $row->variant_id])
+                ? $variants[(int) $row->variant_id]
+                : null;
+
+            $productTitle = $product['title'] ?? '';
+            $variantLabel = $this->buildVariantLabel($variant);
+            $storedTitle  = trim((string) $row->title);
+
+            $displayTitle = $storedTitle !== '' ? $storedTitle : $sku;
+
+            if ($productTitle !== '' && ($storedTitle === '' || $storedTitle === $sku)) {
+                $displayTitle = $variantLabel !== ''
+                    ? $productTitle . ' (' . $variantLabel . ')'
+                    : $productTitle;
+            } elseif ($productTitle !== '' && $variantLabel !== '' && stripos($displayTitle, $productTitle) === false) {
+                $displayTitle = $productTitle . ' (' . $variantLabel . ')';
+            }
+
+            $image = $variant['image'] ?? ($product['image'] ?? null);
 
             if (!isset($map[$orderId])) {
                 $map[$orderId] = [];
@@ -640,12 +691,15 @@ class OrderService
                 'order_id'         => $orderId,
                 'product_id'       => $row->product_id !== null ? (int) $row->product_id : null,
                 'variant_id'       => $row->variant_id !== null ? (int) $row->variant_id : null,
-                'sku'              => (string) $row->sku,
-                'title'            => (string) $row->title,
+                'sku'              => $sku,
+                'title'            => $displayTitle,
+                'product_title'    => $productTitle !== '' ? $productTitle : $displayTitle,
+                'variant_label'    => $variantLabel !== '' ? $variantLabel : null,
                 'qty'              => (int) $row->qty,
                 'unit_price_cents' => (int) $row->unit_price_cents,
                 'tax_rate'         => (string) $row->tax_rate,
                 'total_cents'      => (int) $row->total_cents,
+                'image'            => $image,
             ];
         }
 
@@ -698,6 +752,165 @@ class OrderService
     private function getAuditTrail(int $orderId): array
     {
         return $this->getAuditService()->forOrder($orderId);
+    }
+
+    /**
+     * Fetch product metadata for order item presentation.
+     *
+     * @param array<int, int> $ids
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchProducts(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids)));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select([$this->db->quoteName('id'), $this->db->quoteName('title'), $this->db->quoteName('images')])
+            ->from($this->db->quoteName('#__nxp_easycart_products'))
+            ->where($this->db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
+
+        $this->db->setQuery($query);
+
+        $rows     = $this->db->loadObjectList() ?: [];
+        $products = [];
+
+        foreach ($rows as $row) {
+            $products[(int) $row->id] = [
+                'id'    => (int) $row->id,
+                'title' => (string) $row->title,
+                'image' => $this->resolvePrimaryImage($row->images ?? null),
+            ];
+        }
+
+        return $products;
+    }
+
+    /**
+     * Fetch variant metadata for order items.
+     *
+     * @param array<int, int> $ids
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchVariants(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids)));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__nxp_easycart_variants'))
+            ->where($this->db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
+
+        $this->db->setQuery($query);
+
+        $rows     = $this->db->loadObjectList() ?: [];
+        $variants = [];
+
+        foreach ($rows as $row) {
+            $options = [];
+
+            if (!empty($row->options)) {
+                $decoded = json_decode($row->options, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
+                    $options = array_filter($decoded, static fn ($option) => \is_array($option));
+                }
+            }
+
+            $variants[(int) $row->id] = [
+                'id'         => (int) $row->id,
+                'product_id' => (int) $row->product_id,
+                'title'      => (string) $row->sku,
+                'sku'        => (string) $row->sku,
+                'options'    => $options,
+                'image'      => null,
+            ];
+        }
+
+        return $variants;
+    }
+
+    /**
+     * Build a variant label for display (options preferred, falls back to SKU).
+     */
+    private function buildVariantLabel(?array $variant): string
+    {
+        if (!$variant) {
+            return '';
+        }
+
+        $labels = [];
+
+        if (!empty($variant['options']) && \is_array($variant['options'])) {
+            foreach ($variant['options'] as $option) {
+                if (!\is_array($option)) {
+                    continue;
+                }
+
+                $name  = isset($option['name']) ? trim((string) $option['name']) : '';
+                $value = isset($option['value']) ? trim((string) $option['value']) : '';
+
+                if ($name !== '' && $value !== '') {
+                    $labels[] = $name . ': ' . $value;
+                } elseif ($value !== '') {
+                    $labels[] = $value;
+                }
+            }
+        }
+
+        if (!$labels && !empty($variant['sku'])) {
+            return (string) $variant['sku'];
+        }
+
+        return implode(', ', $labels);
+    }
+
+    /**
+     * Resolve the primary product image from JSON, normalising to an absolute URL.
+     */
+    private function resolvePrimaryImage($imagesJson): ?string
+    {
+        if (empty($imagesJson)) {
+            return null;
+        }
+
+        $decoded = json_decode((string) $imagesJson, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !\is_array($decoded) || !isset($decoded[0])) {
+            return null;
+        }
+
+        $candidate = $decoded[0];
+
+        if (!\is_string($candidate)) {
+            return null;
+        }
+
+        $image = trim($candidate);
+
+        if ($image === '') {
+            return null;
+        }
+
+        if (
+            str_starts_with($image, 'http://')
+            || str_starts_with($image, 'https://')
+            || str_starts_with($image, '//')
+        ) {
+            return $image;
+        }
+
+        $base     = rtrim(Uri::root(true), '/');
+        $relative = '/' . ltrim($image, '/');
+
+        return ($base === '' ? '' : $base) . $relative;
     }
 
     /**
@@ -899,13 +1112,13 @@ class OrderService
             return [];
         }
 
-        try {
-            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_DESERIALISE_FAILED'), 0, $exception);
+        $decoded = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !\is_array($decoded)) {
+            return [];
         }
 
-        return (array) $decoded;
+        return $decoded;
     }
 
     /**

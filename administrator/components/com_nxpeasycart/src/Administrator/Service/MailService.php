@@ -6,7 +6,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Mailer\MailerInterface;
+use Joomla\CMS\Mail\MailerInterface;
 use Joomla\CMS\Uri\Uri;
 use RuntimeException;
 
@@ -35,6 +35,11 @@ class MailService
             return;
         }
 
+        // Ensure component language strings are available when rendering emails.
+        $language = Factory::getLanguage();
+        $language->load('com_nxpeasycart', JPATH_SITE);
+        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+
         $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SUBJECT', $order['order_no'] ?? '');
         $body    = $this->renderTemplate('order_confirmation', [
             'order' => $order,
@@ -50,7 +55,7 @@ class MailService
         $mailer->setBody($body);
         $mailer->addRecipient($recipient);
 
-        $mailer->Send();
+        $mailer->send();
     }
 
     /**
