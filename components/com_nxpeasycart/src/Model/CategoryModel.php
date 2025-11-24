@@ -11,6 +11,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
@@ -143,6 +144,8 @@ class CategoryModel extends BaseDatabaseModel
         $category = $this->getItem();
 
         $db    = $this->getDatabase();
+        $activeStatus = ProductStatus::ACTIVE;
+        $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -151,6 +154,7 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.short_desc'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
+                $db->quoteName('p.active'),
                 'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
@@ -172,7 +176,11 @@ class CategoryModel extends BaseDatabaseModel
                 . ' ON ' . $db->quoteName('c_all.id') . ' = ' . $db->quoteName('pc_all.category_id')
             )
             ->select('MIN(' . $db->quoteName('c_all.slug') . ') AS ' . $db->quoteName('primary_category_slug'))
-            ->where($db->quoteName('p.active') . ' = 1')
+            ->where(
+                $db->quoteName('p.active') . ' IN (:activeStatus, :outOfStockStatus)'
+            )
+            ->bind(':activeStatus', $activeStatus, ParameterType::INTEGER)
+            ->bind(':outOfStockStatus', $outOfStockStatus, ParameterType::INTEGER)
             ->order($db->quoteName('p.title') . ' ASC')
             ->group($db->quoteName('p.id'));
 
@@ -287,6 +295,7 @@ class CategoryModel extends BaseDatabaseModel
             $primaryVariantId = ($variantCount === 1 && $row->primary_variant_id !== null)
                 ? (int) $row->primary_variant_id
                 : null;
+            $status = ProductStatus::normalise($row->active ?? ProductStatus::INACTIVE);
 
             $products[] = [
                 'id'         => (int) $row->id,
@@ -295,6 +304,8 @@ class CategoryModel extends BaseDatabaseModel
                 'short_desc' => (string) ($row->short_desc ?? ''),
                 'images'     => $images,
                 'featured'   => (bool) ($row->featured ?? 0),
+                'status'     => $status,
+                'out_of_stock' => ProductStatus::isOutOfStock($status),
                 'price'      => $price,
                 'price_label' => $price['label'],
                 'category_slug' => $linkCategorySlug,

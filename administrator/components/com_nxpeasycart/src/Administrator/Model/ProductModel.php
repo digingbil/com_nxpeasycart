@@ -14,6 +14,7 @@ use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\Database\ParameterType;
 use JsonException;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Table\CategoryTable;
 use Joomla\Component\Nxpeasycart\Administrator\Table\ProductTable;
 use Joomla\Component\Nxpeasycart\Administrator\Table\VariantTable;
@@ -98,6 +99,8 @@ class ProductModel extends AdminModel
         $validated['variants']   = $this->filterVariants($data['variants'] ?? []);
         $validated['categories'] = $this->filterCategories($data['categories'] ?? []);
         $validated['featured']   = isset($validated['featured']) ? (int) (bool) $validated['featured'] : 0;
+        $validated['status']     = ProductStatus::normalise($data['status'] ?? $data['active'] ?? ProductStatus::ACTIVE);
+        $validated['active']     = $validated['status'];
 
         if (empty($validated['variants'])) {
             $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_VARIANT_REQUIRED'));
@@ -171,7 +174,7 @@ class ProductModel extends AdminModel
             $table->slug = ApplicationHelper::stringURLSafe($table->slug);
         }
 
-        $table->active   = (int) (bool) $table->active;
+        $table->active   = ProductStatus::normalise($table->active ?? $table->status ?? ProductStatus::ACTIVE);
         $table->featured = (int) (bool) $table->featured;
 
         if (\is_array($table->images)) {
@@ -253,7 +256,10 @@ class ProductModel extends AdminModel
 
         foreach ($items as $index => $item) {
             $id                = (int) ($item->id ?? 0);
-            $item->active      = (bool) $item->active;
+            $status            = ProductStatus::normalise($item->active ?? 0);
+            $item->status      = $status;
+            $item->active      = ProductStatus::isPurchasable($status);
+            $item->out_of_stock = ProductStatus::isOutOfStock($status);
             $item->featured    = (bool) $item->featured;
             $item->images      = $this->decodeImages($item->images ?? null);
             $item->variants    = $variants[$id]   ?? [];

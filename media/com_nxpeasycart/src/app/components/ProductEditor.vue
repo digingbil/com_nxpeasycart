@@ -148,21 +148,53 @@
                     ></textarea>
                 </div>
 
-                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                    <label class="nxp-ec-form-label" for="product-active">
+                <div class="nxp-ec-form-field">
+                    <label class="nxp-ec-form-label" for="product-status">
                         {{
                             __(
-                                "COM_NXPEASYCART_FIELD_PRODUCT_ACTIVE",
-                                "Published"
+                                "COM_NXPEASYCART_FIELD_PRODUCT_STATUS",
+                                "Status"
                             )
                         }}
                     </label>
-                    <input
-                        id="product-active"
-                        type="checkbox"
-                        class="nxp-ec-form-checkbox"
-                        v-model="form.active"
-                    />
+                    <select
+                        id="product-status"
+                        class="nxp-ec-form-select"
+                        v-model.number="form.status"
+                    >
+                        <option :value="1">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_ACTIVE",
+                                    "Active (visible & purchasable)"
+                                )
+                            }}
+                        </option>
+                        <option :value="-1">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_OUT_OF_STOCK",
+                                    "Out of stock (visible, purchase disabled)"
+                                )
+                            }}
+                        </option>
+                        <option :value="0">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_INACTIVE",
+                                    "Inactive (hidden)"
+                                )
+                            }}
+                        </option>
+                    </select>
+                    <p class="nxp-ec-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_DESC",
+                                "Control storefront visibility and purchase availability."
+                            )
+                        }}
+                    </p>
                 </div>
 
                 <div class="nxp-ec-form-field nxp-ec-form-field--inline">
@@ -806,12 +838,42 @@ const normaliseCategoryInput = (input) => {
     return null;
 };
 
+const normaliseStatus = (value) => {
+    const numeric = Number(value);
+
+    if (Number.isFinite(numeric)) {
+        if (numeric === -1) {
+            return -1;
+        }
+
+        if (numeric === 0) {
+            return 0;
+        }
+
+        return 1;
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim().toLowerCase();
+
+        if (trimmed === "out_of_stock" || trimmed === "out-of-stock" || trimmed === "-1") {
+            return -1;
+        }
+
+        if (trimmed === "inactive" || trimmed === "0") {
+            return 0;
+        }
+    }
+
+    return 1;
+};
+
 const form = reactive({
     title: "",
     slug: "",
     short_desc: "",
     long_desc: "",
-    active: true,
+    status: 1,
     featured: false,
     images: [],
     categories: [],
@@ -1036,7 +1098,9 @@ const applyProduct = (product) => {
     form.slug = source.slug ?? "";
     form.short_desc = source.short_desc ?? "";
     form.long_desc = source.long_desc ?? "";
-    form.active = source.active !== undefined ? Boolean(source.active) : true;
+    form.status = normaliseStatus(
+        source.status !== undefined ? source.status : source.active
+    );
     form.featured = source.featured !== undefined ? Boolean(source.featured) : false;
 
     const images = Array.isArray(source.images)
@@ -1686,12 +1750,15 @@ const submit = () => {
         };
     });
 
+    const status = normaliseStatus(form.status);
+
     const payload = {
         title: form.title.trim(),
         slug: form.slug.trim(),
         short_desc: form.short_desc ?? "",
         long_desc: form.long_desc ?? "",
-        active: Boolean(form.active),
+        status,
+        active: status,
         featured: Boolean(form.featured),
         images: payloadImages,
         categories: payloadCategories,

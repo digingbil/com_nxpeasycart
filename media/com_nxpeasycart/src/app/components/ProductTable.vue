@@ -143,63 +143,19 @@
                         :class="[
                             'nxp-ec-status',
                             'nxp-ec-status-button',
-                            item.active
-                                ? 'nxp-ec-status--active'
-                                : 'nxp-ec-status--inactive',
+                            statusMeta(item).className,
                         ]"
                         :disabled="saving"
-                        :aria-pressed="item.active ? 'true' : 'false'"
-                        :title="
-                            item.active
-                                ? __(
-                                      'COM_NXPEASYCART_PRODUCTS_STATUS_DEACTIVATE',
-                                      'Deactivate product',
-                                      [],
-                                      'productsStatusDeactivate'
-                                  )
-                                : __(
-                                      'COM_NXPEASYCART_PRODUCTS_STATUS_ACTIVATE',
-                                      'Activate product',
-                                      [],
-                                      'productsStatusActivate'
-                                  )
-                        "
-                        :aria-label="
-                            item.active
-                                ? __(
-                                      'COM_NXPEASYCART_PRODUCTS_STATUS_DEACTIVATE',
-                                      'Deactivate product',
-                                      [],
-                                      'productsStatusDeactivate'
-                                  )
-                                : __(
-                                      'COM_NXPEASYCART_PRODUCTS_STATUS_ACTIVATE',
-                                      'Activate product',
-                                      [],
-                                      'productsStatusActivate'
-                                  )
-                        "
+                        :aria-pressed="statusMeta(item).isActive ? 'true' : 'false'"
+                        :title="statusMeta(item).title"
+                        :aria-label="statusMeta(item).title"
                         @click="$emit('toggle-active', item)"
                     >
                         <i
-                            :class="item.active ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'"
+                            :class="statusMeta(item).icon"
                             aria-hidden="true"
                         ></i>
-                        {{
-                            item.active
-                                ? __(
-                                      "COM_NXPEASYCART_STATUS_ACTIVE",
-                                      "Active",
-                                      [],
-                                      "statusActive"
-                                  )
-                                : __(
-                                      "COM_NXPEASYCART_STATUS_INACTIVE",
-                                      "Inactive",
-                                      [],
-                                      "statusInactive"
-                                  )
-                        }}
+                        {{ statusMeta(item).label }}
                         <span class="nxp-ec-sr-only">
                             {{
                                 __(
@@ -273,6 +229,82 @@ const __ = props.translate;
 const baseCurrency = computed(() =>
     (props.baseCurrency || "USD").toUpperCase()
 );
+
+const STATUS_ACTIVE = 1;
+const STATUS_OUT_OF_STOCK = -1;
+const STATUS_INACTIVE = 0;
+
+const normaliseStatus = (value, outOfStockFlag = false) => {
+    const numeric = Number(value);
+
+    if (Number.isFinite(numeric)) {
+        if (numeric === STATUS_OUT_OF_STOCK) {
+            return STATUS_OUT_OF_STOCK;
+        }
+
+        if (numeric === STATUS_INACTIVE) {
+            return STATUS_INACTIVE;
+        }
+
+        return STATUS_ACTIVE;
+    }
+
+    if (outOfStockFlag) {
+        return STATUS_OUT_OF_STOCK;
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim().toLowerCase();
+
+        if (trimmed === "out_of_stock" || trimmed === "out-of-stock" || trimmed === "-1") {
+            return STATUS_OUT_OF_STOCK;
+        }
+
+        if (trimmed === "inactive" || trimmed === "0") {
+            return STATUS_INACTIVE;
+        }
+    }
+
+    return STATUS_ACTIVE;
+};
+
+const statusMeta = (item) => {
+    const status = normaliseStatus(item?.status ?? item?.active, item?.out_of_stock);
+    const isActive = status === STATUS_ACTIVE;
+    const isOutOfStock = status === STATUS_OUT_OF_STOCK;
+
+    return {
+        status,
+        isActive,
+        isOutOfStock,
+        label: isActive
+            ? __("COM_NXPEASYCART_STATUS_ACTIVE", "Active", [], "statusActive")
+            : isOutOfStock
+              ? __("COM_NXPEASYCART_STATUS_DEPLETED", "Out of stock")
+              : __(
+                    "COM_NXPEASYCART_STATUS_INACTIVE",
+                    "Inactive",
+                    [],
+                    "statusInactive"
+                ),
+        className: isActive
+            ? "nxp-ec-status--active"
+            : isOutOfStock
+              ? "nxp-ec-status--muted"
+              : "nxp-ec-status--inactive",
+        icon: isActive
+            ? "fa-solid fa-circle-check"
+            : isOutOfStock
+              ? "fa-solid fa-triangle-exclamation"
+              : "fa-regular fa-circle",
+        title: __(
+            "COM_NXPEASYCART_PRODUCTS_STATUS_TOGGLE",
+            "Toggle status",
+            [],
+            "productsStatusToggle"
+        ),
+    };
+};
 
 const variantPrice = (product) => {
     const summary = product?.summary?.variants ?? {};

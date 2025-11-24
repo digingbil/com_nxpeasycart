@@ -53,6 +53,7 @@ $images     = array_values(array_filter(array_map(
 )));
 $variants   = $product['variants']   ?? [];
 $categories = $product['categories'] ?? [];
+$isOutOfStock = !empty($product['out_of_stock']);
 
 $language = Factory::getApplication()->getLanguage();
 $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
@@ -118,6 +119,8 @@ $payload = [
         'title'          => (string) ($product['title'] ?? ''),
         'short_desc'     => (string) ($product['short_desc'] ?? ''),
         'long_desc_html' => $preparedLongDescription,
+        'status'         => (int) ($product['status'] ?? ($product['active'] ? 1 : 0)),
+        'out_of_stock'   => $isOutOfStock,
         'images'         => $images,
         'categories'     => $categories,
         'price'          => [
@@ -219,6 +222,14 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
             <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
         </div>
 
+        <?php if ($isOutOfStock) : ?>
+            <noscript>
+                <p class="nxp-ec-product__message nxp-ec-product__message--alert">
+                    <?php echo Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'); ?>
+                </p>
+            </noscript>
+        <?php endif; ?>
+
         <?php if (!empty($product['short_desc'])) : ?>
             <p class="nxp-ec-product__intro">
                 <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
@@ -231,7 +242,7 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
             data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
             data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
         >
-            <button class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?> nxp-ec-product__buy" type="button">
+            <button class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?> nxp-ec-product__buy<?php echo $isOutOfStock ? ' is-disabled is-out-of-stock' : ''; ?>" type="button" <?php echo $isOutOfStock ? 'disabled' : ''; ?>>
                 <?php echo Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'); ?>
             </button>
         </div>

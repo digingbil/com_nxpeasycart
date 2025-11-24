@@ -12,6 +12,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
@@ -303,6 +304,8 @@ class LandingModel extends BaseDatabaseModel
         }
 
         $db    = $this->getDatabase();
+        $activeStatus = ProductStatus::ACTIVE;
+        $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -312,6 +315,7 @@ class LandingModel extends BaseDatabaseModel
                 $db->quoteName('p.images'),
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.created'),
+                $db->quoteName('p.active'),
                 'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('min_price_cents'),
@@ -324,7 +328,11 @@ class LandingModel extends BaseDatabaseModel
                 . ' ON ' . $db->quoteName('v.product_id') . ' = ' . $db->quoteName('p.id')
                 . ' AND ' . $db->quoteName('v.active') . ' = 1'
             )
-            ->where($db->quoteName('p.active') . ' = 1')
+            ->where(
+                $db->quoteName('p.active') . ' IN (:activeStatus, :outOfStockStatus)'
+            )
+            ->bind(':activeStatus', $activeStatus, ParameterType::INTEGER)
+            ->bind(':outOfStockStatus', $outOfStockStatus, ParameterType::INTEGER)
             ->group($db->quoteName('p.id'))
             ->order($db->quoteName('p.created') . ' DESC');
 
@@ -372,6 +380,7 @@ class LandingModel extends BaseDatabaseModel
         foreach ($rows as $row) {
             $images   = $this->decodeImages($row->images ?? '');
             $currency = $row->currency !== null ? strtoupper((string) $row->currency) : $baseCurrency;
+            $status   = ProductStatus::normalise($row->active ?? ProductStatus::INACTIVE);
 
             $minPrice = $row->min_price_cents !== null ? (int) $row->min_price_cents : null;
             $maxPrice = $row->max_price_cents !== null ? (int) $row->max_price_cents : null;
@@ -405,6 +414,8 @@ class LandingModel extends BaseDatabaseModel
                 'short_desc'  => (string) ($row->short_desc ?? ''),
                 'images'      => $images,
                 'featured'    => (bool) $row->featured,
+                'status'      => $status,
+                'out_of_stock' => ProductStatus::isOutOfStock($status),
                 'price_label' => $priceLabel,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,

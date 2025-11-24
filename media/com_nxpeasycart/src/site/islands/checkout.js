@@ -588,21 +588,25 @@ export default function mountCheckoutIsland(el) {
                         endpoints.checkout,
                         payloadBody
                     );
-                    const envelope = response?.data ?? response ?? {};
-                    const order = envelope?.order ?? envelope?.data?.order ?? {};
+                const envelope = response?.data ?? response ?? {};
+                const order = envelope?.order ?? envelope?.data?.order ?? {};
 
-                    ui.success = true;
-                    ui.orderNumber = order.order_no || "";
-                    ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
-                    ui.error = "";
-                } catch (error) {
-                    const serverMessage =
-                        error?.details?.message || error?.message || "";
-                    ui.error =
-                        serverMessage ||
-                        "Unable to complete checkout right now.";
-                } finally {
-                    ui.loading = false;
+                ui.success = true;
+                ui.orderNumber = order.order_no || "";
+                ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
+                ui.error = "";
+            } catch (error) {
+                const serverMessage =
+                    error?.details?.message ||
+                    error?.payload?.data?.message ||
+                    error?.payload?.message ||
+                    error?.message ||
+                    "";
+                ui.error =
+                    serverMessage ||
+                    "Unable to complete checkout right now.";
+            } finally {
+                ui.loading = false;
                 }
             };
 

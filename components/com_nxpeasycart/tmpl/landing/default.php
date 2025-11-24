@@ -139,6 +139,11 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                                             <?php echo htmlspecialchars($item['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
                                         </p>
                                     <?php endif; ?>
+                                    <?php if (!empty($item['out_of_stock'])) : ?>
+                                        <p class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert">
+                                            <?php echo Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'); ?>
+                                        </p>
+                                    <?php endif; ?>
                                     <?php if (!empty($item['price_label'])) : ?>
                                         <p class="nxp-ec-landing__card-price">
                                             <?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?>

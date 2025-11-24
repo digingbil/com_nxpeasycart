@@ -99,6 +99,8 @@ const labels = computed(() => ({
     view_cart: props.labels?.view_cart || "View cart",
     select_variant:
         props.labels?.select_variant || "Choose a variant to continue",
+    out_of_stock:
+        props.labels?.out_of_stock || "This product is currently out of stock.",
     categories_aria:
         props.labels?.categories_aria || "Browse categories",
 }));

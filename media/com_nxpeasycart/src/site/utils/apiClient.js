@@ -21,10 +21,13 @@ export function createApiClient(csrfToken = "") {
 
     const handleResponse = async (response, retried = false) => {
         const json = await parseJsonSafe(response);
+        const data = json && typeof json === 'object' ? json.data || {} : {};
 
         if (!response.ok || (json && json.success === false)) {
             const message =
-                (json && (json.message || json.error)) || DEFAULT_ERROR;
+                (json && (json.message || json.error)) ||
+                (data && (data.message || data.error || data.detail)) ||
+                DEFAULT_ERROR;
 
             if (!retried && shouldRetry(response.status)) {
                 return null; // Signal caller to retry once.
@@ -33,6 +36,7 @@ export function createApiClient(csrfToken = "") {
             const error = new Error(message);
             error.status = response.status;
             error.payload = json;
+            error.details = data && typeof data === 'object' ? data : {};
             throw error;
         }
 

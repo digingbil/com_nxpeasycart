@@ -167,6 +167,11 @@ $currency = $this->currency ?? 'USD';
                                 <?php echo htmlspecialchars($product['short_desc'], ENT_QUOTES, 'UTF-8'); ?>
                             </p>
                         <?php endif; ?>
+                        <?php if (!empty($product['out_of_stock'])) : ?>
+                            <p class="nxp-ec-product-card__badge">
+                                <?php echo Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'); ?>
+                            </p>
+                        <?php endif; ?>
                         <?php if (!empty($product['price_label'])) : ?>
                             <p class="nxp-ec-product-card__price">
                                 <?php echo htmlspecialchars($product['price_label'], ENT_QUOTES, 'UTF-8'); ?>
@@ -175,6 +180,11 @@ $currency = $this->currency ?? 'USD';
                         <a class="nxp-ec-btn nxp-ec-btn--ghost" href="<?php echo htmlspecialchars($product['link'], ENT_QUOTES, 'UTF-8'); ?>">
                             <?php echo Text::_('COM_NXPEASYCART_CATEGORY_VIEW_PRODUCT'); ?>
                         </a>
+                        <?php if (!empty($product['out_of_stock']) && !empty($labels['out_of_stock'])) : ?>
+                            <p class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert">
+                                <?php echo htmlspecialchars($labels['out_of_stock'], ENT_QUOTES, 'UTF-8'); ?>
+                            </p>
+                        <?php endif; ?>
                     </div>
                 </article>
             <?php endforeach; ?>

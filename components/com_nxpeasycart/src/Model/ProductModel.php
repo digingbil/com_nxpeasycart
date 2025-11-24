@@ -9,6 +9,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 
 /**
  * Frontend product model.
@@ -44,10 +45,16 @@ class ProductModel extends BaseDatabaseModel
         }
 
         $db    = $this->getDatabase();
+        $activeStatus = ProductStatus::ACTIVE;
+        $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
         $query = $db->getQuery(true)
             ->select('p.*')
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
-            ->where($db->quoteName('p.active') . ' = 1');
+            ->where(
+                $db->quoteName('p.active') . ' IN (:activeStatus, :outOfStockStatus)'
+            )
+            ->bind(':activeStatus', $activeStatus, ParameterType::INTEGER)
+            ->bind(':outOfStockStatus', $outOfStockStatus, ParameterType::INTEGER);
 
         $id   = (int) $this->getState('product.id');
         $slug = (string) $this->getState('product.slug');
@@ -87,7 +94,8 @@ class ProductModel extends BaseDatabaseModel
         $categories   = $this->fetchCategories((int) $product->id);
         $priceSummary = $this->summarisePrices($variants);
         $stockTotals  = $this->summariseStock($variants);
-        $available    = ((bool) $product->active) && $stockTotals['total'] > 0;
+        $status       = ProductStatus::normalise($product->active ?? ProductStatus::INACTIVE);
+        $available    = ProductStatus::isPurchasable($status) && $stockTotals['total'] > 0;
 
         $this->item = [
             'id'         => (int) $product->id,
@@ -95,7 +103,9 @@ class ProductModel extends BaseDatabaseModel
             'title'      => (string) $product->title,
             'short_desc' => (string) ($product->short_desc ?? ''),
             'long_desc'  => (string) ($product->long_desc ?? ''),
-            'active'     => (bool) $product->active,
+            'status'     => $status,
+            'active'     => ProductStatus::isPurchasable($status),
+            'out_of_stock' => ProductStatus::isOutOfStock($status),
             'featured'   => (bool) ($product->featured ?? 0),
             'images'     => $images,
             'variants'   => $variants,

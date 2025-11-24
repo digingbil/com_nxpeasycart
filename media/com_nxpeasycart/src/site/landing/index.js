@@ -37,6 +37,11 @@ export function mountLandingIsland(el) {
         search_button: labelsPayload.search_button || "Search",
         view_all: labelsPayload.view_all || "View all",
         view_product: labelsPayload.view_product || "View product",
+        add_to_cart: labelsPayload.add_to_cart || "Add to cart",
+        added: labelsPayload.added || "Added to cart",
+        out_of_stock:
+            labelsPayload.out_of_stock ||
+            "This product is currently out of stock.",
         categories_aria:
             labelsPayload.categories_aria || "Browse categories",
     };

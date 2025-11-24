@@ -178,6 +178,58 @@ const editorProduct = computed(() => editorState.product);
 
 const mediaModalUrl = computed(() => (props.mediaModalUrl || "").trim());
 
+const STATUS_ACTIVE = 1;
+const STATUS_OUT_OF_STOCK = -1;
+const STATUS_INACTIVE = 0;
+
+const normaliseStatus = (value, outOfStockFlag = false) => {
+    const numeric = Number(value);
+
+    if (Number.isFinite(numeric)) {
+        if (numeric === STATUS_OUT_OF_STOCK) {
+            return STATUS_OUT_OF_STOCK;
+        }
+
+        if (numeric === STATUS_INACTIVE) {
+            return STATUS_INACTIVE;
+        }
+
+        return STATUS_ACTIVE;
+    }
+
+    if (outOfStockFlag) {
+        return STATUS_OUT_OF_STOCK;
+    }
+
+    if (typeof value === "string") {
+        const trimmed = value.trim().toLowerCase();
+
+        if (trimmed === "out_of_stock" || trimmed === "out-of-stock" || trimmed === "-1") {
+            return STATUS_OUT_OF_STOCK;
+        }
+
+        if (trimmed === "inactive" || trimmed === "0") {
+            return STATUS_INACTIVE;
+        }
+    }
+
+    return STATUS_ACTIVE;
+};
+
+const cycleStatus = (value, outOfStockFlag = false) => {
+    const status = normaliseStatus(value, outOfStockFlag);
+
+    if (status === STATUS_ACTIVE) {
+        return STATUS_OUT_OF_STOCK;
+    }
+
+    if (status === STATUS_OUT_OF_STOCK) {
+        return STATUS_INACTIVE;
+    }
+
+    return STATUS_ACTIVE;
+};
+
 const openCreate = () => {
     props.state.validationErrors = [];
     props.state.error = "";
@@ -187,6 +239,7 @@ const openCreate = () => {
         slug: "",
         short_desc: "",
         long_desc: "",
+        status: STATUS_ACTIVE,
         active: true,
         featured: false,
         images: [],
@@ -210,9 +263,15 @@ const closeEditor = () => {
 };
 
 const handleSubmit = async (payload) => {
+    const status = normaliseStatus(
+        payload.status ?? payload.active,
+        payload.out_of_stock
+    );
+
     const data = {
         ...payload,
-        active: payload.active ? 1 : 0,
+        status,
+        active: status,
         featured: payload.featured ? 1 : 0,
     };
 
@@ -240,6 +299,11 @@ const toggleActive = (product) => {
     if (!product?.id || props.state.saving) {
         return;
     }
+
+    const nextStatus = cycleStatus(
+        product.status ?? product.active,
+        product.out_of_stock
+    );
 
     const normalizeString = (value) => {
         if (value === null || value === undefined) {
@@ -461,7 +525,8 @@ const toggleActive = (product) => {
             slug: normalizeString(product.slug),
             short_desc: normalizeString(product.short_desc),
             long_desc: normalizeString(product.long_desc),
-            active: product.active ? 0 : 1,
+            status: nextStatus,
+            active: nextStatus,
             featured: product.featured ? 1 : 0,
             images: normalisedImages,
             variants: normalisedVariants,

@@ -12,6 +12,7 @@ use Joomla\CMS\Log\Log;
 use Joomla\CMS\Session\Session;
 use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Database\DatabaseInterface;
@@ -307,11 +308,31 @@ class CartController extends BaseController
             ->from($db->quoteName('#__nxp_easycart_products'))
             ->where($db->quoteName('id') . ' = :productId')
             ->bind(':productId', $productId, ParameterType::INTEGER)
-            ->where($db->quoteName('active') . ' = 1');
+            ->where(
+                $db->quoteName('active') . ' IN (:activeStatus, :outOfStockStatus)'
+            );
+
+        $activeStatus = ProductStatus::ACTIVE;
+        $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
+        $query->bind(':activeStatus', $activeStatus, ParameterType::INTEGER);
+        $query->bind(':outOfStockStatus', $outOfStockStatus, ParameterType::INTEGER);
 
         $db->setQuery($query);
 
-        return $db->loadObject() ?: null;
+        $product = $db->loadObject();
+
+        if (!$product) {
+            return null;
+        }
+
+        $status = ProductStatus::normalise($product->active ?? ProductStatus::INACTIVE);
+
+        if (!ProductStatus::isPurchasable($status)) {
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'), true, 400);
+            Factory::getApplication()->close();
+        }
+
+        return $product;
     }
 
     /**

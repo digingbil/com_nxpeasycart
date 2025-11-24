@@ -38,7 +38,8 @@ export default function mountCategoryIsland(el) {
         add_to_cart: labelsPayload.add_to_cart || "Add to cart",
         added: labelsPayload.added || "Added to cart",
         view_cart: labelsPayload.view_cart || "View cart",
-        out_of_stock: labelsPayload.out_of_stock || "Out of stock",
+        out_of_stock:
+            labelsPayload.out_of_stock || "This product is currently out of stock.",
         error_generic:
             labelsPayload.error_generic ||
             "We couldn't add this item to your cart. Please try again.",
@@ -98,6 +99,16 @@ export default function mountCategoryIsland(el) {
                     ? item.price_label
                     : "";
 
+            const status = Number.isFinite(Number(item.status))
+                ? Number(item.status)
+                : item.active
+                  ? 1
+                  : 0;
+            const outOfStock =
+                item.out_of_stock !== undefined
+                    ? Boolean(item.out_of_stock)
+                    : status === -1;
+
             if (!priceLabel && min !== null && max !== null) {
                 if (min === max) {
                     priceLabel = formatMoney(min, currency, locale);
@@ -152,6 +163,12 @@ export default function mountCategoryIsland(el) {
                 variant_count: Number.isFinite(variantCount)
                     ? variantCount
                     : null,
+                status,
+                out_of_stock: outOfStock,
+                hint:
+                    outOfStock && labels.out_of_stock
+                        ? labels.out_of_stock
+                        : "",
             };
         });
 
@@ -242,7 +259,10 @@ export default function mountCategoryIsland(el) {
                 type="button"
                 class="nxp-ec-quick-add"
                 :aria-label="labels.add_to_cart + ': ' + product.title"
-                :disabled="quickState[keyFor(product)]?.loading"
+                :class="{
+                  'is-disabled': product.out_of_stock || quickState[keyFor(product)]?.loading
+                }"
+                :disabled="product.out_of_stock || quickState[keyFor(product)]?.loading"
                 @click="quickAdd(product)"
               >
                 <svg
@@ -297,6 +317,12 @@ export default function mountCategoryIsland(el) {
                 <template v-if="cartLinks.cart">
                   · <a :href="cartLinks.cart">{{ labels.view_cart }}</a>
                 </template>
+              </p>
+              <p
+                v-else-if="product.out_of_stock"
+                class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert"
+              >
+                {{ labels.out_of_stock }}
               </p>
             </div>
           </article>
@@ -355,6 +381,11 @@ export default function mountCategoryIsland(el) {
 
                 if (!cartEndpoints.add) {
                     window.location.href = product.link || links.search;
+                    return;
+                }
+
+                if (product?.out_of_stock) {
+                    state.error = labels.out_of_stock;
                     return;
                 }
 

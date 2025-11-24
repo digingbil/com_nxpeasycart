@@ -11,6 +11,7 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use JsonException;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
@@ -1090,9 +1091,16 @@ class OrderService
 
             $disable = $this->db->getQuery(true)
                 ->update($this->db->quoteName('#__nxp_easycart_products'))
-                ->set($this->db->quoteName('active') . ' = 0')
+                ->set($this->db->quoteName('active') . ' = :outOfStock')
                 ->where($this->db->quoteName('id') . ' = :productId')
+                ->where($this->db->quoteName('active') . ' = :activeStatus')
                 ->bind(':productId', $productId, ParameterType::INTEGER);
+
+            $outOfStock = ProductStatus::OUT_OF_STOCK;
+            $activeStatus = ProductStatus::ACTIVE;
+
+            $disable->bind(':outOfStock', $outOfStock, ParameterType::INTEGER);
+            $disable->bind(':activeStatus', $activeStatus, ParameterType::INTEGER);
 
             $this->db->setQuery($disable);
             $this->db->execute();

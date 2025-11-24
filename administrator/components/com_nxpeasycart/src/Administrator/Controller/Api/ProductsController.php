@@ -10,6 +10,7 @@ use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use RuntimeException;
 
 /**
@@ -292,13 +293,21 @@ class ProductsController extends AbstractJsonController
             ];
         }
 
+        $status     = property_exists($item, 'status')
+            ? ProductStatus::normalise($item->status)
+            : ProductStatus::normalise($item->active ?? ProductStatus::ACTIVE);
+        $isActive   = ProductStatus::isPurchasable($status);
+        $outOfStock = ProductStatus::isOutOfStock($status);
+
         return [
             'id'         => (int) $item->id,
             'title'      => (string) $item->title,
             'slug'       => (string) $item->slug,
             'short_desc' => $item->short_desc,
             'long_desc'  => $item->long_desc,
-            'active'     => (bool) $item->active,
+            'status'     => $status,
+            'active'     => $isActive,
+            'out_of_stock' => $outOfStock,
             'featured'   => (bool) $item->featured,
             'images'     => $images,
             'variants'   => $variants,

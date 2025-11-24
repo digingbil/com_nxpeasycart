@@ -44,7 +44,10 @@
                         type="button"
                         class="nxp-ec-quick-add"
                         :aria-label="`${labels.add_to_cart}: ${item.title}`"
-                        :disabled="quickState[itemKey(item)]?.loading"
+                        :class="{
+                            'is-disabled': item.out_of_stock || quickState[itemKey(item)]?.loading
+                        }"
+                        :disabled="item.out_of_stock || quickState[itemKey(item)]?.loading"
                         @click="quickAdd(item)"
                     >
                         <svg
@@ -97,9 +100,15 @@
                     </div>
                     <p
                         v-if="quickState[itemKey(item)]?.message"
-                        class="nxp-ec-landing__card-hint"
+                        class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert"
                     >
                         {{ quickState[itemKey(item)]?.message }}
+                    </p>
+                    <p
+                        v-else-if="item.out_of_stock"
+                        class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert"
+                    >
+                        {{ labels.out_of_stock }}
                     </p>
                 </div>
             </article>
@@ -125,6 +134,7 @@ const props = defineProps({
             added: "Added to cart",
             error_generic: "We couldn't add this item. Please try again.",
             select_variant: "Choose a variant to continue",
+            out_of_stock: "This product is currently out of stock.",
         }),
     },
     searchAction: {
@@ -158,7 +168,12 @@ const hasSingleVariant = (item) => {
 };
 
 const shouldQuickAdd = (item) =>
-    !!(props.cart?.endpoints?.add && item?.primary_variant_id && hasSingleVariant(item));
+    !!(
+        props.cart?.endpoints?.add &&
+        item?.primary_variant_id &&
+        hasSingleVariant(item) &&
+        !item?.out_of_stock
+    );
 
 const ensureState = (key) => {
     if (!quickState[key]) {
@@ -172,6 +187,11 @@ const quickAdd = async (item) => {
     const key = itemKey(item);
     const state = ensureState(key);
     state.message = "";
+
+    if (item?.out_of_stock) {
+        state.message = props.labels?.out_of_stock || "";
+        return;
+    }
 
     if (!props.cart?.endpoints?.add) {
         window.location.href = item.link || props.searchAction;
@@ -227,7 +247,9 @@ const quickAdd = async (item) => {
         }
 
         state.message =
-            json.message || props.labels?.added || props.labels?.add_to_cart;
+            json.message ||
+            props.labels?.added ||
+            props.labels?.add_to_cart;
     } catch (error) {
         // Surface basic error for debugging; keep it non-intrusive.
         console.error(error);

@@ -223,6 +223,13 @@ export default function mountProductIsland(el) {
     const endpoints = payload.endpoints || {};
     const links = payload.links || {};
     const token = payload.token || "";
+    const productStatus = Number.isFinite(Number(product.status))
+        ? Number(product.status)
+        : product.active
+          ? 1
+          : 0;
+    const productOutOfStock =
+        Boolean(product.out_of_stock) || productStatus === -1;
 
     const api = createApiClient(token);
 
@@ -277,6 +284,7 @@ export default function mountProductIsland(el) {
         <button
           type="button"
           class="nxp-ec-btn nxp-ec-btn--primary nxp-ec-product__buy"
+          :class="{ 'is-disabled': isDisabled, 'is-out-of-stock': isOutOfStock }"
           :disabled="isDisabled"
           @click="add"
         >
@@ -290,7 +298,7 @@ export default function mountProductIsland(el) {
 
         <p
           v-if="isOutOfStock"
-          class="nxp-ec-product__message nxp-ec-product__message--muted"
+          class="nxp-ec-product__message nxp-ec-product__message--alert nxp-ec-product__message--badge"
         >
           {{ labels.out_of_stock }}
         </p>
@@ -411,6 +419,10 @@ export default function mountProductIsland(el) {
             );
 
             const isOutOfStock = computed(() => {
+                if (productOutOfStock) {
+                    return true;
+                }
+
                 const variant = selectedVariant.value;
 
                 if (!variant) {

@@ -146,6 +146,7 @@ class HtmlView extends BaseHtmlView
                 'added'           => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
                 'view_cart'       => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
                 'select_variant'  => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
+                'out_of_stock'    => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
                 'categories_aria' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
             ],
             'trust' => [

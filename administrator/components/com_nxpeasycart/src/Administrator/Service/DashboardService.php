@@ -9,6 +9,7 @@ use Joomla\CMS\Component\ComponentHelper;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 
 /**
  * Aggregates high-level metrics for the admin dashboard.
@@ -96,9 +97,16 @@ class DashboardService
         $query = $this->db->getQuery(true)
             ->select([
                 'COUNT(*) AS total',
-                'SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) AS active',
+                'SUM(CASE WHEN active = :activeStatus THEN 1 ELSE 0 END) AS active',
+                'SUM(CASE WHEN active = :outOfStockStatus THEN 1 ELSE 0 END) AS out_of_stock',
             ])
             ->from($this->db->quoteName('#__nxp_easycart_products'));
+
+        $activeStatus = ProductStatus::ACTIVE;
+        $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
+
+        $query->bind(':activeStatus', $activeStatus, ParameterType::INTEGER);
+        $query->bind(':outOfStockStatus', $outOfStockStatus, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
         $row = $this->db->loadObject();
@@ -106,6 +114,7 @@ class DashboardService
         return [
             'total'  => (int) ($row->total ?? 0),
             'active' => (int) ($row->active ?? 0),
+            'out_of_stock' => (int) ($row->out_of_stock ?? 0),
         ];
     }
 
