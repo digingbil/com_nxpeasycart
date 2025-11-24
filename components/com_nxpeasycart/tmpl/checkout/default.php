@@ -32,26 +32,58 @@ $payload = htmlspecialchars(
                 'checkout' => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
                 'payment'  => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
             ],
-            'i18n'           => [
-                'country'             => Text::_('COM_NXPEASYCART_CHECKOUT_COUNTRY'),
-                'region'              => Text::_('COM_NXPEASYCART_CHECKOUT_REGION'),
-                'region_state'        => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE'),
-                'region_province'     => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_PROVINCE'),
-                'region_territory'    => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE_TERRITORY'),
-                'region_county'       => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_COUNTY'),
-                'select_country'      => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_COUNTRY'),
-                'select_region'       => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_REGION'),
-                'select_state'        => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_STATE'),
-                'select_province'     => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_PROVINCE'),
-                'phone'               => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'),
-                'phone_placeholder'   => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER'),
-                'phone_placeholder_required' => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED'),
-                'phone_required'      => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_REQUIRED'),
-                'phone_invalid'       => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_INVALID'),
-            ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
     ),
+    ENT_QUOTES,
+    'UTF-8'
+);
+
+$labels = [
+    'title'                   => Text::_('COM_NXPEASYCART_CHECKOUT_TITLE'),
+    'lead'                    => Text::_('COM_NXPEASYCART_CHECKOUT_LEAD'),
+    'contact'                 => Text::_('COM_NXPEASYCART_CHECKOUT_CUSTOMER_DETAILS'),
+    'email'                   => Text::_('COM_NXPEASYCART_CHECKOUT_EMAIL'),
+    'billing'                 => Text::_('COM_NXPEASYCART_CHECKOUT_BILLING'),
+    'first_name'              => Text::_('COM_NXPEASYCART_CHECKOUT_FIRST_NAME'),
+    'last_name'               => Text::_('COM_NXPEASYCART_CHECKOUT_LAST_NAME'),
+    'address'                 => Text::_('COM_NXPEASYCART_CHECKOUT_ADDRESS'),
+    'city'                    => Text::_('COM_NXPEASYCART_CHECKOUT_CITY'),
+    'postcode'                => Text::_('COM_NXPEASYCART_CHECKOUT_POSTCODE'),
+    'country'                 => Text::_('COM_NXPEASYCART_CHECKOUT_COUNTRY'),
+    'region'                  => Text::_('COM_NXPEASYCART_CHECKOUT_REGION'),
+    'region_state'            => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE'),
+    'region_province'         => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_PROVINCE'),
+    'region_territory'        => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_STATE_TERRITORY'),
+    'region_county'           => Text::_('COM_NXPEASYCART_CHECKOUT_REGION_COUNTY'),
+    'select_country'          => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_COUNTRY'),
+    'select_region'           => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_REGION'),
+    'select_state'            => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_STATE'),
+    'select_province'         => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_PROVINCE'),
+    'phone'                   => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'),
+    'phone_placeholder'       => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER'),
+    'phone_placeholder_required' => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED'),
+    'phone_required'          => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_REQUIRED'),
+    'phone_invalid'           => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_INVALID'),
+    'shipping'                => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING'),
+    'shipping_select_country' => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING_SELECT_COUNTRY'),
+    'shipping_no_rules'       => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING_NO_RULES_FOR_COUNTRY'),
+    'payment_method'          => Text::_('COM_NXPEASYCART_CHECKOUT_PAYMENT_METHOD'),
+    'payment_offline'         => Text::_('COM_NXPEASYCART_CHECKOUT_PAYMENT_OFFLINE'),
+    'processing'              => Text::_('COM_NXPEASYCART_CHECKOUT_PROCESSING'),
+    'submit'                  => Text::_('COM_NXPEASYCART_CHECKOUT_SUBMIT'),
+    'order_summary'           => Text::_('COM_NXPEASYCART_CHECKOUT_ORDER_SUMMARY'),
+    'subtotal'                => Text::_('COM_NXPEASYCART_CHECKOUT_SUBTOTAL'),
+    'total'                   => Text::_('COM_NXPEASYCART_CHECKOUT_TOTAL'),
+    'empty_cart'              => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_EMPTY_CART'),
+    'thank_you'               => Text::_('COM_NXPEASYCART_CHECKOUT_THANK_YOU'),
+    'order_created'           => Text::_('COM_NXPEASYCART_CHECKOUT_ORDER_CREATED'),
+    'view_order'              => Text::_('COM_NXPEASYCART_CHECKOUT_VIEW_ORDER'),
+    'error_generic'           => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_GENERIC'),
+];
+
+$labelsJson = htmlspecialchars(
+    json_encode($labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
     'UTF-8'
 );
@@ -67,6 +99,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
     class="nxp-ec-checkout"
     data-nxp-island="checkout"
     data-nxp-checkout="<?php echo $payload; ?>"
+    data-nxp-labels="<?php echo $labelsJson; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
