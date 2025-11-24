@@ -14,6 +14,10 @@ $cart          = $checkout['cart']           ?? ['items' => [], 'summary' => []]
 $shippingRules = $checkout['shipping_rules'] ?? [];
 $taxRates      = $checkout['tax_rates']      ?? [];
 $settings      = $checkout['settings']       ?? [];
+$phoneRequired = !empty($settings['checkout_phone_required']);
+$phonePlaceholder = $phoneRequired
+    ? Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED')
+    : Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER');
 
 $payload = htmlspecialchars(
     json_encode(
@@ -39,6 +43,11 @@ $payload = htmlspecialchars(
                 'select_region'       => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_REGION'),
                 'select_state'        => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_STATE'),
                 'select_province'     => Text::_('COM_NXPEASYCART_CHECKOUT_SELECT_PROVINCE'),
+                'phone'               => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'),
+                'phone_placeholder'   => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER'),
+                'phone_placeholder_required' => Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED'),
+                'phone_required'      => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_REQUIRED'),
+                'phone_invalid'       => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_INVALID'),
             ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
@@ -90,6 +99,18 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                     <div class="nxp-ec-checkout__field">
                         <label for="nxp-ec-checkout-last-name"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_LAST_NAME'); ?></label>
                         <input type="text" name="billing[last_name]" id="nxp-ec-checkout-last-name" required />
+                    </div>
+                    <div class="nxp-ec-checkout__field">
+                        <label for="nxp-ec-checkout-phone"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'); ?></label>
+                        <input
+                            type="tel"
+                            name="billing[phone]"
+                            id="nxp-ec-checkout-phone"
+                            <?php echo $phoneRequired ? 'required' : ''; ?>
+                            placeholder="<?php echo htmlspecialchars($phonePlaceholder, ENT_QUOTES, 'UTF-8'); ?>"
+                            inputmode="tel"
+                            autocomplete="tel"
+                        />
                     </div>
                     <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
                         <label for="nxp-ec-checkout-address"><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_ADDRESS'); ?></label>

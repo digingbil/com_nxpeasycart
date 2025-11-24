@@ -161,6 +161,7 @@ class PaymentController extends BaseController
             'order_no' => $order['order_no'],
             'currency' => $order['currency'],
             'email'    => $order['email'],
+            'billing'  => $order['billing'] ?? [],
             'items'    => $order['items'],
             'summary'  => [
                 'total_cents' => $order['total_cents'],

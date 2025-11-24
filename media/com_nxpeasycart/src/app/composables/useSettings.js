@@ -29,6 +29,7 @@ const normaliseSettings = (data = {}) => {
             configured: Boolean(payments.configured),
         },
         base_currency: baseCurrency,
+        checkout_phone_required: Boolean(data.checkout_phone_required),
         visual: {
             primary_color: visual.primary_color ?? "",
             text_color: visual.text_color ?? "",

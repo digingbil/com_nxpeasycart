@@ -60,6 +60,7 @@ class SettingsController extends AbstractJsonController
                 'configured' => (bool) $service->get('payments.configured', false),
             ],
             'base_currency' => ConfigHelper::getBaseCurrency(),
+            'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
                 'text_color'    => (string) $service->get('visual.text_color', ''),
@@ -84,6 +85,9 @@ class SettingsController extends AbstractJsonController
         $payments          = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
         $visual            = isset($payload['visual'])   && \is_array($payload['visual']) ? $payload['visual'] : [];
         $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
+        $checkoutPhoneRequired = isset($payload['checkout_phone_required'])
+            ? (bool) $payload['checkout_phone_required']
+            : (isset($store['checkout_phone_required']) ? (bool) $store['checkout_phone_required'] : null);
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -112,6 +116,10 @@ class SettingsController extends AbstractJsonController
             } catch (RuntimeException $exception) {
                 throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_SETTINGS_BASE_CURRENCY_INVALID'), 400, $exception);
             }
+        }
+
+        if ($checkoutPhoneRequired !== null) {
+            ConfigHelper::setCheckoutPhoneRequired((bool) $checkoutPhoneRequired);
         }
 
         $service = $this->getService();
@@ -150,6 +158,7 @@ class SettingsController extends AbstractJsonController
                     'configured' => (bool) $service->get('payments.configured', false),
                 ],
                 'base_currency' => $baseCurrency,
+                'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
                 'visual' => [
                     'primary_color' => (string) $service->get('visual.primary_color', ''),
                     'text_color'    => (string) $service->get('visual.text_color', ''),

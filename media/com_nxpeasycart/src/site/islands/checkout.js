@@ -57,6 +57,18 @@ export default function mountCheckoutIsland(el) {
                   <label for="nxp-ec-last-name">Last name</label>
                   <input id="nxp-ec-last-name" type="text" v-model="model.billing.last_name" required autocomplete="family-name" />
                 </div>
+                <div class="nxp-ec-checkout__field">
+                  <label for="nxp-ec-phone">{{ t.phone_label }}</label>
+                  <input
+                    id="nxp-ec-phone"
+                    type="tel"
+                    v-model.trim="model.billing.phone"
+                    :required="phoneRequired"
+                    :placeholder="phonePlaceholder"
+                    inputmode="tel"
+                    autocomplete="tel"
+                  />
+                </div>
                 <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
                   <label for="nxp-ec-address-line1">Address</label>
                   <input id="nxp-ec-address-line1" type="text" v-model="model.billing.address_line1" required autocomplete="street-address" />
@@ -287,6 +299,31 @@ export default function mountCheckoutIsland(el) {
             const hostedCheckoutAvailable =
                 gateways.length > 0 && Boolean(endpoints.payment);
 
+            const normaliseBool = (value) => {
+                if (typeof value === "boolean") {
+                    return value;
+                }
+
+                if (typeof value === "string") {
+                    const trimmed = value.trim().toLowerCase();
+                    return trimmed === "1" || trimmed === "true" || trimmed === "yes";
+                }
+
+                return Boolean(Number(value || 0));
+            };
+
+            const phoneRequired = normaliseBool(
+                settings.checkout_phone_required ??
+                    settings.checkout?.phone_required ??
+                    false
+            );
+
+            const phonePlaceholder = computed(() =>
+                phoneRequired
+                    ? t.phone_placeholder_required || t.phone_label
+                    : t.phone_placeholder
+            );
+
             // Country/Region data
             const countries = getCountries();
 
@@ -295,6 +332,7 @@ export default function mountCheckoutIsland(el) {
                 billing: {
                     first_name: "",
                     last_name: "",
+                    phone: "",
                     address_line1: "",
                     city: "",
                     postcode: "",
@@ -484,6 +522,24 @@ export default function mountCheckoutIsland(el) {
                     return;
                 }
 
+                const phone = (state.billing.phone || "")
+                    .replace(/\s+/g, " ")
+                    .trim();
+
+                if (phoneRequired && phone === "") {
+                    ui.error =
+                        t.phone_required ||
+                        "Please enter a phone number so we can reach you about your order.";
+                    return;
+                }
+
+                if (phone !== "" && (phone.length < 6 || phone.length > 20)) {
+                    ui.error =
+                        t.phone_invalid ||
+                        "Please enter a valid phone number (6-20 characters).";
+                    return;
+                }
+
                 ui.loading = true;
 
                 const gateway = selectedGateway.value || gateways[0]?.id || "";
@@ -501,6 +557,7 @@ export default function mountCheckoutIsland(el) {
                 const billingPayload = {
                     first_name: state.billing.first_name,
                     last_name: state.billing.last_name,
+                    phone,
                     address_line1: state.billing.address_line1,
                     city: state.billing.city,
                     postcode: state.billing.postcode,
@@ -588,25 +645,27 @@ export default function mountCheckoutIsland(el) {
                         endpoints.checkout,
                         payloadBody
                     );
-                const envelope = response?.data ?? response ?? {};
-                const order = envelope?.order ?? envelope?.data?.order ?? {};
+                    const envelope = response?.data ?? response ?? {};
+                    const order = envelope?.order ?? envelope?.data?.order ?? {};
 
-                ui.success = true;
-                ui.orderNumber = order.order_no || "";
-                ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(ui.orderNumber)}`;
-                ui.error = "";
-            } catch (error) {
-                const serverMessage =
-                    error?.details?.message ||
-                    error?.payload?.data?.message ||
-                    error?.payload?.message ||
-                    error?.message ||
-                    "";
-                ui.error =
-                    serverMessage ||
-                    "Unable to complete checkout right now.";
-            } finally {
-                ui.loading = false;
+                    ui.success = true;
+                    ui.orderNumber = order.order_no || "";
+                    ui.orderUrl = `index.php?option=com_nxpeasycart&view=order&no=${encodeURIComponent(
+                        ui.orderNumber
+                    )}`;
+                    ui.error = "";
+                } catch (error) {
+                    const serverMessage =
+                        error?.details?.message ||
+                        error?.payload?.data?.message ||
+                        error?.payload?.message ||
+                        error?.message ||
+                        "";
+                    ui.error =
+                        serverMessage ||
+                        "Unable to complete checkout right now.";
+                } finally {
+                    ui.loading = false;
                 }
             };
 
@@ -614,6 +673,18 @@ export default function mountCheckoutIsland(el) {
             const t = {
                 country: i18n.country || "Country",
                 select_country: i18n.select_country || "Select country...",
+                phone_label: i18n.phone || "Phone",
+                phone_placeholder:
+                    i18n.phone_placeholder || "Optional, e.g. +1 555 123 4567",
+                phone_placeholder_required:
+                    i18n.phone_placeholder_required ||
+                    "Enter a phone number we can reach you on",
+                phone_required:
+                    i18n.phone_required ||
+                    "Please enter a phone number so we can reach you about your order.",
+                phone_invalid:
+                    i18n.phone_invalid ||
+                    "Please enter a valid phone number (6-20 characters).",
             };
 
             return {
@@ -642,6 +713,8 @@ export default function mountCheckoutIsland(el) {
                 gateways,
                 selectedGateway,
                 t,
+                phoneRequired,
+                phonePlaceholder,
             };
         },
     });

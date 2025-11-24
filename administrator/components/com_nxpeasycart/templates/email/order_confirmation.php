@@ -33,6 +33,13 @@ $formatMoney = static function (int $cents) use ($currency): string {
         <?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_PLACED', $order['order_no'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
     </p>
 
+    <?php if (!empty($order['billing']['phone'])) : ?>
+        <p style="margin: 0 0 16px; font-size: 14px;">
+            <strong><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'), ENT_QUOTES, 'UTF-8'); ?>:</strong>
+            <?php echo htmlspecialchars($order['billing']['phone'], ENT_QUOTES, 'UTF-8'); ?>
+        </p>
+    <?php endif; ?>
+
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 24px;">
         <thead>
             <tr>

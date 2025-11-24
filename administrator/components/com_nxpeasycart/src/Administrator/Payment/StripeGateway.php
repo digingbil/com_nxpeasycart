@@ -146,6 +146,10 @@ class StripeGateway implements PaymentGatewayInterface
             $metadata['metadata[order_no]'] = (string) $order['order_no'];
         }
 
+        if (!empty($order['billing']['phone'])) {
+            $metadata['metadata[phone]'] = (string) $order['billing']['phone'];
+        }
+
         return $metadata;
     }
 

@@ -136,6 +136,12 @@ $shippingLines = $buildAddressLines($order['shipping'] ?? []);
         <section class="nxp-ec-order-confirmation__details">
             <h2><?php echo Text::_('COM_NXPEASYCART_ORDER_CUSTOMER'); ?></h2>
             <p><?php echo htmlspecialchars($order['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+            <?php if (!empty($order['billing']['phone'])) : ?>
+                <p>
+                    <?php echo Text::_('COM_NXPEASYCART_CHECKOUT_PHONE'); ?>:
+                    <?php echo htmlspecialchars($order['billing']['phone'], ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+            <?php endif; ?>
 
             <h3><?php echo Text::_('COM_NXPEASYCART_ORDER_BILLING'); ?></h3>
             <?php if (empty($billingLines)) : ?>

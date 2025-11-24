@@ -406,6 +406,8 @@ class OrderService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_BILLING_REQUIRED'));
         }
 
+        $billing = $this->normaliseBilling($billing);
+
         $shipping = $payload['shipping'] ?? null;
 
         if ($shipping !== null && !\is_array($shipping)) {
@@ -447,6 +449,46 @@ class OrderService
             'discount_cents' => $this->toNonNegativeInt($payload['discount_cents'] ?? 0),
             'tax_inclusive'  => isset($payload['tax_inclusive']) ? (bool) $payload['tax_inclusive'] : false,
         ];
+    }
+
+    /**
+     * Trim billing fields and enforce phone requirements.
+     *
+     * @param array<string, mixed> $billing
+     */
+    private function normaliseBilling(array $billing): array
+    {
+        $cleaned = [];
+
+        foreach ($billing as $key => $value) {
+            if (\is_string($value)) {
+                $cleaned[$key] = trim($value);
+                continue;
+            }
+
+            $cleaned[$key] = $value;
+        }
+
+        $rawPhone = $billing['phone'] ?? '';
+        $phone    = \is_scalar($rawPhone) ? (string) $rawPhone : '';
+        $phone = preg_replace('/\s+/', ' ', trim($phone));
+        $phone = $phone ?? '';
+
+        if ($phone !== '' && (strlen($phone) < 6 || strlen($phone) > 20)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_INVALID'));
+        }
+
+        if (ConfigHelper::isCheckoutPhoneRequired() && $phone === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_REQUIRED'));
+        }
+
+        if ($phone !== '') {
+            $cleaned['phone'] = $phone;
+        } else {
+            unset($cleaned['phone']);
+        }
+
+        return $cleaned;
     }
 
     /**

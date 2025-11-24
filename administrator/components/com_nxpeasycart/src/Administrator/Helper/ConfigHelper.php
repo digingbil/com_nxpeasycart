@@ -20,6 +20,11 @@ class ConfigHelper
     private static ?string $baseCurrency = null;
 
     /**
+     * Cached checkout phone requirement flag.
+     */
+    private static ?bool $checkoutPhoneRequired = null;
+
+    /**
      * Resolve the store's base currency (ISO 4217, uppercase).
      */
     public static function getBaseCurrency(): string
@@ -43,11 +48,28 @@ class ConfigHelper
     }
 
     /**
+     * Whether checkout should require a phone number.
+     */
+    public static function isCheckoutPhoneRequired(): bool
+    {
+        if (self::$checkoutPhoneRequired !== null) {
+            return self::$checkoutPhoneRequired;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+
+        self::$checkoutPhoneRequired = (bool) ((int) $params->get('checkout_phone_required', 0));
+
+        return self::$checkoutPhoneRequired;
+    }
+
+    /**
      * Reset cached configuration values.
      */
     public static function clearCache(): void
     {
         self::$baseCurrency = null;
+        self::$checkoutPhoneRequired = null;
     }
 
     /**
@@ -77,12 +99,44 @@ class ConfigHelper
         $params = new Registry($table->params);
         $params->set('base_currency', $currency);
 
+        $component->params = (string) $params;
         $table->params = (string) $params;
 
         if (!$table->check() || !$table->store()) {
             throw new RuntimeException('Failed to save base currency setting.');
         }
 
-        self::clearCache();
+        self::$baseCurrency = $currency;
+    }
+
+    /**
+     * Persist checkout phone requirement flag.
+     */
+    public static function setCheckoutPhoneRequired(bool $required): void
+    {
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('checkout_phone_required', $required ? 1 : 0);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save checkout phone setting.');
+        }
+
+        self::$checkoutPhoneRequired = $required;
     }
 }

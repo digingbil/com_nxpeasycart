@@ -4,10 +4,11 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use RuntimeException;
 
 /**
@@ -90,6 +91,10 @@ class SettingsService
         foreach ($rows as $row) {
             $settings[$row->key] = $this->decodeValue($row->value);
         }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+        $settings['base_currency'] = ConfigHelper::getBaseCurrency();
+        $settings['checkout_phone_required'] = (bool) ((int) $params->get('checkout_phone_required', 0));
 
         return $settings;
     }

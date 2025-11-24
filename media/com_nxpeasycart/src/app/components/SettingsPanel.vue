@@ -217,6 +217,35 @@
                     />
                 </div>
 
+                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                    <label class="nxp-ec-form-label" for="settings-checkout-phone-required">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_REQUIRED",
+                                "Require phone at checkout",
+                                [],
+                                "settingsGeneralCheckoutPhoneRequired"
+                            )
+                        }}
+                    </label>
+                    <input
+                        id="settings-checkout-phone-required"
+                        class="nxp-ec-form-checkbox"
+                        type="checkbox"
+                        v-model="settingsDraft.checkoutPhoneRequired"
+                    />
+                    <p class="nxp-ec-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_HELP",
+                                "Collect a phone number during checkout (recommended for delivery issues).",
+                                [],
+                                "settingsGeneralCheckoutPhoneHelp"
+                            )
+                        }}
+                    </p>
+                </div>
+
                 <div class="nxp-ec-form-field">
                     <label class="nxp-ec-form-label" for="settings-base-currency">
                         {{
@@ -1850,6 +1879,7 @@ const settingsDraft = reactive({
     storeName: "",
     storeEmail: "",
     storePhone: "",
+    checkoutPhoneRequired: false,
     paymentsConfigured: false,
     baseCurrency: "",
 });
@@ -1928,6 +1958,9 @@ const applySettings = (values = {}) => {
         storeName: store.name ?? "",
         storeEmail: store.email ?? "",
         storePhone: store.phone ?? "",
+        checkoutPhoneRequired: Boolean(
+            values?.checkout_phone_required ?? false
+        ),
         paymentsConfigured: Boolean(payments.configured),
         baseCurrency:
             typeof values?.base_currency === "string"
@@ -1996,6 +2029,7 @@ const saveGeneral = () => {
             configured: settingsDraft.paymentsConfigured,
         },
         base_currency: currency,
+        checkout_phone_required: settingsDraft.checkoutPhoneRequired,
     });
 };
 
