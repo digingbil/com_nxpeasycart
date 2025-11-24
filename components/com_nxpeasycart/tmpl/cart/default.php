@@ -13,7 +13,8 @@ $theme = $this->theme ?? [];
 $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
 $summaryEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
-$removeEndpoint = Route::_('index.php?option=com_nxpeasycart&task=cart.remove&format=json', false);
+$removeEndpoint  = Route::_('index.php?option=com_nxpeasycart&task=cart.remove&format=json', false);
+$updateEndpoint  = Route::_('index.php?option=com_nxpeasycart&task=cart.update&format=json', false);
 $browseLink     = RouteHelper::getLandingRoute(false);
 $checkoutLink   = RouteHelper::getCheckoutRoute(false);
 
@@ -24,6 +25,7 @@ $cartJson = htmlspecialchars(
         'endpoints' => [
             'summary' => $summaryEndpoint,
             'remove'  => $removeEndpoint,
+            'update'  => $updateEndpoint,
         ],
         'links' => [
             'browse' => $browseLink,

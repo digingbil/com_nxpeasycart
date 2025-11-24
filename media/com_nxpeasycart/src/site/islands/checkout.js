@@ -1,4 +1,4 @@
-import { createApp, reactive, computed, ref, watch } from "vue";
+import { createApp, reactive, computed, ref, watch, onMounted } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 import { createApiClient } from "../utils/apiClient.js";
@@ -774,6 +774,55 @@ export default function mountCheckoutIsland(el) {
             const formatOrderCreated = (orderNo) => {
                 return labels.order_created.replace("%s", `<strong>${orderNo}</strong>`);
             };
+
+            // Refresh cart data from server
+            const refreshCart = async () => {
+                const summaryEndpoint = endpoints.summary;
+                if (!summaryEndpoint) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(summaryEndpoint, {
+                        method: "GET",
+                        headers: {
+                            Accept: "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const json = await response.json().catch(() => null);
+
+                    const freshCart =
+                        json?.data?.cart ||
+                        json?.cart ||
+                        json?.data ||
+                        null;
+
+                    if (freshCart && Array.isArray(freshCart.items)) {
+                        // Clear and update cart items - must copy objects to ensure reactivity
+                        cartItems.splice(0, cartItems.length, ...freshCart.items.map(item => ({ ...item })));
+                    }
+                } catch (error) {
+                    // Non-fatal; keep existing state
+                }
+            };
+
+            // Listen for cart updates from other components
+            window.addEventListener("nxp-cart:updated", (event) => {
+                const freshCart = event?.detail || {};
+                if (freshCart.items) {
+                    cartItems.splice(0, cartItems.length, ...freshCart.items);
+                }
+            });
+
+            // Refresh cart on mount
+            onMounted(refreshCart);
 
             return {
                 model: state,

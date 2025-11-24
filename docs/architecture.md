@@ -149,3 +149,32 @@ Variant payloads accept `price` (major units), `currency`, `stock`, `weight`, `a
 - `CacheService` wraps Joomla's callback cache controller; storefront checkout reuses it to memoise shipping/tax datasets and reduce repetitive queries.
 - `MailService` renders PHP-based templates (see `templates/email/order_confirmation.php`) and uses Joomla's configured mailer for transactional notifications.
 - GDPR requests are served by `GdprService`, exposing export/anonymise endpoints wired into the admin API controller.
+
+## Cart Quantity Persistence (M3 enhancement)
+
+- **CartController::update()** provides a new `task=cart.update` endpoint that accepts `variant_id` (or `product_id`) and `qty` parameters via POST with CSRF token validation. The method:
+  - Validates stock availability against `#__nxp_easycart_variants.stock` before allowing quantity increases
+  - Updates the cart item quantity in the database (`#__nxp_easycart_carts.data` JSON payload)
+  - Returns the hydrated cart via `CartPresentationService` for immediate UI synchronization
+  - Dispatches server-side errors (e.g., out-of-stock) as JSON responses with user-friendly messages
+- **cart.js island** implements optimistic UI updates with server persistence:
+  - `updateQty()` immediately updates the local reactive state and recalculates totals for instant feedback
+  - Sends async POST to the `cart.update` endpoint with the new quantity
+  - On success, applies the server-returned cart state and dispatches a `nxp-cart:updated` custom event
+  - On failure (e.g., insufficient stock), shows an alert and refreshes the cart from `cart.summary` to revert to actual state
+  - All quantity changes persist to the database, ensuring cart state survives page navigation
+- **checkout.js island** listens for cart updates:
+  - `onMounted(refreshCart)` fetches fresh cart data via `cart.summary` endpoint when the checkout page loads, preventing stale quantities from server-rendered templates
+  - Subscribes to `nxp-cart:updated` window events to react to quantity changes made on other pages/tabs
+  - Uses reactive `cartItems.splice()` to ensure Vue detects array mutations and re-renders the Order Summary
+- **Stock validation flow**:
+  1. User changes quantity on cart page (e.g., 2 → 4)
+  2. cart.js sends POST to `cart.update` with CSRF token
+  3. `CartController::update()` queries variant stock from database
+  4. If `requested_qty > available_stock`, returns `{success: false, message: "This product is currently out of stock."}`
+  5. cart.js shows alert and refreshes cart to display maximum available quantity
+  6. If stock check passes, cart is persisted and hydrated cart returned
+  7. `nxp-cart:updated` event notifies checkout/cart-summary modules
+- **Language strings** added to `com_nxpeasycart.ini`:
+  - `COM_NXPEASYCART_ERROR_CART_ITEM_NOT_FOUND` for missing cart items during update
+  - All cart error messages use Joomla Text constants for i18n compliance

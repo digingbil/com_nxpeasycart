@@ -31,6 +31,7 @@ $payload = htmlspecialchars(
             'endpoints'      => [
                 'checkout' => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
                 'payment'  => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
+                'summary'  => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json'),
             ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES

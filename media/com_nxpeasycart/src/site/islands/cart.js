@@ -250,11 +250,76 @@ export default function mountCartIsland(el) {
                 recalcSummary();
             };
 
-            const updateQty = (item, value) => {
+            const updateQty = async (item, value) => {
                 const qty = Math.max(1, parseInt(value, 10) || 1);
+
+                // Optimistically update UI
                 item.qty = qty;
                 item.total_cents = qty * (item.unit_price_cents || 0);
                 recalcSummary();
+
+                // Persist to server
+                const updateEndpoint = payload?.endpoints?.update;
+
+                if (updateEndpoint && cartToken) {
+                    try {
+                        const formData = new FormData();
+                        formData.append(cartToken, "1");
+                        formData.append("variant_id", item.variant_id || "");
+                        formData.append("product_id", item.product_id || "");
+                        formData.append("qty", qty);
+
+                        const response = await fetch(updateEndpoint, {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                Accept: "application/json",
+                            },
+                            credentials: "same-origin",
+                        });
+
+                        const json = await response.json().catch(() => null);
+
+                        if (!response.ok || json?.success === false) {
+                            // Server rejected the update (e.g., out of stock)
+                            const errorMessage = json?.message || 'Failed to update cart';
+                            alert(errorMessage);
+
+                            // Refresh cart to revert to actual state
+                            if (summaryEndpoint) {
+                                const summaryResponse = await fetch(summaryEndpoint, {
+                                    method: "GET",
+                                    headers: { Accept: "application/json" },
+                                    credentials: "same-origin",
+                                });
+                                const summaryJson = await summaryResponse.json().catch(() => null);
+                                const freshCart = summaryJson?.data?.cart || summaryJson?.cart || null;
+                                if (freshCart) {
+                                    applyCart(freshCart);
+                                }
+                            }
+                            return;
+                        }
+
+                        const cart =
+                            json?.data?.cart ||
+                            json?.cart ||
+                            json?.data ||
+                            null;
+
+                        if (cart) {
+                            applyCart(cart);
+                            window.dispatchEvent(
+                                new CustomEvent("nxp-cart:updated", {
+                                    detail: cart,
+                                })
+                            );
+                        }
+                    } catch (error) {
+                        // Non-fatal; UI already updated optimistically
+                        console.error("Cart update failed:", error);
+                    }
+                }
             };
 
             const applyCart = (cart) => {

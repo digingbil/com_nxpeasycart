@@ -229,6 +229,106 @@ class CartController extends BaseController
     }
 
     /**
+     * Update the quantity of an existing cart item.
+     *
+     * @return void
+     */
+    public function update(): void
+    {
+        $app = Factory::getApplication();
+
+        if (!Session::checkToken('post')) {
+            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+            $app->close();
+        }
+
+        $input     = $app->input;
+        $variantId = $input->getInt('variant_id');
+        $productId = $input->getInt('product_id');
+        $qty       = max(1, $input->getInt('qty', 1));
+
+        if ($variantId <= 0 && $productId <= 0) {
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_INVALID_REQUEST'), true);
+            $app->close();
+        }
+
+        $container = Factory::getContainer();
+        $this->ensureCartServices($container);
+
+        $carts     = $container->get(CartService::class);
+        $session   = new CartSessionService(
+            $carts,
+            Factory::getApplication()->getSession()
+        );
+        $presenter = $container->get(CartPresentationService::class);
+        $db        = $container->get(DatabaseInterface::class);
+
+        try {
+            $cart    = $session->current();
+            $payload = $cart['data'] ?? [];
+            $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
+
+            $updated = false;
+
+            foreach ($items as $index => $item) {
+                $itemVariantId = (int) ($item['variant_id'] ?? 0);
+                $itemProductId = (int) ($item['product_id'] ?? 0);
+
+                if (($variantId > 0 && $itemVariantId === $variantId) ||
+                    ($productId > 0 && $itemProductId === $productId)) {
+
+                    // Check stock availability
+                    if ($variantId > 0) {
+                        $variant = $this->loadVariant($db, $variantId);
+                        if ($variant && (int) ($variant->stock ?? 0) < $qty) {
+                            echo new JsonResponse(
+                                null,
+                                Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
+                                true
+                            );
+                            $app->close();
+                        }
+                    }
+
+                    $items[$index]['qty'] = $qty;
+                    $items[$index]['unit_price_cents'] = (int) ($item['unit_price_cents'] ?? 0);
+                    $updated = true;
+                    break;
+                }
+            }
+
+            if (!$updated) {
+                echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_ITEM_NOT_FOUND'), true);
+                $app->close();
+            }
+
+            $payload['items'] = $items;
+
+            $joomlaSession = Factory::getApplication()->getSession();
+
+            $persisted = $carts->persist([
+                'id'         => $cart['id']         ?? null,
+                'session_id' => $cart['session_id'] ?? $joomlaSession->getId(),
+                'user_id'    => $cart['user_id']    ?? null,
+                'data'       => $payload,
+            ]);
+
+            $hydrated = $presenter->hydrate($persisted);
+
+            echo new JsonResponse(['cart' => $hydrated]);
+        } catch (\Throwable $exception) {
+            Log::add($exception->getMessage(), Log::ERROR, 'com_nxpeasycart.cart');
+            echo new JsonResponse(
+                null,
+                $exception->getMessage(),
+                true
+            );
+        }
+
+        $app->close();
+    }
+
+    /**
      * Return the current cart summary for the active visitor.
      *
      * @return void
