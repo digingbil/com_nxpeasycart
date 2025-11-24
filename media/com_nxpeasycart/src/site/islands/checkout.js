@@ -37,6 +37,40 @@ export default function mountCheckoutIsland(el) {
         </header>
 
         <div class="nxp-ec-checkout__layout" v-if="!success">
+          <aside class="nxp-ec-checkout__summary">
+            <h2>{{ labels.order_summary }}</h2>
+            <div class="nxp-ec-checkout__cart" v-if="cartItems.length">
+              <ul>
+                <li v-for="item in cartItems" :key="item.id">
+                  <div>
+                    <strong>{{ item.product_title || item.title }}</strong>
+                    <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
+                  </div>
+                  <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                </li>
+              </ul>
+              <div class="nxp-ec-checkout__totals">
+                <div>
+                  <span>{{ labels.subtotal }}</span>
+                  <strong>{{ formatMoney(subtotal) }}</strong>
+                </div>
+                <div>
+                  <span>{{ labels.shipping }}</span>
+                  <strong>{{ formatMoney(selectedShippingCost) }}</strong>
+                </div>
+                <div v-if="showTax">
+                  <span>{{ taxLabel }}</span>
+                  <strong>{{ formatMoney(taxAmount) }}</strong>
+                </div>
+                <div>
+                  <span>{{ labels.total }}</span>
+                  <strong>{{ formatMoney(total) }}</strong>
+                </div>
+              </div>
+            </div>
+            <p v-else>{{ labels.empty_cart }}</p>
+          </aside>
+
           <form class="nxp-ec-checkout__form" @submit.prevent="submit">
             <fieldset>
               <legend>{{ labels.contact }}</legend>
@@ -174,40 +208,6 @@ export default function mountCheckoutIsland(el) {
               <span v-else>{{ labels.submit }}</span>
             </button>
           </form>
-
-          <aside class="nxp-ec-checkout__summary">
-            <h2>{{ labels.order_summary }}</h2>
-            <div class="nxp-ec-checkout__cart" v-if="cartItems.length">
-              <ul>
-                <li v-for="item in cartItems" :key="item.id">
-                  <div>
-                    <strong>{{ item.product_title || item.title }}</strong>
-                    <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
-                  </div>
-                  <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
-                </li>
-              </ul>
-              <div class="nxp-ec-checkout__totals">
-                <div>
-                  <span>{{ labels.subtotal }}</span>
-                  <strong>{{ formatMoney(subtotal) }}</strong>
-                </div>
-                <div>
-                  <span>{{ labels.shipping }}</span>
-                  <strong>{{ formatMoney(selectedShippingCost) }}</strong>
-                </div>
-                <div v-if="showTax">
-                  <span>{{ taxLabel }}</span>
-                  <strong>{{ formatMoney(taxAmount) }}</strong>
-                </div>
-                <div>
-                  <span>{{ labels.total }}</span>
-                  <strong>{{ formatMoney(total) }}</strong>
-                </div>
-              </div>
-            </div>
-            <p v-else>{{ labels.empty_cart }}</p>
-          </aside>
         </div>
 
         <div v-else class="nxp-ec-order-confirmation__summary">
