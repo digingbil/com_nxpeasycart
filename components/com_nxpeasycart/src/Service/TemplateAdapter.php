@@ -49,11 +49,14 @@ class TemplateAdapter
             'css_vars'               => [
                 '--nxp-ec-color-primary'          => '#4f6d7a',
                 '--nxp-ec-color-primary-contrast' => '#ffffff',
+                '--nxp-ec-color-primary-focus'    => 'rgba(79, 109, 122, 0.2)',
                 '--nxp-ec-color-text'             => '#1f2933',
                 '--nxp-ec-color-muted'            => '#6b7280',
                 '--nxp-ec-color-border'           => 'rgba(15, 23, 42, 0.1)',
                 '--nxp-ec-color-surface'          => '#ffffff',
                 '--nxp-ec-color-surface-alt'      => '#f5f7fa',
+                '--nxp-ec-color-success'          => '#027a48',
+                '--nxp-ec-color-error'            => '#b42318',
                 '--nxp-ec-radius-md'              => '0.75rem',
                 '--nxp-ec-radius-lg'              => '1rem',
                 '--nxp-ec-radius-pill'            => '999px',
@@ -72,11 +75,14 @@ class TemplateAdapter
                 'css_vars'               => [
                     '--nxp-ec-color-primary'          => 'var(--cassiopeia-color-primary, #0d6efd)',
                     '--nxp-ec-color-primary-contrast' => 'var(--cassiopeia-color-text-inverse, #ffffff)',
+                    '--nxp-ec-color-primary-focus'    => 'rgba(13, 110, 253, 0.25)',
                     '--nxp-ec-color-text'             => 'var(--cassiopeia-color-text, #1f2933)',
                     '--nxp-ec-color-muted'            => 'var(--cassiopeia-color-muted, #4b5563)',
                     '--nxp-ec-color-border'           => 'var(--cassiopeia-border-color, rgba(15, 23, 42, 0.12))',
                     '--nxp-ec-color-surface'          => 'var(--cassiopeia-color-background, #ffffff)',
                     '--nxp-ec-color-surface-alt'      => 'var(--cassiopeia-color-card, #f8fafc)',
+                    '--nxp-ec-color-success'          => '#027a48',
+                    '--nxp-ec-color-error'            => '#b42318',
                 ],
             ],
             'ja_purity_iv' => [
@@ -88,11 +94,14 @@ class TemplateAdapter
                 'css_vars'               => [
                     '--nxp-ec-color-primary'          => 'var(--t4-primary, #0d6efd)',
                     '--nxp-ec-color-primary-contrast' => '#ffffff',
+                    '--nxp-ec-color-primary-focus'    => 'rgba(13, 110, 253, 0.25)',
                     '--nxp-ec-color-text'             => 'var(--t4-body-color, #212529)',
                     '--nxp-ec-color-muted'            => 'var(--t4-secondary, #6c757d)',
                     '--nxp-ec-color-border'           => 'var(--t4-border-color, rgba(0, 0, 0, 0.1))',
                     '--nxp-ec-color-surface'          => 'var(--t4-body-bg, #ffffff)',
                     '--nxp-ec-color-surface-alt'      => 'var(--t4-gray-100, #f8f9fa)',
+                    '--nxp-ec-color-success'          => '#027a48',
+                    '--nxp-ec-color-error'            => '#b42318',
                 ],
             ],
         ];
@@ -136,6 +145,7 @@ class TemplateAdapter
             self::mixColor($surface, '#f5f7fa', 0.35)
         );
         $contrast    = self::getContrastingColor($primary);
+        $focusColor  = self::hexToRgba($primary, 0.2);
 
         return array_replace_recursive($defaults, [
             'container_class'        => 'container component-content',
@@ -146,11 +156,14 @@ class TemplateAdapter
             'css_vars'               => [
                 '--nxp-ec-color-primary'          => $primary,
                 '--nxp-ec-color-primary-contrast' => $contrast,
+                '--nxp-ec-color-primary-focus'    => $focusColor,
                 '--nxp-ec-color-text'             => $text,
                 '--nxp-ec-color-muted'            => $muted,
                 '--nxp-ec-color-border'           => $border,
                 '--nxp-ec-color-surface'          => $surface,
                 '--nxp-ec-color-surface-alt'      => $surfaceAlt,
+                '--nxp-ec-color-success'          => '#027a48',
+                '--nxp-ec-color-error'            => '#b42318',
             ],
         ]);
     }
@@ -242,6 +255,13 @@ class TemplateAdapter
             hexdec(substr($hex, 3, 2)),
             hexdec(substr($hex, 5, 2)),
         ];
+    }
+
+    private static function hexToRgba(string $hex, float $alpha): string
+    {
+        [$r, $g, $b] = self::hexToRgb($hex);
+
+        return sprintf('rgba(%d, %d, %d, %s)', $r, $g, $b, $alpha);
     }
 
     private static function getContrastingColor(string $hex, string $dark = '#111827', string $light = '#ffffff'): string

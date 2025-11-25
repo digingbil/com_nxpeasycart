@@ -144,6 +144,18 @@ class PaymentController extends BaseController
 
         try {
             $order = $orders->create($orderPayload);
+
+            // Increment coupon usage if a coupon was applied
+            if (!empty($orderPayload['coupon']['id'])) {
+                try {
+                    $couponService = new \Joomla\Component\Nxpeasycart\Administrator\Service\CouponService(
+                        $container->get(DatabaseInterface::class)
+                    );
+                    $couponService->incrementUsage((int) $orderPayload['coupon']['id']);
+                } catch (\Throwable $couponException) {
+                    // Non-fatal: log but don't block order creation
+                }
+            }
         } catch (\Throwable $exception) {
             $message = $exception->getMessage() ?: Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_UNAVAILABLE');
             $code    = $exception instanceof RuntimeException ? 400 : 500;
@@ -294,6 +306,18 @@ class PaymentController extends BaseController
         }
 
         $currency = $cart['summary']['currency'] ?? 'USD';
+        $discountCents = (int) ($cart['summary']['discount_cents'] ?? 0);
+
+        // Store coupon information if applied
+        $couponData = null;
+        if (!empty($cart['coupon'])) {
+            $couponData = [
+                'code'  => $cart['coupon']['code'] ?? '',
+                'id'    => $cart['coupon']['id'] ?? null,
+                'type'  => $cart['coupon']['type'] ?? '',
+                'value' => $cart['coupon']['value'] ?? 0,
+            ];
+        }
 
         return [
             'email'          => $payload['email']    ?? '',
@@ -305,8 +329,9 @@ class PaymentController extends BaseController
             'subtotal_cents' => (int) ($cart['summary']['subtotal_cents'] ?? 0),
             'shipping_cents' => (int) ($payload['shipping_cents'] ?? 0),
             'tax_cents'      => (int) ($payload['tax_cents'] ?? 0),
-            'discount_cents' => (int) ($payload['discount_cents'] ?? 0),
+            'discount_cents' => $discountCents,
             'total_cents'    => (int) ($cart['summary']['total_cents'] ?? 0),
+            'coupon'         => $couponData,
         ];
     }
 

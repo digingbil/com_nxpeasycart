@@ -618,4 +618,175 @@ class CartController extends BaseController
 
         return trim((string) $server->getString('REMOTE_ADDR', ''));
     }
+
+    /**
+     * Apply a coupon code to the current cart.
+     *
+     * @return void
+     */
+    public function applyCoupon(): void
+    {
+        $app = Factory::getApplication();
+
+        // CSRF protection - check 'request' to also validate X-CSRF-Token header
+        if (!Session::checkToken('request')) {
+            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+            $app->close();
+        }
+
+        $input = $app->input;
+
+        // Try to read code from JSON body first (for postJson calls)
+        $code = '';
+        $raw  = $input->json->getRaw();
+
+        if ($raw !== null && $raw !== '') {
+            $json = json_decode($raw, true);
+            if (\is_array($json) && isset($json['code'])) {
+                $code = strtoupper(trim((string) $json['code']));
+            }
+        }
+
+        // Fall back to form/query parameter
+        if ($code === '') {
+            $code = strtoupper(trim((string) $input->getString('code', '')));
+        }
+
+        if ($code === '') {
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_COUPON_CODE_REQUIRED'), true);
+            $app->close();
+        }
+
+        $container = Factory::getContainer();
+        $this->ensureCartServices($container);
+        $db        = $container->get(DatabaseInterface::class);
+        $carts     = $container->get(CartService::class);
+        $session   = new CartSessionService(
+            $carts,
+            Factory::getApplication()->getSession()
+        );
+        $presenter = $container->get(CartPresentationService::class);
+
+        try {
+            $cart    = $session->current();
+            $payload = $cart['data'] ?? [];
+            $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
+
+            if (empty($items)) {
+                echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_COUPON_EMPTY_CART'), true);
+                $app->close();
+            }
+
+            // Calculate cart subtotal from raw item data (unit_price_cents * qty)
+            $subtotalCents = 0;
+            foreach ($items as $item) {
+                $unitPrice = (int) ($item['unit_price_cents'] ?? 0);
+                $qty       = max(1, (int) ($item['qty'] ?? 1));
+                $subtotalCents += $unitPrice * $qty;
+            }
+
+            // Get coupon service
+            $couponService = new \Joomla\Component\Nxpeasycart\Administrator\Service\CouponService($db);
+            $validation    = $couponService->validate($code, $subtotalCents);
+
+            if (!$validation['valid']) {
+                echo new JsonResponse(null, $validation['error'], true);
+                $app->close();
+            }
+
+            // Store coupon in cart session
+            $payload['coupon'] = [
+                'code'           => $validation['coupon']['code'],
+                'id'             => $validation['coupon']['id'],
+                'type'           => $validation['coupon']['type'],
+                'value'          => $validation['coupon']['value'],
+                'discount_cents' => $validation['discount_cents'],
+            ];
+
+            $carts->persist([
+                'id'         => $cart['id'],
+                'session_id' => $cart['session_id'] ?? Factory::getApplication()->getSession()->getId(),
+                'user_id'    => $cart['user_id'] ?? null,
+                'data'       => $payload,
+            ]);
+
+            // Return updated cart with summary
+            $updatedCart = $session->current();
+            $hydrated    = $presenter->hydrate($updatedCart);
+
+            echo new JsonResponse([
+                'cart'    => $hydrated,
+                'message' => Text::_('COM_NXPEASYCART_SUCCESS_COUPON_APPLIED'),
+            ]);
+            $app->close();
+        } catch (\Throwable $exception) {
+            Log::add(
+                sprintf('Cart coupon apply failed: %s', $exception->getMessage()),
+                Log::ERROR,
+                'com_nxpeasycart'
+            );
+
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC'), true);
+            $app->close();
+        }
+    }
+
+    /**
+     * Remove the applied coupon from the current cart.
+     *
+     * @return void
+     */
+    public function removeCoupon(): void
+    {
+        $app = Factory::getApplication();
+
+        // CSRF protection - check 'request' to also validate X-CSRF-Token header
+        if (!Session::checkToken('request')) {
+            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+            $app->close();
+        }
+
+        $container = Factory::getContainer();
+        $this->ensureCartServices($container);
+        $carts     = $container->get(CartService::class);
+        $session   = new CartSessionService(
+            $carts,
+            Factory::getApplication()->getSession()
+        );
+        $presenter = $container->get(CartPresentationService::class);
+
+        try {
+            $cart    = $session->current();
+            $payload = $cart['data'] ?? [];
+
+            // Remove coupon from payload
+            unset($payload['coupon']);
+
+            $carts->persist([
+                'id'         => $cart['id'],
+                'session_id' => $cart['session_id'] ?? Factory::getApplication()->getSession()->getId(),
+                'user_id'    => $cart['user_id'] ?? null,
+                'data'       => $payload,
+            ]);
+
+            // Return updated cart with summary
+            $updatedCart = $session->current();
+            $hydrated    = $presenter->hydrate($updatedCart);
+
+            echo new JsonResponse([
+                'cart'    => $hydrated,
+                'message' => Text::_('COM_NXPEASYCART_SUCCESS_COUPON_REMOVED'),
+            ]);
+            $app->close();
+        } catch (\Throwable $exception) {
+            Log::add(
+                sprintf('Cart coupon removal failed: %s', $exception->getMessage()),
+                Log::ERROR,
+                'com_nxpeasycart'
+            );
+
+            echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC'), true);
+            $app->close();
+        }
+    }
 }

@@ -37,6 +37,12 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 - **Visual customization settings** exposes a dedicated "Visual" tab in the admin settings panel where users can override storefront colors (primary, text, surface, border, muted) with live preview. The system automatically detects template defaults from Cassiopeia, Helix Ultimate, JA Purity IV, or falls back to neutral defaults. Empty fields use the detected template colors; user overrides are applied via `TemplateAdapter::applyUserOverrides()` and persist in the `#__nxp_easycart_settings` table. Color pickers show actual template defaults as placeholders for zero-confusion customization.
 - **Storefront UX polish** links category/landing card media to product detail, adds quick add-to-cart on cards when a primary variant exists, carries TemplateAdapter shadows/radii into cart summary, product descriptions, and variants, and smooths add-to-cart hover effects for cross-template consistency.
 - **Admin panel UX polish** converts the order/customer/coupon sidebars into modal dialogs, tightens the iconography across action buttons (FA6), and adds a one-click Active/Inactive toggle for products that reuses the existing update endpoint while keeping validation intact.
+- **Coupon system** (`applyCoupon` / `removeCoupon` endpoints) now correctly handles JSON body payloads from the Vue checkout island. Key fixes:
+    - CSRF validation upgraded to `Session::checkToken('request')` which validates both form tokens and `X-CSRF-Token` headers sent by the API client.
+    - JSON body parsing added via `$input->json->getRaw()` to extract coupon codes from `postJson()` requests (falls back to form/query params for backwards compatibility).
+    - Cart subtotal calculation fixed to compute from raw item data (`unit_price_cents * qty`) rather than the non-existent `total_cents` field in unhydrated cart items.
+    - Persistence now uses `$carts->persist()` (CartService) instead of the non-existent `$session->persist()` on CartSessionService.
+    - Response now uses `$presenter->hydrate()` to return the full cart with summary, replacing the non-existent `summarise()` method.
 - **Security and data consistency**: storefront cart/payment endpoints now accept CSRF via form token _or_ `X-CSRF-Token`, hide internal exception messages, and pass server locale/currency into all islands to keep money formatting identical between PHP and JS.
 - **Storefront islands refactor**: the monolithic site bundle is split into per-island modules, lazy-mounted via `IntersectionObserver`, and backed by a shared API client + utilities (CSRF injection, money formatting, retries) to reduce TTI on pages that only need one island.
 - **TemplateAdapter caching**: template token resolution is memoised per request to avoid repeated palette parsing when multiple views touch template defaults.
@@ -75,9 +81,10 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
     ```bash
     php tools/build-runtime-vendor.php
     ```
-   - Never copy the repo root `vendor/` into `administrator/components/com_nxpeasycart` or the site component. The root vendor contains `joomla/joomla-cms` for dev tooling only.
-   - Keep the repo-root vendor intact for IDE/PHPStan/PHPUnit, but **only** the trimmed/runtime vendor should live under the Joomla component paths.
-   - Run `php tools/guard-runtime-vendor.php` to verify no `joomla/joomla-cms` stubs slipped into the component vendor paths.
+
+    - Never copy the repo root `vendor/` into `administrator/components/com_nxpeasycart` or the site component. The root vendor contains `joomla/joomla-cms` for dev tooling only.
+    - Keep the repo-root vendor intact for IDE/PHPStan/PHPUnit, but **only** the trimmed/runtime vendor should live under the Joomla component paths.
+    - Run `php tools/guard-runtime-vendor.php` to verify no `joomla/joomla-cms` stubs slipped into the component vendor paths.
 4. Install Node dependencies for the admin SPA toolchain:
     ```bash
     npm install

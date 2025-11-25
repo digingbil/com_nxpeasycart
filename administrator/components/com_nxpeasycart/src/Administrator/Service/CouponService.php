@@ -133,6 +133,150 @@ class CouponService
         return $row ? $this->mapRow($row) : null;
     }
 
+    /**
+     * Find a coupon by code.
+     */
+    public function getByCode(string $code): ?array
+    {
+        $code = strtoupper(trim($code));
+
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__nxp_easycart_coupons'))
+            ->where($this->db->quoteName('code') . ' = :code')
+            ->bind(':code', $code, ParameterType::STRING);
+
+        $this->db->setQuery($query);
+        $row = $this->db->loadObject();
+
+        return $row ? $this->mapRow($row) : null;
+    }
+
+    /**
+     * Validate a coupon for a given order total.
+     *
+     * @param string $code Coupon code
+     * @param int $subtotalCents Order subtotal in cents
+     * @return array{valid: bool, coupon: ?array, error: ?string, discount_cents: int}
+     */
+    public function validate(string $code, int $subtotalCents): array
+    {
+        $coupon = $this->getByCode($code);
+
+        if (!$coupon) {
+            return [
+                'valid'          => false,
+                'coupon'         => null,
+                'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_NOT_FOUND'),
+                'discount_cents' => 0,
+            ];
+        }
+
+        // Check if active
+        if (!$coupon['active']) {
+            return [
+                'valid'          => false,
+                'coupon'         => $coupon,
+                'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_INACTIVE'),
+                'discount_cents' => 0,
+            ];
+        }
+
+        // Check start date
+        if ($coupon['start']) {
+            $start = new DateTimeImmutable($coupon['start']);
+            $now   = new DateTimeImmutable();
+
+            if ($now < $start) {
+                return [
+                    'valid'          => false,
+                    'coupon'         => $coupon,
+                    'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_NOT_STARTED'),
+                    'discount_cents' => 0,
+                ];
+            }
+        }
+
+        // Check end date
+        if ($coupon['end']) {
+            $end = new DateTimeImmutable($coupon['end']);
+            $now = new DateTimeImmutable();
+
+            if ($now > $end) {
+                return [
+                    'valid'          => false,
+                    'coupon'         => $coupon,
+                    'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_EXPIRED'),
+                    'discount_cents' => 0,
+                ];
+            }
+        }
+
+        // Check usage limits
+        if ($coupon['max_uses'] !== null && $coupon['times_used'] >= $coupon['max_uses']) {
+            return [
+                'valid'          => false,
+                'coupon'         => $coupon,
+                'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_MAX_USES_REACHED'),
+                'discount_cents' => 0,
+            ];
+        }
+
+        // Check minimum order total
+        if ($subtotalCents < $coupon['min_total_cents']) {
+            return [
+                'valid'          => false,
+                'coupon'         => $coupon,
+                'error'          => Text::sprintf(
+                    'COM_NXPEASYCART_ERROR_COUPON_MIN_TOTAL',
+                    number_format($coupon['min_total'], 2)
+                ),
+                'discount_cents' => 0,
+            ];
+        }
+
+        // Calculate discount
+        $discountCents = $this->calculateDiscount($coupon, $subtotalCents);
+
+        return [
+            'valid'          => true,
+            'coupon'         => $coupon,
+            'error'          => null,
+            'discount_cents' => $discountCents,
+        ];
+    }
+
+    /**
+     * Calculate discount amount in cents.
+     */
+    private function calculateDiscount(array $coupon, int $subtotalCents): int
+    {
+        if ($coupon['type'] === 'percent') {
+            $discount = (int) round(($subtotalCents * $coupon['value']) / 100);
+        } else {
+            // Fixed amount (convert to cents)
+            $discount = (int) round($coupon['value'] * 100);
+        }
+
+        // Discount cannot exceed subtotal
+        return min($discount, $subtotalCents);
+    }
+
+    /**
+     * Increment usage counter for a coupon.
+     */
+    public function incrementUsage(int $couponId): void
+    {
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_coupons'))
+            ->set($this->db->quoteName('times_used') . ' = ' . $this->db->quoteName('times_used') . ' + 1')
+            ->where($this->db->quoteName('id') . ' = :id')
+            ->bind(':id', $couponId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+    }
+
     private function normalisePayload(array $data, ?int $ignoreId = null): array
     {
         $code = strtoupper(trim((string) ($data['code'] ?? '')));

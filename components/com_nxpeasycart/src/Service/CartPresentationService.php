@@ -44,10 +44,12 @@ class CartPresentationService
     public function hydrate(array $cart): array
     {
         $items    = $cart['data']['items'] ?? [];
+        $coupon   = $cart['data']['coupon'] ?? null;
         $hydrated = $this->hydrateItems(\is_array($items) ? $items : []);
 
         $cart['items']   = $hydrated;
-        $cart['summary'] = $this->buildSummary($hydrated);
+        $cart['coupon']  = $coupon;
+        $cart['summary'] = $this->buildSummary($hydrated, $coupon);
 
         return $cart;
     }
@@ -275,8 +277,9 @@ class CartPresentationService
      * Compute subtotal and totals for the cart.
      *
      * @param array<int, array<string, mixed>> $items
+     * @param array<string, mixed>|null $coupon
      */
-    private function buildSummary(array $items): array
+    private function buildSummary(array $items, ?array $coupon = null): array
     {
         $currency = ConfigHelper::getBaseCurrency();
         $subtotal = 0;
@@ -289,10 +292,18 @@ class CartPresentationService
             }
         }
 
-        $tax      = $this->calculateTax($subtotal);
+        // Apply coupon discount
+        $discountCents = 0;
+        if ($coupon && isset($coupon['discount_cents'])) {
+            $discountCents = (int) $coupon['discount_cents'];
+        }
+
+        // Calculate tax on subtotal after discount
+        $taxableAmount = max(0, $subtotal - $discountCents);
+        $tax      = $this->calculateTax($taxableAmount);
         $taxValue = $tax['amount'];
         $inclusive = $tax['inclusive'];
-        $total    = $subtotal + ($inclusive ? 0 : $taxValue);
+        $total    = $taxableAmount + ($inclusive ? 0 : $taxValue);
 
         return [
             'subtotal_cents' => $subtotal,
@@ -300,7 +311,7 @@ class CartPresentationService
             'tax_rate'       => $tax['rate'],
             'tax_inclusive'  => $inclusive,
             'shipping_cents' => 0,
-            'discount_cents' => 0,
+            'discount_cents' => $discountCents,
             'total_cents'    => $total,
             'currency'       => $currency,
         ];

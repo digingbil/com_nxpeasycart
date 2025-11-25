@@ -19,6 +19,7 @@ $phonePlaceholder = $phoneRequired
     ? Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED')
     : Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER');
 
+
 $payload = htmlspecialchars(
     json_encode(
         [
@@ -29,9 +30,11 @@ $payload = htmlspecialchars(
             'payments'       => $checkout['payments'] ?? [],
             'token'          => Session::getFormToken(),
             'endpoints'      => [
-                'checkout' => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
-                'payment'  => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
-                'summary'  => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json'),
+                'checkout'      => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
+                'payment'       => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
+                'summary'       => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json'),
+                'applyCoupon'   => Route::_('index.php?option=com_nxpeasycart&task=cart.applyCoupon&format=json'),
+                'removeCoupon'  => Route::_('index.php?option=com_nxpeasycart&task=cart.removeCoupon&format=json'),
             ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
@@ -81,6 +84,11 @@ $labels = [
     'order_created'           => Text::_('COM_NXPEASYCART_CHECKOUT_ORDER_CREATED'),
     'view_order'              => Text::_('COM_NXPEASYCART_CHECKOUT_VIEW_ORDER'),
     'error_generic'           => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_GENERIC'),
+    'coupon_label'            => Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_LABEL'),
+    'coupon_placeholder'      => Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_PLACEHOLDER'),
+    'coupon_apply'            => Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_APPLY'),
+    'coupon_remove'           => Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_REMOVE'),
+    'discount'                => Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'),
 ];
 
 $labelsJson = htmlspecialchars(
@@ -230,6 +238,39 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                             </li>
                         <?php endforeach; ?>
                     </ul>
+
+                    <div class="nxp-ec-checkout__coupon" data-nxp-coupon-section>
+                        <?php if (!empty($cart['coupon'])) : ?>
+                            <div class="nxp-ec-checkout__coupon-applied">
+                                <span class="nxp-ec-checkout__coupon-code">
+                                    <strong><?php echo htmlspecialchars($cart['coupon']['code'] ?? '', ENT_QUOTES, 'UTF-8'); ?></strong>
+                                </span>
+                                <button type="button" class="nxp-ec-btn nxp-ec-btn--ghost" data-nxp-coupon-remove>
+                                    <?php echo Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_REMOVE'); ?>
+                                </button>
+                            </div>
+                        <?php else : ?>
+                            <details class="nxp-ec-checkout__coupon-form">
+                                <summary><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_LABEL'); ?></summary>
+                                <div class="nxp-ec-checkout__coupon-input-group">
+                                    <div class="nxp-ec-checkout__field">
+                                        <input
+                                            type="text"
+                                            id="nxp-ec-coupon-code"
+                                            placeholder="<?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_PLACEHOLDER'), ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-nxp-coupon-input
+                                            autocomplete="off"
+                                        />
+                                    </div>
+                                    <button type="button" class="nxp-ec-btn nxp-ec-btn--ghost" data-nxp-coupon-apply>
+                                        <?php echo Text::_('COM_NXPEASYCART_CHECKOUT_COUPON_APPLY'); ?>
+                                    </button>
+                                </div>
+                                <div class="nxp-ec-checkout__coupon-message" data-nxp-coupon-message aria-live="polite"></div>
+                            </details>
+                        <?php endif; ?>
+                    </div>
+
                     <div class="nxp-ec-checkout__totals">
                         <div>
                             <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_SUBTOTAL'); ?></span>
@@ -238,6 +279,15 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                 <?php echo number_format(((int) ($cart['summary']['subtotal_cents'] ?? 0)) / 100, 2); ?>
                             </strong>
                         </div>
+                        <?php if (!empty($cart['summary']['discount_cents'])) : ?>
+                            <div data-nxp-discount-row>
+                                <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'); ?></span>
+                                <strong>
+                                    -<?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php echo number_format(((int) ($cart['summary']['discount_cents'] ?? 0)) / 100, 2); ?>
+                                </strong>
+                            </div>
+                        <?php endif; ?>
                         <?php if (!empty($cart['summary']['tax_cents'])) : ?>
                             <div>
                                 <span><?php echo Text::_('COM_NXPEASYCART_CART_TAX'); ?></span>

@@ -1,11 +1,15 @@
+@charset "UTF-8";
 :root {
   --nxp-ec-color-primary: #4f6d7a;
   --nxp-ec-color-primary-contrast: #ffffff;
+  --nxp-ec-color-primary-focus: rgba(79, 109, 122, 0.2);
   --nxp-ec-color-text: #1f2933;
   --nxp-ec-color-muted: #6b7280;
   --nxp-ec-color-border: rgba(15, 23, 42, 0.1);
   --nxp-ec-color-surface: #ffffff;
   --nxp-ec-color-surface-alt: #f5f7fa;
+  --nxp-ec-color-success: #027a48;
+  --nxp-ec-color-error: #b42318;
   --nxp-ec-radius-md: 0.75rem;
   --nxp-ec-radius-lg: 1rem;
   --nxp-ec-radius-pill: 999px;
@@ -415,6 +419,7 @@
   width: 100%;
   max-width: 320px;
   margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 .nxp-ec-category__search input {
   width: 100%;
@@ -813,6 +818,7 @@
 }
 .nxp-ec-checkout__field label {
   font-weight: 500;
+  color: var(--nxp-ec-color-text);
 }
 .nxp-ec-checkout__field input,
 .nxp-ec-checkout__field select {
@@ -824,6 +830,18 @@
   color: var(--nxp-ec-color-text);
   padding: 0.75rem 1rem;
   font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.nxp-ec-checkout__field input:focus,
+.nxp-ec-checkout__field select:focus {
+  outline: none;
+  border-color: var(--nxp-ec-color-primary);
+  box-shadow: 0 0 0 3px var(--nxp-ec-color-primary-focus);
+}
+.nxp-ec-checkout__field input::placeholder,
+.nxp-ec-checkout__field select::placeholder {
+  color: var(--nxp-ec-color-muted);
+  opacity: 0.7;
 }
 .nxp-ec-checkout__field select {
   cursor: pointer;
@@ -833,12 +851,91 @@
   background-position: right 0.75rem center;
   padding-right: 2.5rem;
 }
-.nxp-ec-checkout__field select:focus {
-  outline: 2px solid var(--nxp-ec-color-primary);
-  outline-offset: 1px;
-}
 .nxp-ec-checkout__field--wide {
   grid-column: 1/-1;
+}
+.nxp-ec-checkout__coupon {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--nxp-ec-color-border);
+}
+.nxp-ec-checkout__coupon-form summary {
+  cursor: pointer;
+  color: var(--nxp-ec-color-primary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.5rem 0;
+  user-select: none;
+  list-style: none;
+}
+.nxp-ec-checkout__coupon-form summary::-webkit-details-marker {
+  display: none;
+}
+.nxp-ec-checkout__coupon-form summary::before {
+  content: "+ ";
+}
+.nxp-ec-checkout__coupon-form summary:hover {
+  text-decoration: underline;
+}
+.nxp-ec-checkout__coupon-form[open] summary::before {
+  content: "− ";
+}
+.nxp-ec-checkout__coupon-input-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  align-items: flex-end;
+  padding-bottom: 1rem;
+  max-width: 320px;
+}
+.nxp-ec-checkout__coupon-input-group .nxp-ec-checkout__field {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+}
+.nxp-ec-checkout__coupon-input-group .nxp-ec-checkout__field input {
+  padding: 0.65rem 1rem;
+  width: 100%;
+}
+.nxp-ec-checkout__coupon-input-group .nxp-ec-btn {
+  flex-shrink: 0;
+  padding: 0.65rem 1.25rem;
+}
+.nxp-ec-checkout__coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--nxp-ec-color-surface-alt);
+  border-radius: var(--nxp-ec-radius-md);
+  padding: 0.75rem 1rem;
+}
+.nxp-ec-checkout__coupon-code {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--nxp-ec-color-primary);
+  font-weight: 600;
+}
+.nxp-ec-checkout__coupon-code::before {
+  content: "✓";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--nxp-ec-color-primary);
+  color: var(--nxp-ec-color-primary-contrast);
+  border-radius: 50%;
+  font-size: 0.7rem;
+}
+.nxp-ec-checkout__coupon-message {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--nxp-ec-color-error);
+}
+.nxp-ec-checkout__coupon-message--success {
+  color: var(--nxp-ec-color-success);
 }
 .nxp-ec-checkout__radio-group {
   display: flex;
@@ -1147,11 +1244,12 @@
 }
 .nxp-ec-landing__search input {
   flex: 1;
-  border: none;
+  border: none !important;
   background: transparent;
   font-size: 1rem;
   outline: none;
   min-width: 0;
+  box-shadow: none !important;
 }
 .nxp-ec-landing__categories {
   display: grid;

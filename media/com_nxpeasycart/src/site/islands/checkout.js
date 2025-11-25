@@ -50,10 +50,47 @@ export default function mountCheckoutIsland(el) {
                   <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
                 </li>
               </ul>
+
+              <div class="nxp-ec-checkout__coupon">
+                <div v-if="coupon" class="nxp-ec-checkout__coupon-applied">
+                  <span class="nxp-ec-checkout__coupon-code">
+                    <strong>{{ coupon.code }}</strong>
+                  </span>
+                  <button type="button" class="nxp-ec-btn nxp-ec-btn--ghost" @click="removeCoupon" :disabled="couponLoading">
+                    {{ labels.coupon_remove }}
+                  </button>
+                </div>
+                <details v-else class="nxp-ec-checkout__coupon-form">
+                  <summary>{{ labels.coupon_label }}</summary>
+                  <div class="nxp-ec-checkout__coupon-input-group">
+                    <div class="nxp-ec-checkout__field">
+                      <input
+                        type="text"
+                        v-model="couponCode"
+                        :placeholder="labels.coupon_placeholder"
+                        @keyup.enter="applyCoupon"
+                        :disabled="couponLoading"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <button type="button" class="nxp-ec-btn nxp-ec-btn--ghost" @click="applyCoupon" :disabled="couponLoading || !couponCode.trim()">
+                      {{ labels.coupon_apply }}
+                    </button>
+                  </div>
+                  <div v-if="couponMessage" class="nxp-ec-checkout__coupon-message" :class="{ 'nxp-ec-checkout__coupon-message--success': coupon }">
+                    {{ couponMessage }}
+                  </div>
+                </details>
+              </div>
+
               <div class="nxp-ec-checkout__totals">
                 <div>
                   <span>{{ labels.subtotal }}</span>
                   <strong>{{ formatMoney(subtotal) }}</strong>
+                </div>
+                <div v-if="discountCents > 0">
+                  <span>{{ labels.discount }}</span>
+                  <strong>-{{ formatMoney(discountCents) }}</strong>
                 </div>
                 <div>
                   <span>{{ labels.shipping }}</span>
@@ -227,6 +264,10 @@ export default function mountCheckoutIsland(el) {
                 settings.base_currency ||
                 currencyAttr ||
                 "USD";
+            const coupon = ref(cart.coupon || null);
+            const couponCode = ref("");
+            const couponMessage = ref("");
+            const couponLoading = ref(false);
             const shipping = (shippingRules || [])
                 .filter(
                     (rule) => rule && (rule.active === undefined || rule.active)
@@ -363,12 +404,20 @@ export default function mountCheckoutIsland(el) {
                 submit: labelsPayload.submit || "Complete order",
                 order_summary: labelsPayload.order_summary || "Order summary",
                 subtotal: labelsPayload.subtotal || "Subtotal",
+                discount: labelsPayload.discount || "Discount",
                 total: labelsPayload.total || "Total",
                 empty_cart: labelsPayload.empty_cart || "Your cart is empty.",
                 thank_you: labelsPayload.thank_you || "Thank you!",
                 order_created: labelsPayload.order_created || "Your order %s was created successfully.",
                 view_order: labelsPayload.view_order || "View order summary",
                 error_generic: labelsPayload.error_generic || "Unable to complete checkout right now.",
+                coupon_label: labelsPayload.coupon_label || "Have a coupon code?",
+                coupon_placeholder: labelsPayload.coupon_placeholder || "Enter code",
+                coupon_apply: labelsPayload.coupon_apply || "Apply",
+                coupon_remove: labelsPayload.coupon_remove || "Remove",
+                coupon_applied: labelsPayload.coupon_applied || "Coupon applied!",
+                coupon_removed: labelsPayload.coupon_removed || "Coupon removed.",
+                coupon_code_required: labelsPayload.coupon_code_required || "Please enter a coupon code.",
             };
 
             // Dynamic label based on country (State for US, Province for CA, Region otherwise)
@@ -470,6 +519,10 @@ export default function mountCheckoutIsland(el) {
                 )
             );
 
+            const discountCents = computed(() => {
+                return coupon.value?.discount_cents || 0;
+            });
+
             const shippingCostForRule = (rule) => {
                 if (!rule) {
                     return 0;
@@ -549,10 +602,11 @@ export default function mountCheckoutIsland(el) {
                 }
 
                 const percent = Number(rate.rate) / 100;
+                const taxableAmount = Math.max(0, subtotal.value - discountCents.value);
 
                 return rate.inclusive
-                    ? Math.round(subtotal.value - subtotal.value / (1 + percent))
-                    : Math.round(subtotal.value * percent);
+                    ? Math.round(taxableAmount - taxableAmount / (1 + percent))
+                    : Math.round(taxableAmount * percent);
             });
 
             const taxLabel = computed(() => {
@@ -569,7 +623,8 @@ export default function mountCheckoutIsland(el) {
 
             const total = computed(
                 () =>
-                    subtotal.value +
+                    subtotal.value -
+                    discountCents.value +
                     selectedShippingCost.value +
                     (activeTaxRate.value?.inclusive ? 0 : taxAmount.value)
             );
@@ -578,6 +633,71 @@ export default function mountCheckoutIsland(el) {
                     Boolean(activeTaxRate.value?.rate) &&
                     taxAmount.value > 0
             );
+
+            const applyCoupon = async () => {
+                const code = couponCode.value.trim().toUpperCase();
+                if (!code) {
+                    couponMessage.value = labels.coupon_code_required || "Please enter a coupon code.";
+                    return;
+                }
+
+                couponLoading.value = true;
+                couponMessage.value = "";
+
+                try {
+                    const response = await api.postJson(endpoints.applyCoupon, { code });
+                    const data = response?.data || response;
+
+                    if (data.cart && data.cart.coupon) {
+                        coupon.value = data.cart.coupon;
+                        couponCode.value = "";
+                        couponMessage.value = data.message || labels.coupon_applied || "Coupon applied!";
+
+                        // Update cart items if returned
+                        if (data.cart.items) {
+                            cartItems.splice(0, cartItems.length, ...data.cart.items.map(item => ({ ...item })));
+                        }
+                    }
+                } catch (error) {
+                    const serverMessage =
+                        error?.details?.message ||
+                        error?.payload?.data?.message ||
+                        error?.payload?.message ||
+                        error?.message ||
+                        "";
+                    couponMessage.value = serverMessage || labels.error_generic || "Unable to apply coupon.";
+                } finally {
+                    couponLoading.value = false;
+                }
+            };
+
+            const removeCoupon = async () => {
+                couponLoading.value = true;
+                couponMessage.value = "";
+
+                try {
+                    const response = await api.postJson(endpoints.removeCoupon, {});
+                    const data = response?.data || response;
+
+                    coupon.value = null;
+                    couponMessage.value = data.message || labels.coupon_removed || "Coupon removed.";
+
+                    // Update cart items if returned
+                    if (data.cart && data.cart.items) {
+                        cartItems.splice(0, cartItems.length, ...data.cart.items.map(item => ({ ...item })));
+                    }
+                } catch (error) {
+                    const serverMessage =
+                        error?.details?.message ||
+                        error?.payload?.data?.message ||
+                        error?.payload?.message ||
+                        error?.message ||
+                        "";
+                    couponMessage.value = serverMessage || labels.error_generic || "Unable to remove coupon.";
+                } finally {
+                    couponLoading.value = false;
+                }
+            };
 
             const submit = async () => {
                 ui.error = "";
@@ -800,11 +920,18 @@ export default function mountCheckoutIsland(el) {
                 regionPlaceholder,
                 regionRequired,
                 subtotal,
+                discountCents,
                 selectedShippingCost,
                 taxAmount,
                 taxLabel,
                 showTax,
                 total,
+                coupon,
+                couponCode,
+                couponMessage,
+                couponLoading,
+                applyCoupon,
+                removeCoupon,
                 submit,
                 loading: computed(() => ui.loading),
                 error: computed(() => ui.error),
