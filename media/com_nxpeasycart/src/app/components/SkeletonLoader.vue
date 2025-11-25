@@ -106,32 +106,32 @@ export default {
 .nxp-ec-skeleton__line {
     height: 1em;
     margin: 0.5em 0;
-    background: #e4e7ec;
+    background: var(--nxp-ec-surface-alt, #e4e7ec);
     border-radius: 4px;
 }
 
 .nxp-ec-skeleton__rectangle {
-    background: #e4e7ec;
+    background: var(--nxp-ec-surface-alt, #e4e7ec);
     border-radius: 4px;
 }
 
 .nxp-ec-skeleton__circle {
     width: 40px;
     height: 40px;
-    background: #e4e7ec;
+    background: var(--nxp-ec-surface-alt, #e4e7ec);
     border-radius: 50%;
 }
 
 .nxp-ec-skeleton__card {
-    border: 1px solid #e4e7ec;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 6px;
     padding: 1rem;
-    background: #fff;
+    background: var(--nxp-ec-surface, #fff);
 }
 
 .nxp-ec-skeleton__card-header {
     height: 24px;
-    background: #e4e7ec;
+    background: var(--nxp-ec-surface-alt, #e4e7ec);
     border-radius: 4px;
     margin-bottom: 1rem;
     width: 60%;
@@ -155,16 +155,16 @@ export default {
     grid-template-columns: repeat(var(--columns, 4), 1fr);
     gap: 1rem;
     padding: 0.75rem 0;
-    border-bottom: 1px solid #f3f4f6;
+    border-bottom: 1px solid var(--nxp-ec-border, #f3f4f6);
 }
 
 .nxp-ec-skeleton__table-row:first-child {
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--nxp-ec-border, #f3f4f6);
 }
 
 .nxp-ec-skeleton__table-cell {
     height: 20px;
-    background: #e4e7ec;
+    background: var(--nxp-ec-surface-alt, #e4e7ec);
     border-radius: 4px;
 }
 </style>

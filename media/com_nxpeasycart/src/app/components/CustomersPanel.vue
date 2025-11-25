@@ -607,12 +607,13 @@ const formatTimestamp = (timestamp) => {
 .nxp-ec-admin-summary dt {
     font-size: 0.75rem;
     text-transform: uppercase;
-    color: #667085;
+    color: var(--nxp-ec-text-muted, #667085);
     margin: 0;
 }
 
 .nxp-ec-admin-summary dd {
     margin: 0;
     font-weight: 500;
+    color: var(--nxp-ec-text, #212529);
 }
 </style>

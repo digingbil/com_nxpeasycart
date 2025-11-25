@@ -449,7 +449,7 @@ const formatTimestampRelative = (timestamp) => {
 .nxp-ec-log-entity-id {
     display: inline-block;
     margin-left: 0.25rem;
-    color: #475467;
+    color: var(--nxp-ec-text-muted, #475467);
 }
 
 .nxp-ec-admin-select {

@@ -302,26 +302,28 @@ const fallbackLabel = (key) => {
 
 .nxp-ec-dashboard__card {
     background: var(--nxp-ec-surface, #fff);
+    border: 1px solid var(--nxp-ec-border, #dee2e6);
     border-radius: 0.75rem;
     padding: 1.25rem;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+    box-shadow: 0 1px 2px var(--nxp-ec-shadow, rgba(16, 24, 40, 0.08));
 }
 
 .nxp-ec-dashboard__card h3 {
     font-size: 0.9rem;
     margin-bottom: 0.5rem;
-    color: #475467;
+    color: var(--nxp-ec-text-muted, #475467);
 }
 
 .nxp-ec-dashboard__value {
     font-size: 1.75rem;
     font-weight: 600;
     margin: 0;
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-dashboard__hint {
     margin: 0;
-    color: #667085;
+    color: var(--nxp-ec-text-muted, #667085);
     font-size: 0.85rem;
 }
 
@@ -347,11 +349,11 @@ const fallbackLabel = (key) => {
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     border-radius: 0.65rem;
-    background: rgba(69, 98, 255, 0.04);
+    background: var(--nxp-ec-primary-bg, rgba(69, 98, 255, 0.04));
 }
 
 .nxp-ec-dashboard__checklist-list li.is-complete {
-    background: rgba(16, 185, 129, 0.08);
+    background: var(--nxp-ec-success-bg, rgba(16, 185, 129, 0.08));
 }
 
 .nxp-ec-dashboard__checklist-icon {
@@ -360,22 +362,17 @@ const fallbackLabel = (key) => {
     height: 1.5rem;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
-    color: #6366f1;
+    font-size: 1.2rem;
+    text-align: center;
+    color: var(--nxp-ec-primary, #6366f1);
 }
 
 .nxp-ec-dashboard__checklist-list li.is-complete .nxp-ec-dashboard__checklist-icon {
-    color: #10b981;
-}
-
-.nxp-ec-dashboard__checklist-icon {
-    font-size: 1.2rem;
-    width: 1.5rem;
-    text-align: center;
-    color: #111827;
+    color: var(--nxp-ec-success, #10b981);
 }
 
 .nxp-ec-dashboard__checklist-label {
     flex: 1;
+    color: var(--nxp-ec-text, #212529);
 }
 </style>

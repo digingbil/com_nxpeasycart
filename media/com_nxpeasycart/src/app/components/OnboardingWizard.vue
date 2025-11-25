@@ -183,18 +183,18 @@ const progressLabel = computed(() => {
 .nxp-ec-onboarding__backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
+    background: var(--nxp-ec-backdrop, rgba(15, 23, 42, 0.55));
 }
 
 .nxp-ec-onboarding__panel {
     position: relative;
-    background: #fff;
+    background: var(--nxp-ec-surface, #fff);
     border-radius: 1rem;
     padding: 2.5rem;
     width: min(720px, calc(100vw - 2rem));
     max-height: calc(100vh - 4rem);
     overflow-y: auto;
-    box-shadow: 0 32px 80px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 32px 80px var(--nxp-ec-shadow-lg, rgba(15, 23, 42, 0.2));
 }
 
 .nxp-ec-onboarding__header {
@@ -209,11 +209,12 @@ const progressLabel = computed(() => {
     margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-onboarding__lead {
     margin: 0.5rem 0 0;
-    color: #475467;
+    color: var(--nxp-ec-text-muted, #475467);
 }
 
 .nxp-ec-onboarding__progress {
@@ -223,7 +224,7 @@ const progressLabel = computed(() => {
 }
 
 .nxp-ec-onboarding__progress-bar {
-    background: #e9ecef;
+    background: var(--nxp-ec-surface-alt, #e9ecef);
     border-radius: 999px;
     height: 10px;
     overflow: hidden;
@@ -232,13 +233,13 @@ const progressLabel = computed(() => {
 .nxp-ec-onboarding__progress-bar span {
     display: block;
     height: 100%;
-    background: #0d6efd;
+    background: var(--nxp-ec-primary, #0d6efd);
     transition: width 0.3s ease;
 }
 
 .nxp-ec-onboarding__progress-label {
     font-size: 0.9rem;
-    color: #475467;
+    color: var(--nxp-ec-text-muted, #475467);
 }
 
 .nxp-ec-onboarding__steps {
@@ -254,14 +255,15 @@ const progressLabel = computed(() => {
     justify-content: space-between;
     gap: 1rem;
     padding: 1.25rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--nxp-ec-border, #e9ecef);
     border-radius: 1rem;
     align-items: center;
+    background: var(--nxp-ec-surface, #fff);
 }
 
 .nxp-ec-onboarding__steps li.is-complete {
-    border-color: rgba(13, 110, 253, 0.4);
-    background: rgba(13, 110, 253, 0.05);
+    border-color: var(--nxp-ec-primary, rgba(13, 110, 253, 0.4));
+    background: var(--nxp-ec-primary-bg, rgba(13, 110, 253, 0.05));
 }
 
 .nxp-ec-onboarding__step-main {
@@ -273,17 +275,18 @@ const progressLabel = computed(() => {
 .nxp-ec-onboarding__step-main h3 {
     margin: 0 0 0.35rem;
     font-size: 1.1rem;
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-onboarding__step-main p {
     margin: 0;
-    color: #667085;
+    color: var(--nxp-ec-text-muted, #667085);
     max-width: 32rem;
 }
 
 .nxp-ec-onboarding__step-icon {
     font-size: 1.5rem;
-    color: #0d6efd;
+    color: var(--nxp-ec-primary, #0d6efd);
     width: 2rem;
     display: grid;
     place-items: center;

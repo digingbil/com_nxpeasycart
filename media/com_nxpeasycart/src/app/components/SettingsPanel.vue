@@ -2774,16 +2774,22 @@ const shippingTypeLabel = (type) => {
 
 .nxp-ec-settings-tab {
     padding: 0.5rem 1rem;
-    border: 1px solid #d0d5dd;
+    border: 1px solid var(--nxp-ec-border, #d0d5dd);
     border-radius: 999px;
-    background: #fff;
+    background: var(--nxp-ec-surface, #fff);
+    color: var(--nxp-ec-text, #212529);
     cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.nxp-ec-settings-tab:hover {
+    background: var(--nxp-ec-surface-alt, #f8f9fa);
 }
 
 .nxp-ec-settings-tab.is-active {
-    background: #4f46e5;
+    background: var(--nxp-ec-primary-bg-solid, #4f46e5);
     color: #fff;
-    border-color: #4f46e5;
+    border-color: var(--nxp-ec-primary-bg-solid, #4f46e5);
 }
 
 .nxp-ec-settings-panel {
@@ -2818,9 +2824,9 @@ const shippingTypeLabel = (type) => {
     display: grid;
     gap: 1rem;
     padding: 1rem;
-    border: 1px solid #e4e7ec;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 0.75rem;
-    background: #fff;
+    background: var(--nxp-ec-surface, #fff);
 }
 
 .nxp-ec-form-grid {
@@ -2842,9 +2848,10 @@ const shippingTypeLabel = (type) => {
 
 .nxp-ec-form-static {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #e4e7ec;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 0.5rem;
-    background: #f9fafb;
+    background: var(--nxp-ec-surface-alt, #f9fafb);
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-visual-grid {
@@ -2868,7 +2875,7 @@ const shippingTypeLabel = (type) => {
 .nxp-ec-color-picker {
     width: 4rem;
     height: 2.5rem;
-    border: 1px solid #d0d5dd;
+    border: 1px solid var(--nxp-ec-input-border, #d0d5dd);
     border-radius: 0.5rem;
     cursor: pointer;
 }
@@ -2885,15 +2892,16 @@ const shippingTypeLabel = (type) => {
 .nxp-ec-visual-preview {
     margin-top: 2rem;
     padding: 1.5rem;
-    border: 1px solid #e4e7ec;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 0.75rem;
-    background: #f9fafb;
+    background: var(--nxp-ec-surface-alt, #f9fafb);
 }
 
 .nxp-ec-visual-preview h4 {
     margin: 0 0 1rem;
     font-size: 1rem;
     font-weight: 600;
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-preview-box {
