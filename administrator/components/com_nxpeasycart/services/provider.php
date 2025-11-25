@@ -28,6 +28,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CacheService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\GdprService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
@@ -178,6 +179,14 @@ return new class () implements ServiceProviderInterface {
             PaymentGatewayService::class,
             static fn (Container $container): PaymentGatewayService => new PaymentGatewayService(
                 $container->get(SettingsService::class)
+            )
+        );
+
+        $container->set(
+            InvoiceService::class,
+            static fn (Container $container): InvoiceService => new InvoiceService(
+                $container->get(SettingsService::class),
+                $container->get(PaymentGatewayService::class)
             )
         );
 

@@ -27,7 +27,7 @@ class MailService
      *
      * @param array<string, mixed> $order
      */
-    public function sendOrderConfirmation(array $order): void
+    public function sendOrderConfirmation(array $order, array $options = []): void
     {
         $recipient = $order['email'] ?? '';
 
@@ -36,17 +36,32 @@ class MailService
         }
 
         // Ensure component language strings are available when rendering emails.
-        $language = Factory::getLanguage();
+        $language = Factory::getApplication()->getLanguage();
         $language->load('com_nxpeasycart', JPATH_SITE);
         $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+
+        $payment     = isset($options['payment']) && \is_array($options['payment']) ? $options['payment'] : [];
+        $attachments = isset($options['attachments']) && \is_array($options['attachments'])
+            ? $options['attachments']
+            : [];
+
+        $app    = Factory::getApplication();
+        $config = method_exists($app, 'getConfig') ? $app->getConfig() : null;
+
+        $siteName = $config ? (string) $config->get('sitename') : '';
+
+        if ($siteName === '' && method_exists($app, 'get')) {
+            $siteName = (string) $app->get('sitename', '');
+        }
 
         $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SUBJECT', $order['order_no'] ?? '');
         $body    = $this->renderTemplate('order_confirmation', [
             'order' => $order,
             'store' => [
-                'name' => Factory::getConfig()->get('sitename'),
+                'name' => $siteName !== '' ? $siteName : 'Your Store',
                 'url'  => Uri::root(),
             ],
+            'payment' => $payment,
         ]);
 
         $mailer = clone $this->mailer;
@@ -54,6 +69,23 @@ class MailService
         $mailer->isHtml(true);
         $mailer->setBody($body);
         $mailer->addRecipient($recipient);
+
+        foreach ($attachments as $attachment) {
+            $data = (string) ($attachment['content'] ?? $attachment['data'] ?? '');
+
+            if ($data === '') {
+                continue;
+            }
+
+            $name = isset($attachment['name']) ? (string) $attachment['name'] : 'attachment.bin';
+            $type = isset($attachment['type']) ? (string) $attachment['type'] : 'application/octet-stream';
+
+            $path = $this->persistAttachment($data, $name);
+
+            if ($path !== null) {
+                $mailer->addAttachment($path, $name, 'base64', $type);
+            }
+        }
 
         $mailer->send();
     }
@@ -77,5 +109,48 @@ class MailService
         include $path;
 
         return (string) ob_get_clean();
+    }
+
+    /**
+     * Write attachment contents to a temporary file for the mailer to consume.
+     */
+    private function persistAttachment(string $contents, string $name): ?string
+    {
+        $app       = Factory::getApplication();
+        $config    = method_exists($app, 'getConfig') ? $app->getConfig() : null;
+        $configTmp = $config ? $config->get('tmp_path') : null;
+        $tmpDir    = \is_string($configTmp) && $configTmp !== '' ? $configTmp : sys_get_temp_dir();
+
+        $tmp = tempnam($tmpDir, 'nxp-ec-attach-');
+
+        if ($tmp === false) {
+            return null;
+        }
+
+        $extension = '';
+        $dotPos    = strrpos($name, '.');
+
+        if ($dotPos !== false && $dotPos < strlen($name) - 1) {
+            $extension = substr($name, $dotPos);
+        }
+
+        $final = $tmp;
+
+        if ($extension !== '') {
+            $final = $tmp . $extension;
+            @rename($tmp, $final);
+        }
+
+        if (@file_put_contents($final, $contents) === false) {
+            return null;
+        }
+
+        register_shutdown_function(static function () use ($final): void {
+            if (is_file($final)) {
+                @unlink($final);
+            }
+        });
+
+        return $final;
     }
 }

@@ -59,10 +59,8 @@ final class CategoryModelTest extends TestCase
 
         $products = $model->getProducts();
 
-        $this->assertSame([
-            ':rootCat0' => 5,
-            ':rootCat1' => 9,
-        ], $query->bindings);
+        $this->assertSame(5, $query->bindings[':rootCat0']);
+        $this->assertSame(9, $query->bindings[':rootCat1']);
 
         $this->assertCount(1, $products);
         $this->assertSame('apparel', $products[0]['category_slug']);

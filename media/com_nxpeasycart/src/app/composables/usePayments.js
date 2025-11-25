@@ -18,6 +18,14 @@ const defaultConfig = () => ({
         enabled: true,
         label: "Cash on delivery",
     },
+    bank_transfer: {
+        enabled: false,
+        label: "Bank transfer",
+        instructions: "",
+        account_name: "",
+        iban: "",
+        bic: "",
+    },
 });
 
 export function usePayments({ endpoints = {}, token = "" }) {
@@ -90,6 +98,10 @@ export function usePayments({ endpoints = {}, token = "" }) {
             cod: {
                 ...template.cod,
                 ...(raw.cod ?? {}),
+            },
+            bank_transfer: {
+                ...template.bank_transfer,
+                ...(raw.bank_transfer ?? {}),
             },
         };
     };

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Stubs;
 
+use Joomla\Registry\Registry;
+
 /**
  * Extremely small CMS application stub for routing and language access.
  */
@@ -31,7 +33,17 @@ class StubApplication
             {
                 return null;
             }
+
+            public function getItems()
+            {
+                return [];
+            }
         };
+    }
+
+    public function getConfig(): Registry
+    {
+        return new Registry(['sitename' => 'Test Site']);
     }
 
     public function get($key, $default = null)

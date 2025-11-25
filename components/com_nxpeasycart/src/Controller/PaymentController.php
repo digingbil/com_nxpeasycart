@@ -12,8 +12,10 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -41,11 +43,25 @@ class PaymentController extends BaseController
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
         $gateway = isset($payload['gateway']) ? strtolower((string) $payload['gateway']) : 'stripe';
 
-        if (!in_array($gateway, ['stripe', 'paypal', 'cod'], true)) {
+        if (!in_array($gateway, ['stripe', 'paypal', 'cod', 'bank_transfer'], true)) {
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
         }
 
         $container   = Factory::getContainer();
+
+        $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+        if (
+            !$container->has(SessionInterface::class)
+            || !$container->has(CartSessionService::class)
+            || !$container->has(MailService::class)
+            || !$container->has(PaymentGatewayService::class)
+            || !$container->has(InvoiceService::class)
+        ) {
+            if (is_file($providerPath)) {
+                $container->registerServiceProvider(require $providerPath);
+            }
+        }
 
         if (!$container->has(SessionInterface::class)) {
             $container->share(
@@ -58,22 +74,6 @@ class PaymentController extends BaseController
                     return Factory::getApplication()->getSession();
                 }
             );
-        }
-
-        if (!$container->has(CartSessionService::class)) {
-            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
-
-            if (is_file($providerPath)) {
-                $container->registerServiceProvider(require $providerPath);
-            }
-        }
-
-        if (!$container->has(MailService::class)) {
-            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
-
-            if (is_file($providerPath)) {
-                $container->registerServiceProvider(require $providerPath);
-            }
         }
 
         $cartSession = $container->get(CartSessionService::class);
@@ -89,6 +89,7 @@ class PaymentController extends BaseController
         /** @var OrderService $orders */
         $orders       = $container->get(OrderService::class);
         $orderPayload = $this->buildOrderPayload($cart, $payload);
+        $orderPayload['payment_method'] = $gateway;
 
         $shippingCents = $this->resolveShippingAmount(
             isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
@@ -104,7 +105,21 @@ class PaymentController extends BaseController
             $orderPayload['items'] ?? [],
             $tax['rate']
         );
-        $orderPayload['state'] = $gateway === 'cod' ? 'pending' : $orderPayload['state'];
+        $orderPayload['state'] = \in_array($gateway, ['cod', 'bank_transfer'], true)
+            ? 'pending'
+            : $orderPayload['state'];
+
+        $paymentService     = $container->get(PaymentGatewayService::class);
+        $paymentConfig      = $paymentService->getConfig();
+        $bankTransferConfig = $paymentService->getGatewayConfig('bank_transfer');
+
+        if ($gateway === 'cod' && isset($paymentConfig['cod']['enabled']) && !$paymentConfig['cod']['enabled']) {
+            $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
+        }
+
+        if ($gateway === 'bank_transfer' && empty($paymentConfig['bank_transfer']['enabled'])) {
+            $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
+        }
 
         try {
             $order = $orders->create($orderPayload);
@@ -118,19 +133,49 @@ class PaymentController extends BaseController
 
         /** @var MailService $mailer */
         $mailer = $container->get(MailService::class);
+        $order['payment_method'] = $gateway;
 
         /** @var PaymentGatewayManager $manager */
-        if ($gateway === 'cod') {
+        if ($gateway === 'cod' || $gateway === 'bank_transfer') {
+            $paymentContext = [
+                'method'  => $gateway,
+                'details' => $gateway === 'bank_transfer'
+                    ? ($bankTransferConfig ?: ($paymentConfig['bank_transfer'] ?? []))
+                    : [],
+            ];
+
             $orders->recordTransaction((int) $order['id'], [
-                'gateway'      => 'cod',
+                'gateway'      => $gateway,
                 'status'       => 'pending',
                 'amount_cents' => (int) $order['total_cents'],
-                'payload'      => ['method' => 'cash_on_delivery'],
+                'payload'      => ['method' => $gateway],
             ]);
 
             $orderUrl = $this->buildOrderUrl($order['order_no']);
 
-            $mailer->sendOrderConfirmation($order);
+            $attachments = [];
+
+            if ($gateway === 'bank_transfer') {
+                try {
+                    $invoice = $container->get(InvoiceService::class);
+                    $pdf     = $invoice->generateInvoice($order, ['payment' => $paymentContext]);
+
+                    if (!empty($pdf['content'])) {
+                        $attachments[] = [
+                            'name'    => $pdf['filename'] ?? ('invoice-' . ($order['order_no'] ?? 'order') . '.pdf'),
+                            'content' => (string) $pdf['content'],
+                            'type'    => 'application/pdf',
+                        ];
+                    }
+                } catch (\Throwable $exception) {
+                    // Non-fatal: continue without attachment if invoice rendering fails.
+                }
+            }
+
+            $mailer->sendOrderConfirmation($order, [
+                'payment'     => $paymentContext,
+                'attachments' => $attachments,
+            ]);
             $this->clearCart($cartSession, $cart);
 
             $this->respond([
@@ -139,7 +184,7 @@ class PaymentController extends BaseController
                     'order_no' => $order['order_no'],
                 ],
                 'checkout' => [
-                    'mode'     => 'cod',
+                    'mode'     => $gateway,
                     'redirect' => $orderUrl,
                     'url'      => $orderUrl,
                 ],

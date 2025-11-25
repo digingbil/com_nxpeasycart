@@ -9,7 +9,8 @@
     "build:site:css": "sass media/com_nxpeasycart/src/site.scss media/com_nxpeasycart/css/site.css --no-source-map --style=expanded",
     "build:site": "npm run build:site:css && vite build --config build/vite.config.site.js",
     "sync:assets": "node tools/sync-asset-manifest.js",
-    "postbuild:site": "npm run sync:assets"
+    "postbuild:site": "npm run sync:assets",
+    "test:js": "node --test media/com_nxpeasycart/src/site/utils/__tests__/gatewayOptions.test.js"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

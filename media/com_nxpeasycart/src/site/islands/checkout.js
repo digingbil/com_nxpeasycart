@@ -9,6 +9,7 @@ import {
     getCountryName,
     getRegionName,
 } from "../utils/countryRegionData.js";
+import { buildGatewayOptions } from "../utils/gatewayOptions.js";
 
 export default function mountCheckoutIsland(el) {
     const locale = el.dataset.nxpLocale || undefined;
@@ -262,46 +263,7 @@ export default function mountCheckoutIsland(el) {
                         b.rate - a.rate
                 );
 
-            const isConfigured = (config, keys = []) =>
-                keys.every((key) => {
-                    const value = config[key] ?? "";
-                    return String(value).trim() !== "";
-                });
-
-            const gatewayOptions = [];
-
-            if (
-                isConfigured(payments.stripe ?? {}, [
-                    "publishable_key",
-                    "secret_key",
-                ])
-            ) {
-                gatewayOptions.push({
-                    id: "stripe",
-                    label: "Card (Stripe)",
-                });
-            }
-
-            if (
-                isConfigured(payments.paypal ?? {}, [
-                    "client_id",
-                    "client_secret",
-                ])
-            ) {
-                gatewayOptions.push({
-                    id: "paypal",
-                    label: "PayPal",
-                });
-            }
-
-            if ((payments.cod?.enabled ?? true) && cartItems.length > 0) {
-                gatewayOptions.push({
-                    id: "cod",
-                    label: payments.cod?.label || "Cash on delivery",
-                });
-            }
-
-            const gateways = gatewayOptions;
+            const gateways = buildGatewayOptions(payments, cartItems);
             const selectedGateway = ref(gateways[0]?.id || "");
             const hostedCheckoutAvailable =
                 gateways.length > 0 && Boolean(endpoints.payment);

@@ -1438,6 +1438,147 @@
                     </div>
                 </fieldset>
 
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER",
+                                "Bank transfer",
+                                [],
+                                "settingsPaymentsBankTransfer"
+                            )
+                        }}
+                    </legend>
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-enabled">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_ENABLED",
+                                    "Enable bank transfer",
+                                    [],
+                                    "settingsPaymentsBankTransferEnabled"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="nxp-ec-bank-transfer-enabled"
+                            type="checkbox"
+                            v-model="paymentsDraft.bank_transfer.enabled"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-label">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_LABEL",
+                                    "Checkout label",
+                                    [],
+                                    "settingsPaymentsBankTransferLabel"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="nxp-ec-bank-transfer-label"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="paymentsDraft.bank_transfer.label"
+                            placeholder="Bank transfer"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-instructions">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_INSTRUCTIONS",
+                                    "Payment instructions",
+                                    [],
+                                    "settingsPaymentsBankTransferInstructions"
+                                )
+                            }}
+                        </label>
+                        <textarea
+                            id="nxp-ec-bank-transfer-instructions"
+                            class="nxp-ec-form-input"
+                            rows="4"
+                            v-model="paymentsDraft.bank_transfer.instructions"
+                            :placeholder="__(
+                                'COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_INSTRUCTIONS_PLACEHOLDER',
+                                'Share how to complete the transfer and include the order number reference.',
+                                [],
+                                'settingsPaymentsBankTransferInstructionsPlaceholder'
+                            )"
+                        ></textarea>
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_INSTRUCTIONS_HELP",
+                                    "Customers will see this in the checkout email alongside their invoice.",
+                                    [],
+                                    "settingsPaymentsBankTransferInstructionsHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <div class="nxp-ec-form-grid">
+                        <div class="nxp-ec-form-field">
+                            <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-account-name">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_ACCOUNT_NAME",
+                                        "Account name",
+                                        [],
+                                        "settingsPaymentsBankTransferAccountName"
+                                    )
+                                }}
+                            </label>
+                            <input
+                                id="nxp-ec-bank-transfer-account-name"
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="paymentsDraft.bank_transfer.account_name"
+                            />
+                        </div>
+                        <div class="nxp-ec-form-field">
+                            <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-iban">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_IBAN",
+                                        "IBAN",
+                                        [],
+                                        "settingsPaymentsBankTransferIban"
+                                    )
+                                }}
+                            </label>
+                            <input
+                                id="nxp-ec-bank-transfer-iban"
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="paymentsDraft.bank_transfer.iban"
+                                maxlength="34"
+                            />
+                        </div>
+                        <div class="nxp-ec-form-field">
+                            <label class="nxp-ec-form-label" for="nxp-ec-bank-transfer-bic">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_SETTINGS_PAYMENTS_BANK_TRANSFER_BIC",
+                                        "BIC/SWIFT",
+                                        [],
+                                        "settingsPaymentsBankTransferBic"
+                                    )
+                                }}
+                            </label>
+                            <input
+                                id="nxp-ec-bank-transfer-bic"
+                                class="nxp-ec-form-input"
+                                type="text"
+                                v-model.trim="paymentsDraft.bank_transfer.bic"
+                                maxlength="11"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
+
                 <div
                     v-if="paymentsState.message"
                     class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
@@ -1920,6 +2061,14 @@ const paymentsDraft = reactive({
         enabled: true,
         label: "Cash on delivery",
     },
+    bank_transfer: {
+        enabled: false,
+        label: "Bank transfer",
+        instructions: "",
+        account_name: "",
+        iban: "",
+        bic: "",
+    },
 });
 
 const visualDraft = reactive({
@@ -1981,6 +2130,7 @@ const applyPayments = (config = {}) => {
     const stripe = config.stripe ?? {};
     const paypal = config.paypal ?? {};
     const cod = config.cod ?? {};
+    const bank = config.bank_transfer ?? {};
 
     Object.assign(paymentsDraft.stripe, {
         publishable_key: stripe.publishable_key ?? "",
@@ -2002,6 +2152,20 @@ const applyPayments = (config = {}) => {
                 ? Boolean(cod.enabled)
                 : paymentsDraft.cod.enabled,
         label: cod.label ?? paymentsDraft.cod.label ?? "Cash on delivery",
+    });
+
+    Object.assign(paymentsDraft.bank_transfer, {
+        enabled:
+            bank.enabled !== undefined
+                ? Boolean(bank.enabled)
+                : paymentsDraft.bank_transfer.enabled,
+        label: bank.label ?? paymentsDraft.bank_transfer.label ?? "Bank transfer",
+        instructions:
+            bank.instructions ?? paymentsDraft.bank_transfer.instructions ?? "",
+        account_name:
+            bank.account_name ?? paymentsDraft.bank_transfer.account_name ?? "",
+        iban: bank.iban ?? paymentsDraft.bank_transfer.iban ?? "",
+        bic: bank.bic ?? paymentsDraft.bank_transfer.bic ?? "",
     });
 };
 
@@ -2325,6 +2489,12 @@ const shippingTypeLabel = (type) => {
     border: 1px solid #e4e7ec;
     border-radius: 0.75rem;
     background: #fff;
+}
+
+.nxp-ec-form-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .nxp-ec-settings-actions {

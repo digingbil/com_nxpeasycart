@@ -1,10 +1,14 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 use NumberFormatter;
 
 /** @var array<string, mixed> $order */
 /** @var array<string, mixed> $store */
+/** @var array<string, mixed> $payment */
+
+$payment = isset($payment) && \is_array($payment) ? $payment : [];
 
 $items    = $order['items']    ?? [];
 $currency = $order['currency'] ?? 'USD';
@@ -18,6 +22,8 @@ $formatMoney = static function (int $cents) use ($currency): string {
         return sprintf('%s %.2f', $currency, $amount);
     }
 };
+
+$isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_transfer';
 ?>
 
 <div style="font-family: Arial, sans-serif; color: #111827;">
@@ -32,6 +38,42 @@ $formatMoney = static function (int $cents) use ($currency): string {
     <p style="margin: 0 0 24px; font-size: 15px;">
         <?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_PLACED', $order['order_no'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
     </p>
+
+    <?php if ($isBankTransfer) : ?>
+        <p style="margin: 0 0 16px; font-size: 14px;">
+            <?php echo htmlspecialchars(Text::sprintf('COM_NXPEASYCART_EMAIL_BANK_TRANSFER_INTRO', $order['order_no'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+        </p>
+        <?php if (!empty($payment['instructions'])) : ?>
+            <p style="margin: 0 0 12px; font-size: 14px; white-space: pre-line;">
+                <?php echo htmlspecialchars((string) $payment['instructions'], ENT_QUOTES, 'UTF-8'); ?>
+            </p>
+        <?php endif; ?>
+        <?php if (!empty($payment['account_name']) || !empty($payment['iban']) || !empty($payment['bic'])) : ?>
+            <div style="margin: 0 0 16px; padding: 12px; background: #f1f5f9; border-radius: 8px;">
+                <?php if (!empty($payment['account_name'])) : ?>
+                    <div style="margin-bottom: 6px;">
+                        <strong><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_INVOICE_BANK_ACCOUNT_NAME'), ENT_QUOTES, 'UTF-8'); ?>:</strong>
+                        <?php echo htmlspecialchars((string) $payment['account_name'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($payment['iban'])) : ?>
+                    <div style="margin-bottom: 6px;">
+                        <strong><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_INVOICE_BANK_IBAN'), ENT_QUOTES, 'UTF-8'); ?>:</strong>
+                        <?php echo htmlspecialchars((string) $payment['iban'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($payment['bic'])) : ?>
+                    <div style="margin-bottom: 6px;">
+                        <strong><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_INVOICE_BANK_BIC'), ENT_QUOTES, 'UTF-8'); ?>:</strong>
+                        <?php echo htmlspecialchars((string) $payment['bic'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+        <p style="margin: 0 0 16px; font-size: 14px;">
+            <?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_BANK_TRANSFER_INVOICE_ATTACHED'), ENT_QUOTES, 'UTF-8'); ?>
+        </p>
+    <?php endif; ?>
 
     <?php if (!empty($order['billing']['phone'])) : ?>
         <p style="margin: 0 0 16px; font-size: 14px;">

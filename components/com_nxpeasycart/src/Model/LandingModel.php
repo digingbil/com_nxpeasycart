@@ -524,8 +524,6 @@ class LandingModel extends BaseDatabaseModel
 
                     if ($app && method_exists($app, 'getLanguage')) {
                         $language = $app->getLanguage();
-                    } elseif (method_exists(Factory::class, 'getLanguage')) {
-                        $language = Factory::getLanguage();
                     }
 
                     $tag = $language && method_exists($language, 'getTag')

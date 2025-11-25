@@ -28,4 +28,9 @@ class StubLanguage
     {
         return 'en-GB';
     }
+
+    public function load($extension = null, $basePath = null): bool
+    {
+        return true;
+    }
 }

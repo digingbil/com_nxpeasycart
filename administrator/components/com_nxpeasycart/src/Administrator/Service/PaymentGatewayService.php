@@ -45,6 +45,16 @@ class PaymentGatewayService
                     : true,
                 'label'   => $raw['cod']['label'] ?? 'Cash on delivery',
             ],
+            'bank_transfer' => [
+                'enabled'      => array_key_exists('bank_transfer', $raw)
+                    ? (bool) ($raw['bank_transfer']['enabled'] ?? false)
+                    : false,
+                'label'        => $raw['bank_transfer']['label'] ?? 'Bank transfer',
+                'instructions' => $raw['bank_transfer']['instructions'] ?? '',
+                'account_name' => $raw['bank_transfer']['account_name'] ?? '',
+                'iban'         => $raw['bank_transfer']['iban'] ?? '',
+                'bic'          => $raw['bank_transfer']['bic'] ?? '',
+            ],
         ];
     }
 
@@ -70,6 +80,10 @@ class PaymentGatewayService
             'stripe' => $this->normaliseStripe($payload['stripe'] ?? [], $existing['stripe'] ?? []),
             'paypal' => $this->normalisePaypal($payload['paypal'] ?? [], $existing['paypal'] ?? []),
             'cod'    => $this->normaliseCod($payload['cod'] ?? [], $existing['cod'] ?? []),
+            'bank_transfer' => $this->normaliseBankTransfer(
+                $payload['bank_transfer'] ?? [],
+                $existing['bank_transfer'] ?? []
+            ),
         ];
 
         $this->settings->set(self::SETTINGS_KEY, $normalised);
@@ -152,5 +166,53 @@ class PaymentGatewayService
             'enabled' => $enabled,
             'label'   => $label !== '' ? $label : ($existing['label'] ?? 'Cash on delivery'),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $existing
+     */
+    private function normaliseBankTransfer(array $input, array $existing): array
+    {
+        $enabled = isset($input['enabled'])
+            ? (bool) $input['enabled']
+            : (bool) ($existing['enabled'] ?? false);
+
+        $label        = trim((string) ($input['label'] ?? ''));
+        $instructions = strip_tags(trim((string) ($input['instructions'] ?? '')));
+        $accountName  = trim((string) ($input['account_name'] ?? ''));
+        $iban         = $this->sanitiseIban((string) ($input['iban'] ?? ''));
+        $bic          = $this->sanitiseBic((string) ($input['bic'] ?? ''));
+
+        return [
+            'enabled'      => $enabled,
+            'label'        => $label !== '' ? $label : ($existing['label'] ?? 'Bank transfer'),
+            'instructions' => $instructions !== '' ? $instructions : ($existing['instructions'] ?? ''),
+            'account_name' => $accountName !== '' ? $accountName : ($existing['account_name'] ?? ''),
+            'iban'         => $iban !== '' ? $iban : ($existing['iban'] ?? ''),
+            'bic'          => $bic !== '' ? $bic : ($existing['bic'] ?? ''),
+        ];
+    }
+
+    private function sanitiseIban(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $normalised = strtoupper((string) preg_replace('/\s+/', '', $value));
+
+        return preg_match('/^[A-Z]{2}[0-9A-Z]{6,32}$/', $normalised) ? $normalised : '';
+    }
+
+    private function sanitiseBic(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $normalised = strtoupper(trim($value));
+
+        return preg_match('/^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/', $normalised) ? $normalised : '';
     }
 }
