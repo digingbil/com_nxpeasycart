@@ -1,4 +1,4 @@
-# **IMPORTANT — Product North Star**
+# **IMPORTANT — `Product North Star`**
 
 Joomla’s big carts try to be everything; **our advantage is clarity \+ speed to first sale**. Small businesses want to: install, add a few products, connect a gateway, and start selling **today**. Every decision should serve this:
 

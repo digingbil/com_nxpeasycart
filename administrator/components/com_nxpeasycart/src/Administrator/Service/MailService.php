@@ -64,7 +64,7 @@ class MailService
             'payment' => $payment,
         ]);
 
-        $mailer = clone $this->mailer;
+        $mailer = clone $this->mailer;// Avoid mutating the shared mailer instance.
         $mailer->setSubject($subject);
         $mailer->isHtml(true);
         $mailer->setBody($body);

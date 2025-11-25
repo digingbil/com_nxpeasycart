@@ -10,8 +10,10 @@ use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -39,6 +41,8 @@ class CartController extends BaseController
             echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
             $app->close();
         }
+
+        $this->enforceRateLimit();
 
         $input     = $app->input;
         $productId = $input->getInt('product_id');
@@ -163,6 +167,8 @@ class CartController extends BaseController
             $app->close();
         }
 
+        $this->enforceRateLimit();
+
         $input     = $app->input;
         $variantId = $input->getInt('variant_id');
         $productId = $input->getInt('product_id');
@@ -241,6 +247,8 @@ class CartController extends BaseController
             echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
             $app->close();
         }
+
+        $this->enforceRateLimit();
 
         $input     = $app->input;
         $variantId = $input->getInt('variant_id');
@@ -550,5 +558,64 @@ class CartController extends BaseController
         ];
 
         return $items;
+    }
+
+    /**
+     * Throttle cart mutations to reduce bot abuse.
+     */
+    private function enforceRateLimit(): void
+    {
+        $limiter = $this->getRateLimiter();
+
+        if (!$limiter) {
+            return;
+        }
+
+        $app       = Factory::getApplication();
+        $sessionId = $app->getSession()->getId();
+        $ip        = $this->getClientIp();
+        $key       = sprintf(
+            'cart:mutate:ip:%s:session:%s',
+            $ip !== '' ? $ip : 'unknown',
+            $sessionId !== '' ? $sessionId : 'anon'
+        );
+
+        if ($limiter->hit($key, 60, 600)) {
+            return;
+        }
+
+        http_response_code(429);
+        echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_RATE_LIMITED'), true);
+        $app->close();
+    }
+
+    private function getRateLimiter(): ?RateLimiter
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(RateLimiter::class)) {
+            try {
+                return $container->get(RateLimiter::class);
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        try {
+            if ($container->has(CacheControllerFactoryInterface::class)) {
+                return new RateLimiter($container->get(CacheControllerFactoryInterface::class));
+            }
+        } catch (\Throwable $exception) {
+            return null;
+        }
+
+        return null;
+    }
+
+    private function getClientIp(): string
+    {
+        $server = Factory::getApplication()->input->server;
+
+        return trim((string) $server->getString('REMOTE_ADDR', ''));
     }
 }

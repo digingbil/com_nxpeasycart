@@ -50,6 +50,16 @@ class SettingsController extends AbstractJsonController
 
         $service = $this->getService();
 
+        // The database already has normalized values (in seconds).
+        // Just use them directly and fill in any missing fields with defaults.
+        $rateLimits = (array) $service->get('security.rate_limits', []);
+        $defaults = $this->getDefaultRateLimits();
+        foreach ($defaults as $key => $defaultValue) {
+            if (!isset($rateLimits[$key])) {
+                $rateLimits[$key] = $defaultValue;
+            }
+        }
+
         $settings = [
             'store' => [
                 'name'  => (string) $service->get('store.name', ''),
@@ -69,6 +79,21 @@ class SettingsController extends AbstractJsonController
                 'muted_color'   => (string) $service->get('visual.muted_color', ''),
             ],
             'visual_defaults' => $this->getTemplateDefaults(),
+            'security' => [
+                'rate_limits' => [
+                    'checkout_ip_limit'      => $rateLimits['checkout_ip_limit'],
+                    'checkout_email_limit'   => $rateLimits['checkout_email_limit'],
+                    'checkout_session_limit' => $rateLimits['checkout_session_limit'],
+                    'checkout_window_minutes' => $rateLimits['checkout_window'] > 0
+                        ? (int) ceil($rateLimits['checkout_window'] / 60)
+                        : 0,
+                    'offline_ip_limit'    => $rateLimits['offline_ip_limit'],
+                    'offline_email_limit' => $rateLimits['offline_email_limit'],
+                    'offline_window_minutes' => $rateLimits['offline_window'] > 0
+                        ? (int) ceil($rateLimits['offline_window'] / 60)
+                        : 0,
+                ],
+            ],
         ];
 
         return $this->respond(['settings' => $settings]);
@@ -84,6 +109,7 @@ class SettingsController extends AbstractJsonController
         $store             = isset($payload['store'])    && \is_array($payload['store']) ? $payload['store'] : [];
         $payments          = isset($payload['payments']) && \is_array($payload['payments']) ? $payload['payments'] : [];
         $visual            = isset($payload['visual'])   && \is_array($payload['visual']) ? $payload['visual'] : [];
+        $security          = isset($payload['security']) && \is_array($payload['security']) ? $payload['security'] : [];
         $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
         $checkoutPhoneRequired = isset($payload['checkout_phone_required'])
             ? (bool) $payload['checkout_phone_required']
@@ -123,6 +149,21 @@ class SettingsController extends AbstractJsonController
         }
 
         $service = $this->getService();
+        $rateLimits = $this->normaliseRateLimits(
+            isset($security['rate_limits']) && \is_array($security['rate_limits'])
+                ? $security['rate_limits']
+                : [],
+            (array) $service->get('security.rate_limits', [])
+        );
+
+        // Force override from explicit minute fields when provided to avoid any fallback drift.
+        if (isset($security['rate_limits']['checkout_window_minutes'])) {
+            $rateLimits['checkout_window'] = max(0, (int) $security['rate_limits']['checkout_window_minutes']) * 60;
+        }
+
+        if (isset($security['rate_limits']['offline_window_minutes'])) {
+            $rateLimits['offline_window'] = max(0, (int) $security['rate_limits']['offline_window_minutes']) * 60;
+        }
 
         // Only update store settings if provided in payload
         if (!empty($store)) {
@@ -136,6 +177,8 @@ class SettingsController extends AbstractJsonController
             $service->set('payments.configured', $paymentsConfigured);
         }
 
+        $service->set('security.rate_limits', $rateLimits);
+
         // Handle visual customization settings
         foreach (['primary_color', 'text_color', 'surface_color', 'border_color', 'muted_color'] as $colorKey) {
             if (isset($visual[$colorKey])) {
@@ -145,6 +188,8 @@ class SettingsController extends AbstractJsonController
         }
 
         $baseCurrency = ConfigHelper::getBaseCurrency();
+
+        // Use the values we just saved (don't re-read from database to avoid race conditions)
 
         // Always return current values from database (not just what was sent)
         return $this->respond([
@@ -167,6 +212,21 @@ class SettingsController extends AbstractJsonController
                     'muted_color'   => (string) $service->get('visual.muted_color', ''),
                 ],
                 'visual_defaults' => $this->getTemplateDefaults(),
+                'security' => [
+                    'rate_limits' => [
+                        'checkout_ip_limit'      => $rateLimits['checkout_ip_limit'],
+                        'checkout_email_limit'   => $rateLimits['checkout_email_limit'],
+                        'checkout_session_limit' => $rateLimits['checkout_session_limit'],
+                        'checkout_window_minutes' => $rateLimits['checkout_window'] > 0
+                            ? (int) ceil($rateLimits['checkout_window'] / 60)
+                            : 0,
+                        'offline_ip_limit'    => $rateLimits['offline_ip_limit'],
+                        'offline_email_limit' => $rateLimits['offline_email_limit'],
+                        'offline_window_minutes' => $rateLimits['offline_window'] > 0
+                            ? (int) ceil($rateLimits['offline_window'] / 60)
+                            : 0,
+                    ],
+                ],
             ],
         ]);
     }
@@ -186,6 +246,103 @@ class SettingsController extends AbstractJsonController
         }
 
         return (array) $data;
+    }
+
+    /**
+     * Normalise rate limit payload into a stored structure (windows in seconds).
+     *
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $existing
+     *
+     * @return array<string, int>
+     */
+    private function normaliseRateLimits(array $input, array $existing = []): array
+    {
+        // Temporary debug hook to trace incoming payload during QA.
+        if (getenv('NXP_EASYCART_DEBUG_RATELIMIT') === '1') {
+            try {
+                error_log('RateLimit input: ' . json_encode($input, JSON_UNESCAPED_SLASHES));
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        $defaults = $this->getDefaultRateLimits();
+
+        $checkoutWindowMinutes = array_key_exists('checkout_window_minutes', $input)
+            ? $input['checkout_window_minutes']
+            : (isset($existing['checkout_window']) ? (int) $existing['checkout_window'] / 60 : $defaults['checkout_window'] / 60);
+
+        $offlineWindowMinutes = array_key_exists('offline_window_minutes', $input)
+            ? $input['offline_window_minutes']
+            : (isset($existing['offline_window']) ? (int) $existing['offline_window'] / 60 : $defaults['offline_window'] / 60);
+
+        return [
+            'checkout_ip_limit'      => $this->sanitiseLimit(
+                array_key_exists('checkout_ip_limit', $input) ? $input['checkout_ip_limit'] : ($existing['checkout_ip_limit'] ?? null),
+                $defaults['checkout_ip_limit']
+            ),
+            'checkout_email_limit'   => $this->sanitiseLimit(
+                array_key_exists('checkout_email_limit', $input) ? $input['checkout_email_limit'] : ($existing['checkout_email_limit'] ?? null),
+                $defaults['checkout_email_limit']
+            ),
+            'checkout_session_limit' => $this->sanitiseLimit(
+                array_key_exists('checkout_session_limit', $input) ? $input['checkout_session_limit'] : ($existing['checkout_session_limit'] ?? null),
+                $defaults['checkout_session_limit']
+            ),
+            'checkout_window'        => $this->sanitiseWindowSeconds($checkoutWindowMinutes, $defaults['checkout_window']),
+            'offline_ip_limit'       => $this->sanitiseLimit(
+                array_key_exists('offline_ip_limit', $input) ? $input['offline_ip_limit'] : ($existing['offline_ip_limit'] ?? null),
+                $defaults['offline_ip_limit']
+            ),
+            'offline_email_limit'    => $this->sanitiseLimit(
+                array_key_exists('offline_email_limit', $input) ? $input['offline_email_limit'] : ($existing['offline_email_limit'] ?? null),
+                $defaults['offline_email_limit']
+            ),
+            'offline_window'         => $this->sanitiseWindowSeconds($offlineWindowMinutes, $defaults['offline_window']),
+        ];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function getDefaultRateLimits(): array
+    {
+        return [
+            'checkout_ip_limit'      => 10,
+            'checkout_email_limit'   => 5,
+            'checkout_session_limit' => 15,
+            'checkout_window'        => 600,
+            'offline_ip_limit'       => 3,
+            'offline_email_limit'    => 3,
+            'offline_window'         => 1800,
+        ];
+    }
+
+    private function sanitiseLimit($value, int $default): int
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        $int = (int) $value;
+
+        return $int >= 0 ? $int : $default;
+    }
+
+    private function sanitiseWindowSeconds($minutesValue, int $default): int
+    {
+        if ($minutesValue === null || $minutesValue === '') {
+            return $default;
+        }
+
+        $minutes = (int) $minutesValue;
+
+        if ($minutes < 0) {
+            return $default;
+        }
+
+        return $minutes * 60;
     }
 
     private function getService(): SettingsService

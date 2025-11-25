@@ -32,6 +32,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Site\Service\Router as EasyCartRouter;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
@@ -241,6 +242,13 @@ return new class () implements ServiceProviderInterface {
         $container->set(
             CacheService::class,
             static fn (Container $container): CacheService => new CacheService(
+                $container->get(CacheControllerFactoryInterface::class)
+            )
+        );
+
+        $container->set(
+            RateLimiter::class,
+            static fn (Container $container): RateLimiter => new RateLimiter(
                 $container->get(CacheControllerFactoryInterface::class)
             )
         );

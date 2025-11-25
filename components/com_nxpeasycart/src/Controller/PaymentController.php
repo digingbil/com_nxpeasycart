@@ -4,6 +4,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Controller;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
@@ -16,6 +17,9 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
+use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -35,6 +39,7 @@ class PaymentController extends BaseController
     {
         $app   = Factory::getApplication();
         $input = $app->input;
+        $session = $app->getSession();
 
         if (!$this->hasValidToken()) {
             $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
@@ -42,6 +47,22 @@ class PaymentController extends BaseController
 
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
         $gateway = isset($payload['gateway']) ? strtolower((string) $payload['gateway']) : 'stripe';
+
+        if ($this->honeypotTripped($payload)) {
+            $this->logSecurityEvent('checkout_honeypot', [
+                'ip'    => $this->getClientIp(),
+                'email' => isset($payload['email']) ? (string) $payload['email'] : '',
+            ]);
+
+            $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_RATE_LIMITED')], 400);
+        }
+
+        $this->enforceCheckoutRateLimits(
+            $payload,
+            $gateway,
+            $this->getClientIp(),
+            method_exists($session, 'getId') ? (string) $session->getId() : ''
+        );
 
         if (!in_array($gateway, ['stripe', 'paypal', 'cod', 'bank_transfer'], true)) {
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
@@ -596,5 +617,248 @@ class PaymentController extends BaseController
                 );
             }
         }
+    }
+
+    /**
+     * Apply rate limits to checkout attempts.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function enforceCheckoutRateLimits(array $payload, string $gateway, string $clientIp, string $sessionId): void
+    {
+        $limiter = $this->getRateLimiter();
+
+        if (!$limiter) {
+            return;
+        }
+
+        $email = strtolower(trim((string) ($payload['email'] ?? '')));
+        $limits = $this->getRateLimitConfig();
+
+        $checkoutWindow = $limits['checkout_window'] ?? 600;
+        $offlineWindow  = $limits['offline_window']  ?? 1800;
+
+        $checks = [
+            [
+                'key'     => 'checkout:ip:' . ($clientIp !== '' ? $clientIp : 'unknown'),
+                'limit'   => $limits['checkout_ip_limit'] ?? 10,
+                'window'  => $checkoutWindow,
+                'action'  => 'checkout_rate_limited',
+            ],
+            [
+                'key'     => 'checkout:session:' . ($sessionId !== '' ? $sessionId : 'anon'),
+                'limit'   => $limits['checkout_session_limit'] ?? 15,
+                'window'  => $checkoutWindow,
+                'action'  => 'checkout_rate_limited',
+            ],
+            [
+                'key'     => $email !== '' ? 'checkout:email:' . $email : '',
+                'limit'   => $limits['checkout_email_limit'] ?? 5,
+                'window'  => $checkoutWindow,
+                'action'  => 'checkout_rate_limited',
+            ],
+        ];
+
+        if (\in_array($gateway, ['cod', 'bank_transfer'], true)) {
+            $checks[] = [
+                'key'    => 'checkout:offline:ip:' . ($clientIp !== '' ? $clientIp : 'unknown'),
+                'limit'  => $limits['offline_ip_limit'] ?? 3,
+                'window' => $offlineWindow,
+                'action' => 'checkout_offline_rate_limited',
+            ];
+
+            $checks[] = [
+                'key'    => $email !== '' ? 'checkout:offline:email:' . $email : '',
+                'limit'  => $limits['offline_email_limit'] ?? 3,
+                'window' => $offlineWindow,
+                'action' => 'checkout_offline_rate_limited',
+            ];
+        }
+
+        foreach ($checks as $check) {
+            if ($check['key'] === '' || (int) $check['limit'] <= 0 || (int) $check['window'] <= 0) {
+                continue;
+            }
+
+            if (!$limiter->hit($check['key'], (int) $check['limit'], (int) $check['window'])) {
+                $this->logSecurityEvent($check['action'], ['ip' => $clientIp, 'email' => $email]);
+                $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_RATE_LIMITED')], 429);
+            }
+        }
+    }
+
+    /**
+     * Return a shared rate limiter instance.
+     */
+    private function getRateLimiter(): ?RateLimiter
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(RateLimiter::class)) {
+            try {
+                return $container->get(RateLimiter::class);
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        try {
+            if ($container->has(CacheControllerFactoryInterface::class)) {
+                return new RateLimiter($container->get(CacheControllerFactoryInterface::class));
+            }
+        } catch (\Throwable $exception) {
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Lightweight honeypot check.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function honeypotTripped(array $payload): bool
+    {
+        $traps = [
+            'company_website',
+            'website',
+            'url',
+            'honeypot',
+        ];
+
+        foreach ($traps as $trap) {
+            if (!empty($payload[$trap])) {
+                $value = \is_array($payload[$trap]) ? implode('', $payload[$trap]) : (string) $payload[$trap];
+
+                if (trim($value) !== '') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function getClientIp(): string
+    {
+        $server = Factory::getApplication()->input->server;
+        $ip     = (string) $server->getString('REMOTE_ADDR', '');
+
+        return trim($ip);
+    }
+
+    /**
+     * Record a security-related audit event when possible.
+     */
+    private function logSecurityEvent(string $action, array $context = []): void
+    {
+        try {
+            $audit = $this->getAuditService();
+
+            if (!$audit) {
+                return;
+            }
+
+            $userId = null;
+
+            try {
+                $identity = Factory::getApplication()->getIdentity();
+                $userId   = $identity && !$identity->guest ? (int) $identity->id : null;
+            } catch (\Throwable $exception) {
+                $userId = null;
+            }
+
+            $audit->record('security', 0, $action, $context, $userId);
+        } catch (\Throwable $exception) {
+            // Swallow logging failures to avoid blocking checkout.
+        }
+    }
+
+    private function getAuditService(): ?AuditService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(AuditService::class)) {
+            try {
+                return $container->get(AuditService::class);
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve rate limit configuration with sensible defaults.
+     *
+     * @return array<string, int>
+     */
+    private function getRateLimitConfig(): array
+    {
+        $defaults = [
+            'checkout_ip_limit'      => 10,
+            'checkout_email_limit'   => 5,
+            'checkout_session_limit' => 15,
+            'checkout_window'        => 600,
+            'offline_ip_limit'       => 3,
+            'offline_email_limit'    => 3,
+            'offline_window'         => 1800,
+        ];
+
+        try {
+            $service = $this->getSettingsService();
+            $stored  = $service ? (array) $service->get('security.rate_limits', []) : [];
+        } catch (\Throwable $exception) {
+            $stored = [];
+        }
+
+        return [
+            'checkout_ip_limit'      => $this->sanitiseLimit($stored['checkout_ip_limit'] ?? null, $defaults['checkout_ip_limit']),
+            'checkout_email_limit'   => $this->sanitiseLimit($stored['checkout_email_limit'] ?? null, $defaults['checkout_email_limit']),
+            'checkout_session_limit' => $this->sanitiseLimit($stored['checkout_session_limit'] ?? null, $defaults['checkout_session_limit']),
+            'checkout_window'        => $this->sanitiseWindow($stored['checkout_window'] ?? null, $defaults['checkout_window']),
+            'offline_ip_limit'       => $this->sanitiseLimit($stored['offline_ip_limit'] ?? null, $defaults['offline_ip_limit']),
+            'offline_email_limit'    => $this->sanitiseLimit($stored['offline_email_limit'] ?? null, $defaults['offline_email_limit']),
+            'offline_window'         => $this->sanitiseWindow($stored['offline_window'] ?? null, $defaults['offline_window']),
+        ];
+    }
+
+    private function sanitiseLimit($value, int $default): int
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        $int = (int) $value;
+
+        return $int >= 0 ? $int : $default;
+    }
+
+    private function sanitiseWindow($value, int $default): int
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        $int = (int) $value;
+
+        return $int >= 0 ? $int : $default;
+    }
+
+    private function getSettingsService(): ?SettingsService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(SettingsService::class)) {
+            try {
+                return $container->get(SettingsService::class);
+            } catch (\Throwable $exception) {
+                return null;
+            }
+        }
+
+        return null;
     }
 }

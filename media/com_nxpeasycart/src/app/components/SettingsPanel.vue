@@ -44,6 +44,21 @@
             <button
                 type="button"
                 class="nxp-ec-settings-tab"
+                :class="{ 'is-active': activeTab === 'security' }"
+                @click="activeTab = 'security'"
+            >
+                {{
+                    __(
+                        "COM_NXPEASYCART_SETTINGS_TAB_SECURITY",
+                        "Security",
+                        [],
+                        "settingsTabSecurity"
+                    )
+                }}
+            </button>
+            <button
+                type="button"
+                class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'tax' }"
                 @click="activeTab = 'tax'"
             >
@@ -340,6 +355,263 @@
                                       "Save settings",
                                       [],
                                       "settingsGeneralSave"
+                                  )
+                        }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div v-else-if="activeTab === 'security'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
+                <h3>
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_SECURITY_TITLE",
+                            "Security & anti-spam",
+                            [],
+                            "settingsSecurityTitle"
+                        )
+                    }}
+                </h3>
+                <button
+                    class="nxp-ec-btn"
+                    type="button"
+                    @click="refreshGeneral"
+                    :disabled="settingsState.loading"
+                >
+                    {{
+                        __(
+                            "COM_NXPEASYCART_COUPONS_REFRESH",
+                            "Refresh",
+                            [],
+                            "settingsSecurityRefresh"
+                        )
+                    }}
+                </button>
+            </header>
+
+            <div
+                v-if="settingsState.error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
+            >
+                {{ settingsState.error }}
+            </div>
+
+            <form
+                v-else
+                class="nxp-ec-settings-form nxp-ec-settings-form--security"
+                @submit.prevent="saveSecurity"
+            >
+                <p class="nxp-ec-form-help">
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_SECURITY_LEAD",
+                            "Tighten checkout and offline payment limits to reduce bot spam. Set a value to 0 to disable a limit.",
+                            [],
+                            "settingsSecurityLead"
+                        )
+                    }}
+                </p>
+
+                <div class="nxp-ec-form-grid">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-checkout-window">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_CHECKOUT_WINDOW",
+                                    "Checkout window (minutes)",
+                                    [],
+                                    "settingsSecurityCheckoutWindow"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-checkout-window"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.checkoutWindowMinutes"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_CHECKOUT_WINDOW_HELP",
+                                    "Applies to all gateways; counts reset after this window.",
+                                    [],
+                                    "settingsSecurityCheckoutWindowHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-offline-window">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_OFFLINE_WINDOW",
+                                    "Offline payments window (minutes)",
+                                    [],
+                                    "settingsSecurityOfflineWindow"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-offline-window"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.offlineWindowMinutes"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_OFFLINE_WINDOW_HELP",
+                                    "Used for COD and bank transfer spam protection.",
+                                    [],
+                                    "settingsSecurityOfflineWindowHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="nxp-ec-form-grid">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-checkout-ip-limit">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_CHECKOUT_IP_LIMIT",
+                                    "Checkout attempts per IP",
+                                    [],
+                                    "settingsSecurityCheckoutIpLimit"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-checkout-ip-limit"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.checkoutIpLimit"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-checkout-email-limit">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_CHECKOUT_EMAIL_LIMIT",
+                                    "Checkout attempts per email",
+                                    [],
+                                    "settingsSecurityCheckoutEmailLimit"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-checkout-email-limit"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.checkoutEmailLimit"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-checkout-session-limit">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_CHECKOUT_SESSION_LIMIT",
+                                    "Checkout attempts per session",
+                                    [],
+                                    "settingsSecurityCheckoutSessionLimit"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-checkout-session-limit"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.checkoutSessionLimit"
+                        />
+                    </div>
+                </div>
+
+                <div class="nxp-ec-form-grid">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-offline-ip-limit">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_OFFLINE_IP_LIMIT",
+                                    "Offline attempts per IP",
+                                    [],
+                                    "settingsSecurityOfflineIpLimit"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-offline-ip-limit"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.offlineIpLimit"
+                        />
+                    </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-offline-email-limit">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_SECURITY_OFFLINE_EMAIL_LIMIT",
+                                    "Offline attempts per email",
+                                    [],
+                                    "settingsSecurityOfflineEmailLimit"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-offline-email-limit"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="securityDraft.offlineEmailLimit"
+                        />
+                    </div>
+                </div>
+
+                <div class="nxp-ec-settings-actions">
+                    <button
+                        class="nxp-ec-btn"
+                        type="button"
+                        @click="resetSecurity"
+                        :disabled="settingsState.saving"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CANCEL",
+                                "Cancel",
+                                [],
+                                "settingsSecurityCancel"
+                            )
+                        }}
+                    </button>
+                    <button
+                        class="nxp-ec-btn nxp-ec-btn--primary"
+                        type="submit"
+                        :disabled="settingsState.saving"
+                    >
+                        {{
+                            settingsState.saving
+                                ? __("JPROCESSING_REQUEST", "Saving…")
+                                : __(
+                                      "COM_NXPEASYCART_SETTINGS_SECURITY_SAVE",
+                                      "Save security",
+                                      [],
+                                      "settingsSecuritySave"
                                   )
                         }}
                     </button>
@@ -2025,6 +2297,16 @@ const settingsDraft = reactive({
     baseCurrency: "",
 });
 
+const securityDraft = reactive({
+    checkoutWindowMinutes: 10,
+    checkoutIpLimit: 10,
+    checkoutEmailLimit: 5,
+    checkoutSessionLimit: 15,
+    offlineWindowMinutes: 30,
+    offlineIpLimit: 3,
+    offlineEmailLimit: 3,
+});
+
 const taxDraft = reactive({
     id: null,
     country: "",
@@ -2102,6 +2384,7 @@ const applySettings = (values = {}) => {
     const store = values?.store ?? {};
     const payments = values?.payments ?? {};
     const visual = values?.visual ?? {};
+    const security = values?.security?.rate_limits ?? {};
 
     Object.assign(settingsDraft, {
         storeName: store.name ?? "",
@@ -2123,6 +2406,30 @@ const applySettings = (values = {}) => {
         surfaceColor: visual.surface_color ?? "",
         borderColor: visual.border_color ?? "",
         mutedColor: visual.muted_color ?? "",
+    });
+
+    Object.assign(securityDraft, {
+        checkoutWindowMinutes: Number.isFinite(Number(security.checkout_window_minutes))
+            ? Number(security.checkout_window_minutes)
+            : 10,
+        checkoutIpLimit: Number.isFinite(Number(security.checkout_ip_limit))
+            ? Number(security.checkout_ip_limit)
+            : 10,
+        checkoutEmailLimit: Number.isFinite(Number(security.checkout_email_limit))
+            ? Number(security.checkout_email_limit)
+            : 5,
+        checkoutSessionLimit: Number.isFinite(Number(security.checkout_session_limit))
+            ? Number(security.checkout_session_limit)
+            : 15,
+        offlineWindowMinutes: Number.isFinite(Number(security.offline_window_minutes))
+            ? Number(security.offline_window_minutes)
+            : 30,
+        offlineIpLimit: Number.isFinite(Number(security.offline_ip_limit))
+            ? Number(security.offline_ip_limit)
+            : 3,
+        offlineEmailLimit: Number.isFinite(Number(security.offline_email_limit))
+            ? Number(security.offline_email_limit)
+            : 3,
     });
 };
 
@@ -2198,6 +2505,31 @@ const saveGeneral = () => {
 };
 
 const resetGeneral = () => {
+    applySettings(settingsState.values ?? {});
+};
+
+const saveSecurity = () => {
+    const normalise = (value, fallback = 0) => {
+        const num = Number(value);
+        return Number.isFinite(num) && num >= 0 ? num : fallback;
+    };
+
+    emit("save-settings", {
+        security: {
+            rate_limits: {
+                checkout_window_minutes: normalise(securityDraft.checkoutWindowMinutes, 10),
+                checkout_ip_limit: normalise(securityDraft.checkoutIpLimit, 10),
+                checkout_email_limit: normalise(securityDraft.checkoutEmailLimit, 5),
+                checkout_session_limit: normalise(securityDraft.checkoutSessionLimit, 15),
+                offline_window_minutes: normalise(securityDraft.offlineWindowMinutes, 30),
+                offline_ip_limit: normalise(securityDraft.offlineIpLimit, 3),
+                offline_email_limit: normalise(securityDraft.offlineEmailLimit, 3),
+            },
+        },
+    });
+};
+
+const resetSecurity = () => {
     applySettings(settingsState.values ?? {});
 };
 

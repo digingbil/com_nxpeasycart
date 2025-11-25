@@ -115,6 +115,17 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
     <div class="nxp-ec-checkout__layout">
         <form class="nxp-ec-checkout__form" method="post" id="nxp-ec-checkout-form">
             <input type="hidden" name="<?php echo Session::getFormToken(); ?>" value="1" />
+            <div class="nxp-ec-checkout__field nxp-ec-checkout__field--honeypot" aria-hidden="true">
+                <label for="nxp-ec-checkout-company-website" class="visually-hidden">Company website</label>
+                <input
+                    type="text"
+                    name="company_website"
+                    id="nxp-ec-checkout-company-website"
+                    tabindex="-1"
+                    autocomplete="off"
+                    style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;"
+                />
+            </div>
             <fieldset>
                 <legend><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_CUSTOMER_DETAILS'); ?></legend>
                 <div class="nxp-ec-checkout__field">

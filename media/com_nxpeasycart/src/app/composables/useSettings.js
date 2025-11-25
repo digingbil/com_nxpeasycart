@@ -12,6 +12,7 @@ const normaliseSettings = (data = {}) => {
     const payments = data.payments ?? {};
     const visual = data.visual ?? {};
     const visualDefaults = data.visual_defaults ?? {};
+    const security = data.security?.rate_limits ?? {};
 
     const baseCurrency =
         typeof data.base_currency === "string" &&
@@ -43,6 +44,39 @@ const normaliseSettings = (data = {}) => {
             surface_color: visualDefaults.surface_color ?? "#ffffff",
             border_color: visualDefaults.border_color ?? "#e4e7ec",
             muted_color: visualDefaults.muted_color ?? "#6b7280",
+        },
+        security: {
+            rate_limits: {
+                checkout_ip_limit: Number.isFinite(Number(security.checkout_ip_limit))
+                    ? Number(security.checkout_ip_limit)
+                    : 10,
+                checkout_email_limit: Number.isFinite(Number(security.checkout_email_limit))
+                    ? Number(security.checkout_email_limit)
+                    : 5,
+                checkout_session_limit: Number.isFinite(Number(security.checkout_session_limit))
+                    ? Number(security.checkout_session_limit)
+                    : 15,
+                checkout_window_minutes: Number.isFinite(
+                    Number(security.checkout_window_minutes)
+                )
+                    ? Number(security.checkout_window_minutes)
+                    : Number.isFinite(Number(security.checkout_window))
+                      ? Math.max(0, Math.ceil(Number(security.checkout_window) / 60))
+                      : 10,
+                offline_ip_limit: Number.isFinite(Number(security.offline_ip_limit))
+                    ? Number(security.offline_ip_limit)
+                    : 3,
+                offline_email_limit: Number.isFinite(Number(security.offline_email_limit))
+                    ? Number(security.offline_email_limit)
+                    : 3,
+                offline_window_minutes: Number.isFinite(
+                    Number(security.offline_window_minutes)
+                )
+                    ? Number(security.offline_window_minutes)
+                    : Number.isFinite(Number(security.offline_window))
+                      ? Math.max(0, Math.ceil(Number(security.offline_window) / 60))
+                      : 30,
+            },
         },
     };
 };

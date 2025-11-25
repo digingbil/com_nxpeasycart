@@ -659,6 +659,8 @@ export default function mountCheckoutIsland(el) {
                         tax_cents: taxCents,
                         total_cents: total.value,
                     },
+                    // Honeypot kept blank intentionally; bots filling it trip server-side checks.
+                    company_website: "",
                     gateway,
                 };
 
