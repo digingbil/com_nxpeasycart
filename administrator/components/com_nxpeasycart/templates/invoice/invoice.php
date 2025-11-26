@@ -75,7 +75,7 @@ if (!empty($order['created'])) {
         <title><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_INVOICE_TITLE'), ENT_QUOTES, 'UTF-8'); ?></title>
         <style>
             body {
-                font-family: Arial, sans-serif;
+                font-family: "DejaVu Sans", Arial, sans-serif;
                 color: #1f2937;
                 font-size: 12px;
                 margin: 0;

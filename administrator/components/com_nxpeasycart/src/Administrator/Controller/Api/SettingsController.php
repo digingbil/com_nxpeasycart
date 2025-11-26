@@ -312,10 +312,10 @@ class SettingsController extends AbstractJsonController
             'checkout_ip_limit'      => 10,
             'checkout_email_limit'   => 5,
             'checkout_session_limit' => 15,
-            'checkout_window'        => 600,
-            'offline_ip_limit'       => 3,
-            'offline_email_limit'    => 3,
-            'offline_window'         => 1800,
+            'checkout_window'        => 900,
+            'offline_ip_limit'       => 10,
+            'offline_email_limit'    => 5,
+            'offline_window'         => 14400,
         ];
     }
 

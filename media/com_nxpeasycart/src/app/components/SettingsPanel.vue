@@ -2298,13 +2298,13 @@ const settingsDraft = reactive({
 });
 
 const securityDraft = reactive({
-    checkoutWindowMinutes: 10,
+    checkoutWindowMinutes: 15,
     checkoutIpLimit: 10,
     checkoutEmailLimit: 5,
     checkoutSessionLimit: 15,
-    offlineWindowMinutes: 30,
-    offlineIpLimit: 3,
-    offlineEmailLimit: 3,
+    offlineWindowMinutes: 240,
+    offlineIpLimit: 10,
+    offlineEmailLimit: 5,
 });
 
 const taxDraft = reactive({
@@ -2411,7 +2411,7 @@ const applySettings = (values = {}) => {
     Object.assign(securityDraft, {
         checkoutWindowMinutes: Number.isFinite(Number(security.checkout_window_minutes))
             ? Number(security.checkout_window_minutes)
-            : 10,
+            : 15,
         checkoutIpLimit: Number.isFinite(Number(security.checkout_ip_limit))
             ? Number(security.checkout_ip_limit)
             : 10,
@@ -2423,13 +2423,13 @@ const applySettings = (values = {}) => {
             : 15,
         offlineWindowMinutes: Number.isFinite(Number(security.offline_window_minutes))
             ? Number(security.offline_window_minutes)
-            : 30,
+            : 240,
         offlineIpLimit: Number.isFinite(Number(security.offline_ip_limit))
             ? Number(security.offline_ip_limit)
-            : 3,
+            : 10,
         offlineEmailLimit: Number.isFinite(Number(security.offline_email_limit))
             ? Number(security.offline_email_limit)
-            : 3,
+            : 5,
     });
 };
 
@@ -2517,13 +2517,13 @@ const saveSecurity = () => {
     emit("save-settings", {
         security: {
             rate_limits: {
-                checkout_window_minutes: normalise(securityDraft.checkoutWindowMinutes, 10),
+                checkout_window_minutes: normalise(securityDraft.checkoutWindowMinutes, 15),
                 checkout_ip_limit: normalise(securityDraft.checkoutIpLimit, 10),
                 checkout_email_limit: normalise(securityDraft.checkoutEmailLimit, 5),
                 checkout_session_limit: normalise(securityDraft.checkoutSessionLimit, 15),
-                offline_window_minutes: normalise(securityDraft.offlineWindowMinutes, 30),
-                offline_ip_limit: normalise(securityDraft.offlineIpLimit, 3),
-                offline_email_limit: normalise(securityDraft.offlineEmailLimit, 3),
+                offline_window_minutes: normalise(securityDraft.offlineWindowMinutes, 240),
+                offline_ip_limit: normalise(securityDraft.offlineIpLimit, 10),
+                offline_email_limit: normalise(securityDraft.offlineEmailLimit, 5),
             },
         },
     });

@@ -68,7 +68,8 @@ class PaymentController extends BaseController
             $payload,
             $gateway,
             $this->getClientIp(),
-            method_exists($session, 'getId') ? (string) $session->getId() : ''
+            method_exists($session, 'getId') ? (string) $session->getId() : '',
+            $identity && !$identity->guest
         );
 
         if (!in_array($gateway, ['stripe', 'paypal', 'cod', 'bank_transfer'], true)) {
@@ -664,7 +665,13 @@ class PaymentController extends BaseController
      *
      * @param array<string, mixed> $payload
      */
-    private function enforceCheckoutRateLimits(array $payload, string $gateway, string $clientIp, string $sessionId): void
+    private function enforceCheckoutRateLimits(
+        array $payload,
+        string $gateway,
+        string $clientIp,
+        string $sessionId,
+        bool $isAuthenticated = false
+    ): void
     {
         $limiter = $this->getRateLimiter();
 
@@ -677,6 +684,43 @@ class PaymentController extends BaseController
 
         $checkoutWindow = $limits['checkout_window'] ?? 600;
         $offlineWindow  = $limits['offline_window']  ?? 1800;
+
+        // Relax limits for authenticated users to reduce friction while keeping guest protection intact.
+        $authFactor = $isAuthenticated ? 5 : 1;
+        $relaxLimit = static function ($value, int $factor): int {
+            if (!\is_numeric($value)) {
+                return 0;
+            }
+
+            $limit = (int) $value;
+
+            if ($limit <= 0) {
+                return 0;
+            }
+
+            return max($limit, (int) ceil($limit * $factor));
+        };
+        $relaxWindow = static function ($value, int $factor): int {
+            if (!\is_numeric($value)) {
+                return 0;
+            }
+
+            $window = (int) $value;
+
+            if ($window <= 0) {
+                return 0;
+            }
+
+            return max($window, (int) ceil($window * $factor));
+        };
+
+        $checkoutWindow = $relaxWindow($checkoutWindow, $authFactor);
+        $offlineWindow  = $relaxWindow($offlineWindow, $authFactor);
+        $limits['checkout_ip_limit']      = $relaxLimit($limits['checkout_ip_limit'] ?? 0, $authFactor);
+        $limits['checkout_email_limit']   = $relaxLimit($limits['checkout_email_limit'] ?? 0, $authFactor);
+        $limits['checkout_session_limit'] = $relaxLimit($limits['checkout_session_limit'] ?? 0, $authFactor);
+        $limits['offline_ip_limit']       = $relaxLimit($limits['offline_ip_limit'] ?? 0, $authFactor);
+        $limits['offline_email_limit']    = $relaxLimit($limits['offline_email_limit'] ?? 0, $authFactor);
 
         $checks = [
             [
@@ -841,10 +885,10 @@ class PaymentController extends BaseController
             'checkout_ip_limit'      => 10,
             'checkout_email_limit'   => 5,
             'checkout_session_limit' => 15,
-            'checkout_window'        => 600,
-            'offline_ip_limit'       => 3,
-            'offline_email_limit'    => 3,
-            'offline_window'         => 1800,
+            'checkout_window'        => 900,
+            'offline_ip_limit'       => 10,
+            'offline_email_limit'    => 5,
+            'offline_window'         => 14400,
         ];
 
         try {
