@@ -811,19 +811,21 @@ class PaymentController extends BaseController
             'honeypot',
         ];
 
-        // Require presence and emptiness of all trap fields
+        // Backward-compatible honeypot: if any trap field is present and non-empty, trip.
+        // If traps are absent (older clients/cached JS), do not trip.
+        $foundTrap = false;
         foreach ($traps as $trap) {
-            if (!array_key_exists($trap, $payload)) {
-                return true; // Missing trap field is suspicious
-            }
-
-            $raw = $payload[$trap];
-            $value = is_array($raw) ? implode('', $raw) : (string) $raw;
-            if (trim($value) !== '') {
-                return true; // Filled trap trips the honeypot
+            if (array_key_exists($trap, $payload)) {
+                $foundTrap = true;
+                $raw = $payload[$trap];
+                $value = is_array($raw) ? implode('', $raw) : (string) $raw;
+                if (trim($value) !== '') {
+                    return true; // Filled trap trips the honeypot
+                }
             }
         }
 
+        // No traps found or all present traps were empty => allow
         return false;
     }
 
