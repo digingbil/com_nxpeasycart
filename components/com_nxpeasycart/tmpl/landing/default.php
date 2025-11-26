@@ -40,6 +40,7 @@ $ctaLink     = \is_string($hero['cta']['link'] ?? null)
     ? $hero['cta']['link']
     : 'index.php?option=com_nxpeasycart&view=category';
 $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CTA_LABEL_DEFAULT');
+$ctaEnabled  = isset($hero['cta']['enabled']) ? (bool) $hero['cta']['enabled'] : true;
 ?>
 
 <section
@@ -64,11 +65,13 @@ $ctaLabel    = $hero['cta']['label'] ?? Text::_('COM_NXPEASYCART_LANDING_HERO_CT
                             <?php echo htmlspecialchars($hero['subtitle'], ENT_QUOTES, 'UTF-8'); ?>
                         </p>
                     <?php endif; ?>
-                    <div class="nxp-ec-landing__actions">
-                        <a class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($ctaLink, ENT_QUOTES, 'UTF-8'); ?>">
-                            <?php echo htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8'); ?>
-                        </a>
-                    </div>
+                    <?php if ($ctaEnabled) : ?>
+                        <div class="nxp-ec-landing__actions">
+                            <a class="<?php echo htmlspecialchars($primaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($ctaLink, ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8'); ?>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <form class="nxp-ec-landing__search" action="<?php echo htmlspecialchars($searchRoute, ENT_QUOTES, 'UTF-8'); ?>" method="get">
                     <label class="sr-only" for="nxp-ec-landing-search">

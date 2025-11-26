@@ -78,11 +78,16 @@ class LandingModel extends BaseDatabaseModel
             $ctaLink = 'index.php?option=com_nxpeasycart&view=category';
         }
 
+        $ctaEnabled = $params->get('hero_cta_enabled', 1);
+        $ctaEnabled = \is_numeric($ctaEnabled) ? (int) $ctaEnabled : (int) (bool) $ctaEnabled;
+        $ctaEnabled = $ctaEnabled > 0;
+
         return [
             'eyebrow' => Text::_('COM_NXPEASYCART_LANDING_EYEBROW'),
             'title'    => $title,
             'subtitle' => $subtitle,
             'cta'      => [
+                'enabled' => $ctaEnabled,
                 'label' => $ctaLabel,
                 'link'  => $ctaLink,
             ],

@@ -35,6 +35,17 @@
                 description="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_LINK_DESC"
                 filter="string"
             />
+            <field
+                name="hero_cta_enabled"
+                type="radio"
+                label="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_ENABLED"
+                description="COM_NXPEASYCART_LANDING_FIELD_HERO_CTA_ENABLED_DESC"
+                default="1"
+                class="btn-group btn-group-yesno"
+            >
+                <option value="1">JYES</option>
+                <option value="0">JNO</option>
+            </field>
         </fieldset>
 
         <fieldset name="search" label="COM_NXPEASYCART_LANDING_FIELDSET_SEARCH">

@@ -27,6 +27,14 @@ export function mountLandingIsland(el) {
     };
     const cart = payload.cart || {};
     const cta = {
+        enabled:
+            typeof hero?.cta?.enabled === "boolean"
+                ? hero.cta.enabled
+                : Boolean(
+                      typeof hero?.cta?.enabled !== "undefined"
+                          ? hero?.cta?.enabled
+                          : true
+                  ),
         label: hero?.cta?.label || "Shop Best Sellers",
         link: hero?.cta?.link || searchAction,
     };

@@ -86,6 +86,10 @@ const hero = computed(() => ({
     subtitle: props.hero?.subtitle || "",
 }));
 const cta = computed(() => ({
+    enabled:
+        typeof props.cta?.enabled === "boolean"
+            ? props.cta.enabled
+            : true,
     label: props.cta?.label || "Shop Best Sellers",
     link: props.cta?.link || props.searchAction || DEFAULT_SEARCH_ACTION,
 }));

@@ -44,6 +44,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
     - Persistence now uses `$carts->persist()` (CartService) instead of the non-existent `$session->persist()` on CartSessionService.
     - Response now uses `$presenter->hydrate()` to return the full cart with summary, replacing the non-existent `summarise()` method.
 - **Security and data consistency**: storefront cart/payment endpoints now accept CSRF via form token _or_ `X-CSRF-Token`, hide internal exception messages, and pass server locale/currency into all islands to keep money formatting identical between PHP and JS.
+- **Shop landing CTA toggle**: the Shop Landing menu item now includes a “Show primary CTA” toggle; when disabled, the hero CTA button is omitted on the storefront landing page while keeping the label/link settings available for later use.
 - **Storefront islands refactor**: the monolithic site bundle is split into per-island modules, lazy-mounted via `IntersectionObserver`, and backed by a shared API client + utilities (CSRF injection, money formatting, retries) to reduce TTI on pages that only need one island.
 - **TemplateAdapter caching**: template token resolution is memoised per request to avoid repeated palette parsing when multiple views touch template defaults.
 - **Hashed site bundle**: Vite now emits hashed JS/CSS with a manifest; `joomla.asset.json` points at the hashed entry with `version: auto` for reliable cache-busting in production.

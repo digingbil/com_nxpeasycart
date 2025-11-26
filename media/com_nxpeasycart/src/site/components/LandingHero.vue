@@ -11,7 +11,7 @@
             >
                 {{ hero.subtitle }}
             </p>
-            <div class="nxp-ec-landing__actions">
+            <div v-if="cta.enabled" class="nxp-ec-landing__actions">
                 <a class="nxp-ec-btn nxp-ec-btn--primary" :href="cta.link">
                     {{ cta.label }}
                 </a>
@@ -44,6 +44,7 @@ const props = defineProps({
     cta: {
         type: Object,
         default: () => ({
+            enabled: true,
             label: "Shop Now",
             link: "#",
         }),
