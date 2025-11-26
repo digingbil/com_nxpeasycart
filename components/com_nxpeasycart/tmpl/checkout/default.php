@@ -14,6 +14,7 @@ $cart          = $checkout['cart']           ?? ['items' => [], 'summary' => []]
 $shippingRules = $checkout['shipping_rules'] ?? [];
 $taxRates      = $checkout['tax_rates']      ?? [];
 $settings      = $checkout['settings']       ?? [];
+$userPrefill   = $checkout['user']           ?? [];
 $phoneRequired = !empty($settings['checkout_phone_required']);
 $phonePlaceholder = $phoneRequired
     ? Text::_('COM_NXPEASYCART_CHECKOUT_PHONE_PLACEHOLDER_REQUIRED')
@@ -29,6 +30,7 @@ $payload = htmlspecialchars(
             'settings'       => $settings,
             'payments'       => $checkout['payments'] ?? [],
             'token'          => Session::getFormToken(),
+            'prefill'        => $userPrefill,
             'endpoints'      => [
                 'checkout'      => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
                 'payment'       => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
@@ -70,6 +72,9 @@ $labels = [
     'phone_required'          => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_REQUIRED'),
     'phone_invalid'           => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_PHONE_INVALID'),
     'shipping'                => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING'),
+    'shipping_address'        => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING_ADDRESS'),
+    'ship_to_different'       => Text::_('COM_NXPEASYCART_CHECKOUT_SHIP_TO_DIFFERENT'),
+    'shipping_required'       => Text::_('COM_NXPEASYCART_ERROR_CHECKOUT_SHIPPING_REQUIRED'),
     'shipping_select_country' => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING_SELECT_COUNTRY'),
     'shipping_no_rules'       => Text::_('COM_NXPEASYCART_CHECKOUT_SHIPPING_NO_RULES_FOR_COUNTRY'),
     'payment_method'          => Text::_('COM_NXPEASYCART_CHECKOUT_PAYMENT_METHOD'),

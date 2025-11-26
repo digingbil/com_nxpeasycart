@@ -68,6 +68,7 @@ class CheckoutModel extends BaseDatabaseModel
         );
         $settings = $this->getSettingsService()->all();
         $payments = $this->getPaymentService()->getConfig();
+        $prefill = $this->getUserPrefill();
 
         $this->payload = [
             'cart'           => $cart,
@@ -76,6 +77,10 @@ class CheckoutModel extends BaseDatabaseModel
             'settings'       => $settings,
             'payments'       => $payments,
         ];
+
+        if (!empty($prefill)) {
+            $this->payload['user'] = $prefill;
+        }
 
         return $this->payload;
     }
@@ -144,5 +149,47 @@ class CheckoutModel extends BaseDatabaseModel
         }
 
         return new CacheService($container->get(\Joomla\CMS\Cache\CacheControllerFactoryInterface::class));
+    }
+
+    /**
+     * Build a lightweight prefill array for authenticated users.
+     *
+     * @return array<string, mixed>
+     */
+    private function getUserPrefill(): array
+    {
+        try {
+            $user = Factory::getApplication()->getIdentity();
+        } catch (\Throwable $exception) {
+            return [];
+        }
+
+        if (!$user || $user->guest) {
+            return [];
+        }
+
+        $prefill = [];
+
+        $userId = (int) ($user->id ?? 0);
+        if ($userId > 0) {
+            $prefill['id'] = $userId;
+        }
+
+        $email = (string) ($user->email ?? '');
+        $email = trim($email);
+
+        if ($email !== '') {
+            $prefill['email'] = $email;
+        }
+
+        $fullName = trim((string) ($user->name ?? ''));
+
+        if ($fullName !== '') {
+            $parts = preg_split('/\s+/', $fullName) ?: [];
+            $prefill['first_name'] = $parts[0] ?? '';
+            $prefill['last_name']  = \count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : '';
+        }
+
+        return $prefill;
     }
 }

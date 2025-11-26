@@ -16,6 +16,7 @@ export default function mountCheckoutIsland(el) {
     const currencyAttr = (el.dataset.nxpCurrency || "").trim() || undefined;
     const payload = parsePayload(el.dataset.nxpCheckout, {});
     const labelsPayload = parsePayload(el.dataset.nxpLabels, {});
+    const prefill = payload.prefill || payload.user || {};
     const cart = payload.cart || { items: [], summary: {} };
     const shippingRules = payload.shipping_rules || [];
     const taxRates = payload.tax_rates || [];
@@ -170,18 +171,18 @@ export default function mountCheckoutIsland(el) {
                     >{{ country.name }}</option>
                   </select>
                 </div>
-                <div class="nxp-ec-checkout__field" v-if="showRegionField">
-                  <label for="nxp-ec-region">{{ regionLabel }}</label>
+                <div class="nxp-ec-checkout__field" v-if="showBillingRegionField">
+                  <label for="nxp-ec-region">{{ billingRegionLabel }}</label>
                   <select
                     id="nxp-ec-region"
                     v-model="model.billing.region_code"
-                    :required="regionRequired"
+                    :required="billingRegionRequired"
                     autocomplete="address-level1"
                     class="nxp-ec-checkout__select"
                   >
-                    <option value="">{{ regionPlaceholder }}</option>
+                    <option value="">{{ billingRegionPlaceholder }}</option>
                     <option
-                      v-for="region in availableRegions"
+                      v-for="region in billingAvailableRegions"
                       :key="region.code"
                       :value="region.code"
                     >{{ region.name }}</option>
@@ -191,13 +192,123 @@ export default function mountCheckoutIsland(el) {
             </fieldset>
 
             <fieldset>
+              <legend>{{ labels.shipping_address }}</legend>
+              <div class="nxp-ec-checkout__field">
+                <label class="nxp-ec-checkout__checkbox">
+                  <input type="checkbox" v-model="model.shipToDifferent" />
+                  {{ labels.ship_to_different }}
+                </label>
+              </div>
+
+              <div v-if="model.shipToDifferent">
+                <div class="nxp-ec-checkout__grid">
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-first-name">{{ labels.first_name }}</label>
+                    <input
+                      id="nxp-ec-shipping-first-name"
+                      type="text"
+                      v-model="model.shipping.first_name"
+                      required
+                      autocomplete="shipping given-name"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-last-name">{{ labels.last_name }}</label>
+                    <input
+                      id="nxp-ec-shipping-last-name"
+                      type="text"
+                      v-model="model.shipping.last_name"
+                      required
+                      autocomplete="shipping family-name"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-phone">{{ labels.phone }}</label>
+                    <input
+                      id="nxp-ec-shipping-phone"
+                      type="tel"
+                      v-model.trim="model.shipping.phone"
+                      :placeholder="phonePlaceholder"
+                      inputmode="tel"
+                      autocomplete="shipping tel"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field nxp-ec-checkout__field--wide">
+                    <label for="nxp-ec-shipping-address">{{ labels.address }}</label>
+                    <input
+                      id="nxp-ec-shipping-address"
+                      type="text"
+                      v-model="model.shipping.address_line1"
+                      required
+                      autocomplete="shipping street-address"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-city">{{ labels.city }}</label>
+                    <input
+                      id="nxp-ec-shipping-city"
+                      type="text"
+                      v-model="model.shipping.city"
+                      required
+                      autocomplete="shipping address-level2"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-postcode">{{ labels.postcode }}</label>
+                    <input
+                      id="nxp-ec-shipping-postcode"
+                      type="text"
+                      v-model="model.shipping.postcode"
+                      required
+                      autocomplete="shipping postal-code"
+                    />
+                  </div>
+                  <div class="nxp-ec-checkout__field">
+                    <label for="nxp-ec-shipping-country">{{ labels.country }}</label>
+                    <select
+                      id="nxp-ec-shipping-country"
+                      v-model="model.shipping.country_code"
+                      required
+                      autocomplete="shipping country"
+                      class="nxp-ec-checkout__select"
+                    >
+                      <option value="" disabled>{{ labels.select_country }}</option>
+                      <option
+                        v-for="country in countries"
+                        :key="country.code"
+                        :value="country.code"
+                      >{{ country.name }}</option>
+                    </select>
+                  </div>
+                  <div class="nxp-ec-checkout__field" v-if="showShippingRegionField">
+                    <label for="nxp-ec-shipping-region">{{ shippingRegionLabel }}</label>
+                    <select
+                      id="nxp-ec-shipping-region"
+                      v-model="model.shipping.region_code"
+                      :required="shippingRegionRequired"
+                      autocomplete="shipping address-level1"
+                      class="nxp-ec-checkout__select"
+                    >
+                      <option value="">{{ shippingRegionPlaceholder }}</option>
+                      <option
+                        v-for="region in shippingAvailableRegions"
+                        :key="region.code"
+                        :value="region.code"
+                      >{{ region.name }}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset>
               <legend>{{ labels.shipping }}</legend>
               <p class="nxp-ec-checkout__radio-group">
-                <template v-if="!model.billing.country_code">
+                <template v-if="!destinationCountry">
                   <span class="nxp-ec-checkout__notice">{{ labels.shipping_select_country }}</span>
                 </template>
                 <template v-else-if="applicableShippingRules.length === 0">
-                  <span class="nxp-ec-checkout__notice">{{ formatShippingNoRules(getCountryName(model.billing.country_code)) }}</span>
+                  <span class="nxp-ec-checkout__notice">{{ formatShippingNoRules(getCountryName(destinationCountry)) }}</span>
                 </template>
                 <template v-else>
                   <label
@@ -322,6 +433,9 @@ export default function mountCheckoutIsland(el) {
                 return Boolean(Number(value || 0));
             };
 
+            const normaliseString = (value) =>
+                typeof value === "string" ? value.trim() : "";
+
             const phoneRequired = normaliseBool(
                 settings.checkout_phone_required ??
                     settings.checkout?.phone_required ??
@@ -337,11 +451,15 @@ export default function mountCheckoutIsland(el) {
             // Country/Region data
             const countries = getCountries();
 
+            const initialEmail = normaliseString(prefill.email || "");
+            const initialFirstName = normaliseString(prefill.first_name || "");
+            const initialLastName = normaliseString(prefill.last_name || "");
+
             const state = reactive({
-                email: "",
+                email: initialEmail,
                 billing: {
-                    first_name: "",
-                    last_name: "",
+                    first_name: initialFirstName,
+                    last_name: initialLastName,
                     phone: "",
                     address_line1: "",
                     city: "",
@@ -349,23 +467,18 @@ export default function mountCheckoutIsland(el) {
                     country_code: "",
                     region_code: "",
                 },
+                shipping: {
+                    first_name: initialFirstName,
+                    last_name: initialLastName,
+                    phone: "",
+                    address_line1: "",
+                    city: "",
+                    postcode: "",
+                    country_code: "",
+                    region_code: "",
+                },
+                shipToDifferent: false,
                 shipping_rule_id: null,
-            });
-
-            // Computed: available regions based on selected country
-            const availableRegions = computed(() => {
-                if (!state.billing.country_code) {
-                    return [];
-                }
-                return getRegions(state.billing.country_code);
-            });
-
-            // Show region field only if country has regions
-            const showRegionField = computed(() => {
-                return (
-                    state.billing.country_code &&
-                    hasRegions(state.billing.country_code)
-                );
             });
 
             // Build labels object with fallbacks
@@ -396,8 +509,11 @@ export default function mountCheckoutIsland(el) {
                 phone_required: labelsPayload.phone_required || "Please enter a phone number so we can reach you about your order.",
                 phone_invalid: labelsPayload.phone_invalid || "Please enter a valid phone number (6-20 characters).",
                 shipping: labelsPayload.shipping || "Shipping",
+                shipping_address: labelsPayload.shipping_address || "Shipping address",
+                ship_to_different: labelsPayload.ship_to_different || "Ship to a different address",
                 shipping_select_country: labelsPayload.shipping_select_country || "Please select your country above to see available shipping options.",
                 shipping_no_rules: labelsPayload.shipping_no_rules || "No shipping available to %s. Please contact us for assistance.",
+                shipping_required: labelsPayload.shipping_required || "Please enter a shipping address.",
                 payment_method: labelsPayload.payment_method || "Payment method",
                 payment_offline: labelsPayload.payment_offline || "Payments will be captured offline once this order is submitted.",
                 processing: labelsPayload.processing || "Processing…",
@@ -420,34 +536,114 @@ export default function mountCheckoutIsland(el) {
                 coupon_code_required: labelsPayload.coupon_code_required || "Please enter a coupon code.",
             };
 
-            // Dynamic label based on country (State for US, Province for CA, Region otherwise)
-            const regionLabel = computed(() => {
-                const code = state.billing.country_code;
+            const resolveRegionLabel = (countryCode) => {
+                const code = (countryCode || "").toUpperCase();
                 if (code === "US") return labels.region_state;
                 if (code === "CA") return labels.region_province;
                 if (code === "AU") return labels.region_territory;
                 if (code === "GB" || code === "UK") return labels.region_county;
                 return labels.region;
-            });
+            };
 
-            const regionPlaceholder = computed(() => {
-                const code = state.billing.country_code;
+            const resolveRegionPlaceholder = (countryCode) => {
+                const code = (countryCode || "").toUpperCase();
                 if (code === "US") return labels.select_state;
                 if (code === "CA") return labels.select_province;
                 return labels.select_region;
+            };
+
+            const isRegionRequired = (countryCode) => {
+                const code = (countryCode || "").toUpperCase();
+                return ["US", "CA", "AU", "IN", "BR", "MX"].includes(code);
+            };
+
+            const billingAvailableRegions = computed(() => {
+                if (!state.billing.country_code) {
+                    return [];
+                }
+                return getRegions(state.billing.country_code);
             });
 
-            // Region is required for countries with subdivisions
-            const regionRequired = computed(() => {
-                const code = state.billing.country_code;
-                // Make region required for major countries with tax implications
-                return ["US", "CA", "AU", "IN", "BR", "MX"].includes(code);
+            const shippingAvailableRegions = computed(() => {
+                if (!state.shipping.country_code) {
+                    return [];
+                }
+                return getRegions(state.shipping.country_code);
             });
+
+            const showBillingRegionField = computed(() => {
+                return (
+                    state.billing.country_code &&
+                    hasRegions(state.billing.country_code)
+                );
+            });
+
+            const showShippingRegionField = computed(() => {
+                return (
+                    state.shipToDifferent &&
+                    state.shipping.country_code &&
+                    hasRegions(state.shipping.country_code)
+                );
+            });
+
+            const billingRegionLabel = computed(() =>
+                resolveRegionLabel(state.billing.country_code)
+            );
+            const shippingRegionLabel = computed(() =>
+                resolveRegionLabel(state.shipping.country_code)
+            );
+
+            const billingRegionPlaceholder = computed(() =>
+                resolveRegionPlaceholder(state.billing.country_code)
+            );
+            const shippingRegionPlaceholder = computed(() =>
+                resolveRegionPlaceholder(state.shipping.country_code)
+            );
+
+            const billingRegionRequired = computed(() =>
+                isRegionRequired(state.billing.country_code)
+            );
+            const shippingRegionRequired = computed(
+                () =>
+                    state.shipToDifferent &&
+                    isRegionRequired(state.shipping.country_code)
+            );
+
+            const isShippingEmpty = () =>
+                !state.shipping.first_name &&
+                !state.shipping.last_name &&
+                !state.shipping.address_line1 &&
+                !state.shipping.city &&
+                !state.shipping.postcode &&
+                !state.shipping.country_code &&
+                !state.shipping.region_code &&
+                !state.shipping.phone;
+
+            const copyBillingToShipping = () => {
+                state.shipping.first_name = state.billing.first_name;
+                state.shipping.last_name = state.billing.last_name;
+                state.shipping.phone = state.billing.phone;
+                state.shipping.address_line1 = state.billing.address_line1;
+                state.shipping.city = state.billing.city;
+                state.shipping.postcode = state.billing.postcode;
+                state.shipping.country_code = state.billing.country_code;
+                state.shipping.region_code = state.billing.region_code;
+            };
+
+            const destination = computed(() =>
+                state.shipToDifferent ? state.shipping : state.billing
+            );
+            const destinationCountry = computed(() =>
+                (destination.value.country_code || "").trim().toUpperCase()
+            );
+            const destinationRegion = computed(() =>
+                (destination.value.region_code || "").trim().toUpperCase()
+            );
 
             // Filter shipping rules based on selected country/region
             const applicableShippingRules = computed(() => {
-                const selectedCountry = state.billing.country_code?.trim().toUpperCase();
-                const selectedRegion = state.billing.region_code?.trim().toUpperCase();
+                const selectedCountry = destinationCountry.value;
+                const selectedRegion = destinationRegion.value;
 
                 // If no country selected yet, don't show any rules
                 if (!selectedCountry) {
@@ -501,6 +697,22 @@ export default function mountCheckoutIsland(el) {
                 () => {
                     state.billing.region_code = "";
                     // Shipping rule will be auto-selected by applicableShippingRules watcher
+                }
+            );
+
+            watch(
+                () => state.shipping.country_code,
+                () => {
+                    state.shipping.region_code = "";
+                }
+            );
+
+            watch(
+                () => state.shipToDifferent,
+                (enabled) => {
+                    if (enabled && isShippingEmpty()) {
+                        copyBillingToShipping();
+                    }
                 }
             );
 
@@ -699,6 +911,30 @@ export default function mountCheckoutIsland(el) {
                 }
             };
 
+            const buildAddressPayload = (source, phoneOverride = null) => {
+                const countryCode = normaliseString(source.country_code || "");
+                const regionCode = normaliseString(source.region_code || "");
+                const phoneValue =
+                    phoneOverride !== null
+                        ? phoneOverride
+                        : normaliseString(source.phone || "");
+
+                return {
+                    first_name: normaliseString(source.first_name || ""),
+                    last_name: normaliseString(source.last_name || ""),
+                    phone: phoneValue,
+                    address_line1: normaliseString(source.address_line1 || ""),
+                    city: normaliseString(source.city || ""),
+                    postcode: normaliseString(source.postcode || ""),
+                    country_code: countryCode,
+                    country: getCountryName(countryCode),
+                    region_code: regionCode,
+                    region: regionCode
+                        ? getRegionName(countryCode, regionCode)
+                        : "",
+                };
+            };
+
             const submit = async () => {
                 ui.error = "";
 
@@ -721,6 +957,34 @@ export default function mountCheckoutIsland(el) {
                     return;
                 }
 
+                if (state.shipToDifferent) {
+                    const requiredShippingFields = [
+                        "first_name",
+                        "last_name",
+                        "address_line1",
+                        "city",
+                        "postcode",
+                        "country_code",
+                    ];
+
+                    const missingShippingField = requiredShippingFields.find(
+                        (field) => normaliseString(state.shipping[field] || "") === ""
+                    );
+
+                    if (missingShippingField) {
+                        ui.error = labels.shipping_required;
+                        return;
+                    }
+
+                    if (
+                        shippingRegionRequired.value &&
+                        normaliseString(state.shipping.region_code || "") === ""
+                    ) {
+                        ui.error = labels.shipping_required;
+                        return;
+                    }
+                }
+
                 ui.loading = true;
 
                 const gateway = selectedGateway.value || gateways[0]?.id || "";
@@ -735,27 +999,17 @@ export default function mountCheckoutIsland(el) {
                 const taxCents = taxAmount.value;
 
                 // Build billing object with resolved names for storage
-                const billingPayload = {
-                    first_name: state.billing.first_name,
-                    last_name: state.billing.last_name,
-                    phone,
-                    address_line1: state.billing.address_line1,
-                    city: state.billing.city,
-                    postcode: state.billing.postcode,
-                    country_code: state.billing.country_code,
-                    country: getCountryName(state.billing.country_code),
-                    region_code: state.billing.region_code || "",
-                    region: state.billing.region_code
-                        ? getRegionName(
-                              state.billing.country_code,
-                              state.billing.region_code
-                          )
-                        : "",
-                };
+                const billingPayload = buildAddressPayload(state.billing, phone);
+                const shippingPayload = buildAddressPayload(
+                    state.shipToDifferent ? state.shipping : state.billing,
+                    state.shipToDifferent ? null : phone
+                );
 
                 const payloadBody = {
-                    email: state.email,
+                    email: normaliseString(state.email),
                     billing: billingPayload,
+                    shipping: shippingPayload,
+                    ship_to_different: state.shipToDifferent,
                     shipping_rule_id: state.shipping_rule_id,
                     shipping_cents: shippingCost,
                     tax_cents: taxCents,
@@ -914,11 +1168,17 @@ export default function mountCheckoutIsland(el) {
                 shippingRules: shipping,
                 applicableShippingRules,
                 countries,
-                availableRegions,
-                showRegionField,
-                regionLabel,
-                regionPlaceholder,
-                regionRequired,
+                billingAvailableRegions,
+                shippingAvailableRegions,
+                showBillingRegionField,
+                showShippingRegionField,
+                billingRegionLabel,
+                shippingRegionLabel,
+                billingRegionPlaceholder,
+                shippingRegionPlaceholder,
+                billingRegionRequired,
+                shippingRegionRequired,
+                destinationCountry,
                 subtotal,
                 discountCents,
                 selectedShippingCost,

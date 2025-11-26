@@ -40,6 +40,13 @@ class PaymentController extends BaseController
         $app   = Factory::getApplication();
         $input = $app->input;
         $session = $app->getSession();
+        $identity = null;
+
+        try {
+            $identity = $app->getIdentity();
+        } catch (\Throwable $exception) {
+            $identity = null;
+        }
 
         if (!$this->hasValidToken()) {
             $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
@@ -111,6 +118,14 @@ class PaymentController extends BaseController
         $orders       = $container->get(OrderService::class);
         $orderPayload = $this->buildOrderPayload($cart, $payload);
         $orderPayload['payment_method'] = $gateway;
+
+        if ($identity && !$identity->guest) {
+            $orderPayload['user_id'] = (int) ($identity->id ?? 0);
+
+            if (empty($orderPayload['email']) && !empty($identity->email)) {
+                $orderPayload['email'] = (string) $identity->email;
+            }
+        }
 
         $shippingCents = $this->resolveShippingAmount(
             isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
