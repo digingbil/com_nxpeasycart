@@ -9,6 +9,7 @@ use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use RuntimeException;
 
 /**
  * Database table for product variants.
@@ -31,42 +32,32 @@ class VariantTable extends Table
     public function check()
     {
         if (empty($this->product_id)) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRODUCT_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRODUCT_REQUIRED'));
         }
 
         $this->sku = trim((string) $this->sku);
 
         if ($this->sku === '') {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_REQUIRED'));
         }
 
         $this->currency = strtoupper(trim((string) $this->currency));
 
         if ($this->currency === '') {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_REQUIRED'));
         }
 
         $baseCurrency = ConfigHelper::getBaseCurrency();
 
         if ($this->currency !== $baseCurrency) {
-            $this->setError(Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_MISMATCH', $baseCurrency));
-
-            return false;
+            throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_MISMATCH', $baseCurrency));
         }
 
         $this->active = (int) (bool) $this->active;
         $this->stock  = max(0, (int) $this->stock);
 
         if ($this->price_cents < 0) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRICE_INVALID'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRICE_INVALID'));
         }
 
         if ($this->weight !== null && $this->weight !== '') {
@@ -76,7 +67,7 @@ class VariantTable extends Table
         }
 
         // Enforce unique SKU
-        $db  = $this->getDbo();
+        $db  = $this->getDatabase();
         $sku = (string) $this->sku;
 
         $query = $db->getQuery(true)
@@ -94,9 +85,7 @@ class VariantTable extends Table
         $db->setQuery($query);
 
         if ((int) $db->loadResult() > 0) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_EXISTS'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_EXISTS'));
         }
 
         return parent::check();

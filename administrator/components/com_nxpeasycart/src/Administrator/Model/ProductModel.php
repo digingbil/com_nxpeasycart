@@ -90,9 +90,7 @@ class ProductModel extends AdminModel
         }
 
         if (empty($validated['title'])) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_TITLE_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_TITLE_REQUIRED'));
         }
 
         $validated['images']     = $this->filterImages($data['images'] ?? []);
@@ -103,9 +101,7 @@ class ProductModel extends AdminModel
         $validated['active']     = $validated['status'];
 
         if (empty($validated['variants'])) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_VARIANT_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_VARIANT_REQUIRED'));
         }
 
         return $validated;
@@ -116,7 +112,7 @@ class ProductModel extends AdminModel
      */
     public function save($data)
     {
-        $db = $this->getDbo();
+        $db = $this->getDatabase();
 
         $images     = (array) ($data['images'] ?? []);
         $variants   = (array) ($data['variants'] ?? []);
@@ -125,9 +121,7 @@ class ProductModel extends AdminModel
         try {
             $data['images'] = $this->encodeImages($images);
         } catch (RuntimeException $exception) {
-            $this->setError($exception->getMessage());
-
-            return false;
+            throw $exception;
         }
 
         $db->transactionStart();
@@ -155,9 +149,7 @@ class ProductModel extends AdminModel
             return true;
         } catch (Throwable $exception) {
             $db->transactionRollback();
-            $this->setError($exception->getMessage());
-
-            return false;
+            throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
     }
 
@@ -181,9 +173,7 @@ class ProductModel extends AdminModel
             try {
                 $table->images = $this->encodeImages($table->images);
             } catch (RuntimeException $exception) {
-                $this->setError($exception->getMessage());
-
-                return false;
+                throw $exception;
             }
         }
 
@@ -390,16 +380,12 @@ class ProductModel extends AdminModel
             try {
                 $input = json_decode($input, true, 512, JSON_THROW_ON_ERROR);
             } catch (JsonException $exception) {
-                $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PAYLOAD_INVALID'));
-
-                return [];
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PAYLOAD_INVALID'));
             }
         }
 
         if (!\is_array($input)) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PAYLOAD_INVALID'));
-
-            return [];
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PAYLOAD_INVALID'));
         }
 
         $variants     = [];
@@ -414,17 +400,13 @@ class ProductModel extends AdminModel
             $sku = trim((string) ($variant['sku'] ?? ''));
 
             if ($sku === '') {
-                $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_REQUIRED'));
-
-                return [];
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_REQUIRED'));
             }
 
             $skuKey = strtoupper($sku);
 
             if (isset($seenSkus[$skuKey])) {
-                $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_DUPLICATE'));
-
-                return [];
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SKU_DUPLICATE'));
             }
 
             $seenSkus[$skuKey] = true;
@@ -432,23 +414,17 @@ class ProductModel extends AdminModel
             try {
                 $priceCents = $this->resolvePriceCents($variant);
             } catch (RuntimeException $exception) {
-                $this->setError($exception->getMessage());
-
-                return [];
+                throw $exception;
             }
 
             $currency = strtoupper(trim((string) ($variant['currency'] ?? '')));
 
             if ($currency === '') {
-                $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_REQUIRED'));
-
-                return [];
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_REQUIRED'));
             }
 
             if ($currency !== $baseCurrency) {
-                $this->setError(Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_MISMATCH', $baseCurrency));
-
-                return [];
+                throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_CURRENCY_MISMATCH', $baseCurrency));
             }
 
             $options = $variant['options'] ?? null;
@@ -458,16 +434,12 @@ class ProductModel extends AdminModel
                     $decodedOptions = json_decode($options, true, 512, JSON_THROW_ON_ERROR);
                     $options        = \is_array($decodedOptions) ? $decodedOptions : null;
                 } catch (JsonException $exception) {
-                    $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_OPTIONS_INVALID'));
-
-                    return [];
+                    throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_OPTIONS_INVALID'));
                 }
             }
 
             if ($options !== null && !\is_array($options)) {
-                $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_OPTIONS_INVALID'));
-
-                return [];
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_OPTIONS_INVALID'));
             }
 
             $weight = $variant['weight'] ?? null;
@@ -476,9 +448,7 @@ class ProductModel extends AdminModel
                 try {
                     $weight = (string) BigDecimal::of((string) $weight)->toScale(3, RoundingMode::HALF_UP);
                 } catch (MathException $exception) {
-                    $this->setError(Text::_('COM_NXPEASYCART_ERROR_VARIANT_WEIGHT_INVALID'));
-
-                    return [];
+                    throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_WEIGHT_INVALID'));
                 }
             } else {
                 $weight = null;
@@ -636,7 +606,7 @@ class ProductModel extends AdminModel
      */
     private function syncVariants(int $productId, array $variants): void
     {
-        $db = $this->getDbo();
+        $db = $this->getDatabase();
 
         // Fetch existing variant IDs for the product to determine deletions.
         $query = $db->getQuery(true)
@@ -721,7 +691,7 @@ class ProductModel extends AdminModel
      */
     private function syncCategories(int $productId, array $categories): void
     {
-        $db = $this->getDbo();
+        $db = $this->getDatabase();
 
         $categoryIds = [];
 
@@ -826,7 +796,7 @@ class ProductModel extends AdminModel
      */
     private function categoryExists(int $categoryId): bool
     {
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select('1')
             ->from($db->quoteName('#__nxp_easycart_categories'))
@@ -844,7 +814,7 @@ class ProductModel extends AdminModel
      */
     private function findOrCreateCategory(string $title, string $slug): int
     {
-        $db = $this->getDbo();
+        $db = $this->getDatabase();
 
         if ($slug === '') {
             $slug = ApplicationHelper::stringURLSafe($title);
@@ -917,7 +887,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('id'),
@@ -970,7 +940,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('product_id'),
@@ -1026,7 +996,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('c.id'),
@@ -1073,7 +1043,7 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('pc.product_id'),

@@ -279,7 +279,7 @@ class TemplateAdapter
     private static function applyUserOverrides(array $resolved): array
     {
         try {
-            $db = Factory::getDbo();
+            $db = Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
             $query = $db->getQuery(true)
                 ->select($db->quoteName(['key', 'value']))
                 ->from($db->quoteName('#__nxp_easycart_settings'))

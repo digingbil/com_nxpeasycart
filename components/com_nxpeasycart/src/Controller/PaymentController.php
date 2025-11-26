@@ -811,13 +811,16 @@ class PaymentController extends BaseController
             'honeypot',
         ];
 
+        // Require presence and emptiness of all trap fields
         foreach ($traps as $trap) {
-            if (!empty($payload[$trap])) {
-                $value = \is_array($payload[$trap]) ? implode('', $payload[$trap]) : (string) $payload[$trap];
+            if (!array_key_exists($trap, $payload)) {
+                return true; // Missing trap field is suspicious
+            }
 
-                if (trim($value) !== '') {
-                    return true;
-                }
+            $raw = $payload[$trap];
+            $value = is_array($raw) ? implode('', $raw) : (string) $raw;
+            if (trim($value) !== '') {
+                return true; // Filled trap trips the honeypot
             }
         }
 

@@ -1033,8 +1033,11 @@ export default function mountCheckoutIsland(el) {
                         tax_cents: taxCents,
                         total_cents: total.value,
                     },
-                    // Honeypot kept blank intentionally; bots filling it trip server-side checks.
+                    // Honeypot fields kept blank intentionally; server requires presence and emptiness.
                     company_website: "",
+                    website: "",
+                    url: "",
+                    honeypot: "",
                     gateway,
                 };
 

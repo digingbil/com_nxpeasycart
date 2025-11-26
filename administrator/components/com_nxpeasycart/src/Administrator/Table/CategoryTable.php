@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseDriver;
 use Joomla\Database\ParameterType;
+use RuntimeException;
 
 /**
  * Database table for product categories.
@@ -33,9 +34,7 @@ class CategoryTable extends Table
         $this->title = trim((string) $this->title);
 
         if ($this->title === '') {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_TITLE_REQUIRED'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_TITLE_REQUIRED'));
         }
 
         if (empty($this->slug)) {
@@ -45,12 +44,10 @@ class CategoryTable extends Table
         $this->slug = ApplicationHelper::stringURLSafe((string) $this->slug);
 
         if ($this->slug === '') {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_INVALID'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_INVALID'));
         }
 
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $slug  = $this->slug;
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
@@ -67,9 +64,7 @@ class CategoryTable extends Table
         $db->setQuery($query);
 
         if ((int) $db->loadResult() > 0) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_EXISTS'));
-
-            return false;
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SLUG_EXISTS'));
         }
 
         $this->sort = (int) $this->sort;

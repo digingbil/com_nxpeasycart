@@ -65,7 +65,7 @@ class ProductsModel extends ListModel
      */
     protected function getListQuery()
     {
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select(
                 [

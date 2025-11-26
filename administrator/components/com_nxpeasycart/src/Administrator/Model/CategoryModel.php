@@ -74,15 +74,11 @@ class CategoryModel extends AdminModel
         $id = isset($valid['id']) ? (int) $valid['id'] : 0;
 
         if ($id > 0 && $valid['parent_id'] === $id) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_PARENT_INVALID'));
-
-            return false;
+            throw new \RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_PARENT_INVALID'));
         }
 
         if ($valid['parent_id'] !== null && !$this->categoryExists($valid['parent_id'])) {
-            $this->setError(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_PARENT_INVALID'));
-
-            return false;
+            throw new \RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_PARENT_INVALID'));
         }
 
         return $valid;
@@ -117,7 +113,7 @@ class CategoryModel extends AdminModel
      */
     private function categoryExists(int $id): bool
     {
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select('1')
             ->from($db->quoteName('#__nxp_easycart_categories'))
@@ -135,7 +131,7 @@ class CategoryModel extends AdminModel
      */
     private function resolveNextSort(): int
     {
-        $db    = $this->getDbo();
+        $db    = $this->getDatabase();
         $query = $db->getQuery(true)
             ->select('MAX(' . $db->quoteName('sort') . ')')
             ->from($db->quoteName('#__nxp_easycart_categories'));
