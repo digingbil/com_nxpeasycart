@@ -419,6 +419,9 @@ const categoryOptions = computed(() => {
             id: Number.parseInt(item?.id ?? 0, 10) || 0,
             title: String(item?.title ?? "").trim(),
             slug: String(item?.slug ?? "").trim(),
+            parent_id: item?.parent_id !== null && item?.parent_id !== undefined
+                ? (Number.parseInt(item.parent_id, 10) || null)
+                : null,
         }))
         .filter((item) => item.title !== "");
 });

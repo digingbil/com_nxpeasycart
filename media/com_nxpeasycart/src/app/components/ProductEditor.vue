@@ -352,7 +352,7 @@
                             :key="option.id"
                             :value="option.id"
                         >
-                            {{ option.title }}
+                            {{ getCategoryDisplayName(option) }}
                         </option>
                     </select>
                     <div class="nxp-ec-chip-input nxp-ec-chip-input--selected">
@@ -823,6 +823,9 @@ const normaliseCategoryInput = (input) => {
             "";
         const title = String(titleSource ?? "").trim();
         const slug = String(input.slug ?? "").trim();
+        const parentId = input.parent_id !== null && input.parent_id !== undefined
+            ? (Number.parseInt(input.parent_id, 10) || null)
+            : null;
 
         if (id <= 0 && title === "") {
             return null;
@@ -832,6 +835,7 @@ const normaliseCategoryInput = (input) => {
             id: id > 0 ? id : 0,
             title: title !== "" ? title : slug,
             slug,
+            parent_id: parentId,
         };
     }
 
@@ -882,6 +886,63 @@ const form = reactive({
 const newCategoryDraft = ref("");
 const slugEdited = ref(false);
 
+/**
+ * Calculate the depth of a category in the hierarchy.
+ * Used for visual indentation in the select dropdown.
+ * v1.1 - Added parent_id preservation
+ */
+const getCategoryDepth = (categoryId, categories, visited = new Set()) => {
+    if (!categoryId || visited.has(categoryId)) {
+        return 0;
+    }
+
+    visited.add(categoryId);
+
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category || !category.parent_id) {
+        return 0;
+    }
+
+    return 1 + getCategoryDepth(category.parent_id, categories, visited);
+};
+
+/**
+ * Get the display name for a category with visual indentation.
+ * Child categories are prefixed with "─ " characters based on depth.
+ */
+const getCategoryDisplayName = (category) => {
+    if (!category) {
+        return '';
+    }
+
+    const provided = Array.isArray(props.categoryOptions)
+        ? props.categoryOptions
+        : [];
+
+    const depth = getCategoryDepth(category.id, provided);
+
+    // Debug logging - remove after testing
+    if (category.id === 6 || category.id === 8) {
+        console.log('[ProductEditor] Category with parent_id:', {
+            categoryId: category.id,
+            categoryTitle: category.title,
+            hasParentId: category.parent_id !== undefined && category.parent_id !== null,
+            parentId: category.parent_id,
+            calculatedDepth: depth,
+            totalCategoriesProvided: provided.length
+        });
+    }
+
+    if (depth === 0) {
+        return category.title;
+    }
+
+    // Use non-breaking spaces and unicode box characters for visual hierarchy
+    // Using \u00A0 (non-breaking space) and \u2514 (box drawing character)
+    const indent = '\u00A0\u00A0'.repeat(depth) + '\u2514\u2500 ';
+    return indent + category.title;
+};
+
 const categoryOptionsList = computed(() => {
     const provided = Array.isArray(props.categoryOptions)
         ? props.categoryOptions
@@ -904,13 +965,25 @@ const categoryOptionsList = computed(() => {
                 id: category.id,
                 title: category.title,
                 slug: category.slug ?? "",
+                parent_id: category.parent_id !== null && category.parent_id !== undefined
+                    ? category.parent_id
+                    : null,
             });
         }
     });
 
-    return Array.from(map.values()).sort((a, b) =>
-        a.title.localeCompare(b.title)
-    );
+    // Sort categories hierarchically: parents with their children grouped together
+    const categories = Array.from(map.values());
+
+    // Build a tree structure to sort properly
+    const buildTree = (parentId = null, depth = 0) => {
+        return categories
+            .filter(cat => cat.parent_id === parentId)
+            .sort((a, b) => a.title.localeCompare(b.title))
+            .flatMap(cat => [cat, ...buildTree(cat.id, depth + 1)]);
+    };
+
+    return buildTree();
 });
 
 const categoryOptionsMap = computed(() => {
@@ -927,10 +1000,20 @@ const categoryOptionsMap = computed(() => {
 });
 
 const selectedCategoryIds = computed({
-    get: () =>
-        form.categories
-            .filter((category) => category.id > 0)
-            .map((category) => category.id),
+    get: () => {
+        const ids = form.categories
+            .filter((category) => category && category.id > 0)
+            .map((category) => category.id);
+
+        if (import.meta?.env?.DEV) {
+            console.debug('[ProductEditor] selectedCategoryIds getter:', {
+                formCategories: form.categories,
+                extractedIds: ids
+            });
+        }
+
+        return ids;
+    },
     set: (value) => {
         const list = Array.isArray(value) ? value : [];
         const uniqueIds = Array.from(
@@ -1788,6 +1871,12 @@ watch(
 </script>
 
 <style scoped>
+#product-category-select {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', 'Ubuntu Mono', 'Menlo', 'Consolas', 'Monaco', 'Liberation Mono', monospace;
+    white-space: pre;
+    min-height: 200px;
+}
+
 .nxp-ec-modal__header {
     display: flex;
     align-items: center;

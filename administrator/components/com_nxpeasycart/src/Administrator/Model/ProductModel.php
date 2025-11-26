@@ -766,22 +766,35 @@ class ProductModel extends AdminModel
         $toDelete = array_diff($current, $categoryIds);
 
         if (!empty($toInsert)) {
-            $columns = [$db->quoteName('product_id'), $db->quoteName('category_id')];
-            $values = [];
+            $query = $db->getQuery(true);
+            $query->insert($db->quoteName('#__nxp_easycart_product_categories'))
+                ->columns([$db->quoteName('product_id'), $db->quoteName('category_id')]);
 
-            foreach (array_values($toInsert) as $categoryId) {
-                $values[] = sprintf(
-                    '(%d,%d)',
-                    (int) $productId,
-                    (int) $categoryId
-                );
+            // Build value placeholders for each category to insert
+            foreach (array_values($toInsert) as $index => $categoryId) {
+                $query->values(':productIdInsert' . $index . ', :categoryInsert' . $index);
             }
 
-            $query = 'INSERT IGNORE INTO ' . $db->quoteName('#__nxp_easycart_product_categories')
-                . ' (' . implode(',', $columns) . ') VALUES ' . implode(',', $values);
+            // Bind parameters for each category
+            foreach (array_values($toInsert) as $index => $categoryId) {
+                $productIdBound = (int) $productId;
+                $categoryIdBound = (int) $categoryId;
+                $query->bind(':productIdInsert' . $index, $productIdBound, ParameterType::INTEGER);
+                $query->bind(':categoryInsert' . $index, $categoryIdBound, ParameterType::INTEGER);
+            }
 
-            $db->setQuery($query);
-            $db->execute();
+            // Note: Joomla's query builder doesn't support INSERT IGNORE natively.
+            // We need to handle duplicate key conflicts at the application level or use raw SQL with bindings.
+            // For now, we wrap in a try-catch to gracefully handle duplicate key errors.
+            try {
+                $db->setQuery($query);
+                $db->execute();
+            } catch (\RuntimeException $e) {
+                // Ignore duplicate key errors (23000 = Integrity constraint violation)
+                if (strpos($e->getMessage(), '23000') === false && strpos($e->getMessage(), 'Duplicate entry') === false) {
+                    throw $e;
+                }
+            }
         }
 
         if (!empty($toDelete)) {
