@@ -13,6 +13,7 @@ use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
@@ -321,6 +322,7 @@ class LandingModel extends BaseDatabaseModel
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.created'),
                 $db->quoteName('p.active'),
+                $db->quoteName('p.primary_category_id') . ' AS ' . $db->quoteName('primary_category_id'),
                 'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('min_price_cents'),
@@ -333,6 +335,11 @@ class LandingModel extends BaseDatabaseModel
                 . ' ON ' . $db->quoteName('v.product_id') . ' = ' . $db->quoteName('p.id')
                 . ' AND ' . $db->quoteName('v.active') . ' = 1'
             )
+            ->leftJoin(
+                $db->quoteName('#__nxp_easycart_categories', 'primary_cat')
+                . ' ON ' . $db->quoteName('primary_cat.id') . ' = ' . $db->quoteName('p.primary_category_id')
+            )
+            ->select($db->quoteName('primary_cat.slug') . ' AS ' . $db->quoteName('primary_category_slug'))
             ->where(
                 $db->quoteName('p.active') . ' IN (:activeStatus, :outOfStockStatus)'
             )
@@ -411,6 +418,16 @@ class LandingModel extends BaseDatabaseModel
             $primaryVariantId = ($variantCount === 1 && $row->primary_variant_id !== null)
                 ? (int) $row->primary_variant_id
                 : null;
+            $primaryCategoryId = $row->primary_category_id !== null ? (int) $row->primary_category_id : 0;
+            $primaryPath = [];
+
+            if ($primaryCategoryId > 0) {
+                $primaryPath = CategoryPathHelper::getPath($db, $primaryCategoryId);
+            } elseif (!empty($row->primary_category_slug)) {
+                $primaryPath = CategoryPathHelper::getPathForSlug($db, (string) $row->primary_category_slug);
+            }
+
+            $linkCategoryPath = !empty($primaryPath) ? implode('/', $primaryPath) : '';
 
             $products[] = [
                 'id'          => (int) $row->id,
@@ -424,7 +441,7 @@ class LandingModel extends BaseDatabaseModel
                 'price_label' => $priceLabel,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'        => RouteHelper::getProductRoute((string) $row->slug),
+                'link'        => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: null),
             ];
         }
 

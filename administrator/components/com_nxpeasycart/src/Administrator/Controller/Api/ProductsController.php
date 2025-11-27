@@ -290,6 +290,7 @@ class ProductsController extends AbstractJsonController
                 'id'    => isset($category['id']) ? (int) $category['id'] : 0,
                 'title' => (string) ($category['title'] ?? ''),
                 'slug'  => (string) ($category['slug'] ?? ''),
+                'primary' => !empty($category['primary']),
             ];
         }
 
@@ -312,6 +313,9 @@ class ProductsController extends AbstractJsonController
             'images'     => $images,
             'variants'   => $variants,
             'categories' => $categories,
+            'primary_category_id' => isset($item->primary_category_id) && (int) $item->primary_category_id > 0
+                ? (int) $item->primary_category_id
+                : null,
             'summary'    => [
                 'variants' => $this->buildVariantSummary($variants),
             ],

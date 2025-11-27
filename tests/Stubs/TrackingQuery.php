@@ -51,6 +51,11 @@ class TrackingQuery
         return $this;
     }
 
+    public function setLimit($limit, $offset = 0): self
+    {
+        return $this;
+    }
+
     public function bind($key, &$value, $dataType = ParameterType::STRING, $length = 0, $options = []): self
     {
         $this->bindings[(string) $key] = $value;

@@ -26,6 +26,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 
 ### Recent Enhancements
 
+- **Canonical product routing** now records a primary category on each product and generates all product URLs against that primary category path (e.g., `/shop/category/hifi/amplifiers/product-slug`), eliminating duplicate SEO paths when items belong to multiple categories.
 - **Cart quantity persistence** now persists quantity changes to the database via a new `cart.update` endpoint (`CartController::update()`). When users modify item quantities on the cart page, the changes are saved immediately with optimistic UI updates and server-side stock validation. The checkout page refreshes cart data on mount via `onMounted(refreshCart)` and listens for `nxp-cart:updated` events, ensuring the Order Summary always reflects the latest cart state. Stock validation prevents over-ordering and displays user-friendly alerts when requested quantities exceed available inventory.
 - **Categories workspace (admin)** surfaces a dedicated CRUD panel with slug validation, usage counts, and an indented tree so parent/child relationships are obvious at a glance. The parent selector now prevents loops by removing the current node and its descendants.
 - **Product editor category selector** consumes the categories API, letting merchants multi-select existing categories and create new ones inline; the payload now posts normalised `{id, title, slug}` entries so product/category mappings stay deduplicated.

@@ -9,12 +9,14 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `images` JSON NULL,
   `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
+  `primary_category_id` INT UNSIGNED NULL,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` INT UNSIGNED NULL,
   `modified` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   `modified_by` INT UNSIGNED NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_nxp_products_slug` (`slug`)
+  UNIQUE KEY `idx_nxp_products_slug` (`slug`),
+  KEY `idx_nxp_products_primary_category` (`primary_category_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
@@ -39,6 +41,11 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_product_categories` (
     FOREIGN KEY (`category_id`) REFERENCES `#__nxp_easycart_categories` (`id`)
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `#__nxp_easycart_products`
+  ADD CONSTRAINT `fk_nxp_products_primary_category`
+    FOREIGN KEY (`primary_category_id`) REFERENCES `#__nxp_easycart_categories` (`id`)
+    ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

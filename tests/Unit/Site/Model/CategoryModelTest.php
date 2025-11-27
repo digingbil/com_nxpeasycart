@@ -8,17 +8,24 @@ use Joomla\Component\Nxpeasycart\Site\Model\CategoryModel;
 use Joomla\Database\DatabaseInterface;
 use PHPUnit\Framework\TestCase;
 use Tests\Stubs\TrackingQuery;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
 final class CategoryModelTest extends TestCase
 {
     public function testBindsRootCategoriesWithoutReferenceErrors(): void
     {
+        CategoryPathHelper::reset();
+
         $query = new TrackingQuery();
 
         $db = $this->createMock(DatabaseInterface::class);
         $db->method('getQuery')->willReturn($query);
         $db->method('quoteName')->willReturnCallback(static fn ($value) => (string) $value);
         $db->method('setQuery')->willReturnSelf();
+        $db->method('loadObject')->willReturnOnConsecutiveCalls(
+            (object) ['id' => 3, 'slug' => 'apparel', 'parent_id' => null],
+            (object) ['id' => 3, 'slug' => 'apparel', 'parent_id' => null]
+        );
         $db->method('loadObjectList')->willReturn([
             (object) [
                 'id'                    => 42,
@@ -30,7 +37,10 @@ final class CategoryModelTest extends TestCase
                 'price_min'             => 1299,
                 'price_max'             => 1599,
                 'price_currency'        => 'USD',
+                'variant_count'         => 1,
+                'primary_variant_id'    => 99,
                 'primary_category_slug' => 'apparel',
+                'primary_category_id'   => 3,
             ],
         ]);
 
@@ -64,6 +74,7 @@ final class CategoryModelTest extends TestCase
 
         $this->assertCount(1, $products);
         $this->assertSame('apparel', $products[0]['category_slug']);
+        $this->assertSame('apparel', $products[0]['category_path']);
         $this->assertSame('Demo Shirt', $products[0]['title']);
     }
 }

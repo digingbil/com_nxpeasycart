@@ -34,6 +34,7 @@ The admin view exposes a `<div id="nxp-ec-admin-app">` mount target for the upco
 The install script provisions the core tables required by the domain model:
 
 - `#__nxp_easycart_products`, `#__nxp_easycart_variants`, `#__nxp_easycart_categories`, and pivot table `#__nxp_easycart_product_categories`.
+- Products carry a `primary_category_id` FK so URLs and breadcrumbs can target a single canonical category path even when products belong to multiple categories.
 - Order pipeline tables `#__nxp_easycart_orders`, `#__nxp_easycart_order_items`, `#__nxp_easycart_transactions`, plus `#__nxp_easycart_coupons`.
 - Operational tables for compliance and pricing logic: `#__nxp_easycart_tax_rates`, `#__nxp_easycart_shipping_rules`, `#__nxp_easycart_settings`, and optional cart persistence via `#__nxp_easycart_carts`.
 - `#__nxp_easycart_audit` for state-change logging.

@@ -111,7 +111,7 @@ Agent reminder: when estimating scope, prioritizing tasks, or choosing trade-off
 # **3\) Database model (prefix `#__nxp_easycart_…`)**
 
 -   `#__nxp_easycart_products`
-    `(id PK, slug, title, short_desc, long_desc, images JSON, active TINYINT, created, created_by, modified, modified_by)`
+    `(id PK, slug, title, short_desc, long_desc, images JSON, active TINYINT, primary_category_id FK, created, created_by, modified, modified_by)`
 
 -   `#__nxp_easycart_variants`
     `(id PK, product_id FK, sku UNIQUE, price_cents INT, currency CHAR(3), stock INT, options JSON, weight DECIMAL(10,3), active)`

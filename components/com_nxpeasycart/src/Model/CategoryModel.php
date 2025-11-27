@@ -12,6 +12,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
@@ -155,6 +156,7 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('p.featured'),
                 $db->quoteName('p.images'),
                 $db->quoteName('p.active'),
+                $db->quoteName('p.primary_category_id') . ' AS ' . $db->quoteName('primary_category_id'),
                 'COUNT(DISTINCT ' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('variant_count'),
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
@@ -168,14 +170,10 @@ class CategoryModel extends BaseDatabaseModel
                 . ' AND ' . $db->quoteName('v.active') . ' = 1'
             )
             ->leftJoin(
-                $db->quoteName('#__nxp_easycart_product_categories', 'pc_all')
-                . ' ON ' . $db->quoteName('pc_all.product_id') . ' = ' . $db->quoteName('p.id')
+                $db->quoteName('#__nxp_easycart_categories', 'primary_cat')
+                . ' ON ' . $db->quoteName('primary_cat.id') . ' = ' . $db->quoteName('p.primary_category_id')
             )
-            ->leftJoin(
-                $db->quoteName('#__nxp_easycart_categories', 'c_all')
-                . ' ON ' . $db->quoteName('c_all.id') . ' = ' . $db->quoteName('pc_all.category_id')
-            )
-            ->select('MIN(' . $db->quoteName('c_all.slug') . ') AS ' . $db->quoteName('primary_category_slug'))
+            ->select($db->quoteName('primary_cat.slug') . ' AS ' . $db->quoteName('primary_category_slug'))
             ->where(
                 $db->quoteName('p.active') . ' IN (:activeStatus, :outOfStockStatus)'
             )
@@ -199,13 +197,33 @@ class CategoryModel extends BaseDatabaseModel
         }
 
         if (!empty($category['id'])) {
-            $categoryIdFilter = (int) $category['id'];
-            $query->innerJoin(
-                $db->quoteName('#__nxp_easycart_product_categories', 'pc')
-                . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('p.id')
-            )
-                ->where($db->quoteName('pc.category_id') . ' = :categoryId')
-                ->bind(':categoryId', $categoryIdFilter, ParameterType::INTEGER);
+            // Get the category and all its descendants (subcategories)
+            $categoryIds = CategoryPathHelper::getDescendantIds($db, (int) $category['id']);
+
+            if (\count($categoryIds) === 1) {
+                // Single category - use simple binding
+                $categoryIdFilter = (int) $category['id'];
+                $query->innerJoin(
+                    $db->quoteName('#__nxp_easycart_product_categories', 'pc')
+                    . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('p.id')
+                )
+                    ->where($db->quoteName('pc.category_id') . ' = :categoryId')
+                    ->bind(':categoryId', $categoryIdFilter, ParameterType::INTEGER);
+            } else {
+                // Multiple categories (parent + descendants) - use IN clause with escaped values
+                // We use direct value injection here because Joomla's bind() uses references
+                // and loop variables get overwritten
+                $escapedIds = array_map(
+                    static fn ($id) => (int) $id,
+                    $categoryIds
+                );
+
+                $query->innerJoin(
+                    $db->quoteName('#__nxp_easycart_product_categories', 'pc')
+                    . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('p.id')
+                )
+                    ->where($db->quoteName('pc.category_id') . ' IN (' . implode(',', $escapedIds) . ')');
+            }
         } else {
             $rootIds = (array) $this->getState('category.root_ids', []);
 
@@ -283,12 +301,23 @@ class CategoryModel extends BaseDatabaseModel
                 'label'     => $this->formatPriceLabel($minCents, $maxCents, $currency),
             ];
 
-            $linkCategorySlug = '';
+            $primaryPath = [];
+            $primaryCategoryId = $row->primary_category_id !== null ? (int) $row->primary_category_id : 0;
 
-            if (!empty($category['slug'])) {
-                $linkCategorySlug = (string) $category['slug'];
+            if ($primaryCategoryId > 0) {
+                $primaryPath = CategoryPathHelper::getPath($db, $primaryCategoryId);
             } elseif (!empty($row->primary_category_slug)) {
-                $linkCategorySlug = (string) $row->primary_category_slug;
+                $primaryPath = CategoryPathHelper::getPathForSlug($db, (string) $row->primary_category_slug);
+            } elseif (!empty($category['slug'])) {
+                $primaryPath = CategoryPathHelper::getPathForSlug($db, (string) $category['slug']);
+            }
+
+            $linkCategorySlug = !empty($primaryPath) ? (string) end($primaryPath) : '';
+            $linkCategoryPath = !empty($primaryPath) ? implode('/', $primaryPath) : '';
+
+            if ($linkCategorySlug === '' && !empty($category['slug'])) {
+                $linkCategorySlug = (string) $category['slug'];
+                $linkCategoryPath = $linkCategorySlug;
             }
 
             $variantCount = $row->variant_count !== null ? (int) $row->variant_count : 0;
@@ -309,9 +338,11 @@ class CategoryModel extends BaseDatabaseModel
                 'price'      => $price,
                 'price_label' => $price['label'],
                 'category_slug' => $linkCategorySlug,
+                'category_path' => $linkCategoryPath,
+                'primary_category_id' => $primaryCategoryId ?: null,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'       => RouteHelper::getProductRoute((string) $row->slug, $linkCategorySlug ?: null),
+                'link'       => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: $linkCategorySlug ?: null),
             ];
         }
 
@@ -354,8 +385,9 @@ class CategoryModel extends BaseDatabaseModel
                 $db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')'
             );
         } else {
-            $query->where($db->quoteName('parent_id') . ' IS NULL');
-            $query->orWhere($db->quoteName('parent_id') . ' = 0');
+            $query->where(
+                '(' . $db->quoteName('parent_id') . ' IS NULL OR ' . $db->quoteName('parent_id') . ' = 0)'
+            );
         }
 
         $db->setQuery($query);

@@ -7,6 +7,8 @@ namespace Joomla\Component\Nxpeasycart\Site\Helper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Menu\AbstractMenu;
 use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
+use Joomla\Database\DatabaseInterface;
 
 /**
  * Routing helpers for storefront links.
@@ -25,6 +27,13 @@ class RouteHelper
      * @var array<string, int|null>
      */
     private static array $menuCache = [];
+
+    /**
+     * Cached primary category paths keyed by product slug.
+     *
+     * @var array<string, array<int, string>|null>
+     */
+    private static array $productPathCache = [];
 
     /**
      * Get a SEF URL for the cart view.
@@ -95,15 +104,28 @@ class RouteHelper
      *
      * @return string
      */
-    public static function getProductRoute(string $slug, ?string $categorySlug = null, bool $xhtml = true): string
+    public static function getProductRoute(string $slug, ?string $categoryPath = null, bool $xhtml = true): string
     {
         // Products should be routed via the landing or category menu item
         $itemId = self::findMenuItemId('landing') ?? self::findMenuItemId('category');
 
+        $pathSegments = [];
+        $db = self::getDatabase();
+
+        if ($categoryPath !== null && $categoryPath !== '') {
+            $pathSegments = CategoryPathHelper::normalisePathSegments($categoryPath);
+
+            if (empty($pathSegments) && $db) {
+                $pathSegments = CategoryPathHelper::getPathForSlug($db, $categoryPath);
+            }
+        } elseif ($db) {
+            $pathSegments = self::getPrimaryPathForProduct($db, $slug);
+        }
+
         $url = 'index.php?option=com_nxpeasycart&view=product&slug=' . rawurlencode($slug);
 
-        if ($categorySlug !== null && $categorySlug !== '') {
-            $url .= '&category_slug=' . rawurlencode($categorySlug);
+        if (!empty($pathSegments)) {
+            $url .= '&category_path=' . implode('/', array_map('rawurlencode', $pathSegments));
         }
 
         if ($itemId) {
@@ -121,14 +143,28 @@ class RouteHelper
      *
      * @return string
      */
-    public static function getCategoryRoute(?string $slug = null, bool $xhtml = true): string
+    public static function getCategoryRoute(?string $slug = null, ?int $categoryId = null, bool $xhtml = true): string
     {
         $itemId = self::findMenuItemId('category') ?? self::findMenuItemId('landing');
+        $db     = self::getDatabase();
+        $path   = [];
+
+        if ($categoryId !== null && $categoryId > 0 && $db) {
+            $path = CategoryPathHelper::getPath($db, $categoryId);
+        } elseif ($slug !== null && $slug !== '' && $db) {
+            if (strcasecmp($slug, 'all') !== 0) {
+                $path = CategoryPathHelper::getPathForSlug($db, $slug);
+            }
+        }
 
         $url = 'index.php?option=com_nxpeasycart&view=category';
 
         if ($slug !== null && $slug !== '') {
             $url .= '&slug=' . rawurlencode($slug);
+        }
+
+        if (!empty($path)) {
+            $url .= '&category_path=' . implode('/', array_map('rawurlencode', $path));
         }
 
         if ($itemId) {
@@ -182,6 +218,44 @@ class RouteHelper
     }
 
     /**
+     * Resolve and cache the primary category path for a product.
+     *
+     * @return array<int, string>
+     */
+    private static function getPrimaryPathForProduct(DatabaseInterface $db, string $slug): array
+    {
+        $cacheKey = strtolower($slug);
+
+        if (\array_key_exists($cacheKey, self::$productPathCache)) {
+            return self::$productPathCache[$cacheKey] ?? [];
+        }
+
+        $resolved = CategoryPathHelper::getPrimaryPathForProduct($db, $slug);
+
+        if ($resolved === null) {
+            self::$productPathCache[$cacheKey] = null;
+
+            return [];
+        }
+
+        self::$productPathCache[$cacheKey] = $resolved['path'] ?? [];
+
+        return self::$productPathCache[$cacheKey];
+    }
+
+    /**
+     * Fetch the database connection when available.
+     */
+    private static function getDatabase(): ?DatabaseInterface
+    {
+        try {
+            return Factory::getContainer()->get(DatabaseInterface::class);
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
+    /**
      * Find a menu item ID for the given view.
      *
      * @param string $view The view name
@@ -224,5 +298,7 @@ class RouteHelper
     public static function clearCache(): void
     {
         self::$menuCache = [];
+        self::$productPathCache = [];
+        CategoryPathHelper::reset();
     }
 }

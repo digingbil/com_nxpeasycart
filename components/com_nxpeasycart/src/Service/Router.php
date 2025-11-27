@@ -12,7 +12,9 @@ use Joomla\CMS\Component\Router\Rules\MenuRules;
 use Joomla\CMS\Component\Router\Rules\NomenuRules;
 use Joomla\CMS\Component\Router\Rules\StandardRules;
 use Joomla\CMS\Menu\AbstractMenu;
+use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
 /**
  * Site router registered through Joomla's router factory.
@@ -54,7 +56,7 @@ class Router extends RouterView
         $order->setKey('no');
         $this->registerView($order);
 
-        $this->db = $db;
+        $this->db = $db ?: $this->resolveDatabase();
         parent::__construct($app, $menu);
 
         $this->attachRule(new MenuRules($this));
@@ -74,18 +76,25 @@ class Router extends RouterView
 
             switch ($view) {
                 case 'product':
-                    $hasCategory = !empty($query['category_slug']);
+                    $productSlug = isset($query['slug']) ? (string) $query['slug'] : '';
+                    $categoryPath = $this->extractCategoryPath($query);
 
-                    if ($hasCategory) {
-                        $segments[] = 'category';
-                        $segments[] = rawurlencode((string) $query['category_slug']);
-                        unset($query['category_slug']);
-                    } else {
-                        $segments[] = 'product';
+                    if (empty($categoryPath) && $productSlug !== '') {
+                        $categoryPath = $this->resolveProductPathSegments($productSlug);
                     }
 
-                    if (!empty($query['slug'])) {
-                        $segments[] = rawurlencode((string) $query['slug']);
+                    if (empty($categoryPath)) {
+                        $segments[] = 'product';
+                    } else {
+                        $segments[] = 'category';
+
+                        foreach ($categoryPath as $segment) {
+                            $segments[] = rawurlencode($segment);
+                        }
+                    }
+
+                    if ($productSlug !== '') {
+                        $segments[] = rawurlencode($productSlug);
                         unset($query['slug']);
                     }
 
@@ -95,19 +104,22 @@ class Router extends RouterView
                 case 'category':
                     $segments[] = 'category';
 
-                    $slug = isset($query['slug']) ? (string) $query['slug'] : '';
+                    $slug       = isset($query['slug']) ? (string) $query['slug'] : '';
                     $categoryId = isset($query['id']) ? (int) $query['id'] : 0;
+                    $categoryPath = $this->extractCategoryPath($query);
 
-                    if ($slug === '' && $categoryId > 0) {
-                        $slug = $this->resolveCategorySlug($categoryId);
+                    if (empty($categoryPath)) {
+                        if ($categoryId > 0) {
+                            $categoryPath = $this->resolveCategoryPathById($categoryId);
+                        } elseif ($slug !== '') {
+                            $categoryPath = $this->resolveCategoryPathBySlug($slug);
+                        }
                     }
 
-                    if ($slug === '0') {
-                        $slug = '';
-                    }
-
-                    if ($slug !== '') {
-                        $segments[] = rawurlencode($slug);
+                    if (!empty($categoryPath)) {
+                        foreach ($categoryPath as $segment) {
+                            $segments[] = rawurlencode($segment);
+                        }
                     }
 
                     unset($query['slug'], $query['id']);
@@ -212,39 +224,76 @@ class Router extends RouterView
                 if (!empty($segments)) {
                     $vars['slug'] = urldecode((string) array_shift($segments));
                 }
-                break;
+
+                // Clear remaining segments to prevent Joomla from further parsing
+                $segments = [];
+
+                return $vars;
 
             case 'category':
-                if (!empty($segments)) {
-                    $categorySlug = urldecode((string) array_shift($segments));
+                // Copy segments before clearing so we can process them
+                $pathSegments = array_map(
+                    static fn ($segment) => urldecode((string) $segment),
+                    $segments
+                );
 
-                    if (strcasecmp($categorySlug, 'all') === 0) {
-                        $categorySlug = '';
-                    }
+                // Clear segments immediately - we're consuming them all
+                $segments = [];
 
-                    if (!empty($segments)) {
-                        $vars['view']          = 'product';
-                        $vars['category_slug'] = $categorySlug;
-                        $vars['slug']          = urldecode((string) array_shift($segments));
-                    } else {
-                        $vars['view'] = 'category';
-
-                        if ($categorySlug !== '') {
-                            $vars['slug'] = $categorySlug;
-                        }
-                    }
-                } else {
+                if (empty($pathSegments)) {
                     $vars['view'] = 'category';
+
+                    return $vars;
                 }
-                break;
+
+                if (\count($pathSegments) === 1 && strcasecmp($pathSegments[0], 'all') === 0) {
+                    $vars['view'] = 'category';
+
+                    return $vars;
+                }
+
+                $productSlug  = (string) array_pop($pathSegments);
+                $productMatch = $this->resolveProductPrimaryPath($productSlug);
+
+                if ($productMatch !== null) {
+                    $vars['view'] = 'product';
+                    $vars['slug'] = $productSlug;
+
+                    $path = $productMatch['path'] ?? [];
+
+                    if (!empty($path)) {
+                        $vars['category_path'] = implode('/', $path);
+                        $vars['category_slug'] = end($path);
+                    }
+
+                    return $vars;
+                }
+
+                $fullPath = array_merge($pathSegments, [$productSlug]);
+                $category = $this->resolveCategoryFromPath($fullPath);
+
+                $vars['view'] = 'category';
+
+                if ($category !== null) {
+                    $vars['slug'] = $category['slug'];
+                    $vars['id']   = $category['id'];
+                    $vars['category_path'] = implode('/', $category['path']);
+                } else {
+                    $vars['slug'] = $productSlug;
+                    $vars['category_path'] = implode('/', $fullPath);
+                }
+
+                return $vars;
 
             case 'cart':
                 $vars['view'] = 'cart';
-                break;
+                $segments = [];
+                return $vars;
 
             case 'checkout':
                 $vars['view'] = 'checkout';
-                break;
+                $segments = [];
+                return $vars;
 
             case 'order':
                 $vars['view'] = 'order';
@@ -252,41 +301,152 @@ class Router extends RouterView
                 if (!empty($segments)) {
                     $vars['no'] = urldecode((string) array_shift($segments));
                 }
-                break;
+
+                // Clear remaining segments
+                $segments = [];
+                return $vars;
 
             default:
                 array_unshift($segments, $first);
 
                 return parent::parse($segments);
         }
-
-        return $vars;
     }
 
     /**
-     * Resolve a slug for the given category ID so menu items using the ID field
-     * don't leak empty slug placeholders into the URL.
+     * Extract an explicit category path from the query.
+     *
+     * @param array<string, mixed> $query
+     *
+     * @return array<int, string>
      */
-    private function resolveCategorySlug(int $categoryId): string
+    private function extractCategoryPath(array &$query): array
     {
-        if ($categoryId <= 0 || !$this->db) {
-            return '';
+        if (isset($query['category_path'])) {
+            $path = CategoryPathHelper::normalisePathSegments($query['category_path']);
+            unset($query['category_path']);
+
+            return $path;
         }
 
+        if (isset($query['category_slug'])) {
+            $slug = (string) $query['category_slug'];
+            unset($query['category_slug']);
+
+            return $this->resolveCategoryPathBySlug($slug);
+        }
+
+        if (isset($query['category_id'])) {
+            $categoryId = (int) $query['category_id'];
+            unset($query['category_id']);
+
+            return $this->resolveCategoryPathById($categoryId);
+        }
+
+        return [];
+    }
+
+    /**
+     * Resolve a product's category path segments.
+     *
+     * @return array<int, string>
+     */
+    private function resolveProductPathSegments(string $productSlug): array
+    {
+        $resolved = $this->resolveProductPrimaryPath($productSlug);
+
+        return $resolved['path'] ?? [];
+    }
+
+    /**
+     * Resolve a category path by ID.
+     *
+     * @return array<int, string>
+     */
+    private function resolveCategoryPathById(int $categoryId): array
+    {
+        if ($categoryId <= 0 || !$this->db) {
+            return [];
+        }
+
+        return CategoryPathHelper::getPath($this->db, $categoryId);
+    }
+
+    /**
+     * Resolve a category path by slug.
+     *
+     * @return array<int, string>
+     */
+    private function resolveCategoryPathBySlug(string $slug): array
+    {
+        if ($slug === '' || !$this->db) {
+            return [];
+        }
+
+        return CategoryPathHelper::getPathForSlug($this->db, $slug);
+    }
+
+    /**
+     * Resolve a category from a slug path.
+     *
+     * @param array<int, string> $segments
+     *
+     * @return array{id: int, slug: string, path: array<int, string>}|null
+     */
+    private function resolveCategoryFromPath(array $segments): ?array
+    {
+        if (!$this->db) {
+            return null;
+        }
+
+        return CategoryPathHelper::resolveByPath($this->db, $segments);
+    }
+
+    /**
+     * Resolve the primary category path for a product (if defined).
+     *
+     * @return array{category_id?: int|null, path?: array<int, string>}|null
+     */
+    private function resolveProductPrimaryPath(string $productSlug): ?array
+    {
+        if ($productSlug === '' || !$this->db) {
+            return null;
+        }
+
+        $resolved = CategoryPathHelper::getPrimaryPathForProduct($this->db, $productSlug);
+
+        if ($resolved !== null) {
+            return $resolved;
+        }
+
+        // Allow routing for products without a primary category yet.
         try {
             $query = $this->db->getQuery(true)
-                ->select($this->db->quoteName('slug'))
-                ->from($this->db->quoteName('#__nxp_easycart_categories'))
-                ->where($this->db->quoteName('id') . ' = :categoryId')
-                ->bind(':categoryId', $categoryId, \Joomla\Database\ParameterType::INTEGER);
+                ->select($this->db->quoteName('id'))
+                ->from($this->db->quoteName('#__nxp_easycart_products'))
+                ->where($this->db->quoteName('slug') . ' = :productSlug')
+                ->bind(':productSlug', $productSlug, \Joomla\Database\ParameterType::STRING)
+                ->setLimit(1);
 
             $this->db->setQuery($query);
 
-            $slug = (string) $this->db->loadResult();
+            $exists = (int) $this->db->loadResult();
 
-            return trim($slug);
+            return $exists > 0 ? ['path' => []] : null;
         } catch (\Throwable $exception) {
-            return '';
+            return null;
+        }
+    }
+
+    /**
+     * Resolve database from the container when not injected.
+     */
+    private function resolveDatabase(): ?DatabaseInterface
+    {
+        try {
+            return Factory::getContainer()->get(DatabaseInterface::class);
+        } catch (\Throwable $exception) {
+            return null;
         }
     }
 }

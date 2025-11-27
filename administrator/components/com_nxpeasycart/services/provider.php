@@ -234,7 +234,12 @@ return new class () implements ServiceProviderInterface {
                         $app = JoomlaFactory::getApplication('site');
                     }
 
-                    return new EasyCartRouter($app, $app->getMenu());
+                    return new EasyCartRouter(
+                        $app,
+                        $app->getMenu(),
+                        null,
+                        $container->get(DatabaseInterface::class)
+                    );
                 }
             );
         }

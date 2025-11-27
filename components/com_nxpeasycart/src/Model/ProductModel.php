@@ -10,6 +10,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
 /**
  * Frontend product model.
@@ -91,7 +92,17 @@ class ProductModel extends BaseDatabaseModel
 
         $images       = $this->decodeImages($product->images ?? '');
         $variants     = $this->fetchVariants((int) $product->id);
-        $categories   = $this->fetchCategories((int) $product->id);
+        $primaryCategoryId = $product->primary_category_id !== null ? (int) $product->primary_category_id : null;
+        $categories   = $this->fetchCategories((int) $product->id, $primaryCategoryId);
+
+        if ($primaryCategoryId === null && !empty($categories)) {
+            $primaryCategoryId = $categories[0]['id'] ?? null;
+        }
+
+        $primaryCategoryPath = $primaryCategoryId !== null
+            ? CategoryPathHelper::getPath($db, (int) $primaryCategoryId)
+            : [];
+        $primaryCategorySlug = !empty($primaryCategoryPath) ? (string) end($primaryCategoryPath) : null;
         $priceSummary = $this->summarisePrices($variants);
         $stockTotals  = $this->summariseStock($variants);
         $status       = ProductStatus::normalise($product->active ?? ProductStatus::INACTIVE);
@@ -110,6 +121,9 @@ class ProductModel extends BaseDatabaseModel
             'images'     => $images,
             'variants'   => $variants,
             'categories' => $categories,
+            'primary_category_id' => $primaryCategoryId,
+            'primary_category_slug' => $primaryCategorySlug,
+            'primary_category_path' => !empty($primaryCategoryPath) ? implode('/', $primaryCategoryPath) : null,
             'price'      => $priceSummary,
             'stock'      => $stockTotals,
             'available'  => $available,
@@ -246,7 +260,7 @@ class ProductModel extends BaseDatabaseModel
      *
      * @return array<int, array<string, mixed>>
      */
-    private function fetchCategories(int $productId): array
+    private function fetchCategories(int $productId, ?int $primaryCategoryId = null): array
     {
         $db    = $this->getDatabase();
         $query = $db->getQuery(true)
@@ -273,6 +287,7 @@ class ProductModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
+                'primary' => $primaryCategoryId !== null && (int) $row->id === $primaryCategoryId,
             ],
             $rows
         );

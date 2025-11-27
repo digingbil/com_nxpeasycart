@@ -96,6 +96,8 @@ class ProductModel extends AdminModel
         $validated['images']     = $this->filterImages($data['images'] ?? []);
         $validated['variants']   = $this->filterVariants($data['variants'] ?? []);
         $validated['categories'] = $this->filterCategories($data['categories'] ?? []);
+        $primaryId               = isset($data['primary_category_id']) ? (int) $data['primary_category_id'] : null;
+        $validated['primary_category_id'] = ($primaryId !== null && $primaryId > 0) ? $primaryId : null;
         $validated['featured']   = isset($validated['featured']) ? (int) (bool) $validated['featured'] : 0;
         $validated['status']     = ProductStatus::normalise($data['status'] ?? $data['active'] ?? ProductStatus::ACTIVE);
         $validated['active']     = $validated['status'];
@@ -117,6 +119,8 @@ class ProductModel extends AdminModel
         $images     = (array) ($data['images'] ?? []);
         $variants   = (array) ($data['variants'] ?? []);
         $categories = (array) ($data['categories'] ?? []);
+        $primaryPreferredId = isset($data['primary_category_id']) ? (int) $data['primary_category_id'] : null;
+        $primaryPreferredId = ($primaryPreferredId !== null && $primaryPreferredId > 0) ? $primaryPreferredId : null;
 
         try {
             $data['images'] = $this->encodeImages($images);
@@ -142,7 +146,9 @@ class ProductModel extends AdminModel
             }
 
             $this->syncVariants($id, $variants);
-            $this->syncCategories($id, $categories);
+            $resolvedCategories = $this->syncCategories($id, $categories);
+            $primaryCategoryId  = $this->selectPrimaryCategoryId($resolvedCategories, $primaryPreferredId);
+            $this->persistPrimaryCategory($id, $primaryCategoryId);
 
             $db->transactionCommit();
 
@@ -168,6 +174,8 @@ class ProductModel extends AdminModel
 
         $table->active   = ProductStatus::normalise($table->active ?? $table->status ?? ProductStatus::ACTIVE);
         $table->featured = (int) (bool) $table->featured;
+        $primaryCategoryId = isset($table->primary_category_id) ? (int) $table->primary_category_id : 0;
+        $table->primary_category_id = $primaryCategoryId > 0 ? $primaryCategoryId : null;
 
         if (\is_array($table->images)) {
             try {
@@ -241,8 +249,19 @@ class ProductModel extends AdminModel
             )
         );
 
+        $primaryCategoryMap = [];
+
+        foreach ($items as $item) {
+            $id = (int) ($item->id ?? 0);
+
+            if ($id > 0) {
+                $primaryId = isset($item->primary_category_id) ? (int) $item->primary_category_id : null;
+                $primaryCategoryMap[$id] = $primaryId > 0 ? $primaryId : null;
+            }
+        }
+
         $variants   = $this->loadVariantsForProducts($productIds);
-        $categories = $this->loadCategoriesForProducts($productIds);
+        $categories = $this->loadCategoriesForProducts($productIds, $primaryCategoryMap);
 
         foreach ($items as $index => $item) {
             $id                = (int) ($item->id ?? 0);
@@ -254,6 +273,7 @@ class ProductModel extends AdminModel
             $item->images      = $this->decodeImages($item->images ?? null);
             $item->variants    = $variants[$id]   ?? [];
             $item->categories  = $categories[$id] ?? [];
+            $item->primary_category_id = $primaryCategoryMap[$id] ?? null;
             $items[$index]     = $item;
         }
 
@@ -499,15 +519,20 @@ class ProductModel extends AdminModel
                     'id'    => (int) $category,
                     'title' => null,
                     'slug'  => null,
+                    'primary' => false,
                 ];
 
                 $key = 'id:' . $normalised['id'];
 
                 if (isset($seen[$key])) {
+                    if ($normalised['primary']) {
+                        $categories[$seen[$key]]['primary'] = true;
+                    }
+
                     continue;
                 }
 
-                $seen[$key]  = true;
+                $seen[$key]   = \count($categories);
                 $categories[] = $normalised;
 
                 continue;
@@ -518,6 +543,7 @@ class ProductModel extends AdminModel
                     'id'    => isset($category['id']) ? (int) $category['id'] : 0,
                     'title' => isset($category['title']) ? trim((string) $category['title']) : '',
                     'slug'  => isset($category['slug']) ? trim((string) $category['slug']) : '',
+                    'primary' => !empty($category['primary']),
                 ];
 
                 $key = $normalised['id'] > 0
@@ -529,10 +555,14 @@ class ProductModel extends AdminModel
                 }
 
                 if (isset($seen[$key])) {
+                    if ($normalised['primary']) {
+                        $categories[$seen[$key]]['primary'] = true;
+                    }
+
                     continue;
                 }
 
-                $seen[$key]  = true;
+                $seen[$key]   = \count($categories);
                 $categories[] = $normalised;
 
                 continue;
@@ -548,6 +578,7 @@ class ProductModel extends AdminModel
                 'id'    => 0,
                 'title' => $title,
                 'slug'  => '',
+                'primary' => false,
             ];
 
             $key = 'slug:' . strtolower($title);
@@ -556,7 +587,7 @@ class ProductModel extends AdminModel
                 continue;
             }
 
-            $seen[$key]  = true;
+            $seen[$key]   = \count($categories);
             $categories[] = $normalised;
         }
 
@@ -687,39 +718,63 @@ class ProductModel extends AdminModel
      * @param int   $productId Product identifier
      * @param array $categories Sanitised categories payload
      *
-     * @return void
+     * @return array<int, array{id: int, primary: bool}>
      */
-    private function syncCategories(int $productId, array $categories): void
+    private function syncCategories(int $productId, array $categories): array
     {
         $db = $this->getDatabase();
 
-        $categoryIds = [];
+        $resolved = [];
+        $seen      = [];
 
         foreach ($categories as $category) {
             $id = isset($category['id']) ? (int) $category['id'] : 0;
+            $title = trim((string) ($category['title'] ?? ''));
+            $slug  = trim((string) ($category['slug'] ?? ''));
+            $isPrimary = !empty($category['primary']);
+            $key = $id > 0 ? 'id:' . $id : 'slug:' . strtolower($slug ?: $title);
 
-            if ($id > 0) {
-                if ($this->categoryExists($id)) {
-                    $categoryIds[] = $id;
+            if ($key === 'slug:') {
+                continue;
+            }
+
+            if (isset($seen[$key])) {
+                if ($isPrimary) {
+                    $resolved[$seen[$key]]['primary'] = true;
                 }
 
                 continue;
             }
 
-            $title = trim((string) ($category['title'] ?? ''));
+            if ($id > 0) {
+                if ($this->categoryExists($id)) {
+                    $seen[$key]   = \count($resolved);
+                    $resolved[]   = ['id' => $id, 'primary' => $isPrimary];
+                }
+
+                continue;
+            }
 
             if ($title === '') {
                 continue;
             }
 
-            $slug          = trim((string) ($category['slug'] ?? ''));
-            $categoryIds[] = $this->findOrCreateCategory($title, $slug);
+            $categoryId = $this->findOrCreateCategory($title, $slug);
+
+            $seen[$key] = \count($resolved);
+            $resolved[] = [
+                'id'      => $categoryId,
+                'primary' => $isPrimary,
+            ];
         }
 
         $categoryIds = array_values(
-            array_unique(
-                array_filter($categoryIds, static fn ($id) => (int) $id > 0),
-                SORT_NUMERIC
+            array_filter(
+                array_unique(
+                    array_map(static fn ($item) => (int) $item['id'], $resolved),
+                    SORT_NUMERIC
+                ),
+                static fn ($id) => $id > 0
             )
         );
 
@@ -789,6 +844,54 @@ class ProductModel extends AdminModel
             $db->setQuery($query);
             $db->execute();
         }
+
+        return $resolved;
+    }
+
+    /**
+     * Select the canonical primary category ID for a product.
+     *
+     * @param array<int, array{id: int, primary: bool}> $resolvedCategories
+     */
+    private function selectPrimaryCategoryId(array $resolvedCategories, ?int $preferredId = null): ?int
+    {
+        if ($preferredId !== null && $preferredId > 0) {
+            foreach ($resolvedCategories as $resolved) {
+                if ((int) $resolved['id'] === $preferredId) {
+                    return $preferredId;
+                }
+            }
+        }
+
+        foreach ($resolvedCategories as $resolved) {
+            if (!empty($resolved['primary'])) {
+                return (int) $resolved['id'];
+            }
+        }
+
+        return isset($resolvedCategories[0]) ? (int) $resolvedCategories[0]['id'] : null;
+    }
+
+    /**
+     * Persist the primary category mapping for a product.
+     */
+    private function persistPrimaryCategory(int $productId, ?int $categoryId): void
+    {
+        if ($categoryId !== null && $categoryId <= 0) {
+            $categoryId = null;
+        }
+
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->update($db->quoteName('#__nxp_easycart_products'))
+            ->set($db->quoteName('primary_category_id') . ' = :primaryCategoryId')
+            ->where($db->quoteName('id') . ' = :productId');
+
+        $query->bind(':primaryCategoryId', $categoryId, $categoryId !== null ? ParameterType::INTEGER : ParameterType::NULL);
+        $query->bind(':productId', $productId, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+        $db->execute();
     }
 
     /**
@@ -990,7 +1093,7 @@ class ProductModel extends AdminModel
      *
      * @return array<int, array<string, mixed>>
      */
-    private function loadCategories(int $productId): array
+    private function loadCategories(int $productId, ?int $primaryCategoryId = null): array
     {
         if ($productId <= 0) {
             return [];
@@ -1022,6 +1125,7 @@ class ProductModel extends AdminModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
+                'primary' => $primaryCategoryId !== null && (int) $row->id === $primaryCategoryId,
             ];
         }
 
@@ -1032,10 +1136,11 @@ class ProductModel extends AdminModel
      * Load categories for multiple products in one query.
      *
      * @param array<int> $productIds
+     * @param array<int, int|null> $primaryCategoryMap
      *
      * @return array<int, array<int, array<string, mixed>>>
      */
-    private function loadCategoriesForProducts(array $productIds): array
+    private function loadCategoriesForProducts(array $productIds, array $primaryCategoryMap = []): array
     {
         $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
 
@@ -1074,12 +1179,14 @@ class ProductModel extends AdminModel
 
         foreach ($rows as $row) {
             $productId = (int) $row->product_id;
+            $primaryId = $primaryCategoryMap[$productId] ?? null;
 
             $categoriesById[$productId] ??= [];
             $categoriesById[$productId][] = [
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
+                'primary' => $primaryId !== null && (int) $row->id === (int) $primaryId,
             ];
         }
 
