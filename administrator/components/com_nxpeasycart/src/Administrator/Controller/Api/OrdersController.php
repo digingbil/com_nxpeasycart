@@ -48,6 +48,7 @@ class OrdersController extends AbstractJsonController
             'note'  => $this->note(),
             'tracking' => $this->tracking(),
             'invoice' => $this->invoice(),
+            'export' => $this->export(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -245,6 +246,31 @@ class OrdersController extends AbstractJsonController
             'invoice' => [
                 'filename' => $filename,
                 'content'  => $content,
+            ],
+        ]);
+    }
+
+    /**
+     * Export orders to CSV (Excel-compatible).
+     */
+    protected function export(): JsonResponse
+    {
+        $this->assertCan('core.manage');
+
+        $filters = [
+            'search'    => $this->input->getString('search', ''),
+            'state'     => $this->input->getCmd('state', ''),
+            'date_from' => $this->input->getString('date_from', ''),
+            'date_to'   => $this->input->getString('date_to', ''),
+        ];
+
+        $service = $this->getOrderService();
+        $export  = $service->exportToCsv($filters);
+
+        return $this->respond([
+            'export' => [
+                'filename' => $export['filename'],
+                'content'  => base64_encode($export['content']),
             ],
         ]);
     }

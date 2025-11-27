@@ -47,6 +47,8 @@ export function useOrders({
         endpoints?.tracking ?? deriveEndpoint(listEndpoint, "tracking");
     const invoiceEndpoint =
         endpoints?.invoice ?? deriveEndpoint(listEndpoint, "invoice");
+    const exportEndpoint =
+        endpoints?.export ?? deriveEndpoint(listEndpoint, "export");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -59,6 +61,7 @@ export function useOrders({
     const state = reactive({
         loading: false,
         saving: false,
+        exporting: false,
         error: "",
         transitionError: "",
         items: [...preloadItems],
@@ -411,6 +414,34 @@ export function useOrders({
         }
     };
 
+    const exportOrders = async () => {
+        if (!exportEndpoint) {
+            throw new Error("Export endpoint unavailable.");
+        }
+
+        state.exporting = true;
+        state.error = "";
+
+        try {
+            const exportData = await api.exportOrders({
+                endpoint: exportEndpoint,
+                search: state.search.trim(),
+                state: state.filterState,
+            });
+
+            if (!exportData) {
+                throw new Error("Export not available.");
+            }
+
+            return exportData;
+        } catch (error) {
+            state.error = error?.message ?? "Export failed";
+            throw error;
+        } finally {
+            state.exporting = false;
+        }
+    };
+
     const bulkTransition = async (ids, nextState) => {
         if (!bulkTransitionEndpoint) {
             throw new Error("Bulk transition endpoint unavailable.");
@@ -473,6 +504,7 @@ export function useOrders({
         bulkTransition,
         updateTracking,
         downloadInvoice,
+        exportOrders,
         toggleSelection,
         clearSelection,
         metrics: perf.metrics,

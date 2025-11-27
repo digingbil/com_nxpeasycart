@@ -564,6 +564,20 @@ class ApiClient {
     }
 
     /**
+     * Export orders to CSV.
+     */
+    async exportOrders({ endpoint, search = "", state = "" }) {
+        const url = this.mergeParams(endpoint, {
+            search: search || undefined,
+            state: state || undefined,
+        });
+
+        const payload = await this.get(url);
+
+        return payload.data?.export ?? null;
+    }
+
+    /**
      * Update order tracking metadata.
      */
     async updateOrderTracking({ endpoint, id, tracking }) {

@@ -82,6 +82,36 @@
                 <button
                     class="nxp-ec-btn nxp-ec-btn--icon"
                     type="button"
+                    @click="emitExport"
+                    :disabled="state.loading || state.exporting"
+                    :title="__(
+                        'COM_NXPEASYCART_ORDERS_EXPORT',
+                        'Export CSV',
+                        [],
+                        'ordersExport'
+                    )"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_ORDERS_EXPORT',
+                        'Export CSV',
+                        [],
+                        'ordersExport'
+                    )"
+                >
+                    <i class="fa-solid fa-file-csv"></i>
+                    <span class="nxp-ec-sr-only">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_ORDERS_EXPORT",
+                                "Export CSV",
+                                [],
+                                "ordersExport"
+                            )
+                        }}
+                    </span>
+                </button>
+                <button
+                    class="nxp-ec-btn nxp-ec-btn--icon"
+                    type="button"
                     @click="emitRefresh"
                     :disabled="state.loading"
                     :title="__(
@@ -968,6 +998,7 @@ const emit = defineEmits([
     "add-note",
     "save-tracking",
     "invoice",
+    "export",
 ]);
 
 const __ = props.translate;
@@ -1210,6 +1241,10 @@ const addressLines = (address) => {
 
 const emitRefresh = () => {
     emit("refresh");
+};
+
+const emitExport = () => {
+    emit("export");
 };
 
 const emitSearch = () => {

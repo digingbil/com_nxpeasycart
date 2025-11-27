@@ -104,6 +104,7 @@
             @add-note="onOrdersAddNote"
             @save-tracking="onOrdersSaveTracking"
             @invoice="onOrdersInvoice"
+            @export="onOrdersExport"
         />
 
         <CustomersPanel
@@ -444,6 +445,7 @@ const {
     addNote: addOrderNote,
     updateTracking: updateOrderTracking,
     downloadInvoice: downloadOrderInvoice,
+    exportOrders,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -971,6 +973,31 @@ const onOrdersInvoice = async (orderId) => {
     const link = document.createElement("a");
     link.href = url;
     link.download = invoice.filename || "invoice.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+};
+
+const onOrdersExport = async () => {
+    const exportData = await exportOrders();
+
+    if (!exportData?.content) {
+        return;
+    }
+
+    const byteString = atob(exportData.content);
+    const byteArray = new Uint8Array(byteString.length);
+
+    for (let i = 0; i < byteString.length; i += 1) {
+        byteArray[i] = byteString.charCodeAt(i);
+    }
+
+    const blob = new Blob([byteArray], { type: "text/csv;charset=utf-8" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = exportData.filename || "orders-export.csv";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
