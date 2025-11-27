@@ -81,12 +81,15 @@ class StripeGateway implements PaymentGatewayInterface
     {
         $webhookSecret = trim((string) ($this->config['webhook_secret'] ?? ''));
 
-        if ($webhookSecret !== '') {
-            $signature = $context['Stripe-Signature'] ?? '';
+        // SECURITY: Webhook secret is mandatory to prevent webhook forgery
+        if ($webhookSecret === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_WEBHOOK_SECRET_MISSING'));
+        }
 
-            if (!$this->verifySignature($payload, $signature, $webhookSecret)) {
-                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_SIGNATURE_INVALID'));
-            }
+        $signature = $context['Stripe-Signature'] ?? '';
+
+        if (!$this->verifySignature($payload, $signature, $webhookSecret)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_SIGNATURE_INVALID'));
         }
 
         $event = json_decode($payload, true);

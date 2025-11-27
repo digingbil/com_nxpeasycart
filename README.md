@@ -49,6 +49,11 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 - **TemplateAdapter caching**: template token resolution is memoised per request to avoid repeated palette parsing when multiple views touch template defaults.
 - **Hashed site bundle**: Vite now emits hashed JS/CSS with a manifest; `joomla.asset.json` points at the hashed entry with `version: auto` for reliable cache-busting in production.
 - **Cart module asset loading fix**: `mod_nxpeasycart_cart` now uses the centralised `SiteAssetHelper` to register site JS/CSS, ensuring the cart summary island hydrates correctly on non-component pages (e.g. homepage) where only the module is present.
+- **Security audit fixes (Critical)**: Resolved two critical vulnerabilities identified during security audit:
+    - **XSS vulnerability eliminated**: Replaced `v-html` in checkout success message with safe Vue text interpolation, preventing script injection via order numbers.
+    - **Stripe webhook security enforced**: Made `webhook_secret` mandatory; webhooks without valid signatures are now rejected.
+    - **PayPal webhook verification implemented**: Added complete signature validation using PayPal's verification API; `webhook_id` is now mandatory.
+    - See `docs/security-audit-fixes.md` for complete details, testing procedures, and deployment requirements.
 
 ### Performance Optimizations (Admin SPA)
 
@@ -152,10 +157,10 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 
 - Site/admin bundles are built with Vite from `media/com_nxpeasycart/src`. After `npm run build:site`, the hashed filename must be written to `media/com_nxpeasycart/joomla.asset.json` so Joomla loads the newest bundle. This is automated via the `postbuild:site` hook, which runs `npm run sync:assets` (see `tools/sync-asset-manifest.js`). If you copy files manually or skip the hook, run `npm run sync:assets` to avoid stale scripts.
 
-## Testing
+## Testing & Security
 
 - See `docs/testing.md` for the current automation blueprint covering PHPUnit (unit/integration), API contract runs, Vue unit tests, and Playwright E2E journeys.
-- Risk register lives at `docs/risk-register.md`; packaging workflow is documented in `docs/packaging.md`.
+- Security audit fixes and webhook configuration requirements are documented in `docs/security-audit-fixes.md`.
 - Risk register lives at `docs/risk-register.md`; packaging workflow is documented in `docs/packaging.md`.
 
 ## Changelog summary
@@ -164,3 +169,4 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 - **M1 – Products CRUD**: Admin SPA delivers full product management (images, categories, variants) with validated JSON endpoints and improved UX.
 - **Bugfix – Admin product save routing**: API router now preserves dotted task names (`api.products.store` etc.), restoring the ability to create products from the Vue admin.
 - **Security & rate limiting (Phase 1 MVP)**: Implemented `RateLimiter` service with PSR-16 cache backing, wired into cart and payment controllers with configurable limits per IP, email, and session. Admin settings panel now includes Security tab for managing rate limits with proper persistence. Fixed missing `checkout_session_limit` field that caused settings to reset on save, and corrected `show()` method to read stored values directly instead of re-normalizing them.
+- **Security audit fixes (Critical vulnerabilities resolved)**: Fixed XSS vulnerability in checkout success message by replacing `v-html` with safe text interpolation. Enforced mandatory webhook signature validation for Stripe (webhook_secret required) and implemented complete PayPal webhook verification using their API (webhook_id required). All webhook forgery attack vectors eliminated. See `docs/security-audit-fixes.md`.

@@ -361,7 +361,12 @@ export default function mountCheckoutIsland(el) {
 
         <div v-else class="nxp-ec-order-confirmation__summary">
           <h2>{{ labels.thank_you }}</h2>
-          <p v-html="formatOrderCreated(orderNumber)"></p>
+          <p>
+            <span v-for="(part, index) in formatOrderCreatedParts(orderNumber)" :key="index">
+              <strong v-if="part.bold">{{ part.text }}</strong>
+              <template v-else>{{ part.text }}</template>
+            </span>
+          </p>
           <a class="nxp-ec-btn" :href="orderUrl">{{ labels.view_order }}</a>
         </div>
       </div>
@@ -1112,8 +1117,29 @@ export default function mountCheckoutIsland(el) {
                 return labels.shipping_no_rules.replace("%s", countryName);
             };
 
-            const formatOrderCreated = (orderNo) => {
-                return labels.order_created.replace("%s", `<strong>${orderNo}</strong>`);
+            const formatOrderCreatedParts = (orderNo) => {
+                // Safely split the message and mark the order number as bold
+                // This prevents XSS by avoiding v-html and using Vue's safe text interpolation
+                const template = labels.order_created || "Your order %s was created successfully.";
+                const parts = [];
+                const marker = "%s";
+                const index = template.indexOf(marker);
+
+                if (index === -1) {
+                    // No marker found, return whole message as plain text
+                    parts.push({ text: template, bold: false });
+                } else {
+                    // Split around the marker
+                    if (index > 0) {
+                        parts.push({ text: template.substring(0, index), bold: false });
+                    }
+                    parts.push({ text: String(orderNo || ""), bold: true });
+                    if (index + marker.length < template.length) {
+                        parts.push({ text: template.substring(index + marker.length), bold: false });
+                    }
+                }
+
+                return parts;
             };
 
             // Refresh cart data from server
@@ -1209,7 +1235,7 @@ export default function mountCheckoutIsland(el) {
                 phonePlaceholder,
                 getCountryName,
                 formatShippingNoRules,
-                formatOrderCreated,
+                formatOrderCreatedParts,
             };
         },
     });

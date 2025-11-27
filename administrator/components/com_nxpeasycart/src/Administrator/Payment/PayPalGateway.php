@@ -101,6 +101,9 @@ class PayPalGateway implements PaymentGatewayInterface
 
     public function handleWebhook(string $payload, array $context = []): array
     {
+        // SECURITY: Verify PayPal webhook signature before processing
+        $this->verifyWebhookSignature($payload, $context);
+
         $event = json_decode($payload, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -155,5 +158,84 @@ class PayPalGateway implements PaymentGatewayInterface
         $mode = strtolower((string) ($this->config['mode'] ?? 'sandbox'));
 
         return $mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+    }
+
+    /**
+     * Verify PayPal webhook signature using PayPal's verification API.
+     *
+     * @param string $payload The raw webhook payload
+     * @param array<string, mixed> $context Headers from the webhook request
+     * @throws RuntimeException if verification fails
+     */
+    private function verifyWebhookSignature(string $payload, array $context): void
+    {
+        $webhookId = trim((string) ($this->config['webhook_id'] ?? ''));
+
+        // SECURITY: Webhook ID is mandatory to prevent webhook forgery
+        if ($webhookId === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_ID_MISSING'));
+        }
+
+        // Extract required headers for verification
+        $transmissionId   = $context['PayPal-Transmission-Id']   ?? '';
+        $transmissionTime = $context['PayPal-Transmission-Time'] ?? '';
+        $transmissionSig  = $context['PayPal-Transmission-Sig']  ?? '';
+        $certUrl          = $context['PayPal-Cert-Url']          ?? '';
+        $authAlgo         = $context['PayPal-Auth-Algo']         ?? '';
+
+        if (empty($transmissionId) || empty($transmissionTime) || empty($transmissionSig)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_HEADERS_MISSING'));
+        }
+
+        // Get access token for verification API
+        $clientId     = trim((string) ($this->config['client_id'] ?? ''));
+        $clientSecret = trim((string) ($this->config['client_secret'] ?? ''));
+
+        if ($clientId === '' || $clientSecret === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_CREDENTIALS_MISSING'));
+        }
+
+        $accessToken = $this->fetchAccessToken($clientId, $clientSecret);
+
+        // Call PayPal's webhook verification endpoint
+        $verificationBody = [
+            'transmission_id'   => $transmissionId,
+            'transmission_time' => $transmissionTime,
+            'cert_url'          => $certUrl,
+            'auth_algo'         => $authAlgo,
+            'transmission_sig'  => $transmissionSig,
+            'webhook_id'        => $webhookId,
+            'webhook_event'     => json_decode($payload, true),
+        ];
+
+        try {
+            $response = $this->http->request('POST', $this->apiBase() . '/v1/notifications/verify-webhook-signature', [
+                'headers' => [
+                    'Content-Type'  => 'application/json',
+                    'Authorization' => 'Bearer ' . $accessToken,
+                ],
+                'json' => $verificationBody,
+            ]);
+        } catch (GuzzleException $exception) {
+            throw new RuntimeException(
+                Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_VERIFICATION_FAILED') . ': ' . $exception->getMessage(),
+                0,
+                $exception
+            );
+        }
+
+        $result = json_decode((string) $response->getBody(), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_VERIFICATION_INVALID'));
+        }
+
+        $verificationStatus = strtoupper((string) ($result['verification_status'] ?? ''));
+
+        if ($verificationStatus !== 'SUCCESS') {
+            throw new RuntimeException(
+                Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_SIGNATURE_INVALID') . ' (status: ' . $verificationStatus . ')'
+            );
+        }
     }
 }
