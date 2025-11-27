@@ -203,7 +203,7 @@ export function useOrders({
         }
 
         state.pagination.current = target;
-        loadOrders();
+        loadOrders(true);
     };
 
     const clearSelection = () => {
@@ -228,7 +228,7 @@ export function useOrders({
         }
 
         state.pagination.current += 1;
-        loadOrders();
+        loadOrders(true);
     };
 
     const previousPage = () => {
@@ -237,7 +237,7 @@ export function useOrders({
         }
 
         state.pagination.current -= 1;
-        loadOrders();
+        loadOrders(true);
     };
 
     const fetchOrder = async (id, orderNo = "") => {

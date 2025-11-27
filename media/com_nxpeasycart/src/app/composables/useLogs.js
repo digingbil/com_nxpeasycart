@@ -164,7 +164,7 @@ export function useLogs({
         }
 
         state.pagination.current = target;
-        loadLogs();
+        loadLogs(true);
     };
 
     onMounted(() => {

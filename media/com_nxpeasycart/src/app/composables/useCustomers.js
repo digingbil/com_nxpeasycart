@@ -151,7 +151,7 @@ export function useCustomers({
         }
 
         state.pagination.current = target;
-        loadCustomers();
+        loadCustomers(true);
     };
 
     const viewCustomer = async (customer) => {

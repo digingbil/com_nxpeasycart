@@ -154,7 +154,7 @@ export function useCoupons({
         }
 
         state.pagination.current = target;
-        loadCoupons();
+        loadCoupons(true);
     };
 
     const setActive = (coupon) => {

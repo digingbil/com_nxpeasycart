@@ -156,7 +156,7 @@ export function useCategories({
         }
 
         state.pagination.current = target;
-        loadCategories();
+        loadCategories(true);
     };
 
     const handleApiError = (error, { validation = false } = {}) => {
