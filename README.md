@@ -87,6 +87,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
     composer install
     ```
 3. Build the trimmed runtime vendor that Joomla should load (prevents the dev autoloader from hijacking the CMS) and keep dev stubs out of Joomla:
+
     ```bash
     php tools/build-runtime-vendor.php
     ```
@@ -94,6 +95,7 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
     - Never copy the repo root `vendor/` into `administrator/components/com_nxpeasycart` or the site component. The root vendor contains `joomla/joomla-cms` for dev tooling only.
     - Keep the repo-root vendor intact for IDE/PHPStan/PHPUnit, but **only** the trimmed/runtime vendor should live under the Joomla component paths.
     - Run `php tools/guard-runtime-vendor.php` to verify no `joomla/joomla-cms` stubs slipped into the component vendor paths.
+
 4. Install Node dependencies for the admin SPA toolchain:
     ```bash
     npm install
@@ -159,6 +161,58 @@ See “3.1) Single-currency MVP guardrails (ship fast)” in `INSTRUCTIONS.md` f
 ## Asset builds
 
 - Site/admin bundles are built with Vite from `media/com_nxpeasycart/src`. After `npm run build:site`, the hashed filename must be written to `media/com_nxpeasycart/joomla.asset.json` so Joomla loads the newest bundle. This is automated via the `postbuild:site` hook, which runs `npm run sync:assets` (see `tools/sync-asset-manifest.js`). If you copy files manually or skip the hook, run `npm run sync:assets` to avoid stale scripts.
+
+## Plugin Events (Extensibility)
+
+The component dispatches Joomla plugin events at key points in the order lifecycle, enabling third-party integrations without modifying core code. System plugins can subscribe to these events for notifications, CRM sync, analytics, or custom validation.
+
+| Event                                | Trigger Point                                   | Arguments                                  |
+| ------------------------------------ | ----------------------------------------------- | ------------------------------------------ |
+| `onNxpEasycartBeforeCheckout`        | Before order creation during checkout           | `cart`, `payload`, `gateway`               |
+| `onNxpEasycartAfterOrderCreate`      | After a new order is saved                      | `order`, `gateway`                         |
+| `onNxpEasycartAfterOrderStateChange` | After an order state transition                 | `order`, `fromState`, `toState`, `actorId` |
+| `onNxpEasycartAfterPaymentComplete`  | After successful payment confirmation (webhook) | `order`, `transaction`, `gateway`          |
+
+### Example Plugin
+
+```php
+// plugins/system/myeasycart/myeasycart.php
+use Joomla\CMS\Plugin\CMSPlugin;
+
+class PlgSystemMyeasycart extends CMSPlugin
+{
+    public function onNxpEasycartAfterOrderCreate($event)
+    {
+        $order = $event->getArgument('order');
+        // Send to CRM, analytics, etc.
+    }
+
+    public function onNxpEasycartBeforeCheckout($event)
+    {
+        $cart = $event->getArgument('cart');
+        // Validate or throw RuntimeException to block checkout
+    }
+
+    public function onNxpEasycartAfterOrderStateChange($event)
+    {
+        $order = $event->getArgument('order');
+        $toState = $event->getArgument('toState');
+
+        if ($toState === 'fulfilled') {
+            // Trigger shipping notification
+        }
+    }
+
+    public function onNxpEasycartAfterPaymentComplete($event)
+    {
+        $order = $event->getArgument('order');
+        $transaction = $event->getArgument('transaction');
+        // Update inventory system, send webhook to fulfillment, etc.
+    }
+}
+```
+
+Events are dispatched via `EasycartEventDispatcher` (see `src/Administrator/Event/EasycartEventDispatcher.php`). All event handlers are non-blocking—exceptions in plugins are swallowed to prevent blocking core functionality.
 
 ## Testing & Security
 

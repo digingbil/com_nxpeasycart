@@ -10,6 +10,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use JsonException;
+use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
@@ -168,6 +169,9 @@ class OrderService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
 
+        // Dispatch plugin event: onNxpEasycartAfterOrderCreate
+        EasycartEventDispatcher::afterOrderCreate($order);
+
         return $order;
     }
 
@@ -304,6 +308,14 @@ class OrderService
         if (!$updated) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
+
+        // Dispatch plugin event: onNxpEasycartAfterOrderStateChange
+        EasycartEventDispatcher::afterOrderStateChange(
+            $updated,
+            $current['state'],
+            $state,
+            $actorId
+        );
 
         return $updated;
     }

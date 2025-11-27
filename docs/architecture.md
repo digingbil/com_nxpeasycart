@@ -276,3 +276,97 @@ The `applyCoupon()` function:
 - `COM_NXPEASYCART_ERROR_COUPON_MIN_TOTAL` – "Minimum order of %s required for this coupon."
 - `COM_NXPEASYCART_SUCCESS_COUPON_APPLIED` – "Coupon applied!"
 - `COM_NXPEASYCART_SUCCESS_COUPON_REMOVED` – "Coupon removed."
+
+## Plugin Events (Extensibility)
+
+The component dispatches Joomla plugin events at key lifecycle points to enable third-party integrations. These events are fired via `EasycartEventDispatcher` and can be subscribed to by system plugins.
+
+### Available Events
+
+| Event                                | Location                                 | Trigger                 | Arguments                                  |
+| ------------------------------------ | ---------------------------------------- | ----------------------- | ------------------------------------------ |
+| `onNxpEasycartBeforeCheckout`        | `PaymentController::checkout()`          | Before order creation   | `cart`, `payload`, `gateway`               |
+| `onNxpEasycartAfterOrderCreate`      | `OrderService::create()`                 | After order saved to DB | `order`, `gateway`                         |
+| `onNxpEasycartAfterOrderStateChange` | `OrderService::transitionState()`        | After status change     | `order`, `fromState`, `toState`, `actorId` |
+| `onNxpEasycartAfterPaymentComplete`  | `PaymentGatewayManager::handleWebhook()` | After payment confirmed | `order`, `transaction`, `gateway`          |
+
+### Event Dispatcher
+
+The `EasycartEventDispatcher` helper class (`src/Administrator/Event/EasycartEventDispatcher.php`) provides static methods for dispatching each event:
+
+```php
+use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
+
+// Before checkout (plugins can throw RuntimeException to block)
+EasycartEventDispatcher::beforeCheckout($cart, $payload, $gateway);
+
+// After order creation
+EasycartEventDispatcher::afterOrderCreate($order, $gateway);
+
+// After state transition
+EasycartEventDispatcher::afterOrderStateChange($order, $fromState, $toState, $actorId);
+
+// After payment success
+EasycartEventDispatcher::afterPaymentComplete($order, $transaction, $gateway);
+```
+
+### Plugin Example
+
+A system plugin can subscribe to these events:
+
+```php
+// plugins/system/myeasycart/myeasycart.php
+namespace MyCompany\Plugin\System\MyEasycart;
+
+use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\Event\SubscriberInterface;
+
+class MyEasycart extends CMSPlugin implements SubscriberInterface
+{
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            'onNxpEasycartAfterOrderCreate'      => 'handleOrderCreate',
+            'onNxpEasycartAfterOrderStateChange' => 'handleStateChange',
+            'onNxpEasycartAfterPaymentComplete'  => 'handlePaymentComplete',
+            'onNxpEasycartBeforeCheckout'        => 'handleBeforeCheckout',
+        ];
+    }
+
+    public function handleOrderCreate($event): void
+    {
+        $order = $event->getArgument('order');
+        // Send to CRM, trigger analytics, etc.
+    }
+
+    public function handleStateChange($event): void
+    {
+        $order = $event->getArgument('order');
+        $toState = $event->getArgument('toState');
+
+        if ($toState === 'fulfilled') {
+            // Send shipping notification
+        }
+    }
+
+    public function handlePaymentComplete($event): void
+    {
+        $order = $event->getArgument('order');
+        $transaction = $event->getArgument('transaction');
+        // Update external inventory, send to fulfillment API
+    }
+
+    public function handleBeforeCheckout($event): void
+    {
+        $cart = $event->getArgument('cart');
+        // Validate cart or throw RuntimeException to block checkout
+    }
+}
+```
+
+### Design Decisions
+
+- **Non-blocking**: All event dispatches are wrapped in try/catch to prevent plugin errors from blocking core functionality.
+- **System plugins**: Events import system plugins via `PluginHelper::importPlugin('system')` before dispatch.
+- **State transitions**: The `onNxpEasycartAfterOrderStateChange` event fires for all transitions including webhook-triggered `paid` states, admin-triggered `fulfilled` states, and refunds.
+- **Checkout blocking**: Only `onNxpEasycartBeforeCheckout` can block the flow by throwing a `RuntimeException`; other events are purely informational.

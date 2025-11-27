@@ -6,6 +6,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
+use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
@@ -81,6 +82,13 @@ class PaymentGatewayManager
 
         if ($order && ($order['state'] ?? '') === 'paid') {
             $this->mailer->sendOrderConfirmation($order);
+
+            // Dispatch plugin event: onNxpEasycartAfterPaymentComplete
+            EasycartEventDispatcher::afterPaymentComplete(
+                $order,
+                $event['transaction'] ?? [],
+                $gateway
+            );
         }
 
         return $event;

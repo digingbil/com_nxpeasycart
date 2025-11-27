@@ -22,6 +22,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
+use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
@@ -129,6 +130,15 @@ class PaymentController extends BaseController
         }
 
         $this->assertStockAvailable($cart['items'] ?? [], $container->get(DatabaseInterface::class));
+
+        // Dispatch plugin event: onNxpEasycartBeforeCheckout
+        // Plugins can throw RuntimeException to block checkout
+        try {
+            EasycartEventDispatcher::beforeCheckout($cart, $payload, $gateway);
+        } catch (RuntimeException $exception) {
+            $this->respond(['message' => $exception->getMessage()], 400);
+            return;
+        }
 
         /** @var OrderService $orders */
         $orders       = $container->get(OrderService::class);
