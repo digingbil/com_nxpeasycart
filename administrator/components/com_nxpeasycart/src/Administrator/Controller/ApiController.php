@@ -8,6 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\Component\Nxpeasycart\Administrator\Controller\Api\AbstractJsonController;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Factory;
 use RuntimeException;
 
 /**
@@ -109,9 +110,37 @@ class ApiController extends BaseController
     private function debug(string $message): void
     {
         try {
-            $logFile = defined('JPATH_LOGS')
-                ? rtrim(JPATH_LOGS, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'com_nxpeasycart-api.log'
-                : sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'com_nxpeasycart-api.log';
+            // Prefer Joomla configured log path; fall back to system temp dir if missing
+            $logPath = '';
+
+            try {
+                if (isset($this->app) && method_exists($this->app, 'get')) {
+                    $logPath = (string) ($this->app->get('log_path') ?? '');
+                }
+            } catch (\Throwable $e) {
+                // Ignore and use fallback
+            }
+
+            // Secondary fallback: read from global config if available
+            if ($logPath === '') {
+                try {
+                    $app = \Joomla\CMS\Factory::getApplication();
+                    if ($app) {
+                        $config = $app->getConfig();
+                        if ($config) {
+                            $logPath = (string) ($config->get('log_path') ?? '');
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore and use final fallback
+                }
+            }
+
+            if ($logPath === '' || !is_dir($logPath)) {
+                $logPath = sys_get_temp_dir();
+            }
+
+            $logFile = rtrim($logPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'com_nxpeasycart-api.log';
 
             $line = sprintf("[%s] %s\n", gmdate('c'), $message);
             file_put_contents($logFile, $line, FILE_APPEND);
