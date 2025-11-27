@@ -202,6 +202,8 @@ class PaymentController extends BaseController
             return;
         }
 
+        $publicToken = isset($order['public_token']) ? (string) $order['public_token'] : '';
+
         /** @var MailService $mailer */
         $mailer = $container->get(MailService::class);
         $order['payment_method'] = $gateway;
@@ -222,7 +224,7 @@ class PaymentController extends BaseController
                 'payload'      => ['method' => $gateway],
             ]);
 
-            $orderUrl = $this->buildOrderUrl($order['order_no']);
+            $orderUrl = $this->buildOrderUrl($order['order_no'], $publicToken);
 
             $attachments = [];
 
@@ -253,6 +255,7 @@ class PaymentController extends BaseController
                 'order' => [
                     'id'       => $order['id'],
                     'order_no' => $order['order_no'],
+                    'public_token' => $publicToken,
                 ],
                 'checkout' => [
                     'mode'     => $gateway,
@@ -266,11 +269,11 @@ class PaymentController extends BaseController
         $manager = $container->get(PaymentGatewayManager::class);
 
         $preferences = [
-            'success_url' => $payload['success_url'] ?? ($this->buildOrderUrl($order['order_no']) . '&status=success'),
+            'success_url' => $payload['success_url'] ?? ($this->buildOrderUrl($order['order_no'], $publicToken) . '&status=success'),
             'cancel_url'  => $payload['cancel_url']  ?? (Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'),
         ];
 
-        $orderUrl = $this->buildOrderUrl($order['order_no']);
+        $orderUrl = $this->buildOrderUrl($order['order_no'], $publicToken);
 
         $checkout = $manager->createHostedCheckout($gateway, [
             'id'       => $order['id'],
@@ -301,6 +304,7 @@ class PaymentController extends BaseController
             'order' => [
                 'id'       => $order['id'],
                 'order_no' => $order['order_no'],
+                'public_token' => $publicToken,
             ],
             'checkout' => $checkout,
         ]);
@@ -413,9 +417,9 @@ class PaymentController extends BaseController
         ];
     }
 
-    private function buildOrderUrl(string $orderNo): string
+    private function buildOrderUrl(string $orderNo, ?string $publicToken = null): string
     {
-        $route = RouteHelper::getOrderRoute($orderNo, false);
+        $route = RouteHelper::getOrderRoute($orderNo, false, $publicToken);
 
         // Ensure absolute URL for redirects.
         if (str_starts_with($route, 'http://') || str_starts_with($route, 'https://')) {

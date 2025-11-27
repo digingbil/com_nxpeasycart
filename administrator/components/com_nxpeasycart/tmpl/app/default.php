@@ -19,6 +19,23 @@ $wa->registerAndUseStyle(
     ['version' => 'auto', 'relative' => true]
 );
 
+// Register Visual settings translations for JavaScript access.
+Text::script('COM_NXPEASYCART_SETTINGS_TAB_VISUAL');
+Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_TITLE');
+Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_HINT');
+Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_ADAPTER_NOTE');
+Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_REFRESH');
+Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_LOADING');
+Text::script('COM_NXPEASYCART_VISUAL_PRIMARY');
+Text::script('COM_NXPEASYCART_VISUAL_SURFACE');
+Text::script('COM_NXPEASYCART_VISUAL_BORDER');
+Text::script('COM_NXPEASYCART_VISUAL_TEXT');
+Text::script('COM_NXPEASYCART_VISUAL_MUTED');
+Text::script('COM_NXPEASYCART_VISUAL_PREVIEW');
+Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_BUTTON');
+Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_TEXT');
+Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_MUTED');
+
 // Explicitly queue the bundle in case the registry file is not picked up (symlinked dev installs).
 $document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
 
@@ -74,6 +91,8 @@ $ordersEndpointShow           = $adminBase . '/index.php?option=com_nxpeasycart&
 $ordersEndpointTransition     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json&' . $tokenQuery;
 $ordersEndpointBulkTransition = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.bulkTransition&format=json&' . $tokenQuery;
 $ordersEndpointNote           = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.note&format=json&' . $tokenQuery;
+$ordersEndpointTracking       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.tracking&format=json&' . $tokenQuery;
+$ordersEndpointInvoice        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.invoice&format=json&' . $tokenQuery;
 $dashboardEndpoint            = $adminBase . '/index.php?option=com_nxpeasycart&task=api.dashboard.summary&format=json';
 $customersEndpointList        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.list&format=json';
 $customersEndpointShow        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.show&format=json';
@@ -153,6 +172,7 @@ $jsonOptions = JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_
 $appConfig = [
     'activeSection' => $section,
     'baseCurrency'  => $baseCurrency,
+    'siteRoot'      => Uri::root(),
     'navItems'      => $navItems,
     'orderStates'   => $orderStates,
     'preload'       => [
@@ -189,6 +209,8 @@ $appConfig = [
             'transition'     => $ordersEndpointTransition,
             'bulkTransition' => $ordersEndpointBulkTransition,
             'note'           => $ordersEndpointNote,
+            'tracking'       => $ordersEndpointTracking,
+            'invoice'        => $ordersEndpointInvoice ?? '',
         ],
         'customers' => [
             'list' => $customersEndpointList,
@@ -262,6 +284,7 @@ $appLead  = Text::_($appLeadKey);
 
 $dataAttributes = [
     'csrf-token'                         => $token,
+    'site-root'                          => Uri::root(),
     'products-endpoint'                  => $productsEndpointList,
     'products-endpoint-create'           => $productsEndpointStore,
     'products-endpoint-update'           => $productsEndpointUpdate,
@@ -273,6 +296,8 @@ $dataAttributes = [
     'orders-endpoint'                    => $ordersEndpointList,
     'orders-endpoint-show'               => $ordersEndpointShow,
     'orders-endpoint-transition'         => $ordersEndpointTransition,
+    'orders-endpoint-tracking'           => $ordersEndpointTracking,
+    'orders-endpoint-invoice'            => $ordersEndpointInvoice,
     'app-title'                          => $appTitle,
     'app-lead'                           => $appLead,
     'app-title-key'                      => $appTitleKey,

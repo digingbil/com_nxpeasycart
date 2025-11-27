@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_no` VARCHAR(40) NOT NULL,
+  `public_token` CHAR(64) NOT NULL DEFAULT '',
   `user_id` INT UNSIGNED NULL,
   `email` VARCHAR(255) NOT NULL,
   `billing` JSON NOT NULL,
@@ -72,11 +73,17 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `total_cents` INT NOT NULL DEFAULT 0,
   `currency` CHAR(3) NOT NULL,
   `state` ENUM('cart','pending','paid','fulfilled','refunded','canceled') NOT NULL DEFAULT 'cart',
+  `status_updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `locale` VARCHAR(10) NOT NULL DEFAULT 'en-GB',
+  `carrier` VARCHAR(50) NULL,
+  `tracking_number` VARCHAR(64) NULL,
+  `tracking_url` VARCHAR(255) NULL,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `modified` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
+  `fulfillment_events` JSON NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_orders_order_no` (`order_no`),
+  UNIQUE KEY `idx_nxp_orders_public_token` (`public_token`),
   KEY `idx_nxp_orders_user` (`user_id`),
   KEY `idx_nxp_orders_state` (`state`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,48 +1,47 @@
 <?php
 
-namespace Joomla\Component\Nxpeasycart\Site\View\Cart;
+namespace Joomla\Component\Nxpeasycart\Site\View\Orders;
 
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\Component\Nxpeasycart\Site\Helper\SessionSecurityHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
-use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
- * Cart view for storefront.
+ * Orders list view for authenticated users.
  */
 class HtmlView extends BaseHtmlView
 {
     /**
-     * @var array<string, mixed>
+     * @var array<int, array<string, mixed>>
      */
-    protected array $theme = [];
+    protected array $orders = [];
 
     /**
-     * @var array<string, mixed>
+     * @var array<string, int>
      */
-    protected array $cart = [
-        'items'   => [],
-        'summary' => [],
-    ];
+    protected array $pagination = [];
 
     public function display($tpl = null): void
     {
+        SessionSecurityHelper::regenerateIfNeeded();
+
         $document = $this->getDocument();
         $app       = \Joomla\CMS\Factory::getApplication();
-
-        // Prevent indexing of cart view.
         $document->setMetaData('robots', 'noindex, nofollow');
         $app->setHeader('X-Robots-Tag', 'noindex, nofollow', true);
-
         SiteAssetHelper::useSiteAssets($document);
 
-        $model      = $this->getModel();
-        $this->cart = $model ? $model->getCart() : ['items' => [], 'summary' => []];
-        $this->theme = TemplateAdapter::resolve();
+        $model = $this->getModel();
 
-        $document->setTitle(Text::_('COM_NXPEASYCART_CART_TITLE'));
+        if ($model) {
+            $this->orders      = $model->getItems();
+            $this->pagination  = $model->getPagination();
+        }
+
+        $document->setTitle(Text::_('COM_NXPEASYCART_MY_ORDERS_TITLE'));
 
         parent::display($tpl);
     }

@@ -505,6 +505,86 @@
                             {{ state.transitionError }}
                         </div>
 
+                        <section
+                            class="nxp-ec-admin-panel__section"
+                            v-if="statusLink"
+                        >
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_STATUS_LINK",
+                                        "Status link",
+                                        [],
+                                        "ordersStatusLink"
+                                    )
+                                }}
+                            </h4>
+                            <div class="nxp-ec-admin-copy">
+                                <input
+                                    type="text"
+                                    class="nxp-ec-form-input"
+                                    :value="statusLink"
+                                    readonly
+                                />
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--small"
+                                    type="button"
+                                    :disabled="!statusLink"
+                                    @click="copyStatusLink"
+                                >
+                                    <i class="fa-solid fa-link"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_COPY_LINK",
+                                            "Copy link",
+                                            [],
+                                            "ordersCopyLink"
+                                        )
+                                    }}
+                                </button>
+                            </div>
+                            <p
+                                v-if="copyMessage"
+                                class="nxp-ec-admin-panel__muted"
+                            >
+                                {{ copyMessage }}
+                            </p>
+                            <div class="nxp-ec-admin-copy">
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--small"
+                                    type="button"
+                                    :disabled="
+                                        !props.state.activeOrder ||
+                                        props.state.invoiceLoading
+                                    "
+                                    @click="emitInvoice"
+                                >
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_INVOICE_DOWNLOAD",
+                                            "Download invoice (PDF)",
+                                            [],
+                                            "ordersInvoiceDownload"
+                                        )
+                                    }}
+                                </button>
+                                <span
+                                    v-if="props.state.invoiceLoading"
+                                    class="nxp-ec-admin-panel__muted"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_LOADING",
+                                            "Loading…",
+                                            [],
+                                            "ordersInvoiceLoading"
+                                        )
+                                    }}
+                                </span>
+                            </div>
+                        </section>
+
                         <section class="nxp-ec-admin-panel__section">
                             <h4>
                                 {{
@@ -617,6 +697,114 @@
                             </p>
                         </section>
 
+                        <section class="nxp-ec-admin-panel__section">
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_TRACKING_LABEL",
+                                        "Tracking",
+                                        [],
+                                        "ordersTrackingLabel"
+                                    )
+                                }}
+                            </h4>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-tracking-carrier"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_TRACKING_CARRIER",
+                                            "Carrier",
+                                            [],
+                                            "ordersTrackingCarrier"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="nxp-ec-tracking-carrier"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model="trackingDraft.carrier"
+                                />
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-tracking-number"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_TRACKING_NUMBER",
+                                            "Tracking number",
+                                            [],
+                                            "ordersTrackingNumber"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="nxp-ec-tracking-number"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model="trackingDraft.tracking_number"
+                                />
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-tracking-url"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_TRACKING_URL",
+                                            "Tracking URL",
+                                            [],
+                                            "ordersTrackingUrl"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="nxp-ec-tracking-url"
+                                    class="nxp-ec-form-input"
+                                    type="url"
+                                    v-model="trackingDraft.tracking_url"
+                                />
+                            </div>
+                            <label class="nxp-ec-form-checkbox">
+                                <input
+                                    type="checkbox"
+                                    v-model="trackingDraft.markFulfilled"
+                                />
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_TRACKING_MARK_FULFILLED",
+                                        "Mark fulfilled",
+                                        [],
+                                        "ordersTrackingMarkFulfilled"
+                                    )
+                                }}
+                            </label>
+                            <div class="nxp-ec-admin-form__actions">
+                                <button
+                                    class="nxp-ec-btn"
+                                    type="button"
+                                    :disabled="!trackingChanged || state.saving"
+                                    @click="emitSaveTracking"
+                                >
+                                    <i class="fa-solid fa-truck"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_TRACKING_SAVE",
+                                            "Save tracking",
+                                            [],
+                                            "ordersTrackingSave"
+                                        )
+                                    }}
+                                </button>
+                            </div>
+                        </section>
+
                         <section
                             class="nxp-ec-admin-panel__section"
                             v-if="
@@ -715,17 +903,14 @@
                             </h4>
                             <ul
                                 class="nxp-ec-admin-list"
-                                v-if="
-                                    state.activeOrder.timeline &&
-                                    state.activeOrder.timeline.length
-                                "
+                                v-if="timelineEvents.length"
                             >
                                 <li
-                                    v-for="entry in state.activeOrder.timeline"
-                                    :key="entry.id"
+                                    v-for="entry in timelineEvents"
+                                    :key="entry.key"
                                 >
                                     <div class="nxp-ec-admin-list__title">
-                                        {{ historyLabel(entry) }}
+                                        {{ entry.label }}
                                     </div>
                                     <div class="nxp-ec-admin-list__meta">
                                         {{ formatDate(entry.created) }}
@@ -763,6 +948,10 @@ const props = defineProps({
         type: Function,
         required: true,
     },
+    siteRoot: {
+        type: String,
+        default: "",
+    },
 });
 
 const emit = defineEmits([
@@ -777,6 +966,8 @@ const emit = defineEmits([
     "toggle-selection",
     "clear-selection",
     "add-note",
+    "save-tracking",
+    "invoice",
 ]);
 
 const __ = props.translate;
@@ -785,6 +976,13 @@ const selections = reactive({});
 const bulkState = ref("");
 const noteDraft = ref("");
 const noteReady = computed(() => noteDraft.value.trim().length > 0);
+const copyMessage = ref("");
+const trackingDraft = reactive({
+    carrier: "",
+    tracking_number: "",
+    tracking_url: "",
+    markFulfilled: false,
+});
 
 const selectedIds = computed(() => {
     const selection = props.state?.selection;
@@ -805,10 +1003,16 @@ watch(selectedIds, (ids) => {
 });
 
 watch(
-    () => props.state.activeOrder?.id,
-    () => {
+    () => props.state.activeOrder,
+    (order) => {
         noteDraft.value = "";
-    }
+        copyMessage.value = "";
+        trackingDraft.carrier = order?.carrier ?? "";
+        trackingDraft.tracking_number = order?.tracking_number ?? "";
+        trackingDraft.tracking_url = order?.tracking_url ?? "";
+        trackingDraft.markFulfilled = false;
+    },
+    { immediate: true }
 );
 
 watch(
@@ -886,6 +1090,110 @@ const nextStates = (order) =>
 
 const hasStateChanged = (order) =>
     (selections[order.id] || order.state) !== order.state;
+
+const normaliseSiteRoot = () => {
+    if (props.siteRoot && props.siteRoot.trim() !== "") {
+        return props.siteRoot.trim();
+    }
+
+    if (typeof window !== "undefined" && window.location?.origin) {
+        return window.location.origin;
+    }
+
+    return "";
+};
+
+const statusLink = computed(() => {
+    const order = props.state?.activeOrder ?? {};
+    const token = String(order.public_token || "").trim();
+    const orderNo = String(order.order_no || "").trim();
+
+    if (!token) {
+        return "";
+    }
+
+    const base = normaliseSiteRoot();
+
+    if (!base) {
+        return "";
+    }
+
+    const separator = base.endsWith("/") ? "" : "/";
+    const params = new URLSearchParams({
+        option: "com_nxpeasycart",
+        view: "order",
+        ref: token,
+    });
+
+    if (orderNo) {
+        params.set("no", orderNo);
+    }
+
+    return `${base}${separator}index.php?${params.toString()}`;
+});
+
+const copyStatusLink = async () => {
+    if (!statusLink.value) {
+        return;
+    }
+
+    try {
+        if (!navigator?.clipboard?.writeText) {
+            throw new Error("Clipboard unavailable");
+        }
+
+        await navigator.clipboard.writeText(statusLink.value);
+        copyMessage.value = __(
+            "COM_NXPEASYCART_ORDERS_LINK_COPIED",
+            "Link copied",
+            [],
+            "ordersLinkCopied"
+        );
+    } catch (error) {
+        // Fallback to a temporary textarea selection for HTTP or blocked clipboard contexts.
+        try {
+            const el = document.createElement("textarea");
+            el.value = statusLink.value;
+            el.setAttribute("readonly", "");
+            el.style.position = "absolute";
+            el.style.left = "-9999px";
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+            copyMessage.value = __(
+                "COM_NXPEASYCART_ORDERS_LINK_COPIED",
+                "Link copied",
+                [],
+                "ordersLinkCopiedFallback"
+            );
+        } catch (fallbackError) {
+            copyMessage.value = __(
+                "COM_NXPEASYCART_ORDERS_LINK_COPY_FALLBACK",
+                "Copy the link below.",
+                [],
+                "ordersLinkCopyFallback"
+            );
+        }
+    }
+
+    if (copyMessage.value) {
+        setTimeout(() => {
+            copyMessage.value = "";
+        }, 2000);
+    }
+};
+
+const trackingChanged = computed(() => {
+    const order = props.state?.activeOrder ?? {};
+
+    return (
+        trackingDraft.carrier !== (order.carrier ?? "") ||
+        trackingDraft.tracking_number !== (order.tracking_number ?? "") ||
+        trackingDraft.tracking_url !== (order.tracking_url ?? "") ||
+        trackingDraft.markFulfilled
+    );
+});
 
 const addressLines = (address) => {
     if (!address || typeof address !== "object") {
@@ -975,6 +1283,30 @@ const emitAddNote = () => {
     noteDraft.value = "";
 };
 
+const emitInvoice = () => {
+    if (!props.state.activeOrder) {
+        return;
+    }
+
+    emit("invoice", props.state.activeOrder.id);
+};
+
+const emitSaveTracking = () => {
+    if (!props.state.activeOrder || !trackingChanged.value) {
+        return;
+    }
+
+    emit("save-tracking", {
+        id: props.state.activeOrder.id,
+        carrier: trackingDraft.carrier,
+        tracking_number: trackingDraft.tracking_number,
+        tracking_url: trackingDraft.tracking_url,
+        mark_fulfilled: trackingDraft.markFulfilled,
+    });
+
+    trackingDraft.markFulfilled = false;
+};
+
 const selectionSummary = computed(() =>
     __(
         "COM_NXPEASYCART_ORDERS_SELECTED_COUNT",
@@ -1041,10 +1373,84 @@ const historyLabel = (entry) => {
                 "ordersTimelinePaymentRecorded"
             );
         }
+        case "order.tracking.updated":
+            return __(
+                "COM_NXPEASYCART_ORDER_TRACKING_EVENT",
+                "Tracking updated",
+                [],
+                "ordersTimelineTracking"
+            );
         default:
             return entry.action;
     }
 };
+
+const fulfilmentLabel = (event) => {
+    if (!event) {
+        return "";
+    }
+
+    const type = String(event.type || "").toLowerCase();
+    const message = String(event.message || "").trim();
+    const state = String(event.state || "").toLowerCase();
+
+    if (type === "tracking") {
+        return __(
+            "COM_NXPEASYCART_ORDER_TRACKING_EVENT",
+            "Tracking updated",
+            [],
+            "ordersTimelineTrackingEvent"
+        );
+    }
+
+    if (state) {
+        return stateLabel(state);
+    }
+
+    if (message) {
+        return message;
+    }
+
+    return type || "";
+};
+
+const timelineEvents = computed(() => {
+    const events = [];
+    const fulfilment = Array.isArray(
+        props.state?.activeOrder?.fulfillment_events
+    )
+        ? props.state.activeOrder.fulfillment_events
+        : [];
+
+    fulfilment.forEach((event, index) => {
+        events.push({
+            label: fulfilmentLabel(event),
+            created: event?.at ?? "",
+            key: `f-${index}-${event?.at ?? ""}`,
+        });
+    });
+
+    const audit = Array.isArray(props.state?.activeOrder?.timeline)
+        ? props.state.activeOrder.timeline
+        : [];
+
+    audit.forEach((entry, index) => {
+        events.push({
+            label: historyLabel(entry),
+            created: entry?.created ?? "",
+            key: `a-${entry?.id ?? index}-${entry?.created ?? ""}`,
+        });
+    });
+
+    return events
+        .filter((entry) => entry.label)
+        .sort((a, b) => {
+            const aDate = new Date(a.created || 0).getTime();
+            const bDate = new Date(b.created || 0).getTime();
+
+            return bDate - aDate;
+        });
+});
 
 const transactionStatusLabel = (transaction) =>
     __(
@@ -1122,5 +1528,15 @@ const formatTimestamp = (timestamp) => {
 .nxp-ec-admin-form__actions {
     display: flex;
     justify-content: flex-end;
+}
+
+.nxp-ec-admin-copy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nxp-ec-admin-copy .nxp-ec-form-input {
+    flex: 1;
 }
 </style>

@@ -43,6 +43,10 @@ export function useOrders({
         deriveEndpoint(listEndpoint, "bulkTransition");
     const noteEndpoint =
         endpoints?.note ?? deriveEndpoint(listEndpoint, "note");
+    const trackingEndpoint =
+        endpoints?.tracking ?? deriveEndpoint(listEndpoint, "tracking");
+    const invoiceEndpoint =
+        endpoints?.invoice ?? deriveEndpoint(listEndpoint, "invoice");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -73,6 +77,7 @@ export function useOrders({
         activeOrder: null,
         selection: new Set(),
         lastUpdated: null,
+        invoiceLoading: false,
     });
 
     const buildCacheKey = () => {
@@ -344,6 +349,68 @@ export function useOrders({
         }
     };
 
+    const updateTracking = async (id, tracking) => {
+        if (!trackingEndpoint) {
+            throw new Error("Tracking endpoint unavailable.");
+        }
+
+        state.saving = true;
+        state.transitionError = "";
+
+        try {
+            const order = await api.updateOrderTracking({
+                endpoint: trackingEndpoint,
+                id,
+                tracking,
+            });
+
+            if (order) {
+                updateOrderList(order);
+
+                if (state.activeOrder && state.activeOrder.id === order.id) {
+                    state.activeOrder = order;
+                }
+
+                clearCachedData(buildCacheKey());
+            }
+
+            return order;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Unknown error";
+            throw error;
+        } finally {
+            state.saving = false;
+        }
+    };
+
+    const downloadInvoice = async (id, orderNo = "") => {
+        if (!invoiceEndpoint) {
+            throw new Error("Invoice endpoint unavailable.");
+        }
+
+        state.invoiceLoading = true;
+        state.transitionError = "";
+
+        try {
+            const invoice = await api.fetchOrderInvoice({
+                endpoint: invoiceEndpoint,
+                id,
+                orderNumber: orderNo,
+            });
+
+            if (!invoice) {
+                throw new Error("Invoice not available.");
+            }
+
+            return invoice;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Unknown error";
+            throw error;
+        } finally {
+            state.invoiceLoading = false;
+        }
+    };
+
     const bulkTransition = async (ids, nextState) => {
         if (!bulkTransitionEndpoint) {
             throw new Error("Bulk transition endpoint unavailable.");
@@ -404,6 +471,8 @@ export function useOrders({
         closeOrder,
         transitionOrder,
         bulkTransition,
+        updateTracking,
+        downloadInvoice,
         toggleSelection,
         clearSelection,
         metrics: perf.metrics,

@@ -1960,6 +1960,17 @@
                     }}
                 </p>
 
+                <p class="nxp-ec-form-help nxp-ec-form-help--muted">
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_VISUAL_ADAPTER_NOTE",
+                            "The component will attempt to adapt to your current template's styling automatically. If no adapter is available for your template, these fallback colors will be used instead.",
+                            [],
+                            "settingsVisualAdapterNote"
+                        )
+                    }}
+                </p>
+
                 <div class="nxp-ec-visual-grid">
                     <div class="nxp-ec-visual-field">
                         <label class="nxp-ec-form-label" for="visual-primary-color">
@@ -2829,6 +2840,33 @@ const shippingTypeLabel = (type) => {
     background: var(--nxp-ec-surface, #fff);
 }
 
+/* Payment settings form - fieldset and legend styling */
+.nxp-ec-settings-form--payments fieldset {
+    margin: 0;
+    padding: 1.25rem;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.5rem;
+    background: var(--nxp-ec-surface-alt, #f9fafb);
+}
+
+.nxp-ec-settings-form--payments legend {
+    padding: 0.25rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--nxp-ec-text, #212529);
+    background: var(--nxp-ec-surface, #fff);
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.375rem;
+}
+
+.nxp-ec-settings-form--payments fieldset .nxp-ec-form-field {
+    margin-top: 0.75rem;
+}
+
+.nxp-ec-settings-form--payments fieldset .nxp-ec-form-field:first-of-type {
+    margin-top: 0;
+}
+
 .nxp-ec-form-grid {
     display: grid;
     gap: 1rem;
@@ -2870,6 +2908,21 @@ const shippingTypeLabel = (type) => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+/* Make color input placeholders more transparent to indicate they're defaults */
+.nxp-ec-color-input-group .nxp-ec-form-input::placeholder {
+    color: var(--nxp-ec-text-muted, #98a2b3);
+    opacity: 0.5;
+    font-style: italic;
+}
+
+/* Muted variant for form help text - smaller and more subtle */
+.nxp-ec-form-help--muted {
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    line-height: 1.4;
 }
 
 .nxp-ec-color-picker {

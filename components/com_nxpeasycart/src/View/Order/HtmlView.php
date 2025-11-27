@@ -19,6 +19,8 @@ class HtmlView extends BaseHtmlView
      * @var array<string, mixed>|null
      */
     protected ?array $order = null;
+    protected bool $isPublic = false;
+    protected bool $isOwner  = false;
 
     public function display($tpl = null): void
     {
@@ -28,11 +30,18 @@ class HtmlView extends BaseHtmlView
         SessionSecurityHelper::regenerateIfNeeded();
 
         $document = $this->getDocument();
+        $app       = Factory::getApplication();
+
+        // Prevent indexing of order confirmation/status pages.
+        $document->setMetaData('robots', 'noindex, nofollow');
+        $app->setHeader('X-Robots-Tag', 'noindex, nofollow', true);
 
         SiteAssetHelper::useSiteAssets($document);
 
         $model       = $this->getModel();
         $this->order = $model ? $model->getItem() : null;
+        $this->isPublic = $model && method_exists($model, 'isPublicView') ? (bool) $model->isPublicView() : false;
+        $this->isOwner  = $model && method_exists($model, 'isOwnerView') ? (bool) $model->isOwnerView() : false;
 
         if ($this->order) {
             $document->setTitle(Text::sprintf('COM_NXPEASYCART_ORDER_CONFIRMED_TITLE', $this->order['order_no'] ?? ''));

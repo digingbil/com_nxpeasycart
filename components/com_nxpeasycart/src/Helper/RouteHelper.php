@@ -146,11 +146,33 @@ class RouteHelper
      *
      * @return string
      */
-    public static function getOrderRoute(string $orderNo, bool $xhtml = true): string
+    public static function getOrderRoute(string $orderNo, bool $xhtml = true, ?string $publicToken = null): string
     {
         $itemId = self::findMenuItemId('landing') ?? self::findMenuItemId('order');
 
-        $url = 'index.php?option=com_nxpeasycart&view=order&no=' . rawurlencode($orderNo);
+        $url = 'index.php?option=com_nxpeasycart&view=order';
+
+        if ($publicToken !== null && $publicToken !== '') {
+            $url .= '&ref=' . rawurlencode($publicToken);
+        } else {
+            $url .= '&no=' . rawurlencode($orderNo);
+        }
+
+        if ($itemId) {
+            $url .= '&Itemid=' . $itemId;
+        }
+
+        return Route::_($url, $xhtml);
+    }
+
+    /**
+     * Get a SEF URL for the authenticated orders list.
+     */
+    public static function getOrdersRoute(bool $xhtml = true): string
+    {
+        $itemId = self::findMenuItemId('orders') ?? self::findMenuItemId('landing');
+
+        $url = 'index.php?option=com_nxpeasycart&view=orders';
 
         if ($itemId) {
             $url .= '&Itemid=' . $itemId;

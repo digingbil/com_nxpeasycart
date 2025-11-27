@@ -550,6 +550,32 @@ class ApiClient {
     }
 
     /**
+     * Fetch invoice (PDF) for an order.
+     */
+    async fetchOrderInvoice({ endpoint, id, orderNumber }) {
+        const body = {
+            id: id || undefined,
+            order_no: orderNumber || undefined,
+        };
+
+        const payload = await this.post(endpoint, body);
+
+        return payload.data?.invoice ?? null;
+    }
+
+    /**
+     * Update order tracking metadata.
+     */
+    async updateOrderTracking({ endpoint, id, tracking }) {
+        const payload = await this.post(endpoint, {
+            id,
+            ...tracking,
+        });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
      * Create a product.
      */
     async createProduct({ endpoint, data }) {

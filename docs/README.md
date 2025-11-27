@@ -16,6 +16,9 @@ Component architecture, MVC structure, service layer design, and development pat
 - Vue admin SPA architecture
 - Progressive storefront islands
 
+### [order-status.md](order-status.md)
+Order status/tracking flow, tokenised storefront links, admin tracking fields, and JSON endpoints.
+
 ---
 
 ## 🔒 Security Documentation

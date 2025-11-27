@@ -30,6 +30,11 @@ class HtmlView extends BaseHtmlView
     {
         /** @var HtmlDocument $document */
         $document = $this->getDocument();
+        $app       = Factory::getApplication();
+
+        // Prevent indexing of checkout view.
+        $document->setMetaData('robots', 'noindex, nofollow');
+        $app->setHeader('X-Robots-Tag', 'noindex, nofollow', true);
 
         SiteAssetHelper::useSiteAssets($document);
 

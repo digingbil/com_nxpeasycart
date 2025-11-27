@@ -53,6 +53,10 @@ class GdprService
             ->set($this->db->quoteName('email') . ' = :anonEmail')
             ->set($this->db->quoteName('billing') . ' = NULL')
             ->set($this->db->quoteName('shipping') . ' = NULL')
+            ->set($this->db->quoteName('carrier') . ' = NULL')
+            ->set($this->db->quoteName('tracking_number') . ' = NULL')
+            ->set($this->db->quoteName('tracking_url') . ' = NULL')
+            ->set($this->db->quoteName('fulfillment_events') . ' = NULL')
             ->where($this->db->quoteName('email') . ' = :email')
             ->bind(':anonEmail', $anonymisedEmail, ParameterType::STRING)
             ->bind(':email', $email, ParameterType::STRING);

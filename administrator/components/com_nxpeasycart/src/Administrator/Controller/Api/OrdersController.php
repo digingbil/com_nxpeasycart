@@ -11,6 +11,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use RuntimeException;
 
@@ -45,6 +46,8 @@ class OrdersController extends AbstractJsonController
             'transition', 'state' => $this->transition(),
             'bulktransition', 'bulk' => $this->bulkTransition(),
             'note'  => $this->note(),
+            'tracking' => $this->tracking(),
+            'invoice' => $this->invoice(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -205,6 +208,78 @@ class OrdersController extends AbstractJsonController
     }
 
     /**
+     * Generate and return an invoice PDF (base64) for an order.
+     */
+    protected function invoice(): JsonResponse
+    {
+        $this->assertCan('core.manage');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $id      = isset($payload['id']) ? (int) $payload['id'] : 0;
+        $orderNo = isset($payload['order_no']) ? (string) $payload['order_no'] : '';
+
+        if ($id <= 0 && $orderNo === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $orders  = $this->getOrderService();
+        $order   = $id > 0 ? $orders->get($id) : $orders->getByNumber($orderNo);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        $invoiceService = $this->getInvoiceService();
+        $invoice        = $invoiceService->generateInvoice($order);
+
+        $filename = $invoice['filename'] ?? ('invoice-' . ($order['order_no'] ?? 'order') . '.pdf');
+        $content  = isset($invoice['content']) ? base64_encode((string) $invoice['content']) : '';
+
+        if ($content === '') {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_SERIALISE_FAILED'), 500);
+        }
+
+        return $this->respond([
+            'invoice' => [
+                'filename' => $filename,
+                'content'  => $content,
+            ],
+        ]);
+    }
+
+    /**
+     * Update order tracking metadata.
+     */
+    protected function tracking(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+
+        if ($id <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $tracking = [
+            'carrier'         => $payload['carrier'] ?? '',
+            'tracking_number' => $payload['tracking_number'] ?? '',
+            'tracking_url'    => $payload['tracking_url'] ?? '',
+            'mark_fulfilled'  => !empty($payload['mark_fulfilled']),
+        ];
+
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+        $service = $this->getOrderService();
+        $order   = $service->updateTracking($id, $tracking, $actorId);
+
+        return $this->respond(['order' => $order]);
+    }
+
+    /**
      * Decode the JSON request body.
      */
     private function decodePayload(): array
@@ -251,5 +326,35 @@ class OrdersController extends AbstractJsonController
         }
 
         return $container->get(OrderService::class);
+    }
+
+    private function getInvoiceService(): InvoiceService
+    {
+        $container = Factory::getContainer();
+
+        $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+        if (
+            (!$container->has(\Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService::class)
+            || !$container->has(\Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService::class)
+            || !$container->has(InvoiceService::class))
+            && is_file($providerPath)
+        ) {
+            $container->registerServiceProvider(require $providerPath);
+        }
+
+        if (!$container->has(InvoiceService::class)) {
+            $container->set(
+                InvoiceService::class,
+                static function ($container): InvoiceService {
+                    return new InvoiceService(
+                        $container->get(\Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService::class),
+                        $container->get(\Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService::class)
+                    );
+                }
+            );
+        }
+
+        return $container->get(InvoiceService::class);
     }
 }

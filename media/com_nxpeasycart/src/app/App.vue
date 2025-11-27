@@ -90,6 +90,7 @@
             v-else-if="activeSection === 'orders'"
             :state="ordersState"
             :translate="__"
+            :site-root="siteRoot"
             @refresh="onOrdersRefresh"
             @search="onOrdersSearch"
             @filter="onOrdersFilter"
@@ -101,6 +102,8 @@
             @toggle-selection="onOrdersToggleSelection"
             @clear-selection="onOrdersClearSelection"
             @add-note="onOrdersAddNote"
+            @save-tracking="onOrdersSaveTracking"
+            @invoice="onOrdersInvoice"
         />
 
         <CustomersPanel
@@ -439,6 +442,8 @@ const {
     toggleSelection: toggleOrderSelection,
     clearSelection: clearOrderSelection,
     addNote: addOrderNote,
+    updateTracking: updateOrderTracking,
+    downloadInvoice: downloadOrderInvoice,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -517,6 +522,21 @@ const baseCurrency = computed(() => {
 const mediaModalUrl = computed(() => {
     const value = props.dataset?.mediaModalUrl ?? "";
     return typeof value === "string" ? value.trim() : "";
+});
+
+const siteRoot = computed(() => {
+    const configured =
+        props.config?.siteRoot ?? props.dataset?.siteRoot ?? "";
+
+    if (typeof configured === "string" && configured.trim() !== "") {
+        return configured.trim();
+    }
+
+    if (typeof window !== "undefined" && window.location?.origin) {
+        return window.location.origin;
+    }
+
+    return "";
 });
 
 const onboardingCopy = (label) => {
@@ -917,6 +937,44 @@ const onOrdersClearSelection = () => {
 
 const onOrdersAddNote = async ({ id, message }) => {
     await addOrderNote(id, message);
+};
+
+const onOrdersSaveTracking = async (payload) => {
+    if (!payload?.id) {
+        return;
+    }
+
+    const { id, ...tracking } = payload;
+    await updateOrderTracking(id, tracking);
+};
+
+const onOrdersInvoice = async (orderId) => {
+    if (!orderId) {
+        return;
+    }
+
+    const invoice = await downloadOrderInvoice(orderId);
+
+    if (!invoice?.content) {
+        return;
+    }
+
+    const byteString = atob(invoice.content);
+    const byteArray = new Uint8Array(byteString.length);
+
+    for (let i = 0; i < byteString.length; i += 1) {
+        byteArray[i] = byteString.charCodeAt(i);
+    }
+
+    const blob = new Blob([byteArray], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = invoice.filename || "invoice.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 };
 
 const onCustomersRefresh = () => {

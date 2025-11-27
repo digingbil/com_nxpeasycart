@@ -48,6 +48,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 - **Storefront islands refactor**: the monolithic site bundle is split into per-island modules, lazy-mounted via `IntersectionObserver`, and backed by a shared API client + utilities (CSRF injection, money formatting, retries) to reduce TTI on pages that only need one island.
 - **TemplateAdapter caching**: template token resolution is memoised per request to avoid repeated palette parsing when multiple views touch template defaults.
 - **Hashed site bundle**: Vite now emits hashed JS/CSS with a manifest; `joomla.asset.json` points at the hashed entry with `version: auto` for reliable cache-busting in production.
+- **Order status & tracking**: checkout now emits tokenised status links (emails + redirects), the storefront exposes public status pages and an authenticated “My Orders” list, and the admin Orders panel surfaces copyable status links plus tracking fields that append fulfilment events.
 - **Cart module asset loading fix**: `mod_nxpeasycart_cart` now uses the centralised `SiteAssetHelper` to register site JS/CSS, ensuring the cart summary island hydrates correctly on non-component pages (e.g. homepage) where only the module is present.
 - **Security audit fixes (Critical)**: Resolved four critical vulnerabilities identified during security audit:
     - **XSS vulnerability eliminated**: Replaced `v-html` in checkout success message with safe Vue text interpolation, preventing script injection via order numbers.

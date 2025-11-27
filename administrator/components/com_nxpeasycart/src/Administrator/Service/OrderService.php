@@ -91,6 +91,9 @@ class OrderService
         }
 
         $totals = $this->computeTotals($items, $normalised);
+        $statusTimestamp   = $this->currentTimestamp();
+        $publicToken       = $this->ensureUniquePublicToken();
+        $fulfillmentEvents = [$this->buildStatusEvent($normalised['state'], $statusTimestamp, $actorId)];
 
         $this->db->transactionStart();
 
@@ -112,6 +115,12 @@ class OrderService
                 'currency'       => $normalised['currency'],
                 'state'          => $normalised['state'],
                 'locale'         => $normalised['locale'],
+                'public_token'   => $publicToken,
+                'status_updated_at' => $statusTimestamp,
+                'carrier'        => null,
+                'tracking_number'=> null,
+                'tracking_url'   => null,
+                'fulfillment_events' => $this->encodeJson($fulfillmentEvents),
             ];
 
             $this->db->insertObject('#__nxp_easycart_orders', $order);
@@ -213,6 +222,34 @@ class OrderService
     }
 
     /**
+     * Fetch an order by public token.
+     */
+    public function getByPublicToken(string $token): ?array
+    {
+        $token = trim($token);
+
+        if ($token === '') {
+            return null;
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select('*')
+            ->from($this->db->quoteName('#__nxp_easycart_orders'))
+            ->where($this->db->quoteName('public_token') . ' = :token')
+            ->bind(':token', $token, ParameterType::STRING);
+
+        $this->db->setQuery($query);
+
+        $row = $this->db->loadObject();
+
+        if (!$row) {
+            return null;
+        }
+
+        return $this->mapOrderRow($row, null, true);
+    }
+
+    /**
      * Update an order state and return the updated representation.
      */
     public function transitionState(int $orderId, string $state, ?int $actorId = null): array
@@ -233,12 +270,20 @@ class OrderService
             return $current;
         }
 
+        $timestamp = $this->currentTimestamp();
+        $events    = $this->normaliseFulfillmentEvents($current['fulfillment_events'] ?? []);
+        $events[]  = $this->buildStatusEvent($state, $timestamp, $actorId, $current['state']);
+
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('state') . ' = :state')
+            ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
+            ->set($this->db->quoteName('fulfillment_events') . ' = :fulfillmentEvents')
             ->where($this->db->quoteName('id') . ' = :id')
             ->bind(':state', $state, ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER);
+            ->bind(':id', $orderId, ParameterType::INTEGER)
+            ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
+            ->bind(':fulfillmentEvents', $this->encodeJson($events), ParameterType::STRING);
 
         $this->db->setQuery($query);
         $this->db->execute();
@@ -261,6 +306,82 @@ class OrderService
         }
 
         return $updated;
+    }
+
+    /**
+     * Update tracking metadata and append a fulfilment event.
+     */
+    public function updateTracking(int $orderId, array $tracking, ?int $actorId = null): array
+    {
+        $order = $this->get($orderId);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        $carrier        = substr(trim((string) ($tracking['carrier'] ?? '')), 0, 50);
+        $trackingNumber = substr(trim((string) ($tracking['tracking_number'] ?? '')), 0, 64);
+        $trackingUrl    = substr(trim((string) ($tracking['tracking_url'] ?? '')), 0, 255);
+        $markFulfilled  = !empty($tracking['mark_fulfilled']);
+
+        $timestamp = $this->currentTimestamp();
+        $events    = $this->normaliseFulfillmentEvents($order['fulfillment_events'] ?? []);
+        $events[]  = [
+            'type'     => 'tracking',
+            'state'    => null,
+            'message'  => Text::_('COM_NXPEASYCART_ORDER_TRACKING_EVENT'),
+            'meta'     => array_filter([
+                'carrier'         => $carrier,
+                'tracking_number' => $trackingNumber,
+                'tracking_url'    => $trackingUrl,
+            ]),
+            'at'       => $timestamp,
+            'actor_id' => $actorId,
+        ];
+
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_orders'))
+            ->set($this->db->quoteName('carrier') . ' = ' . ($carrier !== '' ? ':carrier' : 'NULL'))
+            ->set($this->db->quoteName('tracking_number') . ' = ' . ($trackingNumber !== '' ? ':trackingNumber' : 'NULL'))
+            ->set($this->db->quoteName('tracking_url') . ' = ' . ($trackingUrl !== '' ? ':trackingUrl' : 'NULL'))
+            ->set($this->db->quoteName('fulfillment_events') . ' = :events')
+            ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
+            ->where($this->db->quoteName('id') . ' = :id')
+            ->bind(':events', $this->encodeJson($events), ParameterType::STRING)
+            ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
+            ->bind(':id', $orderId, ParameterType::INTEGER);
+
+        if ($carrier !== '') {
+            $query->bind(':carrier', $carrier, ParameterType::STRING);
+        }
+
+        if ($trackingNumber !== '') {
+            $query->bind(':trackingNumber', $trackingNumber, ParameterType::STRING);
+        }
+
+        if ($trackingUrl !== '') {
+            $query->bind(':trackingUrl', $trackingUrl, ParameterType::STRING);
+        }
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.tracking.updated',
+            [
+                'carrier'         => $carrier,
+                'tracking_number' => $trackingNumber,
+            ],
+            $actorId
+        );
+
+        if ($markFulfilled && ($order['state'] ?? '') !== 'fulfilled') {
+            return $this->transitionState($orderId, 'fulfilled', $actorId);
+        }
+
+        return $this->get($orderId) ?? $order;
     }
 
     /**
@@ -341,6 +462,12 @@ class OrderService
             ->from($this->db->quoteName('#__nxp_easycart_orders'));
 
         $state = isset($filters['state']) ? strtolower(trim((string) $filters['state'])) : '';
+        $userId = isset($filters['user_id']) ? (int) $filters['user_id'] : 0;
+
+        if ($userId > 0) {
+            $query->where($this->db->quoteName('user_id') . ' = :filterUserId');
+            $query->bind(':filterUserId', $userId, ParameterType::INTEGER);
+        }
 
         if ($state !== '' && \in_array($state, self::ORDER_STATES, true)) {
             $query->where($this->db->quoteName('state') . ' = :stateFilter');
@@ -586,10 +713,12 @@ class OrderService
         $timeline     = $includeHistory ? $this->getAuditTrail($orderId) : [];
         $itemsCount   = $row->items_count ?? null;
         $itemsCount   = $itemsCount !== null ? (int) $itemsCount : (\is_array($items) ? \count($items) : 0);
+        $statusUpdatedAt = $row->status_updated_at !== null ? (string) $row->status_updated_at : (string) $row->created;
 
         return [
             'id'             => $orderId,
             'order_no'       => (string) $row->order_no,
+            'public_token'   => isset($row->public_token) ? (string) $row->public_token : '',
             'user_id'        => $row->user_id !== null ? (int) $row->user_id : null,
             'email'          => (string) $row->email,
             'billing'        => $this->decodeJson($row->billing ?? '{}'),
@@ -601,9 +730,14 @@ class OrderService
             'total_cents'    => (int) $row->total_cents,
             'currency'       => (string) $row->currency,
             'state'          => (string) $row->state,
+            'status_updated_at' => $statusUpdatedAt,
             'locale'         => (string) $row->locale,
+            'carrier'        => $row->carrier !== null ? (string) $row->carrier : null,
+            'tracking_number'=> $row->tracking_number !== null ? (string) $row->tracking_number : null,
+            'tracking_url'   => $row->tracking_url !== null ? (string) $row->tracking_url : null,
             'created'        => (string) $row->created,
             'modified'       => $row->modified !== null ? (string) $row->modified : null,
+            'fulfillment_events' => $this->normaliseFulfillmentEvents($row->fulfillment_events ?? null),
             'items_count'    => $itemsCount,
             'items'          => $items,
             'transactions'   => $transactions,
@@ -1213,6 +1347,26 @@ class OrderService
     }
 
     /**
+     * Generate and ensure uniqueness of a public tracking token.
+     */
+    private function ensureUniquePublicToken(): string
+    {
+        $attempts = 0;
+        $token    = $this->generatePublicToken();
+
+        while ($attempts < 5 && $this->publicTokenExists($token)) {
+            $token = $this->generatePublicToken();
+            $attempts++;
+        }
+
+        if ($this->publicTokenExists($token)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_TOKEN_UNAVAILABLE'));
+        }
+
+        return $token;
+    }
+
+    /**
      * Ensure an order number is unique in the database.
      */
     private function ensureUniqueOrderNumber(string $candidate): string
@@ -1241,6 +1395,22 @@ class OrderService
             ->from($this->db->quoteName('#__nxp_easycart_orders'))
             ->where($this->db->quoteName('order_no') . ' = :orderNo')
             ->bind(':orderNo', $orderNo, ParameterType::STRING);
+
+        $this->db->setQuery($query, 0, 1);
+
+        return (bool) $this->db->loadResult();
+    }
+
+    /**
+     * Check if the provided public token already exists.
+     */
+    private function publicTokenExists(string $token): bool
+    {
+        $query = $this->db->getQuery(true)
+            ->select('1')
+            ->from($this->db->quoteName('#__nxp_easycart_orders'))
+            ->where($this->db->quoteName('public_token') . ' = :token')
+            ->bind(':token', $token, ParameterType::STRING);
 
         $this->db->setQuery($query, 0, 1);
 
@@ -1321,5 +1491,94 @@ class OrderService
         }
 
         return sprintf('%.2f', (float) $rate);
+    }
+
+    /**
+     * Generate a stable current timestamp string.
+     */
+    private function currentTimestamp(): string
+    {
+        return Factory::getDate()->toSql();
+    }
+
+    /**
+     * Generate a random public token for guest order tracking.
+     */
+    private function generatePublicToken(): string
+    {
+        try {
+            return bin2hex(random_bytes(32));
+        } catch (\Exception $exception) {
+            // Fallback for environments without cryptographically secure randomness.
+            return hash('sha256', microtime(true) . (string) mt_rand());
+        }
+    }
+
+    /**
+     * Build a fulfilment event payload for storage.
+     */
+    private function buildStatusEvent(string $state, string $timestamp, ?int $actorId = null, ?string $fromState = null): array
+    {
+        $state = strtolower(trim($state));
+        $meta  = [];
+
+        if ($fromState !== null && $fromState !== '') {
+            $meta = [
+                'from' => $fromState,
+                'to'   => $state,
+            ];
+        }
+
+        return [
+            'type'     => 'status',
+            'state'    => $state !== '' ? $state : null,
+            'message'  => '',
+            'meta'     => $meta,
+            'at'       => $timestamp,
+            'actor_id' => $actorId,
+        ];
+    }
+
+    /**
+     * Normalise fulfilment events payload to a consistent array structure.
+     *
+     * @param mixed $events
+     * @return array<int, array<string, mixed>>
+     */
+    private function normaliseFulfillmentEvents($events): array
+    {
+        if (\is_string($events) && $events !== '') {
+            $decoded = json_decode($events, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
+                $events = $decoded;
+            }
+        }
+
+        if (!\is_array($events)) {
+            return [];
+        }
+
+        $normalised = [];
+
+        foreach ($events as $event) {
+            if (!\is_array($event)) {
+                continue;
+            }
+
+            $timestamp = isset($event['at']) ? trim((string) $event['at']) : '';
+            $state     = isset($event['state']) ? strtolower((string) $event['state']) : null;
+
+            $normalised[] = [
+                'type'     => isset($event['type']) ? (string) $event['type'] : 'status',
+                'state'    => $state !== '' ? $state : null,
+                'message'  => isset($event['message']) ? trim((string) $event['message']) : '',
+                'meta'     => isset($event['meta']) && \is_array($event['meta']) ? $event['meta'] : [],
+                'at'       => $timestamp !== '' ? $timestamp : $this->currentTimestamp(),
+                'actor_id' => $this->toNullableInt($event['actor_id'] ?? null),
+            ];
+        }
+
+        return $normalised;
     }
 }

@@ -42,6 +42,8 @@ if (!mount) {
         transition: dataset.ordersEndpointTransition ?? "",
         bulkTransition: dataset.ordersEndpointBulk ?? "",
         note: dataset.ordersEndpointNote ?? "",
+        tracking: dataset.ordersEndpointTracking ?? "",
+        invoice: dataset.ordersEndpointInvoice ?? "",
     };
 
     const customersEndpoints = config?.endpoints?.customers ?? {
