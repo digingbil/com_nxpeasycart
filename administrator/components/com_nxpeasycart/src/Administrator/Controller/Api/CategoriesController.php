@@ -151,6 +151,12 @@ class CategoriesController extends AbstractJsonController
         $data       = $this->decodePayload();
         $data['id'] = $id;
 
+        // Explicitly handle parent_id before form validation
+        // Joomla's integer filter may strip null values, so we preserve the intent
+        $parentIdRaw = $data['parent_id'] ?? null;
+        $explicitlyCleared = array_key_exists('parent_id', $data) &&
+            ($parentIdRaw === null || $parentIdRaw === '' || $parentIdRaw === 0 || $parentIdRaw === '0');
+
         $model = $this->getCategoryModel();
         $form  = $model->getForm($data, false);
 
@@ -164,6 +170,11 @@ class CategoriesController extends AbstractJsonController
             $errors = $model->getErrors() ?: [Text::_('COM_NXPEASYCART_ERROR_CATEGORY_SAVE_FAILED')];
 
             return $this->respond(['errors' => $errors], 422);
+        }
+
+        // If parent_id was explicitly set to null/0/empty, ensure it stays null
+        if ($explicitlyCleared) {
+            $validData['parent_id'] = null;
         }
 
         if (!$model->save($validData)) {

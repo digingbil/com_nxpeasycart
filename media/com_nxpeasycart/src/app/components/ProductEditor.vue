@@ -921,18 +921,6 @@ const getCategoryDisplayName = (category) => {
 
     const depth = getCategoryDepth(category.id, provided);
 
-    // Debug logging - remove after testing
-    if (category.id === 6 || category.id === 8) {
-        console.log('[ProductEditor] Category with parent_id:', {
-            categoryId: category.id,
-            categoryTitle: category.title,
-            hasParentId: category.parent_id !== undefined && category.parent_id !== null,
-            parentId: category.parent_id,
-            calculatedDepth: depth,
-            totalCategoriesProvided: provided.length
-        });
-    }
-
     if (depth === 0) {
         return category.title;
     }

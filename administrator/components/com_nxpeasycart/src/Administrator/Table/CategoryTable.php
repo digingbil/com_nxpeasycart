@@ -17,6 +17,16 @@ use RuntimeException;
 class CategoryTable extends Table
 {
     /**
+     * Columns that can be set to NULL when stored.
+     *
+     * Joomla's Table::store() skips null values by default.
+     * Listing columns here ensures they get SET to NULL explicitly.
+     *
+     * @var array<int, string>
+     */
+    protected $_nullable = ['parent_id'];
+
+    /**
      * Constructor.
      *
      * @param DatabaseDriver $db Database connector
@@ -24,6 +34,17 @@ class CategoryTable extends Table
     public function __construct(DatabaseDriver $db)
     {
         parent::__construct('#__nxp_easycart_categories', 'id', $db);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * Override to ensure nullable columns (like parent_id) are included
+     * in UPDATE queries even when their value is NULL.
+     */
+    public function store($updateNulls = true)
+    {
+        return parent::store($updateNulls);
     }
 
     /**
@@ -69,10 +90,11 @@ class CategoryTable extends Table
 
         $this->sort = (int) $this->sort;
 
-        if ($this->parent_id !== null && $this->parent_id !== '') {
-            $this->parent_id = (int) $this->parent_id;
-        } else {
+        // Handle parent_id: null, empty string, 0 all mean "no parent"
+        if ($this->parent_id === null || $this->parent_id === '' || $this->parent_id === 0 || $this->parent_id === '0') {
             $this->parent_id = null;
+        } else {
+            $this->parent_id = (int) $this->parent_id;
         }
 
         return parent::check();

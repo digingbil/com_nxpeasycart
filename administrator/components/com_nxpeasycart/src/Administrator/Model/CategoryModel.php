@@ -63,9 +63,15 @@ class CategoryModel extends AdminModel
         $valid['title']     = trim((string) ($valid['title'] ?? ''));
         $valid['slug']      = isset($valid['slug']) ? trim((string) $valid['slug']) : '';
         $valid['sort']      = isset($valid['sort']) ? (int) $valid['sort'] : 0;
-        $valid['parent_id'] = isset($valid['parent_id']) && $valid['parent_id'] !== ''
-            ? (int) $valid['parent_id']
-            : null;
+
+        // Handle parent_id: null, empty string, 0, or missing all mean "no parent"
+        // Joomla's integer filter may convert null to 0, so we check for both
+        $parentId = $valid['parent_id'] ?? null;
+        if ($parentId === null || $parentId === '' || $parentId === 0 || $parentId === '0') {
+            $valid['parent_id'] = null;
+        } else {
+            $valid['parent_id'] = (int) $parentId;
+        }
 
         if ($valid['parent_id'] !== null && $valid['parent_id'] < 0) {
             $valid['parent_id'] = null;
@@ -97,10 +103,11 @@ class CategoryModel extends AdminModel
             $table->sort = 0;
         }
 
-        if ($table->parent_id !== null && $table->parent_id !== '') {
-            $table->parent_id = (int) $table->parent_id;
-        } else {
+        // Handle parent_id: null, empty string, 0 all mean "no parent"
+        if ($table->parent_id === null || $table->parent_id === '' || $table->parent_id === 0 || $table->parent_id === '0') {
             $table->parent_id = null;
+        } else {
+            $table->parent_id = (int) $table->parent_id;
         }
 
         if ((int) $table->id === 0 && $table->sort === 0) {
