@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Site\View\Order;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\Component\Nxpeasycart\Site\Helper\SessionSecurityHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 
 /**
@@ -21,6 +22,11 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        // SECURITY: Regenerate session ID on order confirmation page
+        // This prevents session fixation attacks when returning from
+        // external payment gateways (Stripe, PayPal) or after checkout
+        SessionSecurityHelper::regenerateIfNeeded();
+
         $document = $this->getDocument();
 
         SiteAssetHelper::useSiteAssets($document);

@@ -50,6 +50,21 @@ class PaymentController extends BaseController
 
         if (!$this->hasValidToken()) {
             $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
+            return;
+        }
+
+        // Enforce HTTPS for checkout (configurable via component params)
+        if (!$this->isSecureConnection()) {
+            $params = \Joomla\CMS\Component\ComponentHelper::getParams('com_nxpeasycart');
+            $enforceHttps = $params->get('enforce_https_checkout', true);
+
+            if ($enforceHttps) {
+                $this->logSecurityEvent('checkout_insecure_connection', [
+                    'ip' => $this->getClientIp(),
+                ]);
+                $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_HTTPS_REQUIRED')], 403);
+                return;
+            }
         }
 
         $payload = $this->decodePayload($input->json->getRaw() ?? '');
@@ -428,6 +443,7 @@ class PaymentController extends BaseController
 
     /**
      * Verify a CSRF token via header or request payload.
+     * Supports both POST form token and X-CSRF-Token header for API compatibility.
      */
     private function hasValidToken(): bool
     {
@@ -435,11 +451,18 @@ class PaymentController extends BaseController
         $headerToken = (string) $input->server->getString('HTTP_X_CSRF_TOKEN', '');
         $sessionToken = Session::getFormToken();
 
+        // Check X-CSRF-Token header (for JSON API calls)
         if ($headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
             return true;
         }
 
-        return Session::checkToken('post');
+        // Check form token in POST body
+        if (Session::checkToken('post')) {
+            return true;
+        }
+
+        // Also check 'request' for broader compatibility (query string + post + json)
+        return Session::checkToken('request');
     }
 
     /**
@@ -574,7 +597,8 @@ class PaymentController extends BaseController
     }
 
     /**
-     * Reset the cart after a cash-on-delivery checkout completes.
+     * Reset the cart after a successful checkout and regenerate the session ID
+     * to prevent session fixation attacks.
      */
     private function clearCart(CartSessionService $session, array $cart): void
     {
@@ -595,9 +619,70 @@ class PaymentController extends BaseController
             }
 
             $session->attachToApplication();
+
+            // SECURITY: Regenerate session ID after successful checkout to prevent
+            // session fixation attacks. The cart is now cleared, so a new session
+            // ID ensures any attacker who knew the old session cannot hijack it.
+            $this->regenerateSession();
         } catch (\Throwable $exception) {
             // Non-fatal: leave the cart intact if reset fails.
         }
+    }
+
+    /**
+     * Regenerate the session ID to prevent session fixation attacks.
+     * Called after successful checkout completion.
+     */
+    private function regenerateSession(): void
+    {
+        try {
+            $app = Factory::getApplication();
+            $joomlaSession = $app->getSession();
+
+            // Mark checkout as completed before regeneration
+            $joomlaSession->set('nxp_ec_checkout_completed', true);
+
+            // Regenerate session ID while preserving session data
+            // This prevents session fixation attacks where an attacker
+            // pre-sets a session ID and waits for the user to complete checkout
+            if (method_exists($joomlaSession, 'regenerate')) {
+                $joomlaSession->regenerate(true);
+            } elseif (\function_exists('session_regenerate_id')) {
+                session_regenerate_id(true);
+            }
+
+            // Log the session regeneration for audit
+            $this->logSecurityEvent('checkout.session_regenerated', [
+                'message' => 'Session ID regenerated after successful checkout',
+            ]);
+        } catch (\Throwable $exception) {
+            // Non-fatal: log but don't block checkout completion
+        }
+    }
+
+    /**
+     * Check if the current request is over a secure HTTPS connection.
+     * Handles reverse proxy/load balancer scenarios via forwarding headers.
+     */
+    private function isSecureConnection(): bool
+    {
+        $uri = Uri::getInstance();
+
+        // Direct HTTPS check
+        if ($uri->isSsl()) {
+            return true;
+        }
+
+        // Check for reverse proxy/load balancer forwarding headers
+        $input = Factory::getApplication()->input;
+        $forwardedProto = strtolower((string) $input->server->getString('HTTP_X_FORWARDED_PROTO', ''));
+        $forwardedSsl = strtolower((string) $input->server->getString('HTTP_X_FORWARDED_SSL', ''));
+
+        if ($forwardedProto === 'https' || $forwardedSsl === 'on') {
+            return true;
+        }
+
+        return false;
     }
 
     private function getCartPresenter(): CartPresentationService
