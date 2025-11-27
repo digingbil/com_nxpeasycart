@@ -677,12 +677,31 @@ class CartController extends BaseController
                 $app->close();
             }
 
-            // Calculate cart subtotal from raw item data (unit_price_cents * qty)
+            // SECURITY: Calculate cart subtotal from DATABASE PRICES, not cart-stored prices
+            // This prevents coupon discount manipulation via cart price tampering
             $subtotalCents = 0;
             foreach ($items as $item) {
-                $unitPrice = (int) ($item['unit_price_cents'] ?? 0);
+                $variantId = (int) ($item['variant_id'] ?? 0);
                 $qty       = max(1, (int) ($item['qty'] ?? 1));
+
+                if ($variantId <= 0) {
+                    continue;
+                }
+
+                // Fetch current price from database
+                $variant = $this->loadVariantForCoupon($db, $variantId);
+
+                if (!$variant || !(bool) $variant->active) {
+                    continue; // Skip inactive variants
+                }
+
+                $unitPrice = (int) ($variant->price_cents ?? 0);
                 $subtotalCents += $unitPrice * $qty;
+            }
+
+            if ($subtotalCents <= 0) {
+                echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_COUPON_EMPTY_CART'), true);
+                $app->close();
             }
 
             // Get coupon service
@@ -787,6 +806,37 @@ class CartController extends BaseController
 
             echo new JsonResponse(null, Text::_('COM_NXPEASYCART_ERROR_CART_GENERIC'), true);
             $app->close();
+        }
+    }
+
+    /**
+     * Load variant with current price from database for coupon calculation.
+     * SECURITY: This method ensures coupon discounts are calculated based on
+     * database prices, not cart-stored prices that could be tampered with.
+     *
+     * @param DatabaseInterface $db
+     * @param int $variantId
+     * @return object|null
+     */
+    private function loadVariantForCoupon(DatabaseInterface $db, int $variantId): ?object
+    {
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('id'),
+                $db->quoteName('price_cents'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->where($db->quoteName('id') . ' = :variantId')
+            ->bind(':variantId', $variantId, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        try {
+            $result = $db->loadObject();
+            return $result ?: null;
+        } catch (\Throwable $exception) {
+            return null;
         }
     }
 }

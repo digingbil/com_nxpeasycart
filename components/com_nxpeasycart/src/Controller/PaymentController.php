@@ -130,18 +130,25 @@ class PaymentController extends BaseController
 
         $shippingCents = $this->resolveShippingAmount(
             isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
-            (int) ($cart['summary']['subtotal_cents'] ?? 0)
+            (int) ($orderPayload['subtotal_cents'] ?? 0)
         );
         $tax = $this->calculateTaxAmount($payload, (int) ($orderPayload['subtotal_cents'] ?? 0));
 
         $orderPayload['shipping_cents'] = $shippingCents;
         $orderPayload['tax_cents']      = $tax['amount'];
-        $orderPayload['discount_cents'] = $orderPayload['discount_cents'] ?? 0;
+        // discount_cents already calculated in buildOrderPayload() from database prices
         $orderPayload['tax_inclusive']  = $tax['inclusive'];
         $orderPayload['items']          = $this->applyTaxRateToItems(
             $orderPayload['items'] ?? [],
             $tax['rate']
         );
+
+        // Recalculate total with final shipping, tax, and discount
+        $subtotal = (int) ($orderPayload['subtotal_cents'] ?? 0);
+        $discount = (int) ($orderPayload['discount_cents'] ?? 0);
+        $taxAmount = $tax['inclusive'] ? 0 : $tax['amount'];
+
+        $orderPayload['total_cents'] = $subtotal + $shippingCents + $taxAmount - $discount;
         $orderPayload['state'] = \in_array($gateway, ['cod', 'bank_transfer'], true)
             ? 'pending'
             : $orderPayload['state'];
@@ -305,27 +312,61 @@ class PaymentController extends BaseController
      */
     private function buildOrderPayload(array $cart, array $payload): array
     {
-        $items = [];
+        $container = Factory::getContainer();
+        $db        = $container->get(DatabaseInterface::class);
+        $items     = [];
 
+        // SECURITY: Recalculate ALL prices from database - never trust cart prices
         foreach ($cart['items'] as $item) {
+            $variantId = (int) ($item['variant_id'] ?? 0);
+            $qty       = max(1, (int) ($item['qty'] ?? 1));
+
+            if ($variantId <= 0) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CART_INVALID_REQUEST'));
+            }
+
+            // Fetch CURRENT price from database
+            $variant = $this->loadVariantForCheckout($db, $variantId);
+
+            if (!$variant) {
+                throw new RuntimeException(
+                    Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_NOT_FOUND', $variantId)
+                );
+            }
+
+            if (!(bool) $variant->active) {
+                throw new RuntimeException(
+                    Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_INACTIVE', $variant->sku ?? $variantId)
+                );
+            }
+
+            // Use database price, NOT cart price
+            $unitPriceCents = (int) ($variant->price_cents ?? 0);
+            $totalCents     = $unitPriceCents * $qty;
+            $currency       = strtoupper((string) ($variant->currency ?? 'USD'));
+
             $items[] = [
-                'sku'              => $item['sku']   ?? '',
-                'title'            => $item['title'] ?? '',
-                'qty'              => (int) ($item['qty'] ?? 1),
-                'unit_price_cents' => (int) ($item['unit_price_cents'] ?? 0),
-                'total_cents'      => (int) ($item['total_cents'] ?? 0),
-                'currency'         => $item['currency']   ?? ($cart['summary']['currency'] ?? 'USD'),
+                'sku'              => $variant->sku ?? '',
+                'title'            => $variant->sku ?? ($item['title'] ?? ''),
+                'qty'              => $qty,
+                'unit_price_cents' => $unitPriceCents,  // FROM DATABASE
+                'total_cents'      => $totalCents,       // RECALCULATED
+                'currency'         => $currency,
                 'product_id'       => $item['product_id'] ?? null,
-                'variant_id'       => $item['variant_id'] ?? null,
+                'variant_id'       => $variantId,
                 'tax_rate'         => '0.00',
             ];
         }
 
-        $currency = $cart['summary']['currency'] ?? 'USD';
-        $discountCents = (int) ($cart['summary']['discount_cents'] ?? 0);
+        // Recalculate subtotal from database prices
+        $subtotalCents = array_reduce($items, static fn($sum, $item) => $sum + ($item['total_cents'] ?? 0), 0);
 
-        // Store coupon information if applied
+        $currency = $items[0]['currency'] ?? ($cart['summary']['currency'] ?? 'USD');
+
+        // SECURITY: Recalculate coupon discount from database subtotal, not cart-stored discount
+        $discountCents = 0;
         $couponData = null;
+
         if (!empty($cart['coupon'])) {
             $couponData = [
                 'code'  => $cart['coupon']['code'] ?? '',
@@ -333,6 +374,12 @@ class PaymentController extends BaseController
                 'type'  => $cart['coupon']['type'] ?? '',
                 'value' => $cart['coupon']['value'] ?? 0,
             ];
+
+            // Recalculate discount based on REAL subtotal from database
+            $discountCents = $this->calculateCouponDiscount(
+                $couponData,
+                $subtotalCents
+            );
         }
 
         return [
@@ -342,11 +389,11 @@ class PaymentController extends BaseController
             'items'          => $items,
             'currency'       => $currency,
             'state'          => 'pending',
-            'subtotal_cents' => (int) ($cart['summary']['subtotal_cents'] ?? 0),
-            'shipping_cents' => (int) ($payload['shipping_cents'] ?? 0),
-            'tax_cents'      => (int) ($payload['tax_cents'] ?? 0),
-            'discount_cents' => $discountCents,
-            'total_cents'    => (int) ($cart['summary']['total_cents'] ?? 0),
+            'subtotal_cents' => $subtotalCents,  // RECALCULATED FROM DATABASE
+            'shipping_cents' => 0,  // Will be set later by resolveShippingAmount()
+            'tax_cents'      => 0,  // Will be set later by calculateTaxAmount()
+            'discount_cents' => $discountCents,  // RECALCULATED FROM DATABASE
+            'total_cents'    => 0,  // Will be recalculated after shipping and tax
             'coupon'         => $couponData,
         ];
     }
@@ -949,5 +996,73 @@ class PaymentController extends BaseController
         }
 
         return null;
+    }
+
+    /**
+     * Load variant with current price from database for checkout.
+     * SECURITY: This method ensures prices are ALWAYS fetched from database,
+     * never trusted from cart data.
+     *
+     * @param DatabaseInterface $db
+     * @param int $variantId
+     * @return object|null
+     */
+    private function loadVariantForCheckout(DatabaseInterface $db, int $variantId): ?object
+    {
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('id'),
+                $db->quoteName('product_id'),
+                $db->quoteName('sku'),
+                $db->quoteName('price_cents'),
+                $db->quoteName('currency'),
+                $db->quoteName('stock'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->where($db->quoteName('id') . ' = :variantId')
+            ->bind(':variantId', $variantId, ParameterType::INTEGER);
+
+        $db->setQuery($query);
+
+        try {
+            $result = $db->loadObject();
+            return $result ?: null;
+        } catch (\Throwable $exception) {
+            return null;
+        }
+    }
+
+    /**
+     * Calculate coupon discount from database subtotal.
+     * SECURITY: This method ensures discount is calculated from real database prices,
+     * not cart-stored prices that could be tampered with.
+     *
+     * @param array<string, mixed> $coupon
+     * @param int $subtotalCents
+     * @return int
+     */
+    private function calculateCouponDiscount(array $coupon, int $subtotalCents): int
+    {
+        $type  = $coupon['type'] ?? '';
+        $value = (int) ($coupon['value'] ?? 0);
+
+        if ($value <= 0) {
+            return 0;
+        }
+
+        switch ($type) {
+            case 'percent':
+            case 'percentage':
+                // Calculate percentage discount
+                return (int) round(($subtotalCents * $value) / 100);
+
+            case 'fixed':
+                // Apply fixed amount discount (cannot exceed subtotal)
+                return min($value, $subtotalCents);
+
+            default:
+                return 0;
+        }
     }
 }

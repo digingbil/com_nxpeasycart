@@ -94,13 +94,11 @@ class CartPresentationService
                     $product = $productId !== null && isset($products[$productId]) ? $products[$productId] : null;
                     $variant = $variantId !== null && isset($variants[$variantId]) ? $variants[$variantId] : null;
 
-                    $priceCents = isset($item['unit_price_cents'])
-                        ? (int) $item['unit_price_cents']
-                        : ($variant['price_cents'] ?? 0);
+                    // SECURITY: Always use database price, never trust cart-stored prices
+                    $priceCents = ($variant['price_cents'] ?? 0);
 
-                    $currency = isset($item['currency'])
-                        ? strtoupper((string) $item['currency'])
-                        : ($variant['currency'] ?? $baseCurrency);
+                    // SECURITY: Always use database currency
+                    $currency = ($variant['currency'] ?? $baseCurrency);
 
                     $variantLabel = $this->buildVariantLabel($variant);
                     $baseTitle    = $product['title'] ?? ($item['title'] ?? '');

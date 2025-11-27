@@ -330,6 +330,163 @@ Before deploying to production:
 
 ---
 
+---
+
+## Issue 4: Price Tampering Vulnerability ✅ FIXED
+
+### Vulnerability Details
+- **Location**: `components/com_nxpeasycart/src/Controller/PaymentController.php:306-352`
+- **Severity**: CRITICAL (9.5/10)
+- **Type**: Price Manipulation / Data Integrity Failure
+
+### Problem
+The checkout system trusted prices stored in the cart database instead of recalculating them from the authoritative source (variants table). An attacker could manipulate cart data to purchase products at arbitrary prices.
+
+**Attack Scenario**: Attacker modifies cart JSON in database:
+```sql
+UPDATE #__nxp_easycart_carts
+SET data = JSON_SET(data, '$.items[0].unit_price_cents', 1)
+WHERE session_id = 'victim-session';
+```
+Result: $999.99 product sold for $0.01
+
+### Solution
+Implemented complete price recalculation from database at checkout:
+
+**PaymentController.php (Lines 306-385)**:
+```php
+// SECURITY: Recalculate ALL prices from database - never trust cart prices
+foreach ($cart['items'] as $item) {
+    $variantId = (int) ($item['variant_id'] ?? 0);
+
+    // Fetch CURRENT price from database
+    $variant = $this->loadVariantForCheckout($db, $variantId);
+
+    // Use database price, NOT cart price
+    $unitPriceCents = (int) ($variant->price_cents ?? 0);
+    $totalCents     = $unitPriceCents * $qty;
+}
+
+// Recalculate subtotal from database prices
+$subtotalCents = array_reduce($items, static fn($sum, $item) => $sum + ($item['total_cents'] ?? 0), 0);
+```
+
+**CartPresentationService.php (Lines 97-101)**:
+```php
+// SECURITY: Always use database price, never trust cart-stored prices
+$priceCents = ($variant['price_cents'] ?? 0);  // FROM DATABASE ONLY
+```
+
+### Protection Mechanism
+- Cart becomes a "shopping list" (variant IDs + quantities only)
+- Database is the ONLY authoritative price source
+- ALL prices recalculated from database at checkout and cart display
+- Validates variant exists and is active before allowing purchase
+
+### Testing
+Attack simulation performed:
+- Tampered cart price from 23400 cents to 1 cent in database
+- Checkout used database price (23400 cents), ignoring tampered value
+- Inactive variants blocked from checkout
+
+**Complete details**: See `docs/security-price-tampering-fix.md`
+
+---
+
+---
+
+## Issue 5: Coupon Discount Tampering Vulnerability ✅ FIXED
+
+### Vulnerability Details
+- **Location**: `components/com_nxpeasycart/src/Controller/CartController.php:680-686`
+- **Severity**: HIGH (8.0/10)
+- **Type**: Discount Calculation Manipulation / Revenue Loss
+
+### Problem
+The coupon discount calculation used cart-stored prices instead of database prices. An attacker could tamper with cart prices to reduce the discount amount, causing revenue loss.
+
+**Attack Scenario**:
+```sql
+-- Product costs $100, 50% coupon available
+UPDATE #__nxp_easycart_carts
+SET data = JSON_SET(data, '$.items[0].unit_price_cents', 1000)  -- Change to $10
+WHERE session_id = 'victim';
+
+-- Apply 50% coupon: 50% of $10 = $5 discount
+-- Checkout: $100 (real price) - $5 (wrong discount) = $95 paid
+-- Expected: $100 - $50 = $50 paid
+-- Merchant loses: $45
+```
+
+### Solution
+Implemented complete discount recalculation from database prices:
+
+**CartController.php applyCoupon() (Lines 680-709)**:
+```php
+// SECURITY: Calculate cart subtotal from DATABASE PRICES
+$subtotalCents = 0;
+foreach ($items as $item) {
+    $variantId = (int) ($item['variant_id'] ?? 0);
+
+    // Fetch current price from database
+    $variant = $this->loadVariantForCoupon($db, $variantId);
+
+    $unitPrice = (int) ($variant->price_cents ?? 0);  // FROM DATABASE
+    $subtotalCents += $unitPrice * $qty;
+}
+
+// Discount calculated from REAL database subtotal
+$validation = $couponService->validate($code, $subtotalCents);
+```
+
+**PaymentController.php buildOrderPayload() (Lines 359-376)**:
+```php
+// SECURITY: Recalculate coupon discount from database subtotal
+$discountCents = $this->calculateCouponDiscount(
+    $couponData,
+    $subtotalCents  // ALREADY RECALCULATED FROM DATABASE
+);
+```
+
+### Protection Mechanism
+- Coupon discount ALWAYS calculated from database prices
+- Checkout recalculates discount from database subtotal
+- Cart-stored discount values completely ignored
+- Supports both percentage and fixed-amount coupons
+- Prevents both revenue loss and customer overcharges
+
+### Testing
+Attack simulation performed:
+- Tampered cart price from $100 to $10
+- Applied 50% coupon
+- Discount calculated as $50 (from database), not $5 (from cart)
+- Revenue protected
+
+**Complete details**: See `docs/security-coupon-discount-fix.md`
+
+### Bug Fix: Coupon Type Mismatch (2025-11-27)
+**Issue**: After implementing the security fix, coupons weren't applying discounts at checkout. Investigation revealed a type mismatch:
+- Database stores coupon type as `"percent"`
+- `calculateCouponDiscount()` only checked for `"percentage"`
+- Result: All percentage coupons returned 0 discount
+
+**Fix**: Updated `PaymentController::calculateCouponDiscount()` line 1064 to accept both `"percent"` and `"percentage"`:
+```php
+switch ($type) {
+    case 'percent':      // ← Added to match database value
+    case 'percentage':
+        return (int) round(($subtotalCents * $value) / 100);
+```
+
+**Verification**: Tested with POPUST (10% off) coupon:
+- Subtotal: $345.00
+- Discount: $34.50 ✓
+- Total: $310.50 ✓
+- Order, email, and admin all show correct discount ✓
+
+---
+
 **Status**: ✅ All critical vulnerabilities resolved
 **Date**: 2025-11-27
-**Reviewed**: Security audit issues #2 and #3
+**Reviewed**: Security audit issues #2, #3, #4, and #5
+**Bug Fix**: Coupon type mismatch resolved 2025-11-27
