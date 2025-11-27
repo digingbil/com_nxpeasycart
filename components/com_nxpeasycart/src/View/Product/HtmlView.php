@@ -8,8 +8,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
+use Joomla\Database\DatabaseInterface;
 
 /**
  * Product frontend view.
@@ -139,10 +142,75 @@ class HtmlView extends BaseHtmlView
             '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>'
         );
 
+        // Build breadcrumb with category hierarchy
         $pathway = $app->getPathway();
+
+        // Add category path items before the product
+        $primaryCategoryPath = $product['primary_category_path'] ?? null;
+
+        if ($primaryCategoryPath !== null && $primaryCategoryPath !== '') {
+            $pathSlugs = explode('/', $primaryCategoryPath);
+
+            // Load category titles for the entire path from database
+            $categoryTitles = $this->loadCategoryTitles($pathSlugs);
+
+            foreach ($pathSlugs as $slug) {
+                $categoryTitle = $categoryTitles[$slug] ?? ucfirst(str_replace('-', ' ', $slug));
+                $fullPathUrl = RouteHelper::getCategoryRoute($slug);
+
+                $pathway->addItem($categoryTitle, $fullPathUrl);
+            }
+        }
+
+        // Add the product as the final breadcrumb item
         $pathway->addItem($title, $canonical);
 
         parent::display($tpl);
+    }
+
+    /**
+     * Load category titles from the database for given slugs.
+     *
+     * @param array<int, string> $slugs
+     *
+     * @return array<string, string> Slug => Title mapping
+     */
+    private function loadCategoryTitles(array $slugs): array
+    {
+        if (empty($slugs)) {
+            return [];
+        }
+
+        try {
+            $db = Factory::getContainer()->get(DatabaseInterface::class);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        // Use direct value escaping since we're dealing with strings
+        $quotedSlugs = array_map(
+            static fn ($slug) => $db->quote((string) $slug),
+            $slugs
+        );
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('slug'),
+                $db->quoteName('title'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_categories'))
+            ->where($db->quoteName('slug') . ' IN (' . implode(',', $quotedSlugs) . ')');
+
+        $db->setQuery($query);
+        $rows = $db->loadObjectList() ?: [];
+
+        $titles = [];
+
+        foreach ($rows as $row) {
+            $titles[(string) $row->slug] = (string) $row->title;
+        }
+
+        return $titles;
     }
 
     /**

@@ -34,6 +34,9 @@ class ProductModel extends BaseDatabaseModel
 
         $this->setState('product.id', $input->getInt('id'));
         $this->setState('product.slug', $input->getCmd('slug', ''));
+
+        // Store the category path from the URL for breadcrumb fallback
+        $this->setState('product.category_path', $input->getString('category_path', ''));
     }
 
     /**
@@ -102,6 +105,18 @@ class ProductModel extends BaseDatabaseModel
         $primaryCategoryPath = $primaryCategoryId !== null
             ? CategoryPathHelper::getPath($db, (int) $primaryCategoryId)
             : [];
+
+        // Fall back to URL category path if product doesn't have a primary category
+        if (empty($primaryCategoryPath)) {
+            $urlCategoryPath = (string) $this->getState('product.category_path', '');
+
+            if ($urlCategoryPath !== '') {
+                $primaryCategoryPath = array_filter(
+                    array_map('trim', explode('/', $urlCategoryPath))
+                );
+            }
+        }
+
         $primaryCategorySlug = !empty($primaryCategoryPath) ? (string) end($primaryCategoryPath) : null;
         $priceSummary = $this->summarisePrices($variants);
         $stockTotals  = $this->summariseStock($variants);

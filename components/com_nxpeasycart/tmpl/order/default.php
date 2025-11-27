@@ -97,7 +97,7 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
         </h1>
         <p><?php echo Text::_('COM_NXPEASYCART_ORDER_CONFIRMED_LEAD'); ?></p>
         <div class="nxp-ec-order-confirmation__status">
-            <span class="nxp-ec-order-confirmation__badge">
+            <span class="nxp-ec-order-confirmation__badge nxp-ec-order-confirmation__badge--<?php echo htmlspecialchars($state, ENT_QUOTES, 'UTF-8'); ?>">
                 <?php echo htmlspecialchars($stateLabel, ENT_QUOTES, 'UTF-8'); ?>
             </span>
             <?php if ($statusUpdated !== '') : ?>
