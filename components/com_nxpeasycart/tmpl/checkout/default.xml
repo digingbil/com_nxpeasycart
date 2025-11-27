@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <metadata>
-    <layout title="COM_NXPEASYCART_SITE_MENU_CHECKOUT">
+    <layout title="COM_NXPEASYCART_SITE_MENU_CHECKOUT" hidden="true">
         <message>COM_NXPEASYCART_MENU_CHECKOUT_DESC</message>
     </layout>
 </metadata>

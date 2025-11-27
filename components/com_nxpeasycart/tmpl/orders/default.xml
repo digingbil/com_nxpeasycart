@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <metadata>
-    <layout title="COM_NXPEASYCART_SITE_MENU_ORDERS">
+    <layout title="COM_NXPEASYCART_SITE_MENU_ORDERS" hidden="true">
         <message>COM_NXPEASYCART_MENU_ORDERS_DESC</message>
     </layout>
     <fields name="request">
