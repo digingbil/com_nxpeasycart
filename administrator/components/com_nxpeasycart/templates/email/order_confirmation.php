@@ -38,7 +38,7 @@ $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_tran
 
 <div style="font-family: Arial, sans-serif; color: #111827;">
     <h1 style="font-size: 20px; margin-bottom: 16px;">
-        <?php echo htmlspecialchars($store['name'] ?? 'Your Store', ENT_QUOTES, 'UTF-8'); ?>
+        <?php echo htmlspecialchars($store['name'] ?? Text::_('COM_NXPEASYCART_EMAIL_STORE_FALLBACK'), ENT_QUOTES, 'UTF-8'); ?>
     </h1>
 
     <p style="margin: 0 0 24px; font-size: 15px;">
@@ -107,8 +107,8 @@ $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_tran
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 24px;">
         <thead>
             <tr>
-                <th align="left" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;">Item</th>
-                <th align="right" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;">Total</th>
+                <th align="left" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_ITEM'), ENT_QUOTES, 'UTF-8'); ?></th>
+                <th align="right" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_TOTAL'), ENT_QUOTES, 'UTF-8'); ?></th>
     </tr>
 </thead>
 <tbody>
@@ -159,7 +159,7 @@ $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_tran
         </tr>
     <?php endif; ?>
     <tr>
-        <td style="padding-top: 12px; font-weight: bold;">Total</td>
+        <td style="padding-top: 12px; font-weight: bold;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_TOTAL'), ENT_QUOTES, 'UTF-8'); ?></td>
         <td align="right" style="padding-top: 12px; font-weight: bold;">
             <?php echo htmlspecialchars($formatMoney((int) ($order['total_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
         </td>

@@ -62,7 +62,7 @@ $isPartialRefund = $refundAmount < (int) ($order['total_cents'] ?? 0);
 
 <div style="font-family: Arial, sans-serif; color: #111827;">
     <h1 style="font-size: 20px; margin-bottom: 16px;">
-        <?php echo htmlspecialchars($store['name'] ?? 'Your Store', ENT_QUOTES, 'UTF-8'); ?>
+        <?php echo htmlspecialchars($store['name'] ?? Text::_('COM_NXPEASYCART_EMAIL_STORE_FALLBACK'), ENT_QUOTES, 'UTF-8'); ?>
     </h1>
 
     <p style="margin: 0 0 24px; font-size: 15px;">
@@ -112,8 +112,8 @@ $isPartialRefund = $refundAmount < (int) ($order['total_cents'] ?? 0);
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; margin-bottom: 24px;">
         <thead>
             <tr>
-                <th align="left" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;">Item</th>
-                <th align="right" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;">Total</th>
+                <th align="left" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_ITEM'), ENT_QUOTES, 'UTF-8'); ?></th>
+                <th align="right" style="border-bottom: 1px solid #e2e8f0; padding: 8px 0; font-size: 13px; text-transform: uppercase;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_TOTAL'), ENT_QUOTES, 'UTF-8'); ?></th>
             </tr>
         </thead>
         <tbody>
@@ -141,6 +141,28 @@ $isPartialRefund = $refundAmount < (int) ($order['total_cents'] ?? 0);
                     <?php echo htmlspecialchars($formatMoney((int) ($order['subtotal_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                 </td>
             </tr>
+            <?php $shippingCents = (int) ($order['shipping_cents'] ?? 0); ?>
+            <?php if ($shippingCents > 0) : ?>
+                <tr>
+                    <td style="padding-top: 6px;">
+                        <?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_ORDER_SHIPPING'), ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                    <td align="right" style="padding-top: 6px;">
+                        <?php echo htmlspecialchars($formatMoney($shippingCents), ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
+            <?php $discountCents = (int) ($order['discount_cents'] ?? 0); ?>
+            <?php if ($discountCents > 0) : ?>
+                <tr>
+                    <td style="padding-top: 6px;">
+                        <?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'), ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                    <td align="right" style="padding-top: 6px;">
+                        -<?php echo htmlspecialchars($formatMoney($discountCents), ENT_QUOTES, 'UTF-8'); ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
             <tr>
                 <td style="padding-top: 12px; font-weight: bold; color: #dc2626;">
                     <?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_REFUND_AMOUNT'), ENT_QUOTES, 'UTF-8'); ?>
