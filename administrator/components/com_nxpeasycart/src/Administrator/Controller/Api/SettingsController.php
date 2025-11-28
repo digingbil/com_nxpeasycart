@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
@@ -279,10 +280,10 @@ class SettingsController extends AbstractJsonController
      */
     private function normaliseRateLimits(array $input, array $existing = []): array
     {
-        // Temporary debug hook to trace incoming payload during QA.
+        // Debug hook to trace incoming payload during QA
         if (getenv('NXP_EASYCART_DEBUG_RATELIMIT') === '1') {
             try {
-                error_log('RateLimit input: ' . json_encode($input, JSON_UNESCAPED_SLASHES));
+                Log::add('RateLimit input: ' . json_encode($input, JSON_UNESCAPED_SLASHES), Log::DEBUG, 'com_nxpeasycart.settings');
             } catch (\Throwable $e) {
                 // ignore
             }
@@ -441,42 +442,9 @@ class SettingsController extends AbstractJsonController
     private function debug(string $message): void
     {
         try {
-            // Prefer Joomla configured log path; fall back to system temp dir if missing
-            $logPath = '';
-
-            try {
-                if (isset($this->app) && method_exists($this->app, 'get')) {
-                    $logPath = (string) ($this->app->get('log_path') ?? '');
-                }
-            } catch (\Throwable $e) {
-                // Ignore and use fallback
-            }
-
-            // Secondary fallback: read from global config if available
-            if ($logPath === '') {
-                try {
-                    $app = \Joomla\CMS\Factory::getApplication();
-                    if ($app) {
-                        $config = $app->getConfig();
-                        if ($config) {
-                            $logPath = (string) ($config->get('log_path') ?? '');
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // Ignore and use final fallback
-                }
-            }
-
-            if ($logPath === '' || !is_dir($logPath)) {
-                $logPath = sys_get_temp_dir();
-            }
-
-            $logFile = rtrim($logPath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'com_nxpeasycart-settings.log';
-
-            $line = sprintf("[%s] %s\n", gmdate('c'), $message);
-            file_put_contents($logFile, $line, FILE_APPEND);
+            Log::add($message, Log::DEBUG, 'com_nxpeasycart.settings');
         } catch (\Throwable $exception) {
-            // Ignore logging errors.
+            // Swallow logging errors
         }
     }
 }
