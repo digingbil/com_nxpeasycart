@@ -313,5 +313,41 @@ const progressLabel = computed(() => {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    .nxp-ec-onboarding__step-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .nxp-ec-onboarding__title {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .nxp-ec-onboarding__panel {
+        padding: 1rem;
+        width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+
+    .nxp-ec-onboarding__step-main {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nxp-ec-onboarding__step-icon {
+        align-self: flex-start;
+    }
+
+    .nxp-ec-onboarding__step-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .nxp-ec-onboarding__step-actions .nxp-ec-btn {
+        width: 100%;
+    }
 }
 </style>

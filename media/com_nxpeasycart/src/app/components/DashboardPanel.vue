@@ -376,4 +376,51 @@ const fallbackLabel = (key) => {
     flex: 1;
     color: var(--nxp-ec-text, #212529);
 }
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-dashboard {
+        padding: 1rem;
+        gap: 1.5rem;
+    }
+
+    .nxp-ec-dashboard__metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nxp-ec-dashboard__value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-dashboard {
+        padding: 0.75rem;
+        gap: 1rem;
+    }
+
+    .nxp-ec-dashboard__metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .nxp-ec-dashboard__card {
+        padding: 1rem;
+    }
+
+    .nxp-ec-dashboard__value {
+        font-size: 1.35rem;
+    }
+
+    .nxp-ec-dashboard__checklist-list li {
+        padding: 0.6rem 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .nxp-ec-dashboard__checklist-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
 </style>

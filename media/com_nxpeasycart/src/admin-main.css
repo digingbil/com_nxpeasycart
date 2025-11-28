@@ -803,3 +803,499 @@
     background: var(--nxp-ec-primary-bg-solid);
     color: #fff;
 }
+
+/* ============================================
+   Responsive / Mobile Styles
+   ============================================ */
+
+/* Tablet breakpoint (768px) */
+@media (max-width: 768px) {
+    /* Base container */
+    .nxp-ec-admin-app {
+        padding: 1rem;
+    }
+
+    /* App header - stack layout */
+    .nxp-ec-admin-app__header {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .nxp-ec-admin-app__header > button,
+    .nxp-ec-admin-app__header > .nxp-ec-btn {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: start;
+    }
+
+    .nxp-ec-admin-app__title {
+        font-size: 1.5rem;
+    }
+
+    /* Navigation - horizontal scroll */
+    .nxp-ec-admin-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 0.5rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nxp-ec-admin-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nxp-ec-admin-nav a {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Panel header - stack layout */
+    .nxp-ec-admin-panel__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .nxp-ec-admin-panel__title {
+        font-size: 1.25rem;
+    }
+
+    .nxp-ec-admin-panel__actions {
+        flex-wrap: wrap;
+        margin-left: 0;
+    }
+
+    /* Panel body */
+    .nxp-ec-admin-panel__body {
+        padding: 0 1rem 1rem;
+    }
+
+    /* Tables - card layout on tablet */
+    .nxp-ec-admin-panel__table {
+        overflow-x: hidden;
+    }
+
+    .nxp-ec-admin-table {
+        display: block;
+        min-width: 0;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .nxp-ec-admin-table thead {
+        display: none;
+    }
+
+    .nxp-ec-admin-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .nxp-ec-admin-table tr {
+        display: flex;
+        flex-direction: column;
+        background: var(--nxp-ec-surface-alt);
+        border: 1px solid var(--nxp-ec-border);
+        border-radius: 10px;
+        padding: 1rem;
+        gap: 0.5rem;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    .nxp-ec-admin-table tr.is-active {
+        border-color: var(--nxp-ec-primary);
+        box-shadow: 0 0 0 2px var(--nxp-ec-primary-bg);
+    }
+
+    .nxp-ec-admin-table th,
+    .nxp-ec-admin-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.35rem 0;
+        border: none;
+        text-align: left;
+        gap: 0.75rem;
+    }
+
+    .nxp-ec-admin-table th[scope="row"],
+    .nxp-ec-admin-table td:first-child {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--nxp-ec-text);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--nxp-ec-border);
+        margin-bottom: 0.25rem;
+    }
+
+    /* Hide select column header text but keep checkbox */
+    .nxp-ec-admin-table__select {
+        justify-content: flex-start;
+        order: -1;
+    }
+
+    /* Actions row - full width at bottom */
+    .nxp-ec-admin-table__actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--nxp-ec-border);
+        margin-top: 0.5rem;
+    }
+
+    /* Empty table state */
+    .nxp-ec-admin-table tr:only-child td[colspan] {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--nxp-ec-text-muted);
+    }
+
+    /* Product table specific */
+    .nxp-ec-products-table__title {
+        font-size: 1.05rem;
+    }
+
+    .nxp-ec-products-table__slug {
+        font-size: 0.8rem;
+    }
+
+    /* Data labels for card layout */
+    .nxp-ec-admin-table td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--nxp-ec-text-muted);
+        flex-shrink: 0;
+        min-width: 100px;
+    }
+
+    /* Primary cell (title/name) styling */
+    .nxp-ec-admin-table__primary {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--nxp-ec-text);
+        padding-bottom: 0.5rem !important;
+        border-bottom: 1px solid var(--nxp-ec-border);
+        margin-bottom: 0.25rem;
+        display: block !important;
+    }
+
+    /* ID column - small and muted */
+    .nxp-ec-admin-table__id {
+        font-size: 0.8rem;
+        color: var(--nxp-ec-text-muted);
+    }
+
+    /* Meta text in table cells */
+    .nxp-ec-admin-table__meta {
+        font-size: 0.8rem;
+        color: var(--nxp-ec-text-muted);
+    }
+
+    /* Status badges in cards */
+    .nxp-ec-admin-table .nxp-ec-status,
+    .nxp-ec-admin-table .nxp-ec-badge {
+        flex-shrink: 0;
+    }
+
+    /* Select dropdowns in cards */
+    .nxp-ec-admin-table .nxp-ec-admin-select {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    /* Link buttons in cards */
+    .nxp-ec-admin-table .nxp-ec-link-button {
+        text-align: left;
+    }
+
+    /* Orders panel - stack layout */
+    .nxp-ec-admin-panel__body--orders {
+        flex-direction: column;
+    }
+
+    .nxp-ec-admin-panel__table {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Modal improvements */
+    .nxp-ec-modal__dialog {
+        width: calc(100% - 1rem);
+        max-height: calc(100% - 2rem);
+    }
+
+    .nxp-ec-modal__dialog--panel {
+        width: calc(100% - 1rem);
+    }
+
+    .nxp-ec-modal__dialog--panel .nxp-ec-admin-panel__sidebar {
+        max-height: calc(100vh - 3rem);
+    }
+
+    /* Touch targets - larger buttons and inputs */
+    .nxp-ec-btn {
+        min-height: 44px;
+        padding: 0.6rem 1rem;
+    }
+
+    .nxp-ec-admin-select {
+        min-height: 44px;
+    }
+
+    .nxp-ec-form-input,
+    .nxp-ec-form-textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    .nxp-ec-admin-search {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    /* Form grids collapse */
+    .nxp-ec-variant-card__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nxp-ec-variant-option-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .nxp-ec-variant-option-row > button {
+        justify-self: end;
+    }
+
+    .nxp-ec-form-field--inline {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    /* Sidebar sections */
+    .nxp-ec-admin-panel__sidebar {
+        padding: 1rem;
+    }
+
+    .nxp-ec-admin-panel__section {
+        margin-bottom: 1.25rem;
+    }
+
+    /* Settings tabs - horizontal scroll */
+    .nxp-ec-settings-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nxp-ec-settings-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nxp-ec-settings-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 44px;
+    }
+
+    /* Pagination */
+    .nxp-ec-admin-pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+/* Mobile breakpoint (480px) */
+@media (max-width: 480px) {
+    /* Base container - tighter padding */
+    .nxp-ec-admin-app {
+        padding: 0.75rem;
+    }
+
+    .nxp-ec-admin-app__title {
+        font-size: 1.35rem;
+    }
+
+    /* Navigation - adjust margins */
+    .nxp-ec-admin-nav {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    /* Panel actions - full width stack */
+    .nxp-ec-admin-panel__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-search {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .nxp-ec-admin-select {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    /* Panel header */
+    .nxp-ec-admin-panel__header {
+        padding: 0.75rem;
+    }
+
+    .nxp-ec-admin-panel__body {
+        padding: 0 0.75rem 0.75rem;
+    }
+
+    /* Tables - more compact cards */
+    .nxp-ec-admin-table tbody {
+        gap: 0.5rem;
+    }
+
+    .nxp-ec-admin-table tr {
+        padding: 0.75rem;
+        gap: 0.35rem;
+    }
+
+    .nxp-ec-admin-table th,
+    .nxp-ec-admin-table td {
+        padding: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+
+    .nxp-ec-admin-table th[scope="row"],
+    .nxp-ec-admin-table td:first-child {
+        font-size: 0.95rem;
+    }
+
+    .nxp-ec-admin-table__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-table__actions .nxp-ec-btn,
+    .nxp-ec-admin-table__actions .nxp-ec-admin-select {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Modal - full screen */
+    .nxp-ec-modal__dialog {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .nxp-ec-modal__dialog--panel {
+        width: 100%;
+    }
+
+    .nxp-ec-modal__dialog--panel .nxp-ec-admin-panel__sidebar {
+        border-radius: 0;
+        max-height: 100%;
+        height: 100%;
+    }
+
+    .nxp-ec-modal__header {
+        padding: 1rem 0 0.5rem;
+    }
+
+    .nxp-ec-modal__title {
+        font-size: 1.15rem;
+    }
+
+    .nxp-ec-modal__actions {
+        flex-direction: column;
+    }
+
+    .nxp-ec-modal__actions .nxp-ec-btn {
+        width: 100%;
+    }
+
+    /* Chip input */
+    .nxp-ec-chip-input__field {
+        min-width: 100%;
+        flex-basis: 100%;
+    }
+
+    /* Settings tabs */
+    .nxp-ec-settings-tabs {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    /* Alerts */
+    .nxp-ec-admin-alert {
+        margin: 1rem 0.75rem 0;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    /* Badge & Status */
+    .nxp-ec-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.5rem;
+    }
+
+    .nxp-ec-status {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+    }
+
+    /* Sidebar header */
+    .nxp-ec-admin-panel__sidebar-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .nxp-ec-admin-panel__sidebar-header h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Address */
+    .nxp-ec-admin-address {
+        font-size: 0.9rem;
+    }
+
+    /* Larger checkboxes for touch */
+    .nxp-ec-form-checkbox,
+    .nxp-ec-admin-checkbox {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+
+    /* Larger icon buttons (Edit/Delete) for touch */
+    .nxp-ec-btn--icon {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0.5rem;
+    }
+
+    .nxp-ec-btn--icon i {
+        font-size: 1.1rem;
+    }
+}

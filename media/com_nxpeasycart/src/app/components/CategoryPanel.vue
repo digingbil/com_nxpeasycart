@@ -181,7 +181,7 @@
                             :key="category.id"
                             :class="{ 'is-active': draft.id === category.id }"
                         >
-                            <th scope="row">
+                            <th scope="row" class="nxp-ec-admin-table__primary">
                                 <span
                                     :style="{
                                         paddingLeft: `${category.depth * 1.5}rem`,
@@ -190,8 +190,8 @@
                                     {{ category.indentedTitle }}
                                 </span>
                             </th>
-                            <td>{{ category.slug || "—" }}</td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_SLUG', 'Slug')">{{ category.slug || "—" }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_PARENT', 'Parent')">
                                 {{
                                     category.path ||
                                     __(
@@ -202,8 +202,8 @@
                                     )
                                 }}
                             </td>
-                            <td>{{ category.sort }}</td>
-                            <td>{{ category.usage ?? 0 }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_SORT', 'Sort')">{{ category.sort }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_USAGE', 'Products')">{{ category.usage ?? 0 }}</td>
                             <td class="nxp-ec-admin-table__actions">
                                 <button
                                     class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"

@@ -344,7 +344,7 @@
                                     "
                                 />
                             </td>
-                            <th scope="row">
+                            <th scope="row" class="nxp-ec-admin-table__primary">
                                 <button
                                     class="nxp-ec-link-button"
                                     type="button"
@@ -353,7 +353,7 @@
                                     {{ order.order_no }}
                                 </button>
                             </th>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_CUSTOMER', 'Customer')">
                                 <div>{{ order.email }}</div>
                                 <div class="nxp-ec-admin-table__meta">
                                     {{
@@ -364,7 +364,7 @@
                                     }}
                                 </div>
                             </td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_TOTAL', 'Total')">
                                 {{
                                     formatCurrency(
                                         order.total_cents,
@@ -372,12 +372,12 @@
                                     )
                                 }}
                             </td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_STATE', 'State')">
                                 <span class="nxp-ec-badge">
                                     {{ stateLabel(order.state) }}
                                 </span>
                             </td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_UPDATED', 'Updated')">
                                 {{
                                     formatDate(order.modified || order.created)
                                 }}
@@ -1684,5 +1684,59 @@ const formatTimestamp = (timestamp) => {
 
 .nxp-ec-admin-panel__metadata {
     pointer-events: none;
+}
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-admin-panel__selection {
+        flex-wrap: wrap;
+    }
+
+    .nxp-ec-admin-panel__selection > span {
+        width: 100%;
+    }
+
+    .nxp-ec-admin-copy {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-checkbox {
+        width: 1.35rem;
+        height: 1.35rem;
+    }
+
+    /* Fix orders table overflow */
+    .nxp-ec-admin-table__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-table__actions .nxp-ec-admin-select,
+    .nxp-ec-admin-table__actions .nxp-ec-btn {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-admin-panel__selection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-form__actions {
+        flex-direction: column;
+    }
+
+    .nxp-ec-admin-form__actions .nxp-ec-btn {
+        width: 100%;
+    }
+
+    .nxp-ec-admin-checkbox {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
 }
 </style>

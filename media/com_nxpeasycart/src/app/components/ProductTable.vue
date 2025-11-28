@@ -63,8 +63,8 @@
                 </td>
             </tr>
             <tr v-for="item in items" :key="item.id">
-                <td>{{ item.id }}</td>
-                <td>
+                <td :data-label="__('JGRID_HEADING_ID', 'ID')" class="nxp-ec-admin-table__id">{{ item.id }}</td>
+                <td class="nxp-ec-admin-table__primary">
                     <div class="nxp-ec-products-table__title">
                         {{ item.title }}
                     </div>
@@ -81,7 +81,7 @@
                         </span>
                     </div>
                 </td>
-                <td>
+                <td :data-label="__('COM_NXPEASYCART_PRODUCTS_TABLE_PRICE', 'Price')">
                     <span v-if="variantPrice(item)">
                         {{ variantPrice(item) }}
                     </span>
@@ -89,10 +89,10 @@
                         {{ __("COM_NXPEASYCART_PRODUCTS_PRICE_UNKNOWN", "—") }}
                     </span>
                 </td>
-                <td>
+                <td :data-label="__('COM_NXPEASYCART_PRODUCTS_TABLE_VARIANTS', 'Variants')">
                     {{ variantCountLabel(item) }}
                 </td>
-                <td>
+                <td :data-label="__('COM_NXPEASYCART_PRODUCTS_TABLE_STOCK', 'Stock')">
                     <span
                         :class="[
                             'nxp-ec-status',
@@ -124,7 +124,7 @@
                         </template>
                     </span>
                 </td>
-                <td>
+                <td :data-label="__('COM_NXPEASYCART_PRODUCTS_TABLE_CATEGORIES', 'Categories')">
                     <span v-if="item.categories?.length">
                         {{ categorySummary(item.categories) }}
                     </span>
@@ -137,7 +137,7 @@
                         }}
                     </span>
                 </td>
-                <td>
+                <td :data-label="__('JSTATUS', 'Status')">
                     <button
                         type="button"
                         :class="[
@@ -168,7 +168,7 @@
                         </span>
                     </button>
                 </td>
-                <td>{{ item.modified || item.created }}</td>
+                <td :data-label="__('COM_NXPEASYCART_PRODUCTS_TABLE_UPDATED', 'Updated')">{{ item.modified || item.created }}</td>
                 <td class="nxp-ec-admin-table__actions">
                     <button
                         class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--icon"

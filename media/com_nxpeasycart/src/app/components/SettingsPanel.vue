@@ -2972,6 +2972,86 @@ const shippingTypeLabel = (type) => {
     }
 }
 
+@media (max-width: 768px) {
+    .nxp-ec-settings-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .nxp-ec-settings-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nxp-ec-settings-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 44px;
+    }
+
+    .nxp-ec-settings-panel {
+        padding: 1rem;
+    }
+
+    .nxp-ec-settings-panel__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem 1rem 0;
+    }
+
+    .nxp-ec-settings-form {
+        padding: 0.75rem;
+    }
+
+    .nxp-ec-settings-actions {
+        flex-direction: column;
+    }
+
+    .nxp-ec-settings-actions .nxp-ec-btn {
+        width: 100%;
+    }
+
+    .nxp-ec-visual-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .nxp-ec-settings-tabs {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .nxp-ec-settings-panel {
+        padding: 0.75rem;
+    }
+
+    .nxp-ec-settings-panel__header {
+        padding: 0.75rem 0.75rem 0;
+    }
+
+    .nxp-ec-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nxp-ec-color-input-group {
+        flex-wrap: wrap;
+    }
+
+    .nxp-ec-color-input-group .nxp-ec-form-input {
+        max-width: none;
+        flex: 1;
+    }
+}
+
 .nxp-ec-settings-table {
     overflow-x: auto;
 }

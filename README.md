@@ -87,6 +87,19 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 
 See `docs/performance-optimization.md` for complete implementation details, cache configuration examples, and performance metrics.
 
+### Mobile-Responsive Admin UI
+
+The admin panel is fully responsive and optimized for tablet and mobile devices:
+
+- **Card-based tables**: At ≤768px, all data tables transform into mobile-friendly card layouts with labeled fields, eliminating horizontal scrolling.
+- **Touch-friendly targets**: All buttons, checkboxes, and form inputs meet the 44px minimum touch target size recommended by iOS Human Interface Guidelines.
+- **Scrollable navigation**: Tab navigation becomes horizontally scrollable on mobile with momentum scrolling.
+- **Full-screen modals**: Order details, product editor, and other modals expand to full-screen on small devices.
+- **Stacked layouts**: Panel headers, action buttons, and form controls stack vertically on mobile for easier interaction.
+- **iOS zoom prevention**: Form inputs use 16px font size to prevent Safari auto-zoom on focus.
+
+See `docs/mobile-responsive-admin.md` for complete implementation details, breakpoint specifications, and testing guidelines.
+
 ### Currency decision (MVP)
 
 For speed to first sale, the storefront ships as single-currency by default:

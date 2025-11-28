@@ -167,7 +167,7 @@
                                         customer.email,
                             }"
                         >
-                            <th scope="row">
+                            <th scope="row" class="nxp-ec-admin-table__primary">
                                 <button
                                     class="nxp-ec-link-button"
                                     type="button"
@@ -176,9 +176,9 @@
                                     {{ customer.email }}
                                 </button>
                             </th>
-                            <td>{{ customer.meta?.name || "—" }}</td>
-                            <td>{{ customer.orders_count }}</td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_CUSTOMERS_TABLE_NAME', 'Name')">{{ customer.meta?.name || "—" }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CUSTOMERS_TABLE_ORDERS', 'Orders')">{{ customer.orders_count }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CUSTOMERS_TABLE_TOTAL', 'Total spent')">
                                 {{
                                     formatCurrency(
                                         customer.total_spent_cents,
@@ -186,7 +186,7 @@
                                     )
                                 }}
                             </td>
-                            <td>{{ formatDate(customer.last_order) }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_CUSTOMERS_TABLE_LAST', 'Last order')">{{ formatDate(customer.last_order) }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -737,5 +737,28 @@ const formatTimestamp = (timestamp) => {
 .nxp-ec-gdpr-message--success {
     background-color: #f0fdf4;
     color: #166534;
+}
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-admin-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .nxp-ec-gdpr-actions {
+        flex-direction: column;
+    }
+
+    .nxp-ec-gdpr-actions .nxp-ec-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-admin-summary {
+        grid-template-columns: 1fr;
+    }
 }
 </style>

@@ -182,8 +182,8 @@
                             </td>
                         </tr>
                         <tr v-for="log in state.items" :key="log.id">
-                            <td>{{ formatTimestamp(log.created) }}</td>
-                            <td>
+                            <td class="nxp-ec-admin-table__primary" :data-label="__('COM_NXPEASYCART_LOGS_TABLE_TIME', 'Time')">{{ formatTimestamp(log.created) }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_LOGS_TABLE_ENTITY', 'Entity')">
                                 <span class="nxp-ec-log-entity">{{
                                     formatEntity(log.entity_type)
                                 }}</span>
@@ -191,9 +191,9 @@
                                     >#{{ log.entity_id }}</span
                                 >
                             </td>
-                            <td>{{ log.action }}</td>
-                            <td>{{ formatActor(log) }}</td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_LOGS_TABLE_ACTION', 'Action')">{{ log.action }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_LOGS_TABLE_ACTOR', 'Actor')">{{ formatActor(log) }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_LOGS_TABLE_DETAILS', 'Details')">
                                 <pre class="nxp-ec-log-context">{{
                                     formatContext(log.context)
                                 }}</pre>
@@ -454,5 +454,40 @@ const formatTimestampRelative = (timestamp) => {
 
 .nxp-ec-admin-select {
     min-width: 160px;
+}
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-admin-panel--logs table {
+        min-width: 0;
+    }
+
+    .nxp-ec-log-context {
+        font-size: 0.75rem;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .nxp-ec-log-entity {
+        display: block;
+    }
+
+    .nxp-ec-log-entity-id {
+        margin-left: 0;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-admin-select {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .nxp-ec-log-context {
+        font-size: 0.7rem;
+        max-height: 100px;
+        overflow-y: auto;
+    }
 }
 </style>

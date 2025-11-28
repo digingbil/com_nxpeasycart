@@ -198,12 +198,12 @@
                             :key="coupon.id"
                             :class="{ 'is-active': draft.id === coupon.id }"
                         >
-                            <th scope="row">
+                            <th scope="row" class="nxp-ec-admin-table__primary">
                                 {{ coupon.code }}
                             </th>
-                            <td>{{ typeLabel(coupon.type) }}</td>
-                            <td>{{ formatValue(coupon) }}</td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_COUPONS_TABLE_TYPE', 'Type')">{{ typeLabel(coupon.type) }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_COUPONS_TABLE_VALUE', 'Value')">{{ formatValue(coupon) }}</td>
+                            <td :data-label="__('COM_NXPEASYCART_COUPONS_TABLE_MIN_TOTAL', 'Min. order')">
                                 {{
                                     formatCurrency(
                                         coupon.min_total_cents,
@@ -211,7 +211,7 @@
                                     )
                                 }}
                             </td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_COUPONS_TABLE_ACTIVE', 'Active')">
                                 <span
                                     class="nxp-ec-badge"
                                     :class="{ 'is-active': coupon.active }"
@@ -231,7 +231,7 @@
                                     }}
                                 </span>
                             </td>
-                            <td>
+                            <td :data-label="__('COM_NXPEASYCART_COUPONS_TABLE_USAGE', 'Usage')">
                                 {{ coupon.times_used
                                 }}{{
                                     coupon.max_uses
@@ -771,5 +771,25 @@ watch(
 
 .nxp-ec-admin-table__actions {
     white-space: nowrap;
+}
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-admin-panel__sidebar form {
+        gap: 0.75rem;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-admin-table__actions {
+        white-space: normal;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-admin-table__actions .nxp-ec-btn {
+        width: 100%;
+    }
 }
 </style>

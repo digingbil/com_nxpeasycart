@@ -1923,4 +1923,48 @@ watch(
     gap: 0.5rem;
     justify-content: flex-end;
 }
+
+/* Tablet breakpoint */
+@media (max-width: 768px) {
+    .nxp-ec-modal__header {
+        padding: 0.75rem 1rem;
+    }
+
+    .nxp-ec-btn--icon {
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 480px) {
+    .nxp-ec-modal__header {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .nxp-ec-modal__header-actions {
+        flex-wrap: wrap;
+    }
+
+    .nxp-ec-btn--icon {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .nxp-ec-btn--icon i {
+        font-size: 1.1rem;
+    }
+
+    #product-category-select {
+        min-height: 150px;
+    }
+
+    .nxp-ec-image-row__actions {
+        justify-content: stretch;
+    }
+
+    .nxp-ec-image-row__actions .nxp-ec-btn {
+        flex: 1;
+    }
+}
 </style>
