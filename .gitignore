@@ -42,11 +42,16 @@ desktop.ini
 /deploy.php
 /release-config.json
 /make-release.sh
+/updates.xml
+/.release-stage/
 /scripts
 /REFERENCE_ONLY_unusedimagefinder_REFERENCE_ONLY/
 /SHOP_LANDING.md
 administrator/components/com_nxpeasycart/vendor/
 components/com_nxpeasycart/vendor/
+
+# Empty plugin placeholder (excluded from releases)
+/plugins/
 
 # AI assistants
 .copilot/

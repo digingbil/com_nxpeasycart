@@ -1,33 +1,161 @@
-# Packaging & Release Checklist
+# Packaging & Release
+
+## Quick Start
+
+Run the release script from the repository root:
+
+```bash
+./make-release.sh
+```
+
+### Options
+
+| Flag           | Description                                   |
+| -------------- | --------------------------------------------- |
+| `--dry-run`    | Build package without git operations          |
+| `--skip-build` | Skip npm/composer build (use existing assets) |
+| `--deploy`     | Upload to update server (when configured)     |
+
+### Interactive Prompts
+
+1. **Component version**: Choose major/minor/patch increment or keep current
+2. **Module version**: Sync with component, keep current, or set custom
+3. **Git operations**: Confirm commit and tag creation
+4. **Push**: Confirm push to remote
+
+## What the Script Does
+
+1. **Pre-flight checks**
+    - Verifies on `main` branch
+    - Checks for uncommitted changes
+    - Validates required tools (`jq`, `zip`, `git`, etc.)
+
+2. **Version management**
+    - Updates version in `nxpeasycart.xml` (component)
+    - Updates version in `mod_nxpeasycart_cart.xml` (module)
+    - Updates version in `composer.json`
+
+3. **Build production assets**
+    - `npm ci && npm run build:admin && npm run build:site`
+    - `php tools/build-runtime-vendor.php` (creates trimmed vendor directory)
+
+4. **Create package**
+    - Copies only release files to staging directory
+    - Excludes dev files, tests, docs, source maps, etc.
+    - Creates `com_nxpeasycart_vX.Y.Z.zip`
+
+5. **Generate checksums**
+    - SHA256 and SHA384 for update server
+
+6. **Create updates.xml**
+    - Ready for Joomla update server
+
+7. **Git operations** (unless `--dry-run`)
+    - Commits version changes
+    - Creates annotated tag `vX.Y.Z`
+    - Optionally pushes to origin
+
+## Package Contents
+
+The generated ZIP includes:
+
+```
+com_nxpeasycart_vX.Y.Z.zip
+├── administrator/
+│   └── components/
+│       └── com_nxpeasycart/
+│           ├── forms/
+│           ├── language/
+│           ├── services/
+│           ├── sql/
+│           ├── src/
+│           ├── templates/
+│           ├── tmpl/
+│           ├── vendor/          # Runtime dependencies only
+│           ├── nxpeasycart.xml  # Component manifest
+│           └── script.php
+├── components/
+│   └── com_nxpeasycart/
+│       ├── src/
+│       └── tmpl/
+├── media/
+│   └── com_nxpeasycart/
+│       ├── css/                 # Built CSS
+│       ├── js/                  # Built JS (admin.iife.js, site.*.js)
+│       └── joomla.asset.json
+├── modules/
+│   └── mod_nxpeasycart_cart/
+│       ├── language/
+│       ├── tmpl/
+│       ├── mod_nxpeasycart_cart.php
+│       └── mod_nxpeasycart_cart.xml
+└── language/
+    └── en-GB/
+        └── com_nxpeasycart.ini
+```
+
+## Excluded from Package
+
+- Development files: `composer.json`, `package.json`, `phpunit.xml.dist`, etc.
+- Source files: `media/com_nxpeasycart/src/` (Vue sources)
+- Build tools: `build/`, `tools/`, `node_modules/`, `node_local/`
+- Documentation: `docs/`, `*.md` (except LICENSE)
+- Tests: `tests/`
+- Root vendor: `vendor/` (dev dependencies)
+- IDE/editor files: `.vscode/`, `.idea/`, `.claude/`
+
+## Configuration
+
+Edit `release-config.json` to customize:
+
+```json
+{
+    "package_name": "com_nxpeasycart",
+    "github_repo": "nexusplugins/com_nxpeasycart",
+    "update_server": {
+        "enabled": false,
+        "remote_server": "your-server.com",
+        "remote_user": "deploy",
+        "remote_path": "/var/www/updates",
+        "remote_domain": "updates.example.com"
+    },
+    "target_platforms": [
+        { "name": "joomla", "version": "5.*" },
+        { "name": "joomla", "version": "6.*" }
+    ]
+}
+```
+
+## Manual Steps (Alternative)
+
+If you prefer not to use the script:
 
 1. **Install dependencies**
-   - `composer install --no-dev --optimize-autoloader`
-- `npm install && npm run build:admin && npm run build:site`
-- `php tools/build-runtime-vendor.php` (ensures `administrator/components/com_nxpeasycart/vendor/` contains only runtime deps)
-   - The `postbuild:site` hook runs `npm run sync:assets` to point `media/com_nxpeasycart/joomla.asset.json` at the latest hashed site bundle. If you rebuild assets manually, run `npm run sync:assets` before packaging.
 
-2. **Prune development artefacts**
-   - Remove `node_modules/`, `tests/`, `.github/`, local config overrides
+    ```bash
+    composer install --no-dev --optimize-autoloader
+    npm ci && npm run build:admin && npm run build:site
+    php tools/build-runtime-vendor.php
+    ```
 
-3. **Warm cache + assets**
-   - `php cli/joomla.php extension:discover`
-   - Verify cached shipping/tax datasets via CacheService (`cache:clear` prior to snapshot)
-   - Ensure the latest `media/com_nxpeasycart/.vite/manifest.json` entries are reflected in `media/com_nxpeasycart/joomla.asset.json` (hashed site bundle paths + `version: auto`)
+2. **Update versions** in manifest files
 
-4. **Assemble package tree**
-   - Copy `administrator/components/com_nxpeasycart`
-   - Copy `components/com_nxpeasycart`
-   - Copy `media/com_nxpeasycart`
-   - Include `vendor/` (runtime dependencies only – generated via `tools/build-runtime-vendor.php`)
+3. **Create ZIP** excluding dev artifacts:
 
-5. **Generate manifest zip**
-   - `zip -r com_nxpeasycart.zip administrator components media vendor`
+    ```bash
+    zip -r com_nxpeasycart.zip administrator components media modules language \
+      -x "*.md" -x "media/com_nxpeasycart/src/*" -x "*.map"
+    ```
 
-6. **Smoke install**
-   - Install zip on staging Joomla 5 instance
-   - Run GDPR export/anonymise smoke tests and checkout via Stripe/PayPal sandbox
+4. **Install** on Joomla via Extensions → Install
 
-7. **Tag & release**
-   - Update `README.md` changelog
-   - Tag semver release (`git tag vx.y.z && git push --tags`)
-   - Publish package to update server indicated in `nxpeasycart.xml`
+## Smoke Testing
+
+After installing on a staging site:
+
+1. ✅ Admin panel loads without errors
+2. ✅ All menu items accessible (Products, Orders, etc.)
+3. ✅ Frontend shop pages render correctly
+4. ✅ Cart functionality works
+5. ✅ Checkout flow completes (sandbox payments)
+6. ✅ Mini cart module displays correctly
