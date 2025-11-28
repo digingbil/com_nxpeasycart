@@ -25,6 +25,21 @@ class ConfigHelper
     private static ?bool $checkoutPhoneRequired = null;
 
     /**
+     * Cached storefront category page size.
+     */
+    private static ?int $categoryPageSize = null;
+
+    /**
+     * Cached storefront category pagination mode.
+     */
+    private static ?string $categoryPaginationMode = null;
+
+    /**
+     * Cached auto-send order emails flag.
+     */
+    private static ?bool $autoSendOrderEmails = null;
+
+    /**
      * Resolve the store's base currency (ISO 4217, uppercase).
      */
     public static function getBaseCurrency(): string
@@ -70,6 +85,9 @@ class ConfigHelper
     {
         self::$baseCurrency = null;
         self::$checkoutPhoneRequired = null;
+        self::$categoryPageSize = null;
+        self::$categoryPaginationMode = null;
+        self::$autoSendOrderEmails = null;
     }
 
     /**
@@ -138,5 +156,157 @@ class ConfigHelper
         }
 
         self::$checkoutPhoneRequired = $required;
+    }
+
+    /**
+     * Persist storefront category page size.
+     */
+    public static function setCategoryPageSize(int $limit): void
+    {
+        $limit = $limit > 0 ? $limit : 12;
+
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('category_page_size', $limit);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save category page size.');
+        }
+
+        self::$categoryPageSize = $limit;
+    }
+
+    /**
+     * Persist storefront category pagination mode.
+     */
+    public static function setCategoryPaginationMode(string $mode): void
+    {
+        $mode = \in_array($mode, ['paged', 'infinite'], true) ? $mode : 'paged';
+
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('category_pagination_mode', $mode);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save category pagination mode.');
+        }
+
+        self::$categoryPaginationMode = $mode;
+    }
+
+    /**
+     * Resolve the storefront category page size.
+     */
+    public static function getCategoryPageSize(): int
+    {
+        if (self::$categoryPageSize !== null) {
+            return self::$categoryPageSize;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+        $limit  = (int) $params->get('category_page_size', 12);
+
+        if ($limit <= 0) {
+            $limit = 12;
+        }
+
+        self::$categoryPageSize = $limit;
+
+        return self::$categoryPageSize;
+    }
+
+    /**
+     * Resolve the storefront category pagination mode.
+     */
+    public static function getCategoryPaginationMode(): string
+    {
+        if (self::$categoryPaginationMode !== null) {
+            return self::$categoryPaginationMode;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+        $mode   = (string) $params->get('category_pagination_mode', 'paged');
+        $mode   = \in_array($mode, ['paged', 'infinite'], true) ? $mode : 'paged';
+
+        self::$categoryPaginationMode = $mode;
+
+        return self::$categoryPaginationMode;
+    }
+
+    /**
+     * Whether to auto-send order status notification emails.
+     */
+    public static function isAutoSendOrderEmails(): bool
+    {
+        if (self::$autoSendOrderEmails !== null) {
+            return self::$autoSendOrderEmails;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+
+        self::$autoSendOrderEmails = (bool) ((int) $params->get('auto_send_order_emails', 0));
+
+        return self::$autoSendOrderEmails;
+    }
+
+    /**
+     * Persist auto-send order emails flag.
+     */
+    public static function setAutoSendOrderEmails(bool $enabled): void
+    {
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('auto_send_order_emails', $enabled ? 1 : 0);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save auto-send order emails setting.');
+        }
+
+        self::$autoSendOrderEmails = $enabled;
     }
 }

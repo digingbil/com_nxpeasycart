@@ -12,6 +12,7 @@ use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use RuntimeException;
 
@@ -47,6 +48,7 @@ class OrdersController extends AbstractJsonController
             'bulktransition', 'bulk' => $this->bulkTransition(),
             'note'  => $this->note(),
             'tracking' => $this->tracking(),
+            'sendemail' => $this->sendEmail(),
             'invoice' => $this->invoice(),
             'export' => $this->export(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
@@ -306,6 +308,77 @@ class OrdersController extends AbstractJsonController
     }
 
     /**
+     * Manually send an order notification email.
+     */
+    protected function sendEmail(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+        $type = isset($payload['type']) ? trim((string) $payload['type']) : '';
+
+        if ($id <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        if (!\in_array($type, ['shipped', 'refunded'], true)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_EMAIL_TYPE'), 400);
+        }
+
+        $service = $this->getOrderService();
+        $order = $service->get($id);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        $mailService = $this->getMailService();
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+
+        try {
+            if ($type === 'shipped') {
+                $mailService->sendOrderShipped($order, [
+                    'carrier'         => $order['carrier'] ?? null,
+                    'tracking_number' => $order['tracking_number'] ?? null,
+                    'tracking_url'    => $order['tracking_url'] ?? null,
+                ]);
+            } elseif ($type === 'refunded') {
+                $mailService->sendOrderRefunded($order);
+            }
+
+            // Log the email sent event
+            $container = Factory::getContainer();
+            $auditService = $container->has(AuditService::class)
+                ? $container->get(AuditService::class)
+                : null;
+
+            if ($auditService) {
+                $auditService->record(
+                    'order',
+                    $id,
+                    'order.email.sent',
+                    ['type' => $type, 'manual' => true],
+                    $actorId
+                );
+            }
+
+            // Refresh order to get updated timeline
+            $order = $service->get($id);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_SEND_EMAIL_FAILED', $e->getMessage()),
+                500,
+                $e
+            );
+        }
+
+        return $this->respond(['order' => $order]);
+    }
+
+    /**
      * Decode the JSON request body.
      */
     private function decodePayload(): array
@@ -382,5 +455,32 @@ class OrdersController extends AbstractJsonController
         }
 
         return $container->get(InvoiceService::class);
+    }
+
+    /**
+     * Resolve the mail service from the DI container.
+     */
+    private function getMailService(): MailService
+    {
+        $container = Factory::getContainer();
+
+        $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+        if (!$container->has(MailService::class) && is_file($providerPath)) {
+            $container->registerServiceProvider(require $providerPath);
+        }
+
+        if (!$container->has(MailService::class)) {
+            // Fallback: create MailService manually
+            $container->set(
+                MailService::class,
+                static function ($container): MailService {
+                    $mailer = Factory::getMailer();
+                    return new MailService($mailer);
+                }
+            );
+        }
+
+        return $container->get(MailService::class);
     }
 }

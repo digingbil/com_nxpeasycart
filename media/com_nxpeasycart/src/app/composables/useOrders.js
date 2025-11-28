@@ -49,6 +49,8 @@ export function useOrders({
         endpoints?.invoice ?? deriveEndpoint(listEndpoint, "invoice");
     const exportEndpoint =
         endpoints?.export ?? deriveEndpoint(listEndpoint, "export");
+    const sendEmailEndpoint =
+        endpoints?.sendEmail ?? deriveEndpoint(listEndpoint, "sendEmail");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -442,6 +444,40 @@ export function useOrders({
         }
     };
 
+    const sendEmail = async (id, emailType) => {
+        if (!sendEmailEndpoint) {
+            throw new Error("Send email endpoint unavailable.");
+        }
+
+        state.saving = true;
+        state.transitionError = "";
+
+        try {
+            const order = await api.sendOrderEmail({
+                endpoint: sendEmailEndpoint,
+                id,
+                type: emailType,
+            });
+
+            if (order) {
+                updateOrderList(order);
+
+                if (state.activeOrder && state.activeOrder.id === order.id) {
+                    state.activeOrder = order;
+                }
+
+                clearCachedData(buildCacheKey());
+            }
+
+            return order;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Failed to send email";
+            throw error;
+        } finally {
+            state.saving = false;
+        }
+    };
+
     const bulkTransition = async (ids, nextState) => {
         if (!bulkTransitionEndpoint) {
             throw new Error("Bulk transition endpoint unavailable.");
@@ -505,6 +541,7 @@ export function useOrders({
         updateTracking,
         downloadInvoice,
         exportOrders,
+        sendEmail,
         toggleSelection,
         clearSelection,
         metrics: perf.metrics,

@@ -292,6 +292,7 @@ const fallbackLabel = (key) => {
 .nxp-ec-dashboard {
     display: grid;
     gap: 2rem;
+    padding: 1.5rem;
 }
 
 .nxp-ec-dashboard__metrics {

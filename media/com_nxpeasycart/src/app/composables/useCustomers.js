@@ -19,6 +19,8 @@ export function useCustomers({
 
     const listEndpoint = endpoints?.list ?? "";
     const showEndpoint = endpoints?.show ?? "";
+    const gdprExportEndpoint = endpoints?.gdpr?.export ?? "";
+    const gdprAnonymiseEndpoint = endpoints?.gdpr?.anonymise ?? "";
 
     const state = reactive({
         loading: false,
@@ -33,6 +35,9 @@ export function useCustomers({
         search: "",
         activeCustomer: preload.active ?? null,
         lastUpdated: null,
+        gdprLoading: false,
+        gdprMessage: "",
+        gdprSuccess: false,
     });
 
     const abortSupported = typeof AbortController !== "undefined";
@@ -174,13 +179,115 @@ export function useCustomers({
 
     const closeCustomer = () => {
         state.activeCustomer = null;
+        state.gdprMessage = "";
+        state.gdprSuccess = false;
+    };
+
+    /**
+     * Export customer data (GDPR Article 20 - Data Portability).
+     * Downloads all customer data as a JSON file.
+     */
+    const gdprExport = async (email) => {
+        if (!gdprExportEndpoint || !email) {
+            state.gdprMessage = "GDPR export endpoint unavailable.";
+            state.gdprSuccess = false;
+            return;
+        }
+
+        state.gdprLoading = true;
+        state.gdprMessage = "";
+
+        try {
+            const data = await api.gdprExport({
+                endpoint: gdprExportEndpoint,
+                email,
+            });
+
+            if (!data) {
+                throw new Error("No data returned");
+            }
+
+            // Create and download JSON file
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
+                type: "application/json",
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `gdpr-export-${email.replace(/[^a-z0-9]/gi, "-")}-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            state.gdprMessage = "Data exported successfully.";
+            state.gdprSuccess = true;
+        } catch (error) {
+            state.gdprMessage = error?.message ?? "Export failed";
+            state.gdprSuccess = false;
+        } finally {
+            state.gdprLoading = false;
+        }
+    };
+
+    /**
+     * Anonymise customer data (GDPR Article 17 - Right to Erasure).
+     * Replaces PII with anonymous data, preserving order records for accounting.
+     */
+    const gdprAnonymise = async (email) => {
+        if (!gdprAnonymiseEndpoint || !email) {
+            state.gdprMessage = "GDPR anonymise endpoint unavailable.";
+            state.gdprSuccess = false;
+            return;
+        }
+
+        // Require explicit confirmation
+        const confirmed = window.confirm(
+            `Are you sure you want to anonymise all data for ${email}?\n\n` +
+                "This action:\n" +
+                "• Replaces the email with an anonymous hash\n" +
+                "• Removes billing and shipping addresses\n" +
+                "• Removes tracking information\n" +
+                "• CANNOT BE UNDONE\n\n" +
+                "Order totals and items are preserved for accounting."
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        state.gdprLoading = true;
+        state.gdprMessage = "";
+
+        try {
+            const result = await api.gdprAnonymise({
+                endpoint: gdprAnonymiseEndpoint,
+                email,
+            });
+
+            state.gdprMessage =
+                result.message || `Anonymised ${result.affected} order(s).`;
+            state.gdprSuccess = true;
+
+            // Refresh the customer list since this customer is now anonymised
+            clearCachedData(buildCacheKey());
+            loadCustomers(true);
+
+            // Close the sidebar after a short delay
+            setTimeout(() => {
+                state.activeCustomer = null;
+                state.gdprMessage = "";
+            }, 2000);
+        } catch (error) {
+            state.gdprMessage = error?.message ?? "Anonymisation failed";
+            state.gdprSuccess = false;
+        } finally {
+            state.gdprLoading = false;
+        }
     };
 
     onMounted(() => {
-        if (
-            autoload &&
-            (!Array.isArray(state.items) || !state.items.length)
-        ) {
+        if (autoload && (!Array.isArray(state.items) || !state.items.length)) {
             loadCustomers();
         }
     });
@@ -193,6 +300,8 @@ export function useCustomers({
         goToPage,
         viewCustomer,
         closeCustomer,
+        gdprExport,
+        gdprAnonymise,
         metrics: perf.metrics,
     };
 }

@@ -5,6 +5,7 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 /** @var array<string, mixed> $this->checkout */
 $checkout = $this->checkout ?? [];
@@ -102,7 +103,7 @@ $labelsJson = htmlspecialchars(
     'UTF-8'
 );
 $locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
-$currency = strtoupper((string) ($cart['summary']['currency'] ?? 'USD'));
+$currency = strtoupper((string) ($cart['summary']['currency'] ?? ConfigHelper::getBaseCurrency()));
 $cssVars = '';
 foreach (($theme['css_vars'] ?? []) as $var => $value) {
     $cssVars .= $var . ':' . $value . ';';
@@ -209,7 +210,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                 />
                                 <span>
                                     <?php echo htmlspecialchars($rule['name'], ENT_QUOTES, 'UTF-8'); ?>
-                                    — <?php echo htmlspecialchars($cart['summary']['currency'] ?? 'USD', ENT_QUOTES, 'UTF-8'); ?>
+                                    — <?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>
                                     <?php echo number_format(((int) ($rule['price_cents'] ?? 0)) / 100, 2); ?>
                                 </span>
                             </label>

@@ -11,6 +11,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 use Joomla\Database\DatabaseInterface;
 
@@ -116,7 +117,7 @@ class HtmlView extends BaseHtmlView
                 return [
                     '@type'         => 'Offer',
                     'sku'           => $variant['sku'],
-                    'priceCurrency' => $variant['currency'],
+                    'priceCurrency' => ConfigHelper::getBaseCurrency(),
                     'price'         => number_format(((int) $variant['price_cents']) / 100, 2, '.', ''),
                     'availability'  => $availability,
                     'url'           => $canonical,

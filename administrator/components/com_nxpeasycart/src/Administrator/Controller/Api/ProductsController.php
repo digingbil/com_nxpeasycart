@@ -10,6 +10,7 @@ use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use RuntimeException;
 
@@ -263,6 +264,7 @@ class ProductsController extends AbstractJsonController
         }
 
         $variants = [];
+        $baseCurrency = ConfigHelper::getBaseCurrency();
 
         foreach ($item->variants ?? [] as $variant) {
             $variant = (array) $variant;
@@ -274,7 +276,7 @@ class ProductsController extends AbstractJsonController
                 'sku'         => (string) ($variant['sku'] ?? ''),
                 'price_cents' => $priceCents,
                 'price'       => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
-                'currency'    => (string) ($variant['currency'] ?? ''),
+                'currency'    => $baseCurrency,
                 'stock'       => isset($variant['stock']) ? (int) $variant['stock'] : 0,
                 'options'     => $variant['options'] ?? null,
                 'weight'      => $variant['weight']  ?? null,
@@ -333,10 +335,12 @@ class ProductsController extends AbstractJsonController
      */
     private function buildVariantSummary(array $variants): array
     {
+        $baseCurrency = ConfigHelper::getBaseCurrency();
+
         if (empty($variants)) {
             return [
                 'count'               => 0,
-                'currency'            => null,
+                'currency'            => $baseCurrency,
                 'multiple_currencies' => false,
                 'price_min_cents'     => null,
                 'price_max_cents'     => null,
@@ -349,15 +353,11 @@ class ProductsController extends AbstractJsonController
         }
 
         $count      = \count($variants);
-        $currencies = [];
         $min        = null;
         $max        = null;
         $stockTotal = 0;
 
         foreach ($variants as $variant) {
-            $currency              = (string) ($variant['currency'] ?? '');
-            $currencies[$currency] = true;
-
             $price = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
             $stock = isset($variant['stock']) ? (int) $variant['stock'] : 0;
 
@@ -366,14 +366,10 @@ class ProductsController extends AbstractJsonController
             $stockTotal += $stock;
         }
 
-        $currencyKeys       = array_keys(array_filter($currencies));
-        $multipleCurrencies = \count($currencyKeys) > 1;
-        $resolvedCurrency   = $multipleCurrencies ? null : ($currencyKeys[0] ?? null);
-
         return [
             'count'               => $count,
-            'currency'            => $resolvedCurrency,
-            'multiple_currencies' => $multipleCurrencies,
+            'currency'            => $baseCurrency,
+            'multiple_currencies' => false,
             'price_min_cents'     => $min,
             'price_max_cents'     => $max,
             'price_min'           => $min !== null ? $this->formatPrice($min) : null,

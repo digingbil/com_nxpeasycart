@@ -801,7 +801,10 @@
                                     v-model="trackingDraft.tracking_url"
                                 />
                             </div>
-                            <label class="nxp-ec-form-checkbox">
+                            <label
+                                v-if="state.activeOrder.state !== 'fulfilled' && state.activeOrder.state !== 'refunded'"
+                                class="nxp-ec-form-checkbox"
+                            >
                                 <input
                                     type="checkbox"
                                     v-model="trackingDraft.markFulfilled"
@@ -830,6 +833,72 @@
                                             [],
                                             "ordersTrackingSave"
                                         )
+                                    }}
+                                </button>
+                            </div>
+                        </section>
+
+                        <section
+                            class="nxp-ec-admin-panel__section"
+                            v-if="state.activeOrder.state === 'fulfilled' || state.activeOrder.state === 'refunded'"
+                        >
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_EMAIL_LABEL",
+                                        "Email notifications",
+                                        [],
+                                        "ordersEmailLabel"
+                                    )
+                                }}
+                            </h4>
+                            <div class="nxp-ec-admin-form__actions nxp-ec-admin-form__actions--stacked">
+                                <button
+                                    v-if="state.activeOrder.state === 'fulfilled'"
+                                    class="nxp-ec-btn"
+                                    type="button"
+                                    :disabled="state.saving"
+                                    @click="emitSendEmail('shipped')"
+                                >
+                                    <i class="fa-solid fa-envelope"></i>
+                                    {{
+                                        emailSentForType('shipped')
+                                            ? __(
+                                                  "COM_NXPEASYCART_ORDERS_EMAIL_RESEND_SHIPPED",
+                                                  "Re-send shipped email",
+                                                  [],
+                                                  "ordersEmailResendShipped"
+                                              )
+                                            : __(
+                                                  "COM_NXPEASYCART_ORDERS_EMAIL_SEND_SHIPPED",
+                                                  "Send shipped email",
+                                                  [],
+                                                  "ordersEmailSendShipped"
+                                              )
+                                    }}
+                                </button>
+                                <button
+                                    v-if="state.activeOrder.state === 'refunded'"
+                                    class="nxp-ec-btn"
+                                    type="button"
+                                    :disabled="state.saving"
+                                    @click="emitSendEmail('refunded')"
+                                >
+                                    <i class="fa-solid fa-envelope"></i>
+                                    {{
+                                        emailSentForType('refunded')
+                                            ? __(
+                                                  "COM_NXPEASYCART_ORDERS_EMAIL_RESEND_REFUNDED",
+                                                  "Re-send refunded email",
+                                                  [],
+                                                  "ordersEmailResendRefunded"
+                                              )
+                                            : __(
+                                                  "COM_NXPEASYCART_ORDERS_EMAIL_SEND_REFUNDED",
+                                                  "Send refunded email",
+                                                  [],
+                                                  "ordersEmailSendRefunded"
+                                              )
                                     }}
                                 </button>
                             </div>
@@ -999,6 +1068,7 @@ const emit = defineEmits([
     "save-tracking",
     "invoice",
     "export",
+    "send-email",
 ]);
 
 const __ = props.translate;
@@ -1342,6 +1412,37 @@ const emitSaveTracking = () => {
     trackingDraft.markFulfilled = false;
 };
 
+const emitSendEmail = (type) => {
+    if (!props.state.activeOrder) {
+        return;
+    }
+
+    emit("send-email", {
+        id: props.state.activeOrder.id,
+        type: type,
+    });
+};
+
+/**
+ * Check if an email of a specific type was already sent for this order.
+ * Looks through the order's audit trail for email.sent events.
+ */
+const emailSentForType = (type) => {
+    const order = props.state?.activeOrder;
+    if (!order) {
+        return false;
+    }
+
+    // Check audit trail for email.sent events
+    const timeline = order.timeline || order.audit || [];
+    return timeline.some((entry) => {
+        if (entry.action === 'order.email.sent') {
+            return entry.context?.type === type;
+        }
+        return false;
+    });
+};
+
 const selectionSummary = computed(() =>
     __(
         "COM_NXPEASYCART_ORDERS_SELECTED_COUNT",
@@ -1565,6 +1666,12 @@ const formatTimestamp = (timestamp) => {
     justify-content: flex-end;
 }
 
+.nxp-ec-admin-form__actions--stacked {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
 .nxp-ec-admin-copy {
     display: flex;
     gap: 0.5rem;
@@ -1573,5 +1680,9 @@ const formatTimestamp = (timestamp) => {
 
 .nxp-ec-admin-copy .nxp-ec-form-input {
     flex: 1;
+}
+
+.nxp-ec-admin-panel__metadata {
+    pointer-events: none;
 }
 </style>

@@ -103,6 +103,7 @@
             @clear-selection="onOrdersClearSelection"
             @add-note="onOrdersAddNote"
             @save-tracking="onOrdersSaveTracking"
+            @send-email="onOrdersSendEmail"
             @invoice="onOrdersInvoice"
             @export="onOrdersExport"
         />
@@ -117,6 +118,8 @@
             @page="onCustomersPage"
             @view="onCustomersView"
             @close="onCustomersClose"
+            @gdpr-export="onGdprExport"
+            @gdpr-anonymise="onGdprAnonymise"
         />
 
         <CouponsPanel
@@ -139,6 +142,7 @@
             :payments-state="paymentsState"
             :translate="__"
             :base-currency="baseCurrency"
+            :initial-tab="settingsInitialTab"
             @refresh-settings="onSettingsRefresh"
             @save-settings="onSettingsSave"
             @refresh-tax="onTaxRefresh"
@@ -289,6 +293,10 @@ const activeSection = computed(
         props.config?.activeSection ||
         props.dataset?.activeSection ||
         "dashboard"
+);
+
+const settingsInitialTab = computed(
+    () => props.config?.settingsTab || props.dataset?.settingsTab || "general"
 );
 
 const sectionIs = (id) => activeSection.value === id;
@@ -446,6 +454,7 @@ const {
     updateTracking: updateOrderTracking,
     downloadInvoice: downloadOrderInvoice,
     exportOrders,
+    sendEmail: sendOrderEmail,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -464,8 +473,13 @@ const {
     goToPage: goToCustomersPage,
     viewCustomer,
     closeCustomer,
+    gdprExport,
+    gdprAnonymise,
 } = useCustomers({
-    endpoints: customersEndpoints,
+    endpoints: {
+        ...customersEndpoints,
+        gdpr: props.endpoints?.gdpr ?? {},
+    },
     token: props.csrfToken,
     preload: props.config?.preload?.customers ?? {
         items: parseJSON(props.dataset?.customersPreload, []),
@@ -950,6 +964,14 @@ const onOrdersSaveTracking = async (payload) => {
     await updateOrderTracking(id, tracking);
 };
 
+const onOrdersSendEmail = async (payload) => {
+    if (!payload?.id || !payload?.type) {
+        return;
+    }
+
+    await sendOrderEmail(payload.id, payload.type);
+};
+
 const onOrdersInvoice = async (orderId) => {
     if (!orderId) {
         return;
@@ -1022,6 +1044,14 @@ const onCustomersView = (customer) => {
 
 const onCustomersClose = () => {
     closeCustomer();
+};
+
+const onGdprExport = (email) => {
+    gdprExport(email);
+};
+
+const onGdprAnonymise = (email) => {
+    gdprAnonymise(email);
 };
 
 const onCouponsRefresh = () => {

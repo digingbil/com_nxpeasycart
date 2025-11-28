@@ -590,6 +590,18 @@ class ApiClient {
     }
 
     /**
+     * Send order email notification.
+     */
+    async sendOrderEmail({ endpoint, id, type }) {
+        const payload = await this.post(endpoint, {
+            id,
+            type,
+        });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
      * Create a product.
      */
     async createProduct({ endpoint, data }) {
@@ -647,6 +659,36 @@ class ApiClient {
         });
 
         return payload.data?.deleted ?? 0;
+    }
+
+    /**
+     * Export customer data for GDPR compliance.
+     * @param {Object} params
+     * @param {string} params.endpoint - The GDPR export endpoint
+     * @param {string} params.email - Customer email to export
+     * @returns {Promise<Object>} Export data
+     */
+    async gdprExport({ endpoint, email }) {
+        const url = this.mergeParams(endpoint, { email });
+        const payload = await this.get(url);
+
+        return payload.data?.export ?? null;
+    }
+
+    /**
+     * Anonymise customer data for GDPR compliance.
+     * @param {Object} params
+     * @param {string} params.endpoint - The GDPR anonymise endpoint
+     * @param {string} params.email - Customer email to anonymise
+     * @returns {Promise<Object>} Result with affected count
+     */
+    async gdprAnonymise({ endpoint, email }) {
+        const payload = await this.post(endpoint, { email });
+
+        return {
+            affected: payload.data?.affected ?? 0,
+            message: payload.data?.message ?? "",
+        };
     }
 
     /**

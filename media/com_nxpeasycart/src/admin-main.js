@@ -51,6 +51,11 @@ if (!mount) {
         show: dataset.customersEndpointShow ?? "",
     };
 
+    const gdprEndpoints = config?.endpoints?.gdpr ?? {
+        export: dataset.gdprEndpointExport ?? "",
+        anonymise: dataset.gdprEndpointAnonymise ?? "",
+    };
+
     const couponsEndpoints = config?.endpoints?.coupons ?? {
         list: dataset.couponsEndpoint ?? "",
         create: dataset.couponsEndpointCreate ?? "",
@@ -90,6 +95,7 @@ if (!mount) {
             categories: categoriesEndpoints,
             orders: ordersEndpoints,
             customers: customersEndpoints,
+            gdpr: gdprEndpoints,
             coupons: couponsEndpoints,
             tax: taxEndpoints,
             shipping: shippingEndpoints,

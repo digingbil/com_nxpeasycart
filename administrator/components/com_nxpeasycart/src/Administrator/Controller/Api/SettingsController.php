@@ -71,6 +71,8 @@ class SettingsController extends AbstractJsonController
             ],
             'base_currency' => ConfigHelper::getBaseCurrency(),
             'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
+            'category_page_size' => ConfigHelper::getCategoryPageSize(),
+            'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
                 'text_color'    => (string) $service->get('visual.text_color', ''),
@@ -111,9 +113,14 @@ class SettingsController extends AbstractJsonController
         $visual            = isset($payload['visual'])   && \is_array($payload['visual']) ? $payload['visual'] : [];
         $security          = isset($payload['security']) && \is_array($payload['security']) ? $payload['security'] : [];
         $baseCurrencyInput = $store['base_currency'] ?? $payload['base_currency'] ?? null;
+        $pageSizeInput     = $payload['category_page_size'] ?? null;
+        $paginationModeInput = $payload['category_pagination_mode'] ?? null;
         $checkoutPhoneRequired = isset($payload['checkout_phone_required'])
             ? (bool) $payload['checkout_phone_required']
             : (isset($store['checkout_phone_required']) ? (bool) $store['checkout_phone_required'] : null);
+        $autoSendOrderEmails = isset($payload['auto_send_order_emails'])
+            ? (bool) $payload['auto_send_order_emails']
+            : null;
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -146,6 +153,18 @@ class SettingsController extends AbstractJsonController
 
         if ($checkoutPhoneRequired !== null) {
             ConfigHelper::setCheckoutPhoneRequired((bool) $checkoutPhoneRequired);
+        }
+
+        if ($autoSendOrderEmails !== null) {
+            ConfigHelper::setAutoSendOrderEmails((bool) $autoSendOrderEmails);
+        }
+
+        if ($pageSizeInput !== null) {
+            ConfigHelper::setCategoryPageSize((int) $pageSizeInput);
+        }
+
+        if ($paginationModeInput !== null) {
+            ConfigHelper::setCategoryPaginationMode((string) $paginationModeInput);
         }
 
         $service = $this->getService();
@@ -204,6 +223,8 @@ class SettingsController extends AbstractJsonController
                 ],
                 'base_currency' => $baseCurrency,
                 'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
+                'category_page_size' => ConfigHelper::getCategoryPageSize(),
+                'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),
                 'visual' => [
                     'primary_color' => (string) $service->get('visual.primary_color', ''),
                     'text_color'    => (string) $service->get('visual.text_color', ''),

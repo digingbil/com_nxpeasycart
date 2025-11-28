@@ -53,9 +53,7 @@ class DashboardService
         $params             = ComponentHelper::getParams('com_nxpeasycart');
         $baseCurrency       = strtoupper($params->get('base_currency', ''));
         $summary            = $this->getSummary();
-        $ordersPaid         = (int) ($summary['orders']['paid_total'] ?? 0);
         $productsActive     = (int) ($summary['products']['active'] ?? 0);
-        $hasCustomers       = (int) ($summary['customers']['total'] ?? 0) > 0;
         $paymentsConfigured = (bool) $this->settings->get('payments.configured', false);
 
         return [
@@ -63,31 +61,19 @@ class DashboardService
                 'id'        => 'set_currency',
                 'label'     => 'COM_NXPEASYCART_CHECKLIST_SET_CURRENCY',
                 'completed' => $baseCurrency !== '',
-                'link'      => 'index.php?option=com_nxpeasycart&view=settings',
+                'link'      => 'index.php?option=com_nxpeasycart&view=settings&settingsTab=general',
+            ],
+            [
+                'id'        => 'configure_payments',
+                'label'     => 'COM_NXPEASYCART_CHECKLIST_CONFIGURE_PAYMENTS',
+                'completed' => $paymentsConfigured,
+                'link'      => 'index.php?option=com_nxpeasycart&view=settings&settingsTab=payments',
             ],
             [
                 'id'        => 'add_product',
                 'label'     => 'COM_NXPEASYCART_CHECKLIST_ADD_PRODUCT',
                 'completed' => $productsActive > 0,
                 'link'      => 'index.php?option=com_nxpeasycart&view=products',
-            ],
-            [
-                'id'        => 'configure_payments',
-                'label'     => 'COM_NXPEASYCART_CHECKLIST_CONFIGURE_PAYMENTS',
-                'completed' => $paymentsConfigured,
-                'link'      => 'index.php?option=com_nxpeasycart&view=settings',
-            ],
-            [
-                'id'        => 'review_orders',
-                'label'     => 'COM_NXPEASYCART_CHECKLIST_REVIEW_ORDERS',
-                'completed' => $ordersPaid > 0,
-                'link'      => 'index.php?option=com_nxpeasycart&view=orders',
-            ],
-            [
-                'id'        => 'invite_customers',
-                'label'     => 'COM_NXPEASYCART_CHECKLIST_INVITE_CUSTOMERS',
-                'completed' => $hasCustomers,
-                'link'      => 'index.php?option=com_nxpeasycart&view=customers',
             ],
         ];
     }

@@ -7,9 +7,11 @@ Complete technical documentation for developers, merchants, and security auditor
 ## 🏗️ Architecture & Design
 
 ### [architecture.md](architecture.md)
+
 Component architecture, MVC structure, service layer design, and development patterns.
 
 **Topics covered:**
+
 - Namespaced MVC structure
 - Dependency injection container
 - Service layer (Cart, Order, Payment)
@@ -17,6 +19,7 @@ Component architecture, MVC structure, service layer design, and development pat
 - Progressive storefront islands
 
 ### [order-status.md](order-status.md)
+
 Order status/tracking flow, tokenised storefront links, admin tracking fields, and JSON endpoints.
 
 ---
@@ -24,14 +27,17 @@ Order status/tracking flow, tokenised storefront links, admin tracking fields, a
 ## 🔒 Security Documentation
 
 ### [security-audit-fixes.md](security-audit-fixes.md) ⭐ **CRITICAL**
+
 Detailed documentation of critical security vulnerabilities resolved during the 2025-11-27 security audit.
 
 **Issues resolved:**
+
 - **XSS vulnerability** in checkout success message (FIXED)
 - **Stripe webhook forgery** - signature validation now mandatory (FIXED)
 - **PayPal webhook forgery** - complete verification implemented (FIXED)
 
 **Includes:**
+
 - Vulnerability descriptions
 - Attack scenarios
 - Fix implementations
@@ -39,9 +45,11 @@ Detailed documentation of critical security vulnerabilities resolved during the 
 - Deployment requirements
 
 ### [security-rate-limiting.md](security-rate-limiting.md)
+
 Rate limiting implementation for cart and payment endpoints.
 
 **Topics covered:**
+
 - RateLimiter service design
 - PSR-16 cache backing
 - Configuration via admin panel
@@ -49,12 +57,46 @@ Rate limiting implementation for cart and payment endpoints.
 
 ---
 
+## 📧 Email & Communications
+
+### [email-templates.md](email-templates.md)
+
+Transactional email system for order lifecycle notifications.
+
+**Topics covered:**
+
+- Order confirmation emails
+- Shipping notification emails (with tracking)
+- Refund notification emails
+- Template customisation
+- Email trigger points
+
+---
+
+## 🔐 Privacy & Compliance
+
+### [gdpr.md](gdpr.md)
+
+GDPR compliance implementation for data export and anonymisation.
+
+**Topics covered:**
+
+- Data export API (Article 20 - Data Portability)
+- Anonymisation API (Article 17 - Right to Erasure)
+- PII handling and retention
+- Compliance checklist
+- API endpoints and permissions
+
+---
+
 ## ⚡ Performance & Optimization
 
 ### [performance-optimization.md](performance-optimization.md)
+
 Admin SPA performance enhancements and caching strategies.
 
 **Topics covered:**
+
 - Cache-first data strategy (5-minute TTL)
 - 60-80% reduction in API calls
 - Skeleton loaders
@@ -66,9 +108,11 @@ Admin SPA performance enhancements and caching strategies.
 ## 🧪 Testing & Quality Assurance
 
 ### [testing.md](testing.md)
+
 Test automation blueprint covering unit, integration, and E2E tests.
 
 **Topics covered:**
+
 - PHPUnit setup (unit/integration)
 - API contract tests
 - Vue component unit tests
@@ -80,9 +124,11 @@ Test automation blueprint covering unit, integration, and E2E tests.
 ## 📦 Packaging & Deployment
 
 ### [packaging.md](packaging.md)
+
 Release workflow, dependency management, and deployment procedures.
 
 **Topics covered:**
+
 - Composer vendor optimization
 - Asset bundling (Vite)
 - Language file distribution
@@ -90,9 +136,11 @@ Release workflow, dependency management, and deployment procedures.
 - Release checklist
 
 ### [asset-sync.md](asset-sync.md)
+
 Automated asset manifest synchronization for cache-busting.
 
 **Topics covered:**
+
 - Vite hash generation
 - `joomla.asset.json` updates
 - Post-build automation
@@ -103,9 +151,11 @@ Automated asset manifest synchronization for cache-busting.
 ## 📊 Risk Management
 
 ### [risk-register.md](risk-register.md)
+
 Component risk assessment, mitigation strategies, and monitoring.
 
 **Topics covered:**
+
 - Gateway misconfiguration risks
 - Webhook failure handling
 - Double-charge prevention
@@ -137,6 +187,10 @@ Before going live, ensure:
 - [ ] Review `risk-register.md` mitigation steps
 - [ ] Run security test suite (see `testing.md`)
 - [ ] Monitor webhook logs for rejected requests
+- [ ] Configure email server (SMTP) in Joomla Global Configuration
+- [ ] Test all email templates (confirmation, shipped, refunded)
+- [ ] Document GDPR data retention policy (see `gdpr.md`)
+- [ ] Test GDPR export/anonymise endpoints
 
 ---
 
@@ -161,5 +215,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-11-28
 **Component Version**: MVP (pre-release)

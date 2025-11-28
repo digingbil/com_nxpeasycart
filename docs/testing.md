@@ -1,13 +1,42 @@
 # Testing Blueprint
 
-NXP Easy Cart ships with multiple surfaces (Joomla MVC, JSON APIs, Vue admin SPA, storefront). The following plan keeps automated coverage lean while giving us fast feedback loops aligned with the “ten-minute setup” goal.
+NXP Easy Cart ships with multiple surfaces (Joomla MVC, JSON APIs, Vue admin SPA, storefront). The following plan keeps automated coverage lean while giving us fast feedback loops aligned with the "ten-minute setup" goal.
 
 ## 1. Unit tests (PHPUnit)
 
-- **Scope**: domain services (`CartService`, `OrderService`, `CustomerService`, `CouponService`, `TaxService`, `ShippingRuleService`, `SettingsService`, `AuditService`), helper utilities (config, money, slug generation), table validation rules.
-- **Structure**: `tests/phpunit/unit/...` mirroring namespace; one test class per service/table.
+- **Scope**: domain services (`CartService`, `OrderService`, `CustomerService`, `CouponService`, `TaxService`, `ShippingRuleService`, `SettingsService`, `AuditService`, `GdprService`, `RateLimiter`), helper utilities (config, money, slug generation), table validation rules.
+- **Structure**: `tests/Unit/...` mirroring namespace; one test class per service/table.
+- **Run**: `./vendor/bin/phpunit tests/Unit`
 - **Fixtures**: rely on SQLite in-memory where possible; seed with thin dataset builders to avoid brittle fixtures.
 - **Assertions**: focus on invariants—currency enforcement, state transitions, transactional integrity, JSON serialisation helpers.
+
+### Current Test Coverage
+
+| Test File                   | Tests | Coverage Area                                                            |
+| --------------------------- | ----- | ------------------------------------------------------------------------ |
+| `OrderStateMachineTest.php` | 8     | State transitions, invalid states, terminal states, audit logging        |
+| `RateLimiterTest.php`       | 7     | Hit counting, window expiry, memory fallback, edge cases                 |
+| `CartServiceTest.php`       | 8     | Persistence, loading, currency migration, session handling               |
+| `CheckoutSecurityTest.php`  | 10    | Price recalculation, tax accuracy, totals, overflow, concurrent checkout |
+| `GdprServiceTest.php`       | 10    | Email validation, anonymisation, PII removal, data portability           |
+
+**Total: 43 unit tests**
+
+### Key Security Tests
+
+```bash
+# Run all security-related tests
+./vendor/bin/phpunit tests/Unit/Site/Model/CheckoutSecurityTest.php
+```
+
+Critical security tests include:
+
+- `testPriceRecalculationIgnoresCartData()` - Verifies prices always come from database
+- `testCouponDiscountCalculatedFromDatabasePrices()` - Prevents discount manipulation
+- `testTaxCalculationAccuracy()` - Validates tax calculations
+- `testTotalCalculationWithAllComponents()` - End-to-end total verification
+- `testIntegerOverflowPrevention()` - Guards against numeric exploits
+- `testConcurrentCheckoutsStockHandling()` - Race condition protection
 
 ## 2. Integration tests (PHPUnit)
 
@@ -41,12 +70,12 @@ NXP Easy Cart ships with multiple surfaces (Joomla MVC, JSON APIs, Vue admin SPA
 ## 7. CI wiring
 
 - GitHub Actions (or GitLab CI) stages:
-  1. `install`: cache Composer/npm dependencies.
-  2. `lint`: PHP-CS-Fixer (dry-run) + ESLint.
-  3. `static`: PHPStan.
-  4. `unit`: PHPUnit (unit + integration suites).
-  5. `api`: Newman contract run (optional nightly).
-  6. `e2e`: Playwright against disposable Joomla container.
+    1. `install`: cache Composer/npm dependencies.
+    2. `lint`: PHP-CS-Fixer (dry-run) + ESLint.
+    3. `static`: PHPStan.
+    4. `unit`: PHPUnit (unit + integration suites).
+    5. `api`: Newman contract run (optional nightly).
+    6. `e2e`: Playwright against disposable Joomla container.
 - Artefacts: coverage reports (PHPUnit, Playwright video on failure).
 
 ## 8. Manual QA checklist (release candidates)

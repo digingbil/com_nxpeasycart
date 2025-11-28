@@ -45,6 +45,95 @@ class MailService
             ? $options['attachments']
             : [];
 
+        $store   = $this->getStoreContext();
+        $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SUBJECT', $order['order_no'] ?? '');
+        $body    = $this->renderTemplate('order_confirmation', [
+            'order'   => $order,
+            'store'   => $store,
+            'payment' => $payment,
+        ]);
+
+        $this->sendMail($recipient, $subject, $body, $attachments);
+    }
+
+    /**
+     * Send an order shipped notification email.
+     *
+     * Triggered when: order transitions to 'fulfilled' state AND tracking info is provided.
+     *
+     * @param array<string, mixed> $order
+     * @param array<string, mixed> $options Tracking info: carrier, tracking_number, tracking_url
+     */
+    public function sendOrderShipped(array $order, array $options = []): void
+    {
+        $recipient = $order['email'] ?? '';
+
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $language = Factory::getApplication()->getLanguage();
+        $language->load('com_nxpeasycart', JPATH_SITE);
+        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+
+        $tracking = [
+            'carrier'         => $options['carrier'] ?? ($order['carrier'] ?? ''),
+            'tracking_number' => $options['tracking_number'] ?? ($order['tracking_number'] ?? ''),
+            'tracking_url'    => $options['tracking_url'] ?? ($order['tracking_url'] ?? ''),
+        ];
+
+        $store   = $this->getStoreContext();
+        $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SHIPPED_SUBJECT', $order['order_no'] ?? '');
+        $body    = $this->renderTemplate('order_shipped', [
+            'order'    => $order,
+            'store'    => $store,
+            'tracking' => $tracking,
+        ]);
+
+        $this->sendMail($recipient, $subject, $body);
+    }
+
+    /**
+     * Send an order refunded notification email.
+     *
+     * Triggered when: order transitions to 'refunded' state OR a refund transaction is recorded.
+     *
+     * @param array<string, mixed> $order
+     * @param array<string, mixed> $options Refund info: amount_cents, reason
+     */
+    public function sendOrderRefunded(array $order, array $options = []): void
+    {
+        $recipient = $order['email'] ?? '';
+
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $language = Factory::getApplication()->getLanguage();
+        $language->load('com_nxpeasycart', JPATH_SITE);
+        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+
+        $refund = [
+            'amount_cents' => $options['amount_cents'] ?? ($order['total_cents'] ?? 0),
+            'reason'       => $options['reason'] ?? '',
+        ];
+
+        $store   = $this->getStoreContext();
+        $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_REFUNDED_SUBJECT', $order['order_no'] ?? '');
+        $body    = $this->renderTemplate('order_refunded', [
+            'order'  => $order,
+            'store'  => $store,
+            'refund' => $refund,
+        ]);
+
+        $this->sendMail($recipient, $subject, $body);
+    }
+
+    /**
+     * Get store context for email templates.
+     */
+    private function getStoreContext(): array
+    {
         $app    = Factory::getApplication();
         $config = method_exists($app, 'getConfig') ? $app->getConfig() : null;
 
@@ -54,17 +143,18 @@ class MailService
             $siteName = (string) $app->get('sitename', '');
         }
 
-        $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_ORDER_SUBJECT', $order['order_no'] ?? '');
-        $body    = $this->renderTemplate('order_confirmation', [
-            'order' => $order,
-            'store' => [
-                'name' => $siteName !== '' ? $siteName : 'Your Store',
-                'url'  => Uri::root(),
-            ],
-            'payment' => $payment,
-        ]);
+        return [
+            'name' => $siteName !== '' ? $siteName : 'Your Store',
+            'url'  => Uri::root(),
+        ];
+    }
 
-        $mailer = clone $this->mailer;// Avoid mutating the shared mailer instance.
+    /**
+     * Send an email with optional attachments.
+     */
+    private function sendMail(string $recipient, string $subject, string $body, array $attachments = []): void
+    {
+        $mailer = clone $this->mailer; // Avoid mutating the shared mailer instance.
         $mailer->setSubject($subject);
         $mailer->isHtml(true);
         $mailer->setBody($body);

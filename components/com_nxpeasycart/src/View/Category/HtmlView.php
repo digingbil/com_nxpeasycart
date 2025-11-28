@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Site\View\Category;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
@@ -39,6 +40,16 @@ class HtmlView extends BaseHtmlView
     protected array $categories = [];
 
     /**
+     * @var array<string, int>
+     */
+    protected array $pagination = [];
+
+    /**
+     * @var string
+     */
+    protected string $paginationMode = 'paged';
+
+    /**
      * @var string
      */
     protected string $searchTerm = '';
@@ -47,6 +58,7 @@ class HtmlView extends BaseHtmlView
     {
         $app      = Factory::getApplication();
         $document = $this->getDocument();
+        $format   = strtolower((string) $app->input->getCmd('format', 'html'));
 
         $model            = $this->getModel();
         $this->category   = $model ? $model->getItem() : null;
@@ -55,6 +67,20 @@ class HtmlView extends BaseHtmlView
         $this->theme      = TemplateAdapter::resolve();
         $search           = $model ? (string) $model->getState('filter.search', '') : '';
         $this->searchTerm = trim($search);
+        $this->pagination = $model ? $model->getPagination() : [];
+        $this->paginationMode = $model ? (string) $model->getState('category.pagination_mode', 'paged') : 'paged';
+
+        if ($format === 'json') {
+            echo new JsonResponse([
+                'products'   => $this->products,
+                'pagination' => array_merge($this->pagination, ['mode' => $this->paginationMode]),
+                'category'   => $this->category,
+                'search'     => $this->searchTerm,
+            ]);
+
+            $app->close();
+            return;
+        }
 
         SiteAssetHelper::useSiteAssets($document);
 

@@ -5,6 +5,8 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $theme   = $this->theme ?? [];
@@ -17,11 +19,73 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
 /** @var array<int, array<string, mixed>> $this->products */
 /** @var array<int, array<string, mixed>> $this->categories */
 
-$category      = $this->category    ?? null;
-$products      = $this->products    ?? [];
-$categories    = $this->categories  ?? [];
-$activeSlug    = $category['slug']  ?? '';
-$categoryTitle = $category['title'] ?? Text::_('COM_NXPEASYCART_CATEGORY_ALL');
+$category        = $this->category     ?? null;
+$products        = $this->products     ?? [];
+$categories      = $this->categories   ?? [];
+$pagination      = $this->pagination   ?? [];
+$paginationMode  = $this->paginationMode ?? 'paged';
+$activeSlug      = $category['slug']   ?? '';
+$categoryTitle   = $category['title']  ?? Text::_('COM_NXPEASYCART_CATEGORY_ALL');
+$baseRoute       = RouteHelper::getCategoryRoute($category['slug'] ?? null, $category['id'] ?? null, false);
+$categoryRoute   = RouteHelper::getCategoryRoute($category['slug'] ?? null, $category['id'] ?? null);
+$searchTerm      = $this->searchTerm ?? '';
+$limitDefault    = isset($pagination['limit']) ? (int) $pagination['limit'] : (int) \count($products);
+$limit           = $limitDefault > 0 ? $limitDefault : 12;
+$start           = isset($pagination['start']) ? max(0, (int) $pagination['start']) : 0;
+$total           = isset($pagination['total']) ? (int) $pagination['total'] : (int) \count($products);
+$pages           = isset($pagination['pages']) ? (int) $pagination['pages'] : ($limit > 0 ? (int) ceil($total / $limit) : 1);
+$currentPage     = isset($pagination['current']) ? (int) $pagination['current'] : 1;
+$pages           = max(1, $pages);
+$currentPage     = max(1, $currentPage);
+$hasMore         = ($start + $limit) < $total;
+$nextStart       = $start + $limit;
+$prevStart       = max(0, $start - $limit);
+$buildPageLink   = static function (int $startValue, bool $asJson) use ($baseRoute, $limit, $searchTerm): string {
+    $uri = Uri::getInstance($baseRoute);
+
+    if ($limit > 0) {
+        $uri->setVar('limit', $limit);
+    } else {
+        $uri->delVar('limit');
+    }
+
+    if ($startValue > 0) {
+        $uri->setVar('start', $startValue);
+    } else {
+        $uri->delVar('start');
+    }
+
+    if ($searchTerm !== '') {
+        $uri->setVar('q', $searchTerm);
+    } else {
+        $uri->delVar('q');
+    }
+
+    if ($asJson) {
+        $uri->setVar('format', 'json');
+    } else {
+        $uri->delVar('format');
+    }
+
+    return $uri->toString();
+};
+$paginationPayload = [
+    'total'     => $total,
+    'limit'     => $limit,
+    'start'     => $start,
+    'pages'     => $pages,
+    'current'   => $currentPage,
+    'mode'      => $paginationMode,
+    'has_more'  => $hasMore,
+    'base'      => $baseRoute,
+    'search'    => $searchTerm,
+    'next'      => $hasMore ? $buildPageLink($nextStart, false) : '',
+    'prev'      => $currentPage > 1 ? $buildPageLink($prevStart, false) : '',
+    'next_json' => $hasMore ? $buildPageLink($nextStart, true) : '',
+    'prev_json' => $currentPage > 1 ? $buildPageLink($prevStart, true) : '',
+];
+$prevLink = $paginationPayload['prev'];
+$nextLink = $paginationPayload['next'];
 $categoryJson  = htmlspecialchars(
     json_encode($category ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
@@ -37,7 +101,6 @@ $categoriesJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
-$searchTerm  = $this->searchTerm ?? '';
 $searchValue = htmlspecialchars($searchTerm, ENT_QUOTES, 'UTF-8');
 $labels      = [
     'filters'            => Text::_('COM_NXPEASYCART_CATEGORY_FILTERS'),
@@ -52,15 +115,22 @@ $labels      = [
     'out_of_stock'       => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
     'error_generic'      => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART_ERROR'),
     'select_variant'     => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
+    'prev'               => Text::_('JPREV'),
+    'next'               => Text::_('JNEXT'),
+    'pagination_label'   => Text::_('JGLOBAL_PAGINATION_LABEL'),
+    'page_of'            => Text::_('COM_NXPEASYCART_ORDER_PAGE_X_OF_Y'),
+    'load_more'          => Text::_('COM_NXPEASYCART_CATEGORY_LOAD_MORE'),
+    'loading_more'       => Text::_('COM_NXPEASYCART_CATEGORY_LOADING_MORE'),
+    'no_more'            => Text::_('COM_NXPEASYCART_CATEGORY_NO_MORE'),
+    'load_error'         => Text::_('COM_NXPEASYCART_CATEGORY_LOAD_ERROR'),
 ];
 $labelsJson = htmlspecialchars(
     json_encode($labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
     ENT_QUOTES,
     'UTF-8'
 );
-$categoryRoute = RouteHelper::getCategoryRoute();
 $links = [
-    'all'    => $categoryRoute,
+    'all'    => RouteHelper::getCategoryRoute(),
     'search' => $categoryRoute,
 ];
 $linksJson = htmlspecialchars(
@@ -85,8 +155,13 @@ $cartJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
+$paginationJson = htmlspecialchars(
+    json_encode($paginationPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ENT_QUOTES,
+    'UTF-8'
+);
 $locale   = $this->locale ?? \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
-$currency = $this->currency ?? 'USD';
+$currency = ConfigHelper::getBaseCurrency();
 ?>
 
 <section
@@ -97,6 +172,7 @@ $currency = $this->currency ?? 'USD';
     data-nxp-categories="<?php echo $categoriesJson; ?>"
     data-nxp-labels="<?php echo $labelsJson; ?>"
     data-nxp-links="<?php echo $linksJson; ?>"
+    data-nxp-pagination="<?php echo $paginationJson; ?>"
     data-nxp-search="<?php echo $searchValue; ?>"
     data-nxp-cart="<?php echo $cartJson; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
@@ -188,6 +264,43 @@ $currency = $this->currency ?? 'USD';
                     </div>
                 </article>
             <?php endforeach; ?>
+        </div>
+
+        <div class="nxp-ec-category__pagination-shell">
+            <?php if ($paginationMode === 'paged') : ?>
+                <?php if ($pages > 1) : ?>
+                    <nav class="nxp-ec-category__pagination" aria-label="<?php echo Text::_('JGLOBAL_PAGINATION_LABEL'); ?>">
+                        <span class="nxp-ec-category__pagination-meta">
+                            <?php echo Text::sprintf('COM_NXPEASYCART_ORDER_PAGE_X_OF_Y', $currentPage, $pages); ?>
+                        </span>
+                        <div class="nxp-ec-category__pagination-links">
+                            <?php if ($prevLink !== '') : ?>
+                                <a class="nxp-ec-category__pagination-link" href="<?php echo htmlspecialchars($prevLink, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo Text::_('JPREV'); ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($nextLink !== '') : ?>
+                                <a class="nxp-ec-category__pagination-link" href="<?php echo htmlspecialchars($nextLink, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo Text::_('JNEXT'); ?>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </nav>
+                <?php endif; ?>
+            <?php else : ?>
+                <div class="nxp-ec-category__load-more">
+                    <?php if ($nextLink !== '') : ?>
+                        <a class="nxp-ec-btn nxp-ec-btn--ghost nxp-ec-category__load-more-button" href="<?php echo htmlspecialchars($nextLink, ENT_QUOTES, 'UTF-8'); ?>">
+                            <?php echo Text::_('COM_NXPEASYCART_CATEGORY_LOAD_MORE'); ?>
+                        </a>
+                    <?php else : ?>
+                        <span class="nxp-ec-category__load-more-label">
+                            <?php echo Text::_('COM_NXPEASYCART_CATEGORY_NO_MORE'); ?>
+                        </span>
+                    <?php endif; ?>
+                </div>
+                <div class="nxp-ec-category__sentinel" aria-hidden="true"></div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 </section>

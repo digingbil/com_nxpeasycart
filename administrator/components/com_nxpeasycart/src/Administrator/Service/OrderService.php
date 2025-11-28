@@ -14,6 +14,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 use Throwable;
@@ -317,7 +318,84 @@ class OrderService
             $actorId
         );
 
+        // Send transactional emails based on state transition
+        $this->sendStateTransitionEmail($updated, $current['state'], $state);
+
         return $updated;
+    }
+
+    /**
+     * Send appropriate email notification based on state transition.
+     */
+    private function sendStateTransitionEmail(array $order, string $fromState, string $toState): void
+    {
+        // Check if auto-send is enabled in settings
+        if (!ConfigHelper::isAutoSendOrderEmails()) {
+            return;
+        }
+
+        // Only send emails for specific state transitions
+        if ($toState === 'fulfilled' && $fromState !== 'fulfilled') {
+            $this->sendShippedEmail($order);
+        } elseif ($toState === 'refunded' && $fromState !== 'refunded') {
+            $this->sendRefundedEmail($order);
+        }
+    }
+
+    /**
+     * Send order shipped notification email.
+     */
+    private function sendShippedEmail(array $order): void
+    {
+        try {
+            $container = Factory::getContainer();
+
+            if (!$container->has(MailService::class)) {
+                return;
+            }
+
+            $mailService = $container->get(MailService::class);
+            $mailService->sendOrderShipped($order, [
+                'carrier'         => $order['carrier'] ?? null,
+                'tracking_number' => $order['tracking_number'] ?? null,
+                'tracking_url'    => $order['tracking_url'] ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            // Log error but don't fail the state transition
+            $this->getAuditService()->record(
+                'order',
+                (int) $order['id'],
+                'order.email.failed',
+                ['type' => 'shipped', 'error' => $e->getMessage()]
+            );
+        }
+    }
+
+    /**
+     * Send order refunded notification email.
+     */
+    private function sendRefundedEmail(array $order): void
+    {
+        try {
+            $container = Factory::getContainer();
+
+            if (!$container->has(MailService::class)) {
+                return;
+            }
+
+            $mailService = $container->get(MailService::class);
+            $mailService->sendOrderRefunded($order, [
+                'amount_cents' => $order['total_cents'] ?? 0,
+            ]);
+        } catch (\Throwable $e) {
+            // Log error but don't fail the state transition
+            $this->getAuditService()->record(
+                'order',
+                (int) $order['id'],
+                'order.email.failed',
+                ['type' => 'refunded', 'error' => $e->getMessage()]
+            );
+        }
     }
 
     /**

@@ -7,6 +7,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 
 $document = $this->getDocument();
 $wa        = $document->getWebAssetManager();
@@ -96,6 +97,8 @@ $ordersEndpointInvoice        = $adminBase . '/index.php?option=com_nxpeasycart&
 $dashboardEndpoint            = $adminBase . '/index.php?option=com_nxpeasycart&task=api.dashboard.summary&format=json';
 $customersEndpointList        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.list&format=json';
 $customersEndpointShow        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.show&format=json';
+$gdprEndpointExport           = $adminBase . '/index.php?option=com_nxpeasycart&task=api.gdpr.export&format=json';
+$gdprEndpointAnonymise        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.gdpr.anonymise&format=json&' . $tokenQuery;
 $couponsEndpointList          = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.list&format=json';
 $couponsEndpointStore         = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.store&format=json&' . $tokenQuery;
 $couponsEndpointUpdate        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.coupons.update&format=json&' . $tokenQuery;
@@ -112,8 +115,9 @@ $settingsEndpointGet          = $adminBase . '/index.php?option=com_nxpeasycart&
 $settingsEndpointSave         = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json&' . $tokenQuery;
 $logsEndpointList             = $adminBase . '/index.php?option=com_nxpeasycart&task=api.logs.list&format=json';
 $params                       = ComponentHelper::getParams('com_nxpeasycart');
-$baseCurrency                 = strtoupper($params->get('base_currency', 'USD'));
+$baseCurrency                 = ConfigHelper::getBaseCurrency();
 $section                      = Factory::getApplication()->input->getCmd('appSection', 'dashboard');
+$settingsTab                  = Factory::getApplication()->input->getCmd('settingsTab', 'general');
 $ordersPreload                = property_exists($this, 'orders')             && \is_array($this->orders) ? $this->orders : ['items' => [], 'pagination' => []];
 $dashboardSummary             = property_exists($this, 'dashboardSummary')   && \is_array($this->dashboardSummary) ? $this->dashboardSummary : [];
 $dashboardChecklist           = property_exists($this, 'dashboardChecklist') && \is_array($this->dashboardChecklist) ? $this->dashboardChecklist : [];
@@ -216,6 +220,10 @@ $appConfig = [
             'list' => $customersEndpointList,
             'show' => $customersEndpointShow,
         ],
+        'gdpr' => [
+            'export'    => $gdprEndpointExport,
+            'anonymise' => $gdprEndpointAnonymise,
+        ],
         'coupons' => [
             'list'   => $couponsEndpointList,
             'create' => $couponsEndpointStore,
@@ -303,6 +311,7 @@ $dataAttributes = [
     'app-title-key'                      => $appTitleKey,
     'app-lead-key'                       => $appLeadKey,
     'active-section'                     => $section,
+    'settings-tab'                       => $settingsTab,
     'products-panel-title'               => Text::_('COM_NXPEASYCART_MENU_PRODUCTS'),
     'products-panel-lead'                => Text::_('COM_NXPEASYCART_PRODUCTS_LEAD'),
     'products-refresh'                   => Text::_('COM_NXPEASYCART_PRODUCTS_REFRESH'),

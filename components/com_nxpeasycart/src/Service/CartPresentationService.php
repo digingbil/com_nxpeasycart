@@ -97,8 +97,8 @@ class CartPresentationService
                     // SECURITY: Always use database price, never trust cart-stored prices
                     $priceCents = ($variant['price_cents'] ?? 0);
 
-                    // SECURITY: Always use database currency
-                    $currency = ($variant['currency'] ?? $baseCurrency);
+                    // SECURITY: Always use store base currency from config
+                    $currency = $baseCurrency;
 
                     $variantLabel = $this->buildVariantLabel($variant);
                     $baseTitle    = $product['title'] ?? ($item['title'] ?? '');

@@ -471,6 +471,78 @@
                                 }}
                             </p>
                         </section>
+
+                        <section class="nxp-ec-admin-panel__section nxp-ec-gdpr-section">
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_GDPR_TITLE",
+                                        "GDPR Actions",
+                                        [],
+                                        "gdprTitle"
+                                    )
+                                }}
+                            </h4>
+                            <p class="nxp-ec-admin-panel__muted nxp-ec-gdpr-description">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_GDPR_DESCRIPTION",
+                                        "Handle customer data requests under GDPR.",
+                                        [],
+                                        "gdprDescription"
+                                    )
+                                }}
+                            </p>
+                            <div class="nxp-ec-gdpr-actions">
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--secondary"
+                                    type="button"
+                                    @click="emitGdprExport(state.activeCustomer.email)"
+                                    :disabled="state.gdprLoading"
+                                    :title="__(
+                                        'COM_NXPEASYCART_GDPR_EXPORT_TOOLTIP',
+                                        'Download all customer data as JSON',
+                                        [],
+                                        'gdprExportTooltip'
+                                    )"
+                                >
+                                    <i class="fa-solid fa-download"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_GDPR_EXPORT",
+                                            "Export Data",
+                                            [],
+                                            "gdprExport"
+                                        )
+                                    }}
+                                </button>
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--danger"
+                                    type="button"
+                                    @click="emitGdprAnonymise(state.activeCustomer.email)"
+                                    :disabled="state.gdprLoading"
+                                    :title="__(
+                                        'COM_NXPEASYCART_GDPR_ANONYMISE_TOOLTIP',
+                                        'Permanently anonymise customer data (cannot be undone)',
+                                        [],
+                                        'gdprAnonymiseTooltip'
+                                    )"
+                                >
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_GDPR_ANONYMISE",
+                                            "Anonymise",
+                                            [],
+                                            "gdprAnonymise"
+                                        )
+                                    }}
+                                </button>
+                            </div>
+                            <p v-if="state.gdprMessage" class="nxp-ec-gdpr-message" :class="{ 'nxp-ec-gdpr-message--success': state.gdprSuccess }">
+                                {{ state.gdprMessage }}
+                            </p>
+                        </section>
                     </aside>
                 </div>
             </div>
@@ -496,7 +568,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["refresh", "search", "page", "view", "close"]);
+const emit = defineEmits(["refresh", "search", "page", "view", "close", "gdprExport", "gdprAnonymise"]);
 
 const __ = props.translate;
 
@@ -556,6 +628,8 @@ const emitSearch = () => emit("search");
 const emitPage = (page) => emit("page", page);
 const emitView = (customer) => emit("view", customer);
 const emitClose = () => emit("close");
+const emitGdprExport = (email) => emit("gdprExport", email);
+const emitGdprAnonymise = (email) => emit("gdprAnonymise", email);
 
 const formatTimestamp = (timestamp) => {
     if (!timestamp) {
@@ -615,5 +689,53 @@ const formatTimestamp = (timestamp) => {
     margin: 0;
     font-weight: 500;
     color: var(--nxp-ec-text, #212529);
+}
+
+.nxp-ec-gdpr-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--nxp-ec-border, #e5e7eb);
+}
+
+.nxp-ec-gdpr-description {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+.nxp-ec-gdpr-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.nxp-ec-gdpr-actions .nxp-ec-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.nxp-ec-btn--danger {
+    background-color: #dc2626;
+    color: #fff;
+    border-color: #dc2626;
+}
+
+.nxp-ec-btn--danger:hover:not(:disabled) {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.nxp-ec-gdpr-message {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.nxp-ec-gdpr-message--success {
+    background-color: #f0fdf4;
+    color: #166534;
 }
 </style>

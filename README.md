@@ -58,6 +58,21 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
     - **Price tampering vulnerability fixed**: Checkout and cart display now ALWAYS recalculate prices from database, never trusting cart-stored prices. Prevents attackers from manipulating cart data to purchase products at arbitrary prices.
     - **Coupon discount tampering fixed**: Coupon discounts now ALWAYS calculated from database prices, preventing revenue loss from cart price manipulation. Both coupon application and checkout recalculate discounts from authoritative database values.
     - See `docs/security-audit-fixes.md`, `docs/security-price-tampering-fix.md`, and `docs/security-coupon-discount-fix.md` for complete details, testing procedures, and deployment requirements.
+- **Email templates**: Transactional email system now supports three order lifecycle notifications:
+    - **order_confirmation**: Sent immediately after successful payment capture.
+    - **order_shipped**: Triggered when admin adds tracking info or transitions order to 'fulfilled' state; includes carrier, tracking number, and tracking URL.
+    - **order_refunded**: Triggered when order transitions to 'refunded' state; includes refund amount and support contact.
+    - Templates live in `administrator/components/com_nxpeasycart/templates/email/` and use Joomla's configured mailer.
+- **Email sending controls**: Administrators can now control how order notification emails are sent:
+    - **Auto-send setting**: New "Auto-send order emails" checkbox in Settings → General (default: off). When enabled, shipped/refunded emails are sent automatically on state transitions.
+    - **Manual send buttons**: Order details panel shows "Send shipped email" / "Send refunded email" buttons for fulfilled/refunded orders, allowing manual email dispatch regardless of auto-send setting.
+    - **Re-send capability**: Buttons show "Re-send" label when an email of that type was previously sent (tracked via audit trail).
+    - **Audit logging**: All manually-sent emails are logged with `manual: true` context for compliance tracking.
+- **GDPR compliance (Article 17 & 20)**: Built-in data export and anonymisation endpoints:
+    - `GdprService::exportByEmail()` returns all orders, line items, and transactions for a given email (JSON format for data portability).
+    - `GdprService::anonymiseByEmail()` replaces PII (email, billing, shipping, tracking) with anonymous hash while preserving order data for accounting.
+    - Admin API: `GET ?option=com_nxpeasycart&task=api.gdpr.export&email=...` (requires `core.manage`), `POST ?option=com_nxpeasycart&task=api.gdpr.anonymise` with JSON `{"email":"..."}` (requires `core.admin` + CSRF).
+    - See `docs/gdpr.md` for implementation details and compliance checklist.
 
 ### Performance Optimizations (Admin SPA)
 
@@ -218,7 +233,15 @@ Events are dispatched via `EasycartEventDispatcher` (see `src/Administrator/Even
 ## Testing & Security
 
 - See `docs/testing.md` for the current automation blueprint covering PHPUnit (unit/integration), API contract runs, Vue unit tests, and Playwright E2E journeys.
+- **Comprehensive unit test suite** covers critical services:
+    - `OrderStateMachineTest` (8 tests): State transitions, invalid states, terminal states, audit logging.
+    - `RateLimiterTest` (7 tests): Hit counting, window expiry, memory fallback, edge cases.
+    - `CartServiceTest` (8 tests): Persistence, loading, currency migration, session handling.
+    - `CheckoutSecurityTest` (10 tests): Price recalculation, tax accuracy, total validation, integer overflow, concurrent checkout.
+    - `GdprServiceTest` (10 tests): Email validation, anonymisation, PII removal, data portability compliance.
+- Run tests with: `./vendor/bin/phpunit tests/Unit`
 - Security audit fixes and webhook configuration requirements are documented in `docs/security-audit-fixes.md`.
+- GDPR compliance is documented in `docs/gdpr.md`.
 - Risk register lives at `docs/risk-register.md`; packaging workflow is documented in `docs/packaging.md`.
 
 ## Changelog summary

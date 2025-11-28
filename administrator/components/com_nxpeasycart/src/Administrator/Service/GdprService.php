@@ -48,10 +48,13 @@ class GdprService
         $hash            = substr(sha1($email . microtime()), 0, 12);
         $anonymisedEmail = sprintf('gdpr+%s@example.invalid', $hash);
 
+        // Use empty JSON object for NOT NULL columns, NULL for nullable ones
+        $emptyJson = '{}';
+
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('email') . ' = :anonEmail')
-            ->set($this->db->quoteName('billing') . ' = NULL')
+            ->set($this->db->quoteName('billing') . ' = :emptyBilling')
             ->set($this->db->quoteName('shipping') . ' = NULL')
             ->set($this->db->quoteName('carrier') . ' = NULL')
             ->set($this->db->quoteName('tracking_number') . ' = NULL')
@@ -59,6 +62,7 @@ class GdprService
             ->set($this->db->quoteName('fulfillment_events') . ' = NULL')
             ->where($this->db->quoteName('email') . ' = :email')
             ->bind(':anonEmail', $anonymisedEmail, ParameterType::STRING)
+            ->bind(':emptyBilling', $emptyJson, ParameterType::STRING)
             ->bind(':email', $email, ParameterType::STRING);
 
         $this->db->setQuery($query);

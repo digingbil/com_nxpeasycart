@@ -4,6 +4,7 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed> $this->cart */
@@ -61,7 +62,7 @@ $labelsJson = htmlspecialchars(
     'UTF-8'
 );
 $locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
-$currency = strtoupper((string) ($summary['currency'] ?? 'USD'));
+$currency = strtoupper((string) ($summary['currency'] ?? ConfigHelper::getBaseCurrency()));
 $cssVars = '';
 foreach (($theme['css_vars'] ?? []) as $var => $value) {
     $cssVars .= $var . ':' . $value . ';';

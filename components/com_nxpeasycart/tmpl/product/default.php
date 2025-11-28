@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $theme          = $this->theme ?? [];
@@ -37,8 +38,8 @@ if ($isPlaceholder) : ?>
 
 <?php endif;
 
-$price      = $product['price'] ?? ['currency' => 'USD', 'min_cents' => 0, 'max_cents' => 0];
-$currency   = strtoupper((string) ($price['currency'] ?? 'USD'));
+$price      = $product['price'] ?? ['currency' => ConfigHelper::getBaseCurrency(), 'min_cents' => 0, 'max_cents' => 0];
+$currency   = ConfigHelper::getBaseCurrency();
 $images     = array_values(array_filter(array_map(
     static function ($image) {
         if (!\is_string($image)) {
@@ -97,7 +98,7 @@ $galleryJson = htmlspecialchars(
 $variantPayload = array_map(
     static function (array $variant) use ($locale): array {
         $priceCents = (int) ($variant['price_cents'] ?? 0);
-        $currency   = strtoupper((string) ($variant['currency'] ?? 'USD'));
+        $currency   = ConfigHelper::getBaseCurrency();
 
         return [
             'id'           => (int) ($variant['id'] ?? 0),
@@ -273,7 +274,7 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
                     <?php foreach ($variants as $variant) : ?>
                         <tr>
                             <td><?php echo htmlspecialchars($variant['sku'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars(MoneyHelper::format((int) $variant['price_cents'], $variant['currency'], $locale), ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars(MoneyHelper::format((int) $variant['price_cents'], ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?></td>
                             <td><?php echo (int) $variant['stock']; ?></td>
                             <td>
                                 <?php if (!empty($variant['options'])) : ?>

@@ -158,17 +158,14 @@ class CartService
 
     /**
      * Normalise the cart payload ensuring base currency compliance.
+     * Automatically migrates cart to current base currency (Option A - single source of truth).
      */
     private function normaliseCartData(array $data): array
     {
         $baseCurrency = ConfigHelper::getBaseCurrency();
-        $currency     = strtoupper((string) ($data['currency'] ?? ''));
 
-        if ($currency === '') {
-            $data['currency'] = $baseCurrency;
-        } elseif ($currency !== $baseCurrency) {
-            throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_CART_CURRENCY_MISMATCH', $baseCurrency));
-        }
+        // Always use base currency - migrate any existing cart to current base currency
+        $data['currency'] = $baseCurrency;
 
         if (isset($data['items'])) {
             if (!\is_array($data['items'])) {
@@ -180,13 +177,8 @@ class CartService
                     throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CART_ITEMS_INVALID'));
                 }
 
-                $itemCurrency = strtoupper((string) ($item['currency'] ?? ''));
-
-                if ($itemCurrency !== '' && $itemCurrency !== $baseCurrency) {
-                    throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_CART_CURRENCY_MISMATCH', $baseCurrency));
-                }
-
-                $data['items'][$index]['currency'] = $itemCurrency ?: $baseCurrency;
+                // Always use base currency for items
+                $data['items'][$index]['currency'] = $baseCurrency;
                 $data['items'][$index]['qty']      = $this->toPositiveInt($item['qty'] ?? 1);
             }
         }
@@ -200,7 +192,8 @@ class CartService
     private function mapCartRow(object $row): array
     {
         $data = $this->decodeJson($row->data ?? '{}');
-        $data['currency'] ??= ConfigHelper::getBaseCurrency();
+        // Always use current base currency (Option A - single source of truth)
+        $data['currency'] = ConfigHelper::getBaseCurrency();
 
         return [
             'id'         => (string) $row->id,

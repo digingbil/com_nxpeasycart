@@ -14,11 +14,13 @@ const normaliseSettings = (data = {}) => {
     const visualDefaults = data.visual_defaults ?? {};
     const security = data.security?.rate_limits ?? {};
 
+    // Don't default to USD here - let the caller handle the fallback
+    // so that datasetBaseCurrency from the page can be used
     const baseCurrency =
         typeof data.base_currency === "string" &&
         data.base_currency.trim() !== ""
             ? data.base_currency.trim().toUpperCase()
-            : "USD";
+            : "";
 
     return {
         store: {
@@ -31,6 +33,11 @@ const normaliseSettings = (data = {}) => {
         },
         base_currency: baseCurrency,
         checkout_phone_required: Boolean(data.checkout_phone_required),
+        category_page_size: Number.isFinite(Number(data.category_page_size))
+            ? Number(data.category_page_size)
+            : 12,
+        category_pagination_mode:
+            data.category_pagination_mode === "infinite" ? "infinite" : "paged",
         visual: {
             primary_color: visual.primary_color ?? "",
             text_color: visual.text_color ?? "",
@@ -47,13 +54,19 @@ const normaliseSettings = (data = {}) => {
         },
         security: {
             rate_limits: {
-                checkout_ip_limit: Number.isFinite(Number(security.checkout_ip_limit))
+                checkout_ip_limit: Number.isFinite(
+                    Number(security.checkout_ip_limit)
+                )
                     ? Number(security.checkout_ip_limit)
                     : 10,
-                checkout_email_limit: Number.isFinite(Number(security.checkout_email_limit))
+                checkout_email_limit: Number.isFinite(
+                    Number(security.checkout_email_limit)
+                )
                     ? Number(security.checkout_email_limit)
                     : 5,
-                checkout_session_limit: Number.isFinite(Number(security.checkout_session_limit))
+                checkout_session_limit: Number.isFinite(
+                    Number(security.checkout_session_limit)
+                )
                     ? Number(security.checkout_session_limit)
                     : 15,
                 checkout_window_minutes: Number.isFinite(
@@ -61,12 +74,19 @@ const normaliseSettings = (data = {}) => {
                 )
                     ? Number(security.checkout_window_minutes)
                     : Number.isFinite(Number(security.checkout_window))
-                      ? Math.max(0, Math.ceil(Number(security.checkout_window) / 60))
+                      ? Math.max(
+                            0,
+                            Math.ceil(Number(security.checkout_window) / 60)
+                        )
                       : 10,
-                offline_ip_limit: Number.isFinite(Number(security.offline_ip_limit))
+                offline_ip_limit: Number.isFinite(
+                    Number(security.offline_ip_limit)
+                )
                     ? Number(security.offline_ip_limit)
                     : 3,
-                offline_email_limit: Number.isFinite(Number(security.offline_email_limit))
+                offline_email_limit: Number.isFinite(
+                    Number(security.offline_email_limit)
+                )
                     ? Number(security.offline_email_limit)
                     : 3,
                 offline_window_minutes: Number.isFinite(
@@ -74,7 +94,10 @@ const normaliseSettings = (data = {}) => {
                 )
                     ? Number(security.offline_window_minutes)
                     : Number.isFinite(Number(security.offline_window))
-                      ? Math.max(0, Math.ceil(Number(security.offline_window) / 60))
+                      ? Math.max(
+                            0,
+                            Math.ceil(Number(security.offline_window) / 60)
+                        )
                       : 30,
             },
         },

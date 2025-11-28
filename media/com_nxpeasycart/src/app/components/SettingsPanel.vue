@@ -294,6 +294,92 @@
                     </p>
                 </div>
 
+                <div class="nxp-ec-form-field">
+                    <label
+                        class="nxp-ec-form-label"
+                        for="settings-category-page-size"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE",
+                                "Products per page",
+                                [],
+                                "settingsGeneralCategoryPageSize"
+                            )
+                        }}
+                    </label>
+                    <input
+                        id="settings-category-page-size"
+                        class="nxp-ec-form-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        v-model.number="settingsDraft.categoryPageSize"
+                    />
+                    <p class="nxp-ec-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE_HELP",
+                                "How many products to show per page on the storefront category grid.",
+                                [],
+                                "settingsGeneralCategoryPageSizeHelp"
+                            )
+                        }}
+                    </p>
+                </div>
+
+                <div class="nxp-ec-form-field">
+                    <label
+                        class="nxp-ec-form-label"
+                        for="settings-category-pagination-mode"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE",
+                                "Category pagination mode",
+                                [],
+                                "settingsGeneralCategoryPaginationMode"
+                            )
+                        }}
+                    </label>
+                    <select
+                        id="settings-category-pagination-mode"
+                        class="nxp-ec-form-select"
+                        v-model="settingsDraft.categoryPaginationMode"
+                    >
+                        <option value="paged">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_PAGED",
+                                    "Previous/Next links",
+                                    [],
+                                    "settingsGeneralCategoryPaginationPaged"
+                                )
+                            }}
+                        </option>
+                        <option value="infinite">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_INFINITE",
+                                    "Load more on scroll",
+                                    [],
+                                    "settingsGeneralCategoryPaginationInfinite"
+                                )
+                            }}
+                        </option>
+                    </select>
+                    <p class="nxp-ec-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE_HELP",
+                                "Choose between classic paging links or an infinite load-more experience on the category grid.",
+                                [],
+                                "settingsGeneralCategoryPaginationModeHelp"
+                            )
+                        }}
+                    </p>
+                </div>
+
                 <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                     <label
                         class="nxp-ec-form-label"
@@ -321,6 +407,38 @@
                                 "Track when core payment settings are complete (used by dashboard checklist).",
                                 [],
                                 "settingsGeneralPaymentsHelp"
+                            )
+                        }}
+                    </p>
+                </div>
+
+                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                    <label
+                        class="nxp-ec-form-label"
+                        for="settings-auto-send-order-emails"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS",
+                                "Auto-send order emails",
+                                [],
+                                "settingsGeneralAutoSendEmails"
+                            )
+                        }}
+                    </label>
+                    <input
+                        id="settings-auto-send-order-emails"
+                        class="nxp-ec-form-checkbox"
+                        type="checkbox"
+                        v-model="settingsDraft.autoSendOrderEmails"
+                    />
+                    <p class="nxp-ec-form-help">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS_HELP",
+                                "Automatically send email notifications when order status changes (e.g. shipped, refunded).",
+                                [],
+                                "settingsGeneralAutoSendEmailsHelp"
                             )
                         }}
                     </p>
@@ -2259,6 +2377,10 @@ const props = defineProps({
         type: String,
         default: "USD",
     },
+    initialTab: {
+        type: String,
+        default: "general",
+    },
 });
 
 const emit = defineEmits([
@@ -2280,7 +2402,10 @@ const taxState = props.taxState;
 const shippingState = props.shippingState;
 const paymentsState = props.paymentsState;
 
-const activeTab = ref("general");
+const validTabs = ["general", "security", "tax", "shipping", "payments", "visual"];
+const activeTab = ref(
+    validTabs.includes(props.initialTab) ? props.initialTab : "general"
+);
 
 const baseCurrency = computed(() => {
     const fallback = props.baseCurrency || "USD";
@@ -2305,7 +2430,10 @@ const settingsDraft = reactive({
     storePhone: "",
     checkoutPhoneRequired: false,
     paymentsConfigured: false,
+    autoSendOrderEmails: false,
     baseCurrency: "",
+    categoryPageSize: 12,
+    categoryPaginationMode: "paged",
 });
 
 const securityDraft = reactive({
@@ -2405,10 +2533,18 @@ const applySettings = (values = {}) => {
             values?.checkout_phone_required ?? false
         ),
         paymentsConfigured: Boolean(payments.configured),
+        autoSendOrderEmails: Boolean(values?.auto_send_order_emails ?? false),
         baseCurrency:
             typeof values?.base_currency === "string"
                 ? values.base_currency.trim().toUpperCase()
                 : (props.baseCurrency || "USD").toUpperCase(),
+        categoryPageSize: Number.isFinite(Number(values?.category_page_size))
+            ? Number(values.category_page_size)
+            : 12,
+        categoryPaginationMode:
+            values?.category_pagination_mode === "infinite"
+                ? "infinite"
+                : "paged",
     });
 
     Object.assign(visualDraft, {
@@ -2512,6 +2648,14 @@ const saveGeneral = () => {
         },
         base_currency: currency,
         checkout_phone_required: settingsDraft.checkoutPhoneRequired,
+        auto_send_order_emails: settingsDraft.autoSendOrderEmails,
+        category_page_size: Number.isFinite(Number(settingsDraft.categoryPageSize))
+            ? Number(settingsDraft.categoryPageSize)
+            : 12,
+        category_pagination_mode:
+            settingsDraft.categoryPaginationMode === "infinite"
+                ? "infinite"
+                : "paged",
     });
 };
 
@@ -2806,6 +2950,7 @@ const shippingTypeLabel = (type) => {
 .nxp-ec-settings-panel {
     display: grid;
     gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .nxp-ec-settings-panel__header {
@@ -2908,6 +3053,10 @@ const shippingTypeLabel = (type) => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.nxp-ec-color-input-group .nxp-ec-form-input {
+    max-width: 100px;
 }
 
 /* Make color input placeholders more transparent to indicate they're defaults */

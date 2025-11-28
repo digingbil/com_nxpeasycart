@@ -14,6 +14,7 @@ use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -517,7 +518,7 @@ class CartController extends BaseController
      */
     private function upsertCartItem(array $items, object $product, object $variant, int $qty): array
     {
-        $baseCurrency = strtoupper((string) ($variant->currency ?? 'USD'));
+        $baseCurrency = ConfigHelper::getBaseCurrency();
         $unitPrice    = (int) ($variant->price_cents ?? 0);
         $options      = [];
 

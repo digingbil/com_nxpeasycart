@@ -20,6 +20,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\ShippingRuleService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
@@ -372,7 +373,7 @@ class PaymentController extends BaseController
             // Use database price, NOT cart price
             $unitPriceCents = (int) ($variant->price_cents ?? 0);
             $totalCents     = $unitPriceCents * $qty;
-            $currency       = strtoupper((string) ($variant->currency ?? 'USD'));
+            $currency       = ConfigHelper::getBaseCurrency();
 
             $items[] = [
                 'sku'              => $variant->sku ?? '',
@@ -390,7 +391,7 @@ class PaymentController extends BaseController
         // Recalculate subtotal from database prices
         $subtotalCents = array_reduce($items, static fn($sum, $item) => $sum + ($item['total_cents'] ?? 0), 0);
 
-        $currency = $items[0]['currency'] ?? ($cart['summary']['currency'] ?? 'USD');
+        $currency = ConfigHelper::getBaseCurrency();
 
         // SECURITY: Recalculate coupon discount from database subtotal, not cart-stored discount
         $discountCents = 0;
@@ -626,7 +627,7 @@ class PaymentController extends BaseController
                     'session_id' => $cart['session_id'] ?? Factory::getApplication()->getSession()->getId(),
                     'user_id'    => $cart['user_id']    ?? null,
                     'data'       => [
-                        'currency' => $cart['summary']['currency'] ?? 'USD',
+                        'currency' => ConfigHelper::getBaseCurrency(),
                         'items'    => [],
                     ],
                 ]);

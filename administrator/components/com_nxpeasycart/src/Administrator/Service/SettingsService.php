@@ -95,6 +95,9 @@ class SettingsService
         $params = ComponentHelper::getParams('com_nxpeasycart');
         $settings['base_currency'] = ConfigHelper::getBaseCurrency();
         $settings['checkout_phone_required'] = (bool) ((int) $params->get('checkout_phone_required', 0));
+        $settings['auto_send_order_emails'] = ConfigHelper::isAutoSendOrderEmails();
+        $settings['category_page_size'] = ConfigHelper::getCategoryPageSize();
+        $settings['category_pagination_mode'] = ConfigHelper::getCategoryPaginationMode();
 
         return $settings;
     }

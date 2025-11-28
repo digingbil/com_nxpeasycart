@@ -35,6 +35,13 @@ class CategoryModel extends BaseDatabaseModel
     protected ?array $products = null;
 
     /**
+     * Pagination metadata for the current listing.
+     *
+     * @var array<string, int>
+     */
+    protected array $pagination = [];
+
+    /**
      * {@inheritDoc}
      */
     protected function populateState($ordering = null, $direction = null)
@@ -45,6 +52,16 @@ class CategoryModel extends BaseDatabaseModel
         $this->setState('category.id', $input->getInt('id'));
         $this->setState('category.slug', $input->getCmd('slug', ''));
         $this->setState('filter.search', trim($input->getString('q', '')));
+        $this->setState('category.pagination_mode', ConfigHelper::getCategoryPaginationMode());
+
+        $limit = $input->getInt('limit', ConfigHelper::getCategoryPageSize());
+        $start = $input->getInt('start', 0);
+
+        $limit = $limit > 0 ? $limit : ConfigHelper::getCategoryPageSize();
+        $start = $start >= 0 ? $start : 0;
+
+        $this->setState('list.limit', $limit);
+        $this->setState('list.start', $start);
 
         $rootSelection = [];
 
@@ -147,6 +164,8 @@ class CategoryModel extends BaseDatabaseModel
         $db    = $this->getDatabase();
         $activeStatus = ProductStatus::ACTIVE;
         $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
+        $limit = (int) $this->getState('list.limit', ConfigHelper::getCategoryPageSize());
+        $start = (int) $this->getState('list.start', 0);
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -247,6 +266,16 @@ class CategoryModel extends BaseDatabaseModel
             }
         }
 
+        $countQuery = clone $query;
+        $countQuery->clear('select')
+            ->clear('order')
+            ->clear('group')
+            ->select('COUNT(DISTINCT ' . $db->quoteName('p.id') . ')');
+
+        $db->setQuery($countQuery);
+        $total = (int) $db->loadResult();
+
+        $query->setLimit($limit, $start);
         $db->setQuery($query);
         $rows = $db->loadObjectList() ?: [];
 
@@ -293,7 +322,8 @@ class CategoryModel extends BaseDatabaseModel
 
             $minCents = $row->price_min !== null ? (int) $row->price_min : null;
             $maxCents = $row->price_max !== null ? (int) $row->price_max : null;
-            $currency = strtoupper((string) ($row->price_currency ?? ConfigHelper::getBaseCurrency()));
+            // Always use base currency from config (Option A - single currency source of truth)
+            $currency = ConfigHelper::getBaseCurrency();
             $price    = [
                 'currency'  => $currency,
                 'min_cents' => $minCents,
@@ -347,8 +377,36 @@ class CategoryModel extends BaseDatabaseModel
         }
 
         $this->products = $products;
+        $pages          = $limit > 0 ? (int) ceil($total / $limit) : 1;
+        $currentPage    = $limit > 0 ? (int) floor($start / $limit) + 1 : 1;
+
+        if ($currentPage > $pages) {
+            $currentPage = $pages;
+        }
+
+        $this->pagination = [
+            'total'   => $total,
+            'limit'   => $limit,
+            'start'   => $start,
+            'pages'   => max(1, $pages),
+            'current' => max(1, $currentPage),
+        ];
 
         return $this->products;
+    }
+
+    /**
+     * Pagination metadata for the current category listing.
+     *
+     * @return array<string, int>
+     */
+    public function getPagination(): array
+    {
+        if ($this->products === null) {
+            $this->getProducts();
+        }
+
+        return $this->pagination;
     }
 
     /**

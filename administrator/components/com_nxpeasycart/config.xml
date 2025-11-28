@@ -27,5 +27,29 @@
             <option value="1">JYES</option>
             <option value="0">JNO</option>
         </field>
+        <field
+            name="category_page_size"
+            type="number"
+            default="12"
+            label="COM_NXPEASYCART_CONFIG_CATEGORY_PAGE_SIZE"
+            description="COM_NXPEASYCART_CONFIG_CATEGORY_PAGE_SIZE_DESC"
+            filter="integer"
+            min="1"
+            step="1"
+        />
+        <field
+            name="category_pagination_mode"
+            type="list"
+            default="paged"
+            label="COM_NXPEASYCART_CONFIG_CATEGORY_PAGINATION_MODE"
+            description="COM_NXPEASYCART_CONFIG_CATEGORY_PAGINATION_MODE_DESC"
+        >
+            <option value="paged">
+                COM_NXPEASYCART_CONFIG_CATEGORY_PAGINATION_MODE_PAGED
+            </option>
+            <option value="infinite">
+                COM_NXPEASYCART_CONFIG_CATEGORY_PAGINATION_MODE_INFINITE
+            </option>
+        </field>
     </fieldset>
 </form>

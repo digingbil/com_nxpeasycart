@@ -1,4 +1,11 @@
-import { createApp, reactive, computed, ref } from "vue";
+import {
+    createApp,
+    reactive,
+    computed,
+    ref,
+    onMounted,
+    onBeforeUnmount,
+} from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 import { createApiClient } from "../utils/apiClient.js";
@@ -10,6 +17,7 @@ export default function mountCategoryIsland(el) {
     const categoriesPayload = parsePayload(el.dataset.nxpCategories, []);
     const labelsPayload = parsePayload(el.dataset.nxpLabels, {});
     const linksPayload = parsePayload(el.dataset.nxpLinks, {});
+    const paginationPayload = parsePayload(el.dataset.nxpPagination, {});
     const initialSearch = (el.dataset.nxpSearch || "").trim();
 
     const normaliseCents = (value) => {
@@ -45,6 +53,17 @@ export default function mountCategoryIsland(el) {
             "We couldn't add this item to your cart. Please try again.",
         select_variant:
             labelsPayload.select_variant || "Choose a variant to continue",
+        prev: labelsPayload.prev || "Previous",
+        next: labelsPayload.next || "Next",
+        pagination_label:
+            labelsPayload.pagination_label || "Pagination navigation",
+        page_of: labelsPayload.page_of || "Page %s of %s",
+        load_more: labelsPayload.load_more || "Load more",
+        loading_more: labelsPayload.loading_more || "Loading...",
+        no_more: labelsPayload.no_more || "No more products to show",
+        load_error:
+            labelsPayload.load_error ||
+            "Unable to load more products right now. Please try again.",
     };
 
     const links = {
@@ -80,97 +99,151 @@ export default function mountCategoryIsland(el) {
             : "";
     const searchId = `nxp-ec-category-search-${category?.id || "all"}`;
 
-    const enrichedProducts = products
-        .filter((item) => item && typeof item === "object")
-        .map((item) => {
-            const price =
-                item.price && typeof item.price === "object"
-                    ? item.price
-                    : {};
-            const min = normaliseCents(price.min_cents);
-            const max = normaliseCents(price.max_cents);
-            const currency =
-                typeof price.currency === "string" && price.currency !== ""
-                    ? price.currency
-                    : currencyAttr || "USD";
+    const normaliseNumber = (value, fallback = 0) => {
+        const numeric = Number.parseInt(value, 10);
 
-            let priceLabel =
-                typeof item.price_label === "string"
-                    ? item.price_label
-                    : "";
+        return Number.isFinite(numeric) ? numeric : fallback;
+    };
 
-            const status = Number.isFinite(Number(item.status))
-                ? Number(item.status)
-                : item.active
-                  ? 1
-                  : 0;
-            const outOfStock =
-                item.out_of_stock !== undefined
-                    ? Boolean(item.out_of_stock)
-                    : status === -1;
+    const normaliseProducts = (items = []) =>
+        (Array.isArray(items) ? items : [])
+            .filter((item) => item && typeof item === "object")
+            .map((item) => {
+                const price =
+                    item.price && typeof item.price === "object"
+                        ? item.price
+                        : {};
+                const min = normaliseCents(price.min_cents);
+                const max = normaliseCents(price.max_cents);
+                const currency =
+                    typeof price.currency === "string" && price.currency !== ""
+                        ? price.currency
+                        : currencyAttr || "USD";
 
-            if (!priceLabel && min !== null && max !== null) {
-                if (min === max) {
-                    priceLabel = formatMoney(min, currency, locale);
-                } else {
-                    priceLabel = `${formatMoney(min, currency, locale)} - ${formatMoney(
-                        max,
-                        currency,
-                        locale
-                    )}`;
+                let priceLabel =
+                    typeof item.price_label === "string"
+                        ? item.price_label
+                        : "";
+
+                const status = Number.isFinite(Number(item.status))
+                    ? Number(item.status)
+                    : item.active
+                      ? 1
+                      : 0;
+                const outOfStock =
+                    item.out_of_stock !== undefined
+                        ? Boolean(item.out_of_stock)
+                        : status === -1;
+
+                if (!priceLabel && min !== null && max !== null) {
+                    if (min === max) {
+                        priceLabel = formatMoney(min, currency, locale);
+                    } else {
+                        priceLabel = `${formatMoney(min, currency, locale)} - ${formatMoney(
+                            max,
+                            currency,
+                            locale
+                        )}`;
+                    }
                 }
-            }
 
-            const images = Array.isArray(item.images)
-                ? item.images
-                      .filter(
-                          (image) =>
-                              typeof image === "string" &&
-                              image.trim() !== ""
-                      )
-                      .map((image) => image.trim())
-                : [];
-            const primaryVariantId = Number.parseInt(
-                item.primary_variant_id,
-                10
-            );
-            const variantCount = Number.parseInt(item.variant_count, 10);
+                const images = Array.isArray(item.images)
+                    ? item.images
+                          .filter(
+                              (image) =>
+                                  typeof image === "string" &&
+                                  image.trim() !== ""
+                          )
+                          .map((image) => image.trim())
+                    : [];
+                const primaryVariantId = Number.parseInt(
+                    item.primary_variant_id,
+                    10
+                );
+                const variantCount = Number.parseInt(item.variant_count, 10);
 
-            return {
-                ...item,
-                title:
-                    typeof item.title === "string"
-                        ? item.title
-                        : "",
-                short_desc:
-                    typeof item.short_desc === "string"
-                        ? item.short_desc
-                        : "",
-                link:
-                    typeof item.link === "string" && item.link !== ""
-                        ? item.link
-                        : "#",
-                images,
-                price: {
-                    currency,
-                    min_cents: min,
-                    max_cents: max,
-                },
-                price_label: priceLabel,
-                primary_variant_id: Number.isFinite(primaryVariantId)
-                    ? primaryVariantId
-                    : null,
-                variant_count: Number.isFinite(variantCount)
-                    ? variantCount
-                    : null,
-                status,
-                out_of_stock: outOfStock,
-                hint:
-                    outOfStock && labels.out_of_stock
-                        ? labels.out_of_stock
-                        : "",
-            };
-        });
+                return {
+                    ...item,
+                    title:
+                        typeof item.title === "string"
+                            ? item.title
+                            : "",
+                    short_desc:
+                        typeof item.short_desc === "string"
+                            ? item.short_desc
+                            : "",
+                    link:
+                        typeof item.link === "string" && item.link !== ""
+                            ? item.link
+                            : "#",
+                    images,
+                    price: {
+                        currency,
+                        min_cents: min,
+                        max_cents: max,
+                    },
+                    price_label: priceLabel,
+                    primary_variant_id: Number.isFinite(primaryVariantId)
+                        ? primaryVariantId
+                        : null,
+                    variant_count: Number.isFinite(variantCount)
+                        ? variantCount
+                        : null,
+                    status,
+                    out_of_stock: outOfStock,
+                    hint:
+                        outOfStock && labels.out_of_stock
+                            ? labels.out_of_stock
+                            : "",
+                };
+            });
+
+    const state = reactive({
+        items: normaliseProducts(products),
+        loadingMore: false,
+        loadError: "",
+    });
+
+    const pagination = reactive({
+        total: normaliseNumber(
+            paginationPayload.total,
+            state.items.length
+        ),
+        limit:
+            normaliseNumber(
+                paginationPayload.limit,
+                state.items.length || 12
+            ) || 12,
+        start: normaliseNumber(paginationPayload.start, 0),
+        pages: Math.max(
+            1,
+            normaliseNumber(paginationPayload.pages, 1)
+        ),
+        current: Math.max(
+            1,
+            normaliseNumber(paginationPayload.current, 1)
+        ),
+        mode:
+            paginationPayload.mode === "infinite"
+                ? "infinite"
+                : "paged",
+        base:
+            typeof paginationPayload.base === "string" &&
+            paginationPayload.base !== ""
+                ? paginationPayload.base
+                : links.search,
+        search:
+            typeof paginationPayload.search === "string"
+                ? paginationPayload.search
+                : initialSearch,
+    });
+
+    pagination.total = Math.max(
+        pagination.total || state.items.length,
+        state.items.length
+    );
+    pagination.pages = Math.max(1, pagination.pages || 1);
+    pagination.current = Math.max(1, pagination.current || 1);
 
     const filters = categories
         .filter((item) => item && typeof item === "object")
@@ -322,10 +395,74 @@ export default function mountCategoryIsland(el) {
                 v-else-if="product.out_of_stock"
                 class="nxp-ec-product-card__hint nxp-ec-product-card__hint--alert"
               >
-                {{ labels.out_of_stock }}
+                {{ product.hint }}
               </p>
             </div>
           </article>
+        </div>
+
+        <div
+          v-if="pagination.pages > 1 || pagination.mode === 'infinite'"
+          class="nxp-ec-category__pagination-shell"
+        >
+          <template v-if="pagination.mode === 'paged'">
+            <nav
+              v-if="pagination.pages > 1"
+              class="nxp-ec-category__pagination"
+              :aria-label="labels.pagination_label"
+            >
+              <span class="nxp-ec-category__pagination-meta">
+                {{ pageSummary }}
+              </span>
+              <div class="nxp-ec-category__pagination-links">
+                <a
+                  v-if="prevLink"
+                  class="nxp-ec-category__pagination-link"
+                  :href="prevLink"
+                >
+                  {{ labels.prev }}
+                </a>
+                <a
+                  v-if="nextLink"
+                  class="nxp-ec-category__pagination-link"
+                  :href="nextLink"
+                >
+                  {{ labels.next }}
+                </a>
+              </div>
+            </nav>
+          </template>
+          <template v-else>
+            <div class="nxp-ec-category__load-more">
+              <button
+                v-if="hasMore"
+                type="button"
+                class="nxp-ec-btn nxp-ec-btn--ghost nxp-ec-category__load-more-button"
+                :disabled="loadingMore"
+                @click="loadMore"
+              >
+                <span
+                  v-if="loadingMore"
+                  class="nxp-ec-category__spinner"
+                  aria-hidden="true"
+                ></span>
+                {{ loadingMore ? labels.loading_more : labels.load_more }}
+              </button>
+              <span
+                v-else
+                class="nxp-ec-category__load-more-label"
+              >
+                {{ labels.no_more }}
+              </span>
+              <p
+                v-if="loadError"
+                class="nxp-ec-category__hint nxp-ec-category__hint--error"
+              >
+                {{ loadError }}
+              </p>
+            </div>
+            <div ref="sentinel" class="nxp-ec-category__sentinel" aria-hidden="true"></div>
+          </template>
         </div>
       </div>
     `,
@@ -337,7 +474,7 @@ export default function mountCategoryIsland(el) {
                 "Products";
             const search = ref(initialSearch);
 
-            const filteredProducts = computed(() => enrichedProducts);
+            const filteredProducts = computed(() => state.items);
 
             const isActive = (filter) => {
                 const slug =
@@ -349,20 +486,8 @@ export default function mountCategoryIsland(el) {
             const quickState = reactive({});
             const keyFor = (product) =>
                 product.id || product.slug || product.title || "product";
-            const { activeImage, startCycle, stopCycle } = useImageRotator(keyFor);
-
-            const hasSingleVariant = (product) => {
-                const count = Number.parseInt(
-                    product && product.variant_count,
-                    10
-                );
-
-                if (Number.isFinite(count)) {
-                    return count === 1;
-                }
-
-                return !!(product && product.primary_variant_id);
-            };
+            const { activeImage, startCycle, stopCycle } =
+                useImageRotator(keyFor);
 
             const ensureState = (key) => {
                 if (!quickState[key]) {
@@ -372,12 +497,185 @@ export default function mountCategoryIsland(el) {
                 return quickState[key];
             };
 
+            const hasNextPage = computed(
+                () => pagination.current < pagination.pages
+            );
+            const hasPrevPage = computed(() => pagination.current > 1);
+            const hasMore = computed(
+                () => state.items.length < pagination.total
+            );
+
+            const buildPageUrl = (startValue, format = "json") => {
+                const base = pagination.base || links.search || "";
+
+                try {
+                    const url = new URL(base, window.location.origin);
+                    const limit = Number.parseInt(pagination.limit, 10);
+                    const start = Number.parseInt(startValue, 10);
+                    const searchValue =
+                        (pagination.search || initialSearch || "").trim();
+
+                    if (Number.isFinite(limit) && limit > 0) {
+                        url.searchParams.set("limit", String(limit));
+                    } else {
+                        url.searchParams.delete("limit");
+                    }
+
+                    if (Number.isFinite(start) && start > 0) {
+                        url.searchParams.set("start", String(start));
+                    } else {
+                        url.searchParams.delete("start");
+                    }
+
+                    if (searchValue) {
+                        url.searchParams.set("q", searchValue);
+                    } else {
+                        url.searchParams.delete("q");
+                    }
+
+                    if (format === "json") {
+                        url.searchParams.set("format", "json");
+                    } else {
+                        url.searchParams.delete("format");
+                    }
+
+                    return url.toString();
+                } catch (error) {
+                    return base;
+                }
+            };
+
+            const prevLink = computed(() => {
+                if (!hasPrevPage.value) {
+                    return "";
+                }
+
+                const limit = Number.isFinite(Number(pagination.limit))
+                    ? Number(pagination.limit)
+                    : 0;
+                const start = Number.isFinite(Number(pagination.start))
+                    ? Number(pagination.start)
+                    : 0;
+                const prevStart = Math.max(0, start - limit);
+
+                return buildPageUrl(prevStart, "html");
+            });
+
+            const nextLink = computed(() => {
+                if (!hasNextPage.value) {
+                    return "";
+                }
+
+                const limit = Number.isFinite(Number(pagination.limit))
+                    ? Number(pagination.limit)
+                    : 0;
+                const startValue = Number.isFinite(Number(pagination.start))
+                    ? Number(pagination.start) + limit
+                    : state.items.length;
+
+                return buildPageUrl(startValue, "html");
+            });
+
+            const pageSummary = computed(() => {
+                const template = labels.page_of || "Page %s of %s";
+
+                return template
+                    .replace("%s", pagination.current || 1)
+                    .replace("%s", pagination.pages || 1);
+            });
+
+            const applyPagination = (payload = {}) => {
+                const numericKeys = [
+                    "total",
+                    "limit",
+                    "start",
+                    "pages",
+                    "current",
+                ];
+
+                numericKeys.forEach((key) => {
+                    const numeric = normaliseNumber(payload[key], NaN);
+
+                    if (Number.isFinite(numeric)) {
+                        pagination[key] = numeric;
+                    }
+                });
+
+                if (
+                    payload.mode === "infinite" ||
+                    payload.mode === "paged"
+                ) {
+                    pagination.mode = payload.mode;
+                }
+
+                if (typeof payload.search === "string") {
+                    pagination.search = payload.search;
+                }
+
+                pagination.total = Math.max(
+                    pagination.total || state.items.length,
+                    state.items.length
+                );
+                pagination.pages = Math.max(1, pagination.pages || 1);
+                pagination.current = Math.max(1, pagination.current || 1);
+            };
+
+            const loadMore = async () => {
+                if (state.loadingMore || !hasMore.value) {
+                    return;
+                }
+
+                const limit = Number.isFinite(Number(pagination.limit))
+                    ? Number(pagination.limit)
+                    : 0;
+                const startValue =
+                    Number.isFinite(Number(pagination.start)) && limit > 0
+                        ? Number(pagination.start) + limit
+                        : state.items.length;
+
+                state.loadingMore = true;
+                state.loadError = "";
+
+                try {
+                    const response = await fetch(
+                        buildPageUrl(startValue, "json"),
+                        {
+                            headers: { Accept: "application/json" },
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(labels.error_generic);
+                    }
+
+                    const json = await response.json();
+                    const data =
+                        json && typeof json === "object" && json.data && typeof json.data === "object"
+                            ? json.data
+                            : json;
+                    const newProducts = normaliseProducts(
+                        data.products || []
+                    );
+
+                    if (newProducts.length) {
+                        state.items.push(...newProducts);
+                    }
+
+                    applyPagination(data.pagination || {});
+                } catch (error) {
+                    state.loadError =
+                        (error && error.message) || labels.load_error;
+                } finally {
+                    state.loadingMore = false;
+                }
+            };
+
             const quickAdd = async (product) => {
                 const key = keyFor(product);
-                const state = ensureState(key);
-                state.loading = false;
-                state.error = "";
-                state.success = false;
+                const stateRef = ensureState(key);
+                stateRef.loading = false;
+                stateRef.error = "";
+                stateRef.success = false;
 
                 if (!cartEndpoints.add) {
                     window.location.href = product.link || links.search;
@@ -385,22 +683,22 @@ export default function mountCategoryIsland(el) {
                 }
 
                 if (product?.out_of_stock) {
-                    state.error = labels.out_of_stock;
+                    stateRef.error = labels.out_of_stock;
                     return;
                 }
 
-                if (!hasSingleVariant(product)) {
-                    state.error = labels.select_variant;
+                if (
+                    !product ||
+                    !product.primary_variant_id ||
+                    (product.variant_count &&
+                        Number(product.variant_count) > 1)
+                ) {
+                    stateRef.error = labels.select_variant;
                     window.location.href = product.link || links.search;
                     return;
                 }
 
-                if (!product || !product.primary_variant_id) {
-                    state.error = labels.error_generic;
-                    return;
-                }
-
-                state.loading = true;
+                stateRef.loading = true;
 
                 try {
                     const json = await api.postForm(cartEndpoints.add, {
@@ -411,7 +709,7 @@ export default function mountCategoryIsland(el) {
 
                     const cart = json.data?.cart || null;
 
-                    state.success = true;
+                    stateRef.success = true;
 
                     if (cart) {
                         window.dispatchEvent(
@@ -421,17 +719,52 @@ export default function mountCategoryIsland(el) {
                         );
                     }
                 } catch (error) {
-                    state.error =
+                    stateRef.error =
                         (error && error.message) || labels.error_generic;
                 } finally {
-                    state.loading = false;
+                    stateRef.loading = false;
                 }
             };
+
+            const sentinel = ref(null);
+            let observer = null;
+
+            const observeMore = () => {
+                if (pagination.mode !== "infinite") {
+                    return;
+                }
+
+                const target = sentinel.value;
+
+                if (!target || typeof IntersectionObserver === "undefined") {
+                    return;
+                }
+
+                observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                loadMore();
+                            }
+                        });
+                    },
+                    { rootMargin: "200px 0px", threshold: 0.1 }
+                );
+
+                observer.observe(target);
+            };
+
+            onMounted(observeMore);
+            onBeforeUnmount(() => {
+                if (observer) {
+                    observer.disconnect();
+                    observer = null;
+                }
+            });
 
             return {
                 title,
                 labels,
-                products: enrichedProducts,
                 filters,
                 links,
                 cartLinks,
@@ -445,6 +778,15 @@ export default function mountCategoryIsland(el) {
                 activeImage,
                 startCycle,
                 stopCycle,
+                pagination,
+                hasMore,
+                loadMore,
+                loadingMore: computed(() => state.loadingMore),
+                loadError: computed(() => state.loadError),
+                prevLink,
+                nextLink,
+                pageSummary,
+                sentinel,
             };
         },
     });
