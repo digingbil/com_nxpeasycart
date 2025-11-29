@@ -4,9 +4,9 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 \defined('_JEXEC') or die;
 
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Joomla\CMS\Language\Text;
+use Joomla\Http\Http;
+use Joomla\Http\HttpFactory;
 use RuntimeException;
 
 /**
@@ -14,15 +14,15 @@ use RuntimeException;
  */
 class PayPalGateway implements PaymentGatewayInterface
 {
-    private ClientInterface $http;
+    private Http $http;
 
     /** @var array<string, mixed> */
     private array $config;
 
-    public function __construct(array $config, ClientInterface $http)
+    public function __construct(array $config, ?Http $http = null)
     {
         $this->config = $config;
-        $this->http   = $http;
+        $this->http   = $http ?? HttpFactory::getHttp();
     }
 
     public function createHostedCheckout(array $order, array $preferences = []): array
@@ -62,18 +62,27 @@ class PayPalGateway implements PaymentGatewayInterface
         }
 
         try {
-            $response = $this->http->request('POST', $this->apiBase() . '/v2/checkout/orders', [
-                'headers' => [
-                    'Content-Type'  => 'application/json',
-                    'Authorization' => 'Bearer ' . $accessToken,
-                ],
-                'json' => $body,
-            ]);
-        } catch (GuzzleException $exception) {
+            $headers = [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
+
+            $response = $this->http->post(
+                $this->apiBase() . '/v2/checkout/orders',
+                json_encode($body),
+                $headers
+            );
+        } catch (\Exception $exception) {
             throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
 
-        $payload = json_decode((string) $response->getBody(), true);
+        if ($response->code >= 400) {
+            $errorData = json_decode($response->body, true);
+            $errorMsg  = $errorData['message'] ?? $errorData['error_description'] ?? 'PayPal API error (HTTP ' . $response->code . ')';
+            throw new RuntimeException($errorMsg);
+        }
+
+        $payload = json_decode($response->body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || empty($payload['links'])) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_ORDER_FAILED'));
@@ -134,17 +143,25 @@ class PayPalGateway implements PaymentGatewayInterface
     private function fetchAccessToken(string $clientId, string $clientSecret): string
     {
         try {
-            $response = $this->http->request('POST', $this->apiBase() . '/v1/oauth2/token', [
-                'auth'        => [$clientId, $clientSecret],
-                'form_params' => [
-                    'grant_type' => 'client_credentials',
-                ],
-            ]);
-        } catch (GuzzleException $exception) {
+            $headers = [
+                'Authorization' => 'Basic ' . base64_encode($clientId . ':' . $clientSecret),
+                'Content-Type'  => 'application/x-www-form-urlencoded',
+            ];
+
+            $response = $this->http->post(
+                $this->apiBase() . '/v1/oauth2/token',
+                'grant_type=client_credentials',
+                $headers
+            );
+        } catch (\Exception $exception) {
             throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
 
-        $payload = json_decode((string) $response->getBody(), true);
+        if ($response->code >= 400) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_TOKEN_FAILED'));
+        }
+
+        $payload = json_decode($response->body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || empty($payload['access_token'])) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_TOKEN_FAILED'));
@@ -209,14 +226,17 @@ class PayPalGateway implements PaymentGatewayInterface
         ];
 
         try {
-            $response = $this->http->request('POST', $this->apiBase() . '/v1/notifications/verify-webhook-signature', [
-                'headers' => [
-                    'Content-Type'  => 'application/json',
-                    'Authorization' => 'Bearer ' . $accessToken,
-                ],
-                'json' => $verificationBody,
-            ]);
-        } catch (GuzzleException $exception) {
+            $headers = [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $accessToken,
+            ];
+
+            $response = $this->http->post(
+                $this->apiBase() . '/v1/notifications/verify-webhook-signature',
+                json_encode($verificationBody),
+                $headers
+            );
+        } catch (\Exception $exception) {
             throw new RuntimeException(
                 Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_VERIFICATION_FAILED') . ': ' . $exception->getMessage(),
                 0,
@@ -224,7 +244,11 @@ class PayPalGateway implements PaymentGatewayInterface
             );
         }
 
-        $result = json_decode((string) $response->getBody(), true);
+        if ($response->code >= 400) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_VERIFICATION_FAILED'));
+        }
+
+        $result = json_decode($response->body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PAYPAL_WEBHOOK_VERIFICATION_INVALID'));

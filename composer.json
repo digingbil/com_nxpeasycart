@@ -1,70 +1,68 @@
 {
-    "name": "nxp/easy-cart",
-    "description": "Joomla e-commerce component focused on clarity and speed to a first sale.",
-    "type": "library",
-    "version": "0.1.0",
-    "license": "GPL-3.0-or-later",
-    "require": {
-        "php": "^8.0",
-        "brick/money": "^0.9",
-        "dompdf/dompdf": "^2.0",
-        "guzzlehttp/guzzle": "^7.8",
-        "psr/simple-cache": "^3.0",
-        "ramsey/uuid": "^4.7"
-    },
-    "require-dev": {
-        "joomla/joomla-cms": "^5.0",
-        "phpstan/phpstan": "^1.11",
-        "friendsofphp/php-cs-fixer": "^3.58",
-        "phpunit/phpunit": "^10.5"
-    },
-    "autoload": {
-        "psr-4": {
-            "Joomla\\\\Component\\\\Nxpeasycart\\\\Administrator\\\\": "administrator/components/com_nxpeasycart/src/Administrator/",
-            "Joomla\\\\Component\\\\Nxpeasycart\\\\Site\\\\": "components/com_nxpeasycart/src/"
-        }
-    },
-    "config": {
-        "sort-packages": true,
-        "platform": {
-            "ext-ldap": "8.3.0"
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/joomla/joomla-cms.git"
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/joomla-backports/json-api-php.git",
-            "no-api": true,
-            "canonical": false
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/joomla-framework/filter.git",
-            "canonical": false
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/joomla-backports/portable-utf8.git",
-            "no-api": true,
-            "canonical": false
-        },
-        {
-            "type": "vcs",
-            "url": "https://github.com/joomla-backports/php-tuf.git",
-            "no-api": true,
-            "canonical": false
-        }
-    ],
-    "scripts": {
-        "lint": "php-cs-fixer fix --dry-run --diff",
-        "fix": "php-cs-fixer fix",
-        "test": "phpunit",
-        "stan": "phpstan analyse"
+  "name": "nxp/easy-cart",
+  "description": "Joomla e-commerce component focused on clarity and speed to a first sale.",
+  "type": "library",
+  "version": "0.1.5",
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "php": "^8.0",
+    "brick/money": "^0.9",
+    "dompdf/dompdf": "^2.0",
+    "ramsey/uuid": "^4.7"
+  },
+  "require-dev": {
+    "joomla/joomla-cms": "^5.0",
+    "phpstan/phpstan": "^1.11",
+    "friendsofphp/php-cs-fixer": "^3.58",
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Joomla\\\\Component\\\\Nxpeasycart\\\\Administrator\\\\": "administrator/components/com_nxpeasycart/src/Administrator/",
+      "Joomla\\\\Component\\\\Nxpeasycart\\\\Site\\\\": "components/com_nxpeasycart/src/"
     }
+  },
+  "config": {
+    "sort-packages": true,
+    "platform": {
+      "ext-ldap": "8.3.0"
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/joomla/joomla-cms.git"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/joomla-backports/json-api-php.git",
+      "no-api": true,
+      "canonical": false
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/joomla-framework/filter.git",
+      "canonical": false
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/joomla-backports/portable-utf8.git",
+      "no-api": true,
+      "canonical": false
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/joomla-backports/php-tuf.git",
+      "no-api": true,
+      "canonical": false
+    }
+  ],
+  "scripts": {
+    "lint": "php-cs-fixer fix --dry-run --diff",
+    "fix": "php-cs-fixer fix",
+    "test": "phpunit",
+    "stan": "phpstan analyse"
+  }
 }

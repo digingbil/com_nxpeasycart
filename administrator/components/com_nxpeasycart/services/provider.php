@@ -38,10 +38,9 @@ use Joomla\Component\Nxpeasycart\Site\Service\Router as EasyCartRouter;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Router\LandingAliasRule;
-use GuzzleHttp\ClientInterface;
 use Ramsey\Uuid\Uuid;
 
-$needsVendor = !class_exists(ClientInterface::class, false) || !class_exists(Uuid::class, false);
+$needsVendor = !class_exists(Uuid::class, false);
 $runningInsideJoomla = \defined('JPATH_LIBRARIES') && is_file(JPATH_LIBRARIES . '/src/Layout/FileLayout.php');
 
 if ($needsVendor) {
@@ -65,7 +64,7 @@ if ($needsVendor) {
         if (is_file($autoload)) {
             require_once $autoload;
 
-            if (class_exists(ClientInterface::class, false) && class_exists(Uuid::class, false)) {
+            if (class_exists(Uuid::class, false)) {
                 break;
             }
         }

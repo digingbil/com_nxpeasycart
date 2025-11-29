@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Simple CLI health check ensuring the Joomla instance can autoload the
- * third-party libraries the component depends on (Guzzle + Ramsey UUID).
+ * third-party libraries the component depends on (Ramsey UUID + Brick Money).
  *
  * Usage:
  *   php tools/check-autoload.php [/path/to/joomla/root]
@@ -59,12 +59,12 @@ if (is_file($framework)) {
 
 $targets = [
     [
-        'name'  => 'GuzzleHttp\\ClientInterface',
-        'type'  => 'interface',
+        'name'  => 'Ramsey\\Uuid\\Uuid',
+        'type'  => 'class',
         'state' => false,
     ],
     [
-        'name'  => 'Ramsey\\Uuid\\Uuid',
+        'name'  => 'Brick\\Money\\Money',
         'type'  => 'class',
         'state' => false,
     ],

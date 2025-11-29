@@ -4,12 +4,12 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 \defined('_JEXEC') or die;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\ClientInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
+use Joomla\Http\Http;
+use Joomla\Http\HttpFactory;
 use RuntimeException;
 
 /**
@@ -21,7 +21,7 @@ class PaymentGatewayManager
 
     private OrderService $orders;
 
-    private ClientInterface $http;
+    private Http $http;
 
     private MailService $mailer;
 
@@ -29,11 +29,11 @@ class PaymentGatewayManager
         PaymentGatewayService $config,
         OrderService $orders,
         MailService $mailer,
-        ?ClientInterface $http = null
+        ?Http $http = null
     ) {
         $this->config = $config;
         $this->orders = $orders;
-        $this->http   = $http ?? new Client();
+        $this->http   = $http ?? HttpFactory::getHttp();
         $this->mailer = $mailer;
     }
 

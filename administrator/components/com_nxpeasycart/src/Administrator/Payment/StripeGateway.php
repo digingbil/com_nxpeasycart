@@ -4,9 +4,9 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 \defined('_JEXEC') or die;
 
-use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Joomla\CMS\Language\Text;
+use Joomla\Http\Http;
+use Joomla\Http\HttpFactory;
 use RuntimeException;
 
 /**
@@ -14,15 +14,15 @@ use RuntimeException;
  */
 class StripeGateway implements PaymentGatewayInterface
 {
-    private ClientInterface $http;
+    private Http $http;
 
     /** @var array<string, mixed> */
     private array $config;
 
-    public function __construct(array $config, ClientInterface $http)
+    public function __construct(array $config, ?Http $http = null)
     {
         $this->config = $config;
-        $this->http   = $http;
+        $this->http   = $http ?? HttpFactory::getHttp();
     }
 
     public function createHostedCheckout(array $order, array $preferences = []): array
@@ -53,18 +53,28 @@ class StripeGateway implements PaymentGatewayInterface
         }
 
         try {
-            $response = $this->http->request('POST', 'https://api.stripe.com/v1/checkout/sessions', [
-                'auth'    => [$secret, ''],
-                'headers' => [
-                    'Stripe-Version' => '2023-10-16',
-                ],
-                'form_params' => $body,
-            ]);
-        } catch (GuzzleException $exception) {
+            $headers = [
+                'Authorization'  => 'Basic ' . base64_encode($secret . ':'),
+                'Stripe-Version' => '2023-10-16',
+                'Content-Type'   => 'application/x-www-form-urlencoded',
+            ];
+
+            $response = $this->http->post(
+                'https://api.stripe.com/v1/checkout/sessions',
+                http_build_query($body),
+                $headers
+            );
+        } catch (\Exception $exception) {
             throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
 
-        $payload = json_decode((string) $response->getBody(), true);
+        if ($response->code >= 400) {
+            $errorData = json_decode($response->body, true);
+            $errorMsg  = $errorData['error']['message'] ?? 'Stripe API error (HTTP ' . $response->code . ')';
+            throw new RuntimeException($errorMsg);
+        }
+
+        $payload = json_decode($response->body, true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !isset($payload['id'], $payload['url'])) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_STRIPE_SESSION_FAILED'));
