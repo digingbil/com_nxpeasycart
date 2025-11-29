@@ -3,7 +3,6 @@
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
-use NumberFormatter;
 
 /** @var array<string, mixed> $order */
 /** @var array<string, mixed> $store */
@@ -26,11 +25,21 @@ if ($publicToken !== '') {
 $formatMoney = static function (int $cents) use ($currency): string {
     $amount = $cents / 100;
 
-    try {
-        return (new NumberFormatter(null, NumberFormatter::CURRENCY))->formatCurrency($amount, $currency);
-    } catch (Throwable $exception) {
-        return sprintf('%s %.2f', $currency, $amount);
+    if (class_exists('NumberFormatter', false)) {
+        try {
+            $locale = locale_get_default() ?: 'en_US';
+            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+            $formatted = $formatter->formatCurrency($amount, $currency);
+
+            if ($formatted !== false) {
+                return $formatted;
+            }
+        } catch (\Throwable $exception) {
+            // Fall through to simple format
+        }
     }
+
+    return sprintf('%s %.2f', $currency, $amount);
 };
 
 $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_transfer';
