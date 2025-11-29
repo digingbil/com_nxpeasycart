@@ -448,9 +448,12 @@
                         {{
                             __(
                                 "COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS_HELP",
-                                "Each product needs at least one variant with a price and currency."
+                                "Each product needs at least one variant with a price."
                             )
                         }}
+                        <template v-if="baseCurrency">
+                            ({{ __("COM_NXPEASYCART_FIELD_VARIANT_CURRENCY_NOTE", "All prices in %s", [baseCurrency]) }})
+                        </template>
                     </p>
 
                     <article
@@ -539,38 +542,6 @@
                                     @blur="formatVariantPrice(index)"
                                     required
                                 />
-                            </div>
-
-                            <div class="nxp-ec-form-field">
-                                <label
-                                    class="nxp-ec-form-label"
-                                    :for="`variant-currency-${index}`"
-                                >
-                                    {{
-                                        __(
-                                            "COM_NXPEASYCART_FIELD_VARIANT_CURRENCY",
-                                            "Currency"
-                                        )
-                                    }}
-                                </label>
-                                <input
-                                    :id="`variant-currency-${index}`"
-                                    class="nxp-ec-form-input"
-                                    type="text"
-                                    maxlength="3"
-                                    v-model.trim="variant.currency"
-                                    readonly
-                                    aria-readonly="true"
-                                />
-                                <p class="nxp-ec-form-help">
-                                    {{
-                                        __(
-                                            "COM_NXPEASYCART_FIELD_VARIANT_CURRENCY_HELP",
-                                            "Variants inherit the store base currency (%s).",
-                                            [baseCurrency]
-                                        )
-                                    }}
-                                </p>
                             </div>
 
                             <div class="nxp-ec-form-field">

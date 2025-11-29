@@ -3,6 +3,12 @@ import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 
 export default function mountCartSummaryIsland(el) {
+    // Hide the static PHP fallback now that Vue is mounting
+    const fallback = el.querySelector(".nxp-ec-cart-summary__fallback");
+    if (fallback) {
+        fallback.style.display = "none";
+    }
+
     const locale = el.dataset.nxpLocale || undefined;
     const currencyAttr = (el.dataset.nxpCurrency || "").trim() || undefined;
     const payload = parsePayload(el.dataset.nxpCartSummary, {});

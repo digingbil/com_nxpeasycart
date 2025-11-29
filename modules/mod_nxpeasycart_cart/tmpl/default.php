@@ -99,37 +99,27 @@ $countLabel = $itemCount === 1
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
-    <noscript>
-        <div class="nxp-ec-cart-summary__inner">
-            <strong class="nxp-ec-cart-summary__title">
-                <?php echo Text::_('MOD_NXPEASYCART_CART_TITLE'); ?>
-            </strong>
-
-            <?php if ($itemCount === 0) : ?>
-                <p class="nxp-ec-cart-summary__empty">
-                    <?php echo Text::_('MOD_NXPEASYCART_CART_EMPTY'); ?>
-                </p>
-            <?php else : ?>
-                <dl class="nxp-ec-cart-summary__meta">
-                    <div>
-                        <dt><?php echo Text::_('MOD_NXPEASYCART_CART_ITEM_LABEL'); ?></dt>
-                        <dd><?php echo htmlspecialchars($countLabel, ENT_QUOTES, 'UTF-8'); ?></dd>
-                    </div>
-                    <div>
-                        <dt><?php echo Text::_('MOD_NXPEASYCART_CART_TOTAL_LABEL'); ?></dt>
-                        <dd><?php echo htmlspecialchars($formattedTotal, ENT_QUOTES, 'UTF-8'); ?></dd>
-                    </div>
-                </dl>
-
-                <div class="nxp-ec-cart-summary__actions">
-                    <a class="nxp-ec-btn nxp-ec-btn--ghost" href="<?php echo htmlspecialchars($cartLink, ENT_QUOTES, 'UTF-8'); ?>">
-                        <?php echo Text::_('MOD_NXPEASYCART_CART_VIEW_CART'); ?>
-                    </a>
-                    <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars($checkoutLink, ENT_QUOTES, 'UTF-8'); ?>">
-                        <?php echo Text::_('MOD_NXPEASYCART_CART_CHECKOUT'); ?>
-                    </a>
-                </div>
-            <?php endif; ?>
-        </div>
-    </noscript>
+    <!-- Static fallback: shows until Vue island mounts, or when JS fails to load -->
+    <div class="nxp-ec-cart-summary__inner nxp-ec-cart-summary__fallback">
+        <?php if ($itemCount === 0) : ?>
+            <p class="nxp-ec-cart-summary__empty">
+                <?php echo Text::_('MOD_NXPEASYCART_CART_EMPTY'); ?>
+            </p>
+        <?php else : ?>
+            <a href="<?php echo htmlspecialchars($cartLink, ENT_QUOTES, 'UTF-8'); ?>" class="nxp-ec-cart-summary__link">
+                <span class="nxp-ec-cart-summary__count"><?php echo htmlspecialchars($countLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                <span class="nxp-ec-cart-summary__total">
+                    <?php echo Text::_('MOD_NXPEASYCART_CART_TOTAL_LABEL'); ?>: <?php echo htmlspecialchars($formattedTotal, ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+            </a>
+            <div class="nxp-ec-cart-summary__actions">
+                <a class="nxp-ec-btn nxp-ec-btn--ghost" href="<?php echo htmlspecialchars($cartLink, ENT_QUOTES, 'UTF-8'); ?>">
+                    <?php echo Text::_('MOD_NXPEASYCART_CART_VIEW_CART'); ?>
+                </a>
+                <a class="nxp-ec-btn nxp-ec-btn--primary" href="<?php echo htmlspecialchars($checkoutLink, ENT_QUOTES, 'UTF-8'); ?>">
+                    <?php echo Text::_('MOD_NXPEASYCART_CART_CHECKOUT'); ?>
+                </a>
+            </div>
+        <?php endif; ?>
+    </div>
 </section>

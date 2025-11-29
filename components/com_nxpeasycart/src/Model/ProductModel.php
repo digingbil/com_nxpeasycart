@@ -233,7 +233,8 @@ class ProductModel extends BaseDatabaseModel
                 }
             }
 
-            $currency = strtoupper((string) ($row->currency ?? $baseCurrency));
+            // Single-currency MVP: always use configured base currency
+            $currency = $baseCurrency;
 
             $variants[] = [
                 'id'          => (int) $row->id,

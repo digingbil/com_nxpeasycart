@@ -31,6 +31,17 @@
         </schemas>
     </update>
 
+    <!-- Site files (frontend) - at root level like com_content -->
+    <files folder="site">
+        <filename>index.html</filename>
+        <folder>src</folder>
+        <folder>tmpl</folder>
+    </files>
+
+    <languages folder="language">
+        <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
+    </languages>
+
     <media destination="com_nxpeasycart" folder="media">
         <filename>index.html</filename>
         <filename>joomla.asset.json</filename>
@@ -39,8 +50,6 @@
     </media>
 
     <administration>
-        <namespace path="src/Administrator">Joomla\Component\Nxpeasycart\Administrator</namespace>
-
         <menu img="class:cart">COM_NXPEASYCART</menu>
 
         <submenu>
@@ -71,19 +80,6 @@
             <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
         </languages>
     </administration>
-
-    <site>
-        <namespace path="src">Joomla\Component\Nxpeasycart\Site</namespace>
-
-        <files folder="site">
-            <folder>src</folder>
-            <folder>tmpl</folder>
-        </files>
-
-        <languages folder="language">
-            <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
-        </languages>
-    </site>
 
     <updateservers>
         <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nexusplugins.com/com_nxpeasycart.xml</server>

@@ -385,13 +385,15 @@ class LandingModel extends BaseDatabaseModel
         $db->setQuery($query, 0, $limit);
 
         $rows         = $db->loadObjectList() ?: [];
+        // Always use configured base currency (single-currency MVP per INSTRUCTIONS.md 3.1)
         $baseCurrency = ConfigHelper::getBaseCurrency();
 
         $products = [];
 
         foreach ($rows as $row) {
             $images   = $this->decodeImages($row->images ?? '');
-            $currency = $row->currency !== null ? strtoupper((string) $row->currency) : $baseCurrency;
+            // Single-currency MVP: always use configured base currency, not stored variant currency
+            $currency = $baseCurrency;
             $status   = ProductStatus::normalise($row->active ?? ProductStatus::INACTIVE);
 
             $minPrice = $row->min_price_cents !== null ? (int) $row->min_price_cents : null;
