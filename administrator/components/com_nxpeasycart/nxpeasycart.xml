@@ -31,7 +31,7 @@
         </schemas>
     </update>
 
-    <media destination="com_nxpeasycart" folder="../../media/com_nxpeasycart">
+    <media destination="com_nxpeasycart" folder="media">
         <filename>index.html</filename>
         <filename>joomla.asset.json</filename>
         <folder>css</folder>
@@ -54,19 +54,19 @@
             <menu link="option=com_nxpeasycart&amp;view=logs" view="logs">COM_NXPEASYCART_MENU_LOGS</menu>
         </submenu>
 
-        <files>
+        <files folder="admin">
             <folder>services</folder>
             <folder>src</folder>
             <folder>sql</folder>
             <folder>forms</folder>
-            <folder>language</folder>
+            <folder>templates</folder>
             <folder>tmpl</folder>
+            <folder>vendor</folder>
             <filename>config.xml</filename>
-            <filename>script.php</filename>
             <filename>LICENSE.txt</filename>
         </files>
 
-        <languages folder="language">
+        <languages folder="admin/language">
             <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
             <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
         </languages>
@@ -75,23 +75,13 @@
     <site>
         <namespace path="src">Joomla\Component\Nxpeasycart\Site</namespace>
 
-        <files>
+        <files folder="site">
             <folder>src</folder>
             <folder>tmpl</folder>
-            <filename>com_nxpeasycart.php</filename>
         </files>
 
-        <menu link="index.php?option=com_nxpeasycart&amp;view=landing" view="landing">COM_NXPEASYCART_SITE_MENU_LANDING</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=category" view="category">COM_NXPEASYCART_SITE_MENU_CATEGORY</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=product" view="product">COM_NXPEASYCART_SITE_MENU_PRODUCT</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=cart" view="cart">COM_NXPEASYCART_SITE_MENU_CART</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=checkout" view="checkout">COM_NXPEASYCART_SITE_MENU_CHECKOUT</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=order" view="order">COM_NXPEASYCART_SITE_MENU_ORDER</menu>
-        <menu link="index.php?option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_SITE_MENU_ORDERS</menu>
-
-        <languages folder="../../language">
+        <languages folder="language">
             <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
-            <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
         </languages>
     </site>
 
