@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade" version="5.0">
     <name>mod_nxpeasycart_cart</name>
-    <version>0.1.5</version>
+    <version>0.1.6</version>
     <author>NXP Easy Cart</author>
     <description>MOD_NXPEASYCART_CART_DESC</description>
     <files>

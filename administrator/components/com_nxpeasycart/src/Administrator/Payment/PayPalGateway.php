@@ -22,7 +22,7 @@ class PayPalGateway implements PaymentGatewayInterface
     public function __construct(array $config, ?Http $http = null)
     {
         $this->config = $config;
-        $this->http   = $http ?? HttpFactory::getHttp();
+        $this->http   = $http ?? (new HttpFactory())->getHttp();
     }
 
     public function createHostedCheckout(array $order, array $preferences = []): array

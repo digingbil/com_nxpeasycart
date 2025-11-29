@@ -22,10 +22,14 @@ class Com_NxpeasycartInstallerScript
 
     /**
      * Run on update.
+     *
+     * Note: Incremental schema updates are handled by Joomla via
+     * sql/updates/mysql/*.sql files referenced in the manifest.
+     * We do NOT re-run install.sql on updates.
      */
     public function update($parent): void
     {
-        $this->installSchema();
+        // Intentionally empty - Joomla handles incremental updates via manifest
     }
 
     /**
@@ -64,8 +68,13 @@ class Com_NxpeasycartInstallerScript
             } catch (\Throwable $exception) {
                 $message = $exception->getMessage();
 
-                // Ignore "already exists" warnings for idempotency.
-                if (stripos($message, 'already exists') !== false) {
+                // Ignore idempotency-safe errors:
+                // - "already exists" for tables/indexes
+                // - "Duplicate" for foreign key constraints
+                if (
+                    stripos($message, 'already exists') !== false
+                    || stripos($message, 'Duplicate') !== false
+                ) {
                     continue;
                 }
 

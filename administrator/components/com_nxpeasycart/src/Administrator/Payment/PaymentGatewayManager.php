@@ -33,7 +33,7 @@ class PaymentGatewayManager
     ) {
         $this->config = $config;
         $this->orders = $orders;
-        $this->http   = $http ?? HttpFactory::getHttp();
+        $this->http   = $http ?? (new HttpFactory())->getHttp();
         $this->mailer = $mailer;
     }
 
