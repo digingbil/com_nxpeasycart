@@ -7,6 +7,8 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 /**
  * Centralised payment gateway configuration manager.
+ *
+ * @since 0.1.5
  */
 class PaymentGatewayService
 {
@@ -21,6 +23,8 @@ class PaymentGatewayService
 
     /**
      * Return the stored configuration with sensitive fields masked.
+     *
+     * @since 0.1.5
      */
     public function getConfig(): array
     {
@@ -60,6 +64,8 @@ class PaymentGatewayService
 
     /**
      * Return the stored configuration including secrets.
+     *
+     * @since 0.1.5
      */
     public function getRawConfig(): array
     {
@@ -72,6 +78,8 @@ class PaymentGatewayService
      * Persist configuration updates.
      *
      * @param array<string, mixed> $payload
+     *
+     * @since 0.1.5
      */
     public function saveConfig(array $payload): array
     {
@@ -93,6 +101,8 @@ class PaymentGatewayService
 
     /**
      * Retrieve configuration for a single gateway including secrets.
+     *
+     * @since 0.1.5
      */
     public function getGatewayConfig(string $gateway): array
     {
@@ -109,6 +119,8 @@ class PaymentGatewayService
     /**
      * @param array<string, mixed> $input
      * @param array<string, mixed> $existing
+     *
+     * @since 0.1.5
      */
     private function normaliseStripe(array $input, array $existing): array
     {
@@ -129,6 +141,8 @@ class PaymentGatewayService
     /**
      * @param array<string, mixed> $input
      * @param array<string, mixed> $existing
+     *
+     * @since 0.1.5
      */
     private function normalisePaypal(array $input, array $existing): array
     {
@@ -153,6 +167,8 @@ class PaymentGatewayService
     /**
      * @param array<string, mixed> $input
      * @param array<string, mixed> $existing
+     *
+     * @since 0.1.5
      */
     private function normaliseCod(array $input, array $existing): array
     {
@@ -171,6 +187,8 @@ class PaymentGatewayService
     /**
      * @param array<string, mixed> $input
      * @param array<string, mixed> $existing
+     *
+     * @since 0.1.5
      */
     private function normaliseBankTransfer(array $input, array $existing): array
     {

@@ -11,11 +11,15 @@ use Joomla\CMS\Uri\Uri;
 
 /**
  * Hydrates cart payloads with product and variant metadata for storefront views.
+ *
+ * @since 0.1.5
  */
 class CartPresentationService
 {
     /**
      * @var DatabaseInterface
+     *
+     * @since 0.1.5
      */
     private DatabaseInterface $db;
 
@@ -23,11 +27,15 @@ class CartPresentationService
      * Cached default tax rate.
      *
      * @var array<string, mixed>|null
+     *
+     * @since 0.1.5
      */
     private ?array $defaultTaxRate = null;
 
     /**
      * CartPresentationService constructor.
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseInterface $db)
     {
@@ -40,6 +48,8 @@ class CartPresentationService
      * @param array<string, mixed> $cart
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public function hydrate(array $cart): array
     {
@@ -60,6 +70,8 @@ class CartPresentationService
      * @param array<int, array<string, mixed>> $items
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function hydrateItems(array $items): array
     {
@@ -138,6 +150,8 @@ class CartPresentationService
      * @param array<int> $ids
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchProducts(array $ids): array
     {
@@ -193,6 +207,8 @@ class CartPresentationService
 
     /**
      * Build a human-readable variant label from options/sku.
+     *
+     * @since 0.1.5
      */
     private function buildVariantLabel(?array $variant): string
     {
@@ -232,6 +248,8 @@ class CartPresentationService
      * @param array<int> $ids
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchVariants(array $ids): array
     {
@@ -276,6 +294,8 @@ class CartPresentationService
      *
      * @param array<int, array<string, mixed>> $items
      * @param array<string, mixed>|null $coupon
+     *
+     * @since 0.1.5
      */
     private function buildSummary(array $items, ?array $coupon = null): array
     {
@@ -317,6 +337,8 @@ class CartPresentationService
 
     /**
      * Resolve default tax rate from configuration.
+     *
+     * @since 0.1.5
      */
     private function defaultTaxRate(): ?array
     {
@@ -350,6 +372,8 @@ class CartPresentationService
      * Calculate tax from the default rate.
      *
      * @return array{amount: int, rate: float, inclusive: bool}
+     *
+     * @since 0.1.5
      */
     private function calculateTax(int $subtotal): array
     {

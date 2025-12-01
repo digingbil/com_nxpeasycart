@@ -11,16 +11,22 @@ use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Cart view for storefront.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $theme = [];
 
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $cart = [
         'items'   => [],

@@ -12,6 +12,8 @@ use RuntimeException;
 
 /**
  * Outgoing email helper for transactional mail.
+ *
+ * @since 0.1.5
  */
 class MailService
 {
@@ -26,6 +28,8 @@ class MailService
      * Send an order confirmation email.
      *
      * @param array<string, mixed> $order
+     *
+     * @since 0.1.5
      */
     public function sendOrderConfirmation(array $order, array $options = []): void
     {
@@ -63,6 +67,8 @@ class MailService
      *
      * @param array<string, mixed> $order
      * @param array<string, mixed> $options Tracking info: carrier, tracking_number, tracking_url
+     *
+     * @since 0.1.5
      */
     public function sendOrderShipped(array $order, array $options = []): void
     {
@@ -100,6 +106,8 @@ class MailService
      *
      * @param array<string, mixed> $order
      * @param array<string, mixed> $options Refund info: amount_cents, reason
+     *
+     * @since 0.1.5
      */
     public function sendOrderRefunded(array $order, array $options = []): void
     {
@@ -131,6 +139,8 @@ class MailService
 
     /**
      * Get store context for email templates.
+     *
+     * @since 0.1.5
      */
     private function getStoreContext(): array
     {
@@ -151,6 +161,8 @@ class MailService
 
     /**
      * Send an email with optional attachments.
+     *
+     * @since 0.1.5
      */
     private function sendMail(string $recipient, string $subject, string $body, array $attachments = []): void
     {
@@ -184,6 +196,8 @@ class MailService
      * Render a blade-style PHP template.
      *
      * @param array<string, mixed> $context
+     *
+     * @since 0.1.5
      */
     private function renderTemplate(string $name, array $context = []): string
     {
@@ -203,6 +217,8 @@ class MailService
 
     /**
      * Write attachment contents to a temporary file for the mailer to consume.
+     *
+     * @since 0.1.5
      */
     private function persistAttachment(string $contents, string $name): ?string
     {

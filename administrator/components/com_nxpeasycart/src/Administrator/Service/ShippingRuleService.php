@@ -11,6 +11,8 @@ use RuntimeException;
 
 /**
  * Shipping rule management service.
+ *
+ * @since 0.1.5
  */
 class ShippingRuleService
 {

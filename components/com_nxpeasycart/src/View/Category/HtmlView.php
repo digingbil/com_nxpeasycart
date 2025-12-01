@@ -14,6 +14,8 @@ use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Category listing view.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
@@ -21,36 +23,50 @@ class HtmlView extends BaseHtmlView
      * Template styling tokens.
      *
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $theme = [];
 
     /**
      * @var array<string, mixed>|null
+     *
+     * @since 0.1.5
      */
     protected ?array $category = null;
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $products = [];
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $categories = [];
 
     /**
      * @var array<string, int>
+     *
+     * @since 0.1.5
      */
     protected array $pagination = [];
 
     /**
      * @var string
+     *
+     * @since 0.1.5
      */
     protected string $paginationMode = 'paged';
 
     /**
      * @var string
+     *
+     * @since 0.1.5
      */
     protected string $searchTerm = '';
 

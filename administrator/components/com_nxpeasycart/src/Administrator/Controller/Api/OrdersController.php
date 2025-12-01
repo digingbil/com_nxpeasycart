@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
@@ -18,6 +19,8 @@ use RuntimeException;
 
 /**
  * Orders API controller.
+ *
+ * @since 0.1.5
  */
 class OrdersController extends AbstractJsonController
 {
@@ -27,6 +30,8 @@ class OrdersController extends AbstractJsonController
      * @param array                        $config  Controller configuration
      * @param MVCFactoryInterface|null     $factory MVC factory
      * @param CMSApplicationInterface|null $app     Application instance
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
@@ -35,6 +40,8 @@ class OrdersController extends AbstractJsonController
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function execute($task)
     {
@@ -57,6 +64,10 @@ class OrdersController extends AbstractJsonController
 
     /**
      * List orders.
+     *
+     * @return JsonResponse Paginated list of orders
+     *
+     * @since 0.1.5
      */
     protected function list(): JsonResponse
     {
@@ -82,6 +93,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Create a new order.
+     *
+     * @return JsonResponse Newly created order
+     * @throws \Throwable
+     *
+     * @since 0.1.5
      */
     protected function store(): JsonResponse
     {
@@ -99,6 +115,10 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Show a single order by id or order number.
+     *
+     * @return JsonResponse Order details
+     *
+     * @since 0.1.5
      */
     protected function show(): JsonResponse
     {
@@ -125,6 +145,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Transition an order to a new state.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function transition(): JsonResponse
     {
@@ -148,7 +173,12 @@ class OrdersController extends AbstractJsonController
     }
 
     /**
-     * Transition multiple orders.
+     * Transition (change state) multiple orders.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function bulkTransition(): JsonResponse
     {
@@ -183,6 +213,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Record a note against an order.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function note(): JsonResponse
     {
@@ -212,6 +247,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Generate and return an invoice PDF (base64) for an order.
+     *
+     * @return JsonResponse Invoice PDF (base64)
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function invoice(): JsonResponse
     {
@@ -254,6 +294,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Export orders to CSV (Excel-compatible).
+     *
+     * @return JsonResponse Export details (filename and content)
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function export(): JsonResponse
     {
@@ -279,6 +324,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Update order tracking metadata.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function tracking(): JsonResponse
     {
@@ -309,6 +359,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Manually send an order notification email.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function sendEmail(): JsonResponse
     {
@@ -324,7 +379,7 @@ class OrdersController extends AbstractJsonController
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
         }
 
-        if (!\in_array($type, ['shipped', 'refunded'], true)) {
+        if (!\in_array($type, ['shipped', 'refunded'], true)) { //Possibly add other email types in the future
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_EMAIL_TYPE'), 400);
         }
 
@@ -380,6 +435,11 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Decode the JSON request body.
+     *
+     * @return array Decoded JSON payload
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     private function decodePayload(): array
     {
@@ -400,6 +460,10 @@ class OrdersController extends AbstractJsonController
 
     /**
      * Resolve the order service from the DI container.
+     *
+     * @return OrderService Resolved order service
+     *
+     * @since 0.1.5
      */
     private function getOrderService(): OrderService
     {
@@ -427,6 +491,13 @@ class OrdersController extends AbstractJsonController
         return $container->get(OrderService::class);
     }
 
+    /**
+     * Resolve the invoice service from the DI container.
+     *
+     * @return InvoiceService
+     *
+     * @since 0.1.5
+     */
     private function getInvoiceService(): InvoiceService
     {
         $container = Factory::getContainer();
@@ -442,6 +513,7 @@ class OrdersController extends AbstractJsonController
             $container->registerServiceProvider(require $providerPath);
         }
 
+        // Fallback: create InvoiceService manually then
         if (!$container->has(InvoiceService::class)) {
             $container->set(
                 InvoiceService::class,
@@ -458,7 +530,11 @@ class OrdersController extends AbstractJsonController
     }
 
     /**
-     * Resolve the mail service from the DI container.
+     * Resolve the mail service from the Container.
+     *
+     * @return MailService
+     *
+     * @since 0.1.5
      */
     private function getMailService(): MailService
     {
@@ -475,7 +551,9 @@ class OrdersController extends AbstractJsonController
             $container->set(
                 MailService::class,
                 static function ($container): MailService {
-                    $mailer = Factory::getMailer();
+
+                    //New J! 6+ way to create a mailer
+                    $mailer = $container->get(MailerFactoryInterface::class)->createMailer();
                     return new MailService($mailer);
                 }
             );

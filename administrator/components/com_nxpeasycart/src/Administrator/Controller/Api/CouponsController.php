@@ -15,14 +15,34 @@ use RuntimeException;
 
 /**
  * Coupons API controller.
+ *
+ * @since 0.1.5
  */
 class CouponsController extends AbstractJsonController
 {
+    /**
+     * Constructor.
+     *
+     * @param array                        $config  Controller configuration
+     * @param MVCFactoryInterface|null     $factory MVC factory
+     * @param CMSApplicationInterface|null $app     Application instance
+     *
+     * @since 0.1.5
+     */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
         parent::__construct($config, $factory, $app);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param string $task The task name
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     public function execute($task)
     {
         $task = strtolower((string) $task ?: 'list');
@@ -36,6 +56,13 @@ class CouponsController extends AbstractJsonController
         };
     }
 
+    /**
+     * List coupons.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function list(): JsonResponse
     {
         $this->assertCan('core.manage');
@@ -52,6 +79,13 @@ class CouponsController extends AbstractJsonController
         return $this->respond($result);
     }
 
+    /**
+     * Create a new coupon.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function store(): JsonResponse
     {
         $this->assertCan('core.create');
@@ -64,6 +98,13 @@ class CouponsController extends AbstractJsonController
         return $this->respond(['coupon' => $coupon], 201);
     }
 
+    /**
+     * Update a coupon.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function update(): JsonResponse
     {
         $this->assertCan('core.edit');
@@ -78,6 +119,13 @@ class CouponsController extends AbstractJsonController
         return $this->respond(['coupon' => $coupon]);
     }
 
+    /**
+     * Delete one or more coupons.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function destroy(): JsonResponse
     {
         $this->assertCan('core.delete');
@@ -106,6 +154,14 @@ class CouponsController extends AbstractJsonController
         return $this->respond(['deleted' => $deleted]);
     }
 
+    /**
+     * Decode JSON request payload into associative array.
+     *
+     * @return array
+     * @throws RuntimeException When JSON is invalid
+     *
+     * @since 0.1.5
+     */
     private function decodePayload(): array
     {
         $raw = $this->input->json->getRaw();
@@ -123,6 +179,13 @@ class CouponsController extends AbstractJsonController
         return (array) $data;
     }
 
+    /**
+     * Retrieve the coupon service instance from the container.
+     *
+     * @return CouponService
+     *
+     * @since 0.1.5
+     */
     private function getCouponService(): CouponService
     {
         $container = Factory::getContainer();

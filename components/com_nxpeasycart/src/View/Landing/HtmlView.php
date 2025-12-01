@@ -15,46 +15,64 @@ use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Landing page view.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $hero = [];
 
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $search = [];
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $categoryTiles = [];
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $featured = [];
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $arrivals = [];
 
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $deals = [];
 
     /**
      * @var array<string, string>
+     *
+     * @since 0.1.5
      */
     protected array $sectionTitles = [];
 
     /**
      * @var string
+     *
+     * @since 0.1.5
      */
     protected string $trustBadge = '';
 
@@ -62,11 +80,15 @@ class HtmlView extends BaseHtmlView
      * Template styling tokens.
      *
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $theme = [];
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {
@@ -111,6 +133,8 @@ class HtmlView extends BaseHtmlView
      * Dataset passed to the Vue island.
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public function getLandingPayload(): array
     {

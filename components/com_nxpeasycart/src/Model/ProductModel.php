@@ -14,6 +14,8 @@ use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
 /**
  * Frontend product model.
+ *
+ * @since 0.1.5
  */
 class ProductModel extends BaseDatabaseModel
 {
@@ -21,11 +23,15 @@ class ProductModel extends BaseDatabaseModel
      * Cached product payload.
      *
      * @var array<string, mixed>|null
+     *
+     * @since 0.1.5
      */
     protected ?array $item = null;
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = null, $direction = null)
     {
@@ -41,6 +47,8 @@ class ProductModel extends BaseDatabaseModel
 
     /**
      * Retrieve the current product payload.
+     *
+     * @since 0.1.5
      */
     public function getItem(): ?array
     {
@@ -153,6 +161,8 @@ class ProductModel extends BaseDatabaseModel
      * Decode image payload.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function decodeImages(string $images): array
     {
@@ -203,6 +213,8 @@ class ProductModel extends BaseDatabaseModel
      * Fetch product variants for the storefront.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchVariants(int $productId): array
     {
@@ -255,6 +267,8 @@ class ProductModel extends BaseDatabaseModel
      * Summarise variant stock totals.
      *
      * @param array<int, array<string, mixed>> $variants
+     *
+     * @since 0.1.5
      */
     private function summariseStock(array $variants): array
     {
@@ -275,6 +289,8 @@ class ProductModel extends BaseDatabaseModel
      * Fetch categories attached to the product.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchCategories(int $productId, ?int $primaryCategoryId = null): array
     {
@@ -315,6 +331,8 @@ class ProductModel extends BaseDatabaseModel
      * @param array<int, array<string, mixed>> $variants
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function summarisePrices(array $variants): array
     {
@@ -353,6 +371,8 @@ class ProductModel extends BaseDatabaseModel
 
     /**
      * Format a monetary amount.
+     *
+     * @since 0.1.5
      */
     private function formatMoney(int $cents, string $currency): string
     {

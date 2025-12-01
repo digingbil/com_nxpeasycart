@@ -8,11 +8,15 @@ use Joomla\CMS\Document\HtmlDocument;
 
 /**
  * Centralised loader for storefront assets.
+ *
+ * @since 0.1.5
  */
 class SiteAssetHelper
 {
     /**
      * Register and enqueue site CSS/JS via the Web Asset Manager.
+     *
+     * @since 0.1.5
      */
     public static function useSiteAssets(HtmlDocument $document): void
     {
@@ -41,6 +45,8 @@ class SiteAssetHelper
 
     /**
      * Resolve the site JS bundle path from joomla.asset.json.
+     *
+     * @since 0.1.5
      */
     private static function resolveScriptPath(): ?string
     {

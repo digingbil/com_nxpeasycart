@@ -13,6 +13,8 @@ use RuntimeException;
 
 /**
  * Database table for product categories.
+ *
+ * @since 0.1.5
  */
 class CategoryTable extends Table
 {
@@ -23,6 +25,8 @@ class CategoryTable extends Table
      * Listing columns here ensures they get SET to NULL explicitly.
      *
      * @var array<int, string>
+     *
+     * @since 0.1.5
      */
     protected $_nullable = ['parent_id'];
 
@@ -30,6 +34,8 @@ class CategoryTable extends Table
      * Constructor.
      *
      * @param DatabaseDriver $db Database connector
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseDriver $db)
     {
@@ -41,6 +47,8 @@ class CategoryTable extends Table
      *
      * Override to ensure nullable columns (like parent_id) are included
      * in UPDATE queries even when their value is NULL.
+     *
+     * @since 0.1.5
      */
     public function store($updateNulls = true)
     {
@@ -49,6 +57,8 @@ class CategoryTable extends Table
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function check()
     {

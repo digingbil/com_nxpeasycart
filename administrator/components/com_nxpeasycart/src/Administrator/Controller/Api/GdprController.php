@@ -12,9 +12,19 @@ use RuntimeException;
 
 /**
  * GDPR utilities (export/anonymise) for administrators.
+ *
+ * @since 0.1.5
  */
 class GdprController extends AbstractJsonController
 {
+    /**
+     * {@inheritDoc}
+     *
+     * @param string $task The task name
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     public function execute($task)
     {
         $task = strtolower((string) $task ?: 'export');

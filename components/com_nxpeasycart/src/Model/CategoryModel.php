@@ -17,6 +17,8 @@ use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
  * Frontend category model.
+ *
+ * @since 0.1.5
  */
 class CategoryModel extends BaseDatabaseModel
 {
@@ -24,6 +26,8 @@ class CategoryModel extends BaseDatabaseModel
      * Currently loaded category payload.
      *
      * @var array<string, mixed>|null
+     *
+     * @since 0.1.5
      */
     protected ?array $item = null;
 
@@ -31,6 +35,8 @@ class CategoryModel extends BaseDatabaseModel
      * Cached product listing for the category.
      *
      * @var array<int, array<string, mixed>>|null
+     *
+     * @since 0.1.5
      */
     protected ?array $products = null;
 
@@ -38,11 +44,15 @@ class CategoryModel extends BaseDatabaseModel
      * Pagination metadata for the current listing.
      *
      * @var array<string, int>
+     *
+     * @since 0.1.5
      */
     protected array $pagination = [];
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = null, $direction = null)
     {
@@ -96,6 +106,8 @@ class CategoryModel extends BaseDatabaseModel
 
     /**
      * Retrieve category metadata.
+     *
+     * @since 0.1.5
      */
     public function getItem(): ?array
     {
@@ -152,6 +164,8 @@ class CategoryModel extends BaseDatabaseModel
      * Retrieve published products in the current category.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     public function getProducts(): array
     {
@@ -399,6 +413,8 @@ class CategoryModel extends BaseDatabaseModel
      * Pagination metadata for the current category listing.
      *
      * @return array<string, int>
+     *
+     * @since 0.1.5
      */
     public function getPagination(): array
     {
@@ -413,6 +429,8 @@ class CategoryModel extends BaseDatabaseModel
      * Retrieve all categories for navigation.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     public function getCategories(): array
     {
@@ -473,6 +491,8 @@ class CategoryModel extends BaseDatabaseModel
 
     /**
      * Format a money amount using the current locale.
+     *
+     * @since 0.1.5
      */
     private function formatMoney(int $cents, string $currency): string
     {
@@ -499,6 +519,8 @@ class CategoryModel extends BaseDatabaseModel
 
     /**
      * Build a human readable price label for product cards.
+     *
+     * @since 0.1.5
      */
     private function formatPriceLabel(?int $minCents, ?int $maxCents, string $currency): string
     {

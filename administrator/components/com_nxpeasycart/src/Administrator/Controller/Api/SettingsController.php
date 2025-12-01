@@ -277,6 +277,8 @@ class SettingsController extends AbstractJsonController
      * @param array<string, mixed> $existing
      *
      * @return array<string, int>
+     *
+     * @since 0.1.5
      */
     private function normaliseRateLimits(array $input, array $existing = []): array
     {
@@ -327,6 +329,8 @@ class SettingsController extends AbstractJsonController
 
     /**
      * @return array<string, int>
+     *
+     * @since 0.1.5
      */
     private function getDefaultRateLimits(): array
     {
@@ -383,6 +387,8 @@ class SettingsController extends AbstractJsonController
 
     /**
      * Get template color defaults without user overrides.
+     *
+     * @since 0.1.5
      */
     private function getTemplateDefaults(): array
     {
@@ -417,6 +423,8 @@ class SettingsController extends AbstractJsonController
 
     /**
      * Extract a simple hex color from CSS value (handles var() fallbacks).
+     *
+     * @since 0.1.5
      */
     private function extractColor(string $value): string
     {

@@ -8,6 +8,8 @@ use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 
 /**
  * Lightweight caching facade for expensive queries.
+ *
+ * @since 0.1.5
  */
 class CacheService
 {
@@ -28,6 +30,8 @@ class CacheService
      * @param string   $group
      *
      * @return T
+     *
+     * @since 0.1.5
      */
     public function remember(string $key, callable $callback, int $ttlSeconds = 300, string $group = 'com_nxpeasycart')
     {

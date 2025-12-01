@@ -21,6 +21,8 @@ use Throwable;
 
 /**
  * Order persistence and aggregation service.
+ *
+ * @since 0.1.5
  */
 class OrderService
 {
@@ -28,6 +30,8 @@ class OrderService
 
     /**
      * @var DatabaseInterface
+     *
+     * @since 0.1.5
      */
     private DatabaseInterface $db;
 
@@ -55,6 +59,8 @@ class OrderService
      * OrderService constructor.
      *
      * @param DatabaseInterface $db Database connector
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseInterface $db, ?AuditService $audit = null)
     {
@@ -82,6 +88,8 @@ class OrderService
      *   'discount_cents' => 0,
      *   'order_no' => 'EC-12345678'
      * ]
+     *
+     * @since 0.1.5
      */
     public function create(array $payload, ?int $actorId = null): array
     {
@@ -178,6 +186,8 @@ class OrderService
 
     /**
      * Fetch an order by internal identifier.
+     *
+     * @since 0.1.5
      */
     public function get(int $orderId): ?array
     {
@@ -200,6 +210,8 @@ class OrderService
 
     /**
      * Fetch an order by order number.
+     *
+     * @since 0.1.5
      */
     public function getByNumber(string $orderNo): ?array
     {
@@ -228,6 +240,8 @@ class OrderService
 
     /**
      * Fetch an order by public token.
+     *
+     * @since 0.1.5
      */
     public function getByPublicToken(string $token): ?array
     {
@@ -256,6 +270,8 @@ class OrderService
 
     /**
      * Update an order state and return the updated representation.
+     *
+     * @since 0.1.5
      */
     public function transitionState(int $orderId, string $state, ?int $actorId = null): array
     {
@@ -326,6 +342,8 @@ class OrderService
 
     /**
      * Send appropriate email notification based on state transition.
+     *
+     * @since 0.1.5
      */
     private function sendStateTransitionEmail(array $order, string $fromState, string $toState): void
     {
@@ -344,6 +362,8 @@ class OrderService
 
     /**
      * Send order shipped notification email.
+     *
+     * @since 0.1.5
      */
     private function sendShippedEmail(array $order): void
     {
@@ -373,6 +393,8 @@ class OrderService
 
     /**
      * Send order refunded notification email.
+     *
+     * @since 0.1.5
      */
     private function sendRefundedEmail(array $order): void
     {
@@ -400,6 +422,8 @@ class OrderService
 
     /**
      * Update tracking metadata and append a fulfilment event.
+     *
+     * @since 0.1.5
      */
     public function updateTracking(int $orderId, array $tracking, ?int $actorId = null): array
     {
@@ -478,6 +502,8 @@ class OrderService
      * Transition multiple orders and return updated representations.
      *
      * @return array{updated: array<int, array<string, mixed>>, failed: array<int, array<string, mixed>>}
+     *
+     * @since 0.1.5
      */
     public function bulkTransition(array $orderIds, string $state, ?int $actorId = null): array
     {
@@ -508,6 +534,8 @@ class OrderService
 
     /**
      * Append an audit note for fulfilment context.
+     *
+     * @since 0.1.5
      */
     public function addNote(int $orderId, string $message, ?int $actorId = null): array
     {
@@ -538,6 +566,8 @@ class OrderService
      * Paginate orders optionally filtering by state or search query.
      *
      * @return array{items: array<int, array<string, mixed>>, pagination: array<string, int>}
+     *
+     * @since 0.1.5
      */
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
@@ -610,6 +640,8 @@ class OrderService
      *
      * @param array $filters Optional filters (state, search, date_from, date_to)
      * @return array{filename: string, content: string}
+     *
+     * @since 0.1.5
      */
     public function exportToCsv(array $filters = []): array
     {
@@ -742,6 +774,8 @@ class OrderService
      *
      * @param array $fields
      * @return string
+     *
+     * @since 0.1.5
      */
     private function csvLine(array $fields): string
     {
@@ -759,6 +793,8 @@ class OrderService
 
     /**
      * Normalise common order fields and enforce base currency rules.
+     *
+     * @since 0.1.5
      */
     private function normaliseOrderPayload(array $payload): array
     {
@@ -824,6 +860,8 @@ class OrderService
      * Trim billing fields and enforce phone requirements.
      *
      * @param array<string, mixed> $billing
+     *
+     * @since 0.1.5
      */
     private function normaliseBilling(array $billing): array
     {
@@ -866,6 +904,8 @@ class OrderService
      * @param array<int, mixed> $items
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function normaliseOrderItems(array $items): array
     {
@@ -918,6 +958,8 @@ class OrderService
      *
      * @param array<int, array<string, mixed>> $items
      * @param array<string, mixed>             $order
+     *
+     * @since 0.1.5
      */
     private function computeTotals(array $items, array $order): array
     {
@@ -945,6 +987,8 @@ class OrderService
 
     /**
      * Convert DB row to array representation with decoded JSON.
+     *
+     * @since 0.1.5
      */
     private function mapOrderRow(object $row, ?array $items = null, bool $includeHistory = false): array
     {
@@ -992,6 +1036,8 @@ class OrderService
      *
      * @param array<int, object> $rows
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function mapOrderRows(array $rows): array
     {
@@ -1015,6 +1061,8 @@ class OrderService
      * Retrieve order items for a specific order.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function getOrderItems(int $orderId): array
     {
@@ -1028,6 +1076,8 @@ class OrderService
      *
      * @param array<int, int> $orderIds
      * @return array<int, array<int, array<string, mixed>>>
+     *
+     * @since 0.1.5
      */
     private function getOrderItemsMap(array $orderIds): array
     {
@@ -1131,6 +1181,8 @@ class OrderService
 
     /**
      * Retrieve gateway transactions for the order.
+     *
+     * @since 0.1.5
      */
     private function getTransactions(int $orderId): array
     {
@@ -1171,6 +1223,8 @@ class OrderService
 
     /**
      * Retrieve audit trail entries for the order.
+     *
+     * @since 0.1.5
      */
     private function getAuditTrail(int $orderId): array
     {
@@ -1182,6 +1236,8 @@ class OrderService
      *
      * @param array<int, int> $ids
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchProducts(array $ids): array
     {
@@ -1217,6 +1273,8 @@ class OrderService
      *
      * @param array<int, int> $ids
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchVariants(array $ids): array
     {
@@ -1262,6 +1320,8 @@ class OrderService
 
     /**
      * Build a variant label for display (options preferred, falls back to SKU).
+     *
+     * @since 0.1.5
      */
     private function buildVariantLabel(?array $variant): string
     {
@@ -1297,6 +1357,8 @@ class OrderService
 
     /**
      * Resolve the primary product image from JSON, normalising to an absolute URL.
+     *
+     * @since 0.1.5
      */
     private function resolvePrimaryImage($imagesJson): ?string
     {
@@ -1340,6 +1402,8 @@ class OrderService
      * Record or update a payment transaction for an order.
      *
      * @param array<string, mixed> $transaction
+     *
+     * @since 0.1.5
      */
     public function recordTransaction(int $orderId, array $transaction): array
     {
@@ -1480,6 +1544,8 @@ class OrderService
      * Disable products that have no remaining stock across active variants.
      *
      * @param array<int> $productIds
+     *
+     * @since 0.1.5
      */
     private function autoDisableDepletedProducts(array $productIds): void
     {
@@ -1529,6 +1595,8 @@ class OrderService
      * Lock variants, validate availability, decrement stock, and auto-disable depleted products.
      *
      * @param array<int, array<string, mixed>> $items
+     *
+     * @since 0.1.5
      */
     private function reserveStockForItems(array $items): void
     {
@@ -1580,6 +1648,8 @@ class OrderService
 
     /**
      * Generate a unique order number candidate.
+     *
+     * @since 0.1.5
      */
     private function generateOrderNumber(): string
     {
@@ -1590,6 +1660,8 @@ class OrderService
 
     /**
      * Generate and ensure uniqueness of a public tracking token.
+     *
+     * @since 0.1.5
      */
     private function ensureUniquePublicToken(): string
     {
@@ -1610,6 +1682,8 @@ class OrderService
 
     /**
      * Ensure an order number is unique in the database.
+     *
+     * @since 0.1.5
      */
     private function ensureUniqueOrderNumber(string $candidate): string
     {
@@ -1629,6 +1703,8 @@ class OrderService
 
     /**
      * Check if the provided order number already exists.
+     *
+     * @since 0.1.5
      */
     private function orderNumberExists(string $orderNo): bool
     {
@@ -1645,6 +1721,8 @@ class OrderService
 
     /**
      * Check if the provided public token already exists.
+     *
+     * @since 0.1.5
      */
     private function publicTokenExists(string $token): bool
     {
@@ -1661,6 +1739,8 @@ class OrderService
 
     /**
      * Encode PHP structures as JSON.
+     *
+     * @since 0.1.5
      */
     private function encodeJson($data): string
     {
@@ -1673,6 +1753,8 @@ class OrderService
 
     /**
      * Decode JSON to an array.
+     *
+     * @since 0.1.5
      */
     private function decodeJson(?string $json): array
     {
@@ -1691,6 +1773,8 @@ class OrderService
 
     /**
      * Convert a value to a nullable integer.
+     *
+     * @since 0.1.5
      */
     private function toNullableInt($value): ?int
     {
@@ -1703,6 +1787,8 @@ class OrderService
 
     /**
      * Cast value to a non-negative integer.
+     *
+     * @since 0.1.5
      */
     private function toNonNegativeInt($value): int
     {
@@ -1713,6 +1799,8 @@ class OrderService
 
     /**
      * Cast value to a positive integer (minimum 1).
+     *
+     * @since 0.1.5
      */
     private function toPositiveInt($value): int
     {
@@ -1723,6 +1811,8 @@ class OrderService
 
     /**
      * Format the tax rate storage string.
+     *
+     * @since 0.1.5
      */
     private function formatTaxRate(string $rate): string
     {
@@ -1737,6 +1827,8 @@ class OrderService
 
     /**
      * Generate a stable current timestamp string.
+     *
+     * @since 0.1.5
      */
     private function currentTimestamp(): string
     {
@@ -1745,6 +1837,8 @@ class OrderService
 
     /**
      * Generate a random public token for guest order tracking.
+     *
+     * @since 0.1.5
      */
     private function generatePublicToken(): string
     {
@@ -1758,6 +1852,8 @@ class OrderService
 
     /**
      * Build a fulfilment event payload for storage.
+     *
+     * @since 0.1.5
      */
     private function buildStatusEvent(string $state, string $timestamp, ?int $actorId = null, ?string $fromState = null): array
     {
@@ -1786,6 +1882,8 @@ class OrderService
      *
      * @param mixed $events
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function normaliseFulfillmentEvents($events): array
     {

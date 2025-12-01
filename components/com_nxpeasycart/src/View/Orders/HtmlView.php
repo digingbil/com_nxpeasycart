@@ -11,16 +11,22 @@ use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 
 /**
  * Orders list view for authenticated users.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     protected array $orders = [];
 
     /**
      * @var array<string, int>
+     *
+     * @since 0.1.5
      */
     protected array $pagination = [];
 

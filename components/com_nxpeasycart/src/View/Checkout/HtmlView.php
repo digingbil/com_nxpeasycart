@@ -13,16 +13,22 @@ use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 
 /**
  * Checkout view combining cart and configuration metadata.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $checkout = [];
 
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $theme = [];
 

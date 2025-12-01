@@ -11,6 +11,8 @@ use Joomla\Database\DatabaseInterface;
 
 /**
  * Category picker with hierarchical labels for menu items.
+ *
+ * @since 0.1.5
  */
 class CategorySelectField extends ListField
 {

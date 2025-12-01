@@ -8,6 +8,8 @@ use Joomla\CMS\MVC\Controller\BaseController;
 
 /**
  * Default display controller for the admin application.
+ *
+ * @since 0.1.5
  */
 class DisplayController extends BaseController
 {
@@ -15,11 +17,15 @@ class DisplayController extends BaseController
      * Default view for the component backend.
      *
      * @var string
+     *
+     * @since 0.1.5
      */
     protected $default_view = 'app';
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($cachable = false, $urlparams = [])
     {

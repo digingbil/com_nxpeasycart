@@ -14,6 +14,8 @@ use RuntimeException;
 
 /**
  * Database table for products.
+ *
+ * @since 0.1.5
  */
 class ProductTable extends Table
 {
@@ -21,6 +23,8 @@ class ProductTable extends Table
      * Constructor.
      *
      * @param DatabaseDriver $db Database connector
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseDriver $db)
     {
@@ -29,6 +33,8 @@ class ProductTable extends Table
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function check()
     {

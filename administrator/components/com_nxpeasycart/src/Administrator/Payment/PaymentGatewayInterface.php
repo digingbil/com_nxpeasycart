@@ -6,6 +6,8 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Payment;
 
 /**
  * Contract for payment gateway drivers.
+ *
+ * @since 0.1.5
  */
 interface PaymentGatewayInterface
 {
@@ -16,6 +18,8 @@ interface PaymentGatewayInterface
      * @param array<string, mixed> $preferences Gateway-specific preferences (success URL, cancel URL, metadata, etc.)
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public function createHostedCheckout(array $order, array $preferences = []): array;
 
@@ -26,6 +30,8 @@ interface PaymentGatewayInterface
      * @param array<string, mixed> $context Headers / query params for signature verification
      *
      * @return array<string, mixed> Normalised event details
+     *
+     * @since 0.1.5
      */
     public function handleWebhook(string $payload, array $context = []): array;
 }

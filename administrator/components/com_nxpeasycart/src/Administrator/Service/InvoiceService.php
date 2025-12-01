@@ -11,6 +11,8 @@ use Joomla\CMS\Uri\Uri;
 
 /**
  * Generate PDF invoices for orders.
+ *
+ * @since 0.1.5
  */
 class InvoiceService
 {
@@ -29,6 +31,8 @@ class InvoiceService
      *
      * @param array<string, mixed> $order
      * @param array<string, mixed> $context
+     *
+     * @since 0.1.5
      */
     public function renderInvoiceHtml(array $order, array $context = []): string
     {
@@ -53,6 +57,8 @@ class InvoiceService
      * @param array<string, mixed> $context
      *
      * @return array{filename: string, content: string, html?: string}
+     *
+     * @since 0.1.5
      */
     public function generateInvoice(array $order, array $context = []): array
     {
@@ -81,6 +87,8 @@ class InvoiceService
      * @param array<string, mixed> $overrides
      *
      * @return array{name: string, email: string, phone: string, url: string}
+     *
+     * @since 0.1.5
      */
     private function resolveStore(array $overrides = []): array
     {
@@ -118,6 +126,8 @@ class InvoiceService
      * @param array<string, mixed> $payment
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function resolvePaymentDetails(array $payment): array
     {
@@ -142,6 +152,8 @@ class InvoiceService
      * Render a PHP template with the given context.
      *
      * @param array<string, mixed> $context
+     *
+     * @since 0.1.5
      */
     private function renderTemplate(string $name, array $context = []): string
     {

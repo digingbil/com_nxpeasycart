@@ -13,6 +13,8 @@ use RuntimeException;
 
 /**
  * Database table for product variants.
+ *
+ * @since 0.1.5
  */
 class VariantTable extends Table
 {
@@ -20,6 +22,8 @@ class VariantTable extends Table
      * Constructor.
      *
      * @param DatabaseDriver $db Database connector
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseDriver $db)
     {
@@ -28,6 +32,8 @@ class VariantTable extends Table
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function check()
     {

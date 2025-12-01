@@ -17,6 +17,8 @@ use Joomla\Database\DatabaseInterface;
 
 /**
  * Product frontend view.
+ *
+ * @since 0.1.5
  */
 
 class HtmlView extends BaseHtmlView
@@ -25,6 +27,8 @@ class HtmlView extends BaseHtmlView
      * Template styling tokens.
      *
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $theme = [];
 
@@ -32,11 +36,15 @@ class HtmlView extends BaseHtmlView
      * Loaded product payload.
      *
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $product = [];
 
     /**
      * Flag indicating whether the view renders a placeholder instead of a product.
+     *
+     * @since 0.1.5
      */
     protected bool $isPlaceholder = false;
 
@@ -46,6 +54,8 @@ class HtmlView extends BaseHtmlView
      * @param string|null $tpl Template name
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {
@@ -175,6 +185,8 @@ class HtmlView extends BaseHtmlView
      * @param array<int, string> $slugs
      *
      * @return array<string, string> Slug => Title mapping
+     *
+     * @since 0.1.5
      */
     private function loadCategoryTitles(array $slugs): array
     {
@@ -216,6 +228,8 @@ class HtmlView extends BaseHtmlView
 
     /**
      * Truncate text to the provided length.
+     *
+     * @since 0.1.5
      */
     private function truncateText(string $text, int $length): string
     {

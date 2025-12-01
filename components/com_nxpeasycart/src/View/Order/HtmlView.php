@@ -12,11 +12,15 @@ use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
 
 /**
  * Order confirmation view.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>|null
+     *
+     * @since 0.1.5
      */
     protected ?array $order = null;
     protected bool $isPublic = false;

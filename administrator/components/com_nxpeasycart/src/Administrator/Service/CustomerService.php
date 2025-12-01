@@ -10,6 +10,8 @@ use RuntimeException;
 
 /**
  * Aggregates customer data from orders.
+ *
+ * @since 0.1.5
  */
 class CustomerService
 {
@@ -24,6 +26,8 @@ class CustomerService
      * Paginate customers derived from orders.
      *
      * @return array{items: array<int, array<string, mixed>>, pagination: array<string, int>}
+     *
+     * @since 0.1.5
      */
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
@@ -82,6 +86,8 @@ class CustomerService
 
     /**
      * Retrieve a single customer by email.
+     *
+     * @since 0.1.5
      */
     public function get(string $email): ?array
     {
@@ -137,6 +143,8 @@ class CustomerService
 
     /**
      * Fetch representative billing/shipping data for the customer.
+     *
+     * @since 0.1.5
      */
     private function getProfileMeta(string $email, bool $includeShipping = false): array
     {

@@ -12,6 +12,8 @@ use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Cart view model for storefront.
+ *
+ * @since 0.1.5
  */
 class CartModel extends BaseDatabaseModel
 {
@@ -21,6 +23,8 @@ class CartModel extends BaseDatabaseModel
 
     /**
      * Retrieve the hydrated cart payload for the current visitor.
+     *
+     * @since 0.1.5
      */
     public function getCart(): array
     {

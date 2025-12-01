@@ -8,11 +8,20 @@ use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
+use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Database\DatabaseInterface;
+use Joomla\DI\Container;
 use RuntimeException;
 
 /**
  * Webhook receiver for external payment gateways.
+ *
+ * @since 0.1.5
  */
 class WebhookController extends BaseController
 {
@@ -29,12 +38,26 @@ class WebhookController extends BaseController
     private function handleGateway(string $gateway): void
     {
         $app = $this->app ?? Factory::getApplication();
+        $container = Factory::getContainer();
+
+        // Ensure component services are registered when Joomla skips the provider (e.g. webhooks hitting site directly).
+        if (!$container->has(\Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                $provider = require $providerPath;
+                $container->registerServiceProvider($provider);
+            }
+        }
+
+        // Fallback wiring in case the provider is still missing (e.g. webhook boot without component init)
+        $this->ensureGatewayServices($container);
 
         $payload = file_get_contents('php://input') ?: '';
         $context = $this->collectHeaders($app);
 
         /** @var PaymentGatewayManager $manager */
-        $manager = Factory::getContainer()->get(PaymentGatewayManager::class);
+        $manager = $container->get(PaymentGatewayManager::class);
 
         try {
             $event    = $manager->handleWebhook($gateway, $payload, $context);
@@ -51,6 +74,8 @@ class WebhookController extends BaseController
 
     /**
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function collectHeaders(CMSApplicationInterface $app): array
     {
@@ -70,5 +95,56 @@ class WebhookController extends BaseController
         ];
 
         return array_filter($headers, static fn ($value) => $value !== '');
+    }
+
+    /**
+     * Ensure payment gateway services are available even if the component provider was skipped.
+     *
+     * @since 0.1.5
+     */
+    private function ensureGatewayServices(Container $container): void
+    {
+        if (!$container->has(SettingsService::class) && $container->has(DatabaseInterface::class)) {
+            $container->set(
+                SettingsService::class,
+                static fn (Container $c) => new SettingsService($c->get(DatabaseInterface::class))
+            );
+        }
+
+        if (!$container->has(PaymentGatewayService::class) && $container->has(SettingsService::class)) {
+            $container->set(
+                PaymentGatewayService::class,
+                static fn (Container $c) => new PaymentGatewayService($c->get(SettingsService::class))
+            );
+        }
+
+        if (!$container->has(OrderService::class) && $container->has(DatabaseInterface::class)) {
+            $container->set(
+                OrderService::class,
+                static fn (Container $c) => new OrderService($c->get(DatabaseInterface::class))
+            );
+        }
+
+        if (!$container->has(MailService::class) && $container->has(MailerFactoryInterface::class)) {
+            $container->set(
+                MailService::class,
+                static fn (Container $c) => new MailService($c->get(MailerFactoryInterface::class)->createMailer())
+            );
+        }
+
+        if (!$container->has(PaymentGatewayManager::class)
+            && $container->has(PaymentGatewayService::class)
+            && $container->has(OrderService::class)
+            && $container->has(MailService::class)
+        ) {
+            $container->set(
+                PaymentGatewayManager::class,
+                static fn (Container $c) => new PaymentGatewayManager(
+                    $c->get(PaymentGatewayService::class),
+                    $c->get(OrderService::class),
+                    $c->get(MailService::class)
+                )
+            );
+        }
     }
 }

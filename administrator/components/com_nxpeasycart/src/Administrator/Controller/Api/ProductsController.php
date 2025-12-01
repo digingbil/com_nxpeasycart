@@ -16,6 +16,8 @@ use RuntimeException;
 
 /**
  * Products API controller.
+ *
+ * @since 0.1.5
  */
 class ProductsController extends AbstractJsonController
 {
@@ -27,6 +29,8 @@ class ProductsController extends AbstractJsonController
      * @param array                        $config  Controller configuration
      * @param MVCFactoryInterface|null     $factory MVC factory
      * @param CMSApplicationInterface|null $app     Application instance
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
@@ -57,6 +61,9 @@ class ProductsController extends AbstractJsonController
 
     /**
      * List products.
+     *
+     * @return JsonResponse Paginated products.
+     * @since 0.1.5
      */
     protected function list(): JsonResponse
     {
@@ -113,6 +120,11 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Create a product.
+     *
+     * @return JsonResponse Created product.
+     *
+     * @throws \Exception
+     * @since 0.1.5
      */
     protected function store(): JsonResponse
     {
@@ -160,6 +172,9 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Update a product.
+     *
+     * @return JsonResponse Updated product.
+     * @since 0.1.5
      */
     protected function update(): JsonResponse
     {
@@ -196,6 +211,9 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Delete products.
+     *
+     * @return JsonResponse Deleted products.
+     * @since 0.1.5
      */
     protected function delete(): JsonResponse
     {
@@ -226,6 +244,10 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Decode JSON payload.
+     *
+     * @return array Decoded JSON payload.
+     * @throws RuntimeException When JSON is invalid.
+     * @since 0.1.5
      */
     private function decodePayload(): array
     {
@@ -246,6 +268,8 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Get the product admin model.
+     *
+     * @since 0.1.5
      */
     private function getProductModel()
     {
@@ -254,8 +278,13 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Transform product row to array.
+     *
+     * @param   object  $item  Product row.
+     *
+     * @return array Transformed product row.
+     * @since 0.1.5
      */
-    private function transformProduct($item): array
+    private function transformProduct(object $item): array
     {
         $images = [];
 
@@ -332,6 +361,9 @@ class ProductsController extends AbstractJsonController
      * Build a lightweight summary for variant collections.
      *
      * @param array<int, array<string, mixed>> $variants
+     *
+     * @return array<string, mixed>
+     * @since 0.1.5
      */
     private function buildVariantSummary(array $variants): array
     {
@@ -382,12 +414,22 @@ class ProductsController extends AbstractJsonController
 
     /**
      * Format cents into a decimal string with two fraction digits.
+     *
+     * @param int $cents Cents to format.
+     * @return string Formatted price.
+     * @since 0.1.5
      */
     private function formatPrice(int $cents): string
     {
         return number_format($cents / 100, 2, '.', '');
     }
 
+    /*
+     * Debugging helper.
+     *
+     * @param string $message Message to log.
+     * @param mixed $context Optional context to log.
+     */
     private function debug(string $message, $context = null): void
     {
         if ($context !== null) {

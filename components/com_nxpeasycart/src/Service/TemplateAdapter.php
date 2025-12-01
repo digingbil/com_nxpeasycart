@@ -9,6 +9,8 @@ use Joomla\Registry\Registry;
 
 /**
  * Resolves template-specific styling tokens for the storefront.
+ *
+ * @since 0.1.5
  */
 class TemplateAdapter
 {
@@ -16,6 +18,8 @@ class TemplateAdapter
      * Resolve adapter tokens for the active template.
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public static function resolve(): array
     {
@@ -26,6 +30,8 @@ class TemplateAdapter
      * Resolve adapter tokens WITHOUT user overrides (for showing defaults in admin).
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public static function resolveWithoutOverrides(): array
     {
@@ -128,6 +134,8 @@ class TemplateAdapter
 
     /**
      * Adapt storefront tokens for Helix Ultimate templates based on the active preset.
+     *
+     * @since 0.1.5
      */
     private static function resolveHelix(array $defaults, Registry $params): array
     {
@@ -172,6 +180,8 @@ class TemplateAdapter
      * Extract the active Helix preset palette.
      *
      * @return array{0:string,1:array<string,string>}
+     *
+     * @since 0.1.5
      */
     private static function extractHelixPalette(Registry $params): array
     {
@@ -275,6 +285,8 @@ class TemplateAdapter
 
     /**
      * Apply user color overrides from settings.
+     *
+     * @since 0.1.5
      */
     private static function applyUserOverrides(array $resolved): array
     {

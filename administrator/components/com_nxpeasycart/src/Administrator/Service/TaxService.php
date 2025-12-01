@@ -11,6 +11,8 @@ use RuntimeException;
 
 /**
  * Tax rate management service.
+ *
+ * @since 0.1.5
  */
 class TaxService
 {

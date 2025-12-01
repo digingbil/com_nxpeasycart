@@ -13,11 +13,15 @@ use Joomla\Component\Nxpeasycart\Site\Model\OrdersModel;
 
 /**
  * Read-only order status endpoints for storefront consumers.
+ *
+ * @since 0.1.5
  */
 class StatusController extends BaseController
 {
     /**
      * Public, tokenised order status endpoint.
+     *
+     * @since 0.1.5
      */
     public function tracking(): void
     {
@@ -54,6 +58,8 @@ class StatusController extends BaseController
 
     /**
      * Authenticated order detail endpoint (owner-only).
+     *
+     * @since 0.1.5
      */
     public function show(): void
     {
@@ -94,6 +100,8 @@ class StatusController extends BaseController
 
     /**
      * Authenticated list endpoint for the current user's orders.
+     *
+     * @since 0.1.5
      */
     public function mine(): void
     {
@@ -124,6 +132,8 @@ class StatusController extends BaseController
 
     /**
      * Resolve the current user identity safely.
+     *
+     * @since 0.1.5
      */
     private function getIdentity()
     {

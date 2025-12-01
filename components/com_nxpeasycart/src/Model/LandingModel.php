@@ -18,11 +18,15 @@ use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /**
  * Model powering the shop landing page.
+ *
+ * @since 0.1.5
  */
 class LandingModel extends BaseDatabaseModel
 {
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = null, $direction = null)
     {
@@ -46,6 +50,8 @@ class LandingModel extends BaseDatabaseModel
      * Retrieve hero copy.
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public function getHero(): array
     {
@@ -99,6 +105,8 @@ class LandingModel extends BaseDatabaseModel
      * Retrieve search configuration.
      *
      * @return array<string, string>
+     *
+     * @since 0.1.5
      */
     public function getSearch(): array
     {
@@ -120,6 +128,8 @@ class LandingModel extends BaseDatabaseModel
      * Retrieve category tiles.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     public function getCategoryTiles(): array
     {
@@ -195,6 +205,8 @@ class LandingModel extends BaseDatabaseModel
      * Retrieve section titles organised by key.
      *
      * @return array<string, string>
+     *
+     * @since 0.1.5
      */
     public function getSectionTitles(): array
     {
@@ -230,6 +242,8 @@ class LandingModel extends BaseDatabaseModel
      * Retrieve curated product collections for the landing page.
      *
      * @return array<string, array<int, array<string, mixed>>>
+     *
+     * @since 0.1.5
      */
     public function getCollections(): array
     {
@@ -275,6 +289,8 @@ class LandingModel extends BaseDatabaseModel
 
     /**
      * Retrieve trust badge copy.
+     *
+     * @since 0.1.5
      */
     public function getTrustBadge(): string
     {
@@ -298,6 +314,8 @@ class LandingModel extends BaseDatabaseModel
      * @param bool                 $featuredOnly Limit results to featured items
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function fetchProducts(
         int $limit,
@@ -454,6 +472,8 @@ class LandingModel extends BaseDatabaseModel
      * Decode JSON image payload.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function decodeImages(string $payload): array
     {
@@ -506,6 +526,8 @@ class LandingModel extends BaseDatabaseModel
      * @param mixed $raw Input from menu params.
      *
      * @return array<int>
+     *
+     * @since 0.1.5
      */
     private function normaliseIds($raw): array
     {
@@ -525,6 +547,8 @@ class LandingModel extends BaseDatabaseModel
 
     /**
      * Ensure a value is at least the provided minimum.
+     *
+     * @since 0.1.5
      */
     private function clampPositive(int $value, int $minimum): int
     {
@@ -533,6 +557,8 @@ class LandingModel extends BaseDatabaseModel
 
     /**
      * Format a monetary amount.
+     *
+     * @since 0.1.5
      */
     private function formatMoney(int $cents, string $currency): string
     {

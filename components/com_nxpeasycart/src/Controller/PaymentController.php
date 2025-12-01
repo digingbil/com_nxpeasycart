@@ -34,6 +34,8 @@ use RuntimeException;
 
 /**
  * Front-end controller for initiating hosted checkout flows.
+ *
+ * @since 0.1.5
  */
 class PaymentController extends BaseController
 {
@@ -339,6 +341,8 @@ class PaymentController extends BaseController
     /**
      * @param array<string, mixed> $cart
      * @param array<string, mixed> $payload
+     *
+     * @since 0.1.5
      */
     private function buildOrderPayload(array $cart, array $payload): array
     {
@@ -459,6 +463,8 @@ class PaymentController extends BaseController
     /**
      * Verify a CSRF token via header or request payload.
      * Supports both POST form token and X-CSRF-Token header for API compatibility.
+     *
+     * @since 0.1.5
      */
     private function hasValidToken(): bool
     {
@@ -484,6 +490,8 @@ class PaymentController extends BaseController
      * Calculate tax amount based on configured rates and billing address.
      *
      * @return array{amount: int, rate: float, inclusive: bool}
+     *
+     * @since 0.1.5
      */
     private function calculateTaxAmount(array $payload, int $subtotal): array
     {
@@ -556,6 +564,8 @@ class PaymentController extends BaseController
 
     /**
      * Resolve shipping amount from configured rules.
+     *
+     * @since 0.1.5
      */
     private function resolveShippingAmount(?int $ruleId, int $subtotal): int
     {
@@ -592,6 +602,8 @@ class PaymentController extends BaseController
      * @param array<int, array<string, mixed>> $items
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function applyTaxRateToItems(array $items, float $rate): array
     {
@@ -614,6 +626,8 @@ class PaymentController extends BaseController
     /**
      * Reset the cart after a successful checkout and regenerate the session ID
      * to prevent session fixation attacks.
+     *
+     * @since 0.1.5
      */
     private function clearCart(CartSessionService $session, array $cart): void
     {
@@ -647,6 +661,8 @@ class PaymentController extends BaseController
     /**
      * Regenerate the session ID to prevent session fixation attacks.
      * Called after successful checkout completion.
+     *
+     * @since 0.1.5
      */
     private function regenerateSession(): void
     {
@@ -678,6 +694,8 @@ class PaymentController extends BaseController
     /**
      * Check if the current request is over a secure HTTPS connection.
      * Handles reverse proxy/load balancer scenarios via forwarding headers.
+     *
+     * @since 0.1.5
      */
     private function isSecureConnection(): bool
     {
@@ -737,6 +755,8 @@ class PaymentController extends BaseController
      * Ensure requested quantities are available before starting checkout.
      *
      * @param array<int, array<string, mixed>> $items
+     *
+     * @since 0.1.5
      */
     private function assertStockAvailable(array $items, DatabaseInterface $db): void
     {
@@ -811,6 +831,8 @@ class PaymentController extends BaseController
      * Apply rate limits to checkout attempts.
      *
      * @param array<string, mixed> $payload
+     *
+     * @since 0.1.5
      */
     private function enforceCheckoutRateLimits(
         array $payload,
@@ -920,6 +942,8 @@ class PaymentController extends BaseController
 
     /**
      * Return a shared rate limiter instance.
+     *
+     * @since 0.1.5
      */
     private function getRateLimiter(): ?RateLimiter
     {
@@ -948,6 +972,8 @@ class PaymentController extends BaseController
      * Lightweight honeypot check.
      *
      * @param array<string, mixed> $payload
+     *
+     * @since 0.1.5
      */
     private function honeypotTripped(array $payload): bool
     {
@@ -986,6 +1012,8 @@ class PaymentController extends BaseController
 
     /**
      * Record a security-related audit event when possible.
+     *
+     * @since 0.1.5
      */
     private function logSecurityEvent(string $action, array $context = []): void
     {
@@ -1030,6 +1058,8 @@ class PaymentController extends BaseController
      * Resolve rate limit configuration with sensible defaults.
      *
      * @return array<string, int>
+     *
+     * @since 0.1.5
      */
     private function getRateLimitConfig(): array
     {
@@ -1106,6 +1136,8 @@ class PaymentController extends BaseController
      * @param DatabaseInterface $db
      * @param int $variantId
      * @return object|null
+     *
+     * @since 0.1.5
      */
     private function loadVariantForCheckout(DatabaseInterface $db, int $variantId): ?object
     {
@@ -1141,6 +1173,8 @@ class PaymentController extends BaseController
      * @param array<string, mixed> $coupon
      * @param int $subtotalCents
      * @return int
+     *
+     * @since 0.1.5
      */
     private function calculateCouponDiscount(array $coupon, int $subtotalCents): int
     {

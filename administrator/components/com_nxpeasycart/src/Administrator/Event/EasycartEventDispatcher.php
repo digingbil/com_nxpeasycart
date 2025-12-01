@@ -20,6 +20,8 @@ use Joomla\Event\DispatcherInterface;
  * - onNxpEasycartAfterOrderCreate: Fired after a new order is saved
  * - onNxpEasycartAfterOrderStateChange: Fired after an order state transition
  * - onNxpEasycartAfterPaymentComplete: Fired after successful payment confirmation
+ *
+ * @since 0.1.5
  */
 class EasycartEventDispatcher
 {
@@ -27,6 +29,8 @@ class EasycartEventDispatcher
 
     /**
      * Get the Joomla event dispatcher.
+     *
+     * @since 0.1.5
      */
     private static function getDispatcher(): ?DispatcherInterface
     {
@@ -53,6 +57,8 @@ class EasycartEventDispatcher
      * @param string $eventName The event name (e.g., 'onNxpEasycartAfterOrderCreate')
      * @param array<string, mixed> $arguments Event arguments passed to subscribers
      * @return AbstractEvent|null The dispatched event or null if dispatch failed
+     *
+     * @since 0.1.5
      */
     public static function dispatch(string $eventName, array $arguments = []): ?AbstractEvent
     {
@@ -92,6 +98,8 @@ class EasycartEventDispatcher
      * @param array<string, mixed> $payload The checkout request payload
      * @param string $gateway The selected payment gateway
      * @return AbstractEvent|null
+     *
+     * @since 0.1.5
      */
     public static function beforeCheckout(array $cart, array $payload, string $gateway): ?AbstractEvent
     {
@@ -113,6 +121,8 @@ class EasycartEventDispatcher
      * @param array<string, mixed> $order The newly created order
      * @param string|null $gateway The payment gateway used (null for offline)
      * @return AbstractEvent|null
+     *
+     * @since 0.1.5
      */
     public static function afterOrderCreate(array $order, ?string $gateway = null): ?AbstractEvent
     {
@@ -135,6 +145,8 @@ class EasycartEventDispatcher
      * @param string $toState The new state
      * @param int|null $actorId The user ID who triggered the change (null for system)
      * @return AbstractEvent|null
+     *
+     * @since 0.1.5
      */
     public static function afterOrderStateChange(
         array $order,
@@ -166,6 +178,8 @@ class EasycartEventDispatcher
      * @param array<string, mixed> $transaction The transaction details
      * @param string $gateway The payment gateway that processed the payment
      * @return AbstractEvent|null
+     *
+     * @since 0.1.5
      */
     public static function afterPaymentComplete(
         array $order,
@@ -181,6 +195,8 @@ class EasycartEventDispatcher
 
     /**
      * Reset the cached dispatcher (useful for testing).
+     *
+     * @since 0.1.5
      */
     public static function reset(): void
     {

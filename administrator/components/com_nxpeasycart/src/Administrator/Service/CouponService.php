@@ -12,6 +12,8 @@ use RuntimeException;
 
 /**
  * Coupon management service.
+ *
+ * @since 0.1.5
  */
 class CouponService
 {
@@ -28,6 +30,8 @@ class CouponService
      * Paginate coupons with optional search.
      *
      * @return array{items: array<int, array<string, mixed>>, pagination: array<string, int>}
+     *
+     * @since 0.1.5
      */
     public function paginate(array $filters = [], int $limit = 20, int $start = 0): array
     {
@@ -135,6 +139,8 @@ class CouponService
 
     /**
      * Find a coupon by code.
+     *
+     * @since 0.1.5
      */
     public function getByCode(string $code): ?array
     {
@@ -158,6 +164,8 @@ class CouponService
      * @param string $code Coupon code
      * @param int $subtotalCents Order subtotal in cents
      * @return array{valid: bool, coupon: ?array, error: ?string, discount_cents: int}
+     *
+     * @since 0.1.5
      */
     public function validate(string $code, int $subtotalCents): array
     {
@@ -248,6 +256,8 @@ class CouponService
 
     /**
      * Calculate discount amount in cents.
+     *
+     * @since 0.1.5
      */
     private function calculateDiscount(array $coupon, int $subtotalCents): int
     {
@@ -264,6 +274,8 @@ class CouponService
 
     /**
      * Increment usage counter for a coupon.
+     *
+     * @since 0.1.5
      */
     public function incrementUsage(int $couponId): void
     {

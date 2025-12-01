@@ -10,6 +10,8 @@ use Joomla\Database\ParameterType;
 
 /**
  * Categories list model.
+ *
+ * @since 0.1.5
  */
 class CategoriesModel extends ListModel
 {
@@ -17,6 +19,8 @@ class CategoriesModel extends ListModel
      * Configure default filter fields.
      *
      * @param array $config Configuration array
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [])
     {
@@ -35,6 +39,8 @@ class CategoriesModel extends ListModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = 'a.sort', $direction = 'ASC')
     {
@@ -54,6 +60,8 @@ class CategoriesModel extends ListModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function getListQuery()
     {

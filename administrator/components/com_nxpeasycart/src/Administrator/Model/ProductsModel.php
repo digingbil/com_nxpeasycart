@@ -10,6 +10,8 @@ use Joomla\Database\ParameterType;
 
 /**
  * Products list model.
+ *
+ * @since 0.1.5
  */
 class ProductsModel extends ListModel
 {
@@ -17,6 +19,8 @@ class ProductsModel extends ListModel
      * Constructor.
      *
      * @param array $config Configuration array
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [])
     {
@@ -41,6 +45,8 @@ class ProductsModel extends ListModel
      * @param string $direction Order direction
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = 'a.created', $direction = 'DESC')
     {
@@ -62,6 +68,8 @@ class ProductsModel extends ListModel
      * Build list query.
      *
      * @return \Joomla\Database\DatabaseQuery
+     *
+     * @since 0.1.5
      */
     protected function getListQuery()
     {

@@ -11,6 +11,8 @@ use Joomla\Database\DatabaseInterface;
 
 /**
  * Multi-select field listing root categories.
+ *
+ * @since 0.1.5
  */
 class RootCategoriesField extends ListField
 {
@@ -18,11 +20,15 @@ class RootCategoriesField extends ListField
      * Field type.
      *
      * @var string
+     *
+     * @since 0.1.5
      */
     protected $type = 'RootCategories';
 
     /**
      * {@inheritdoc}
+     *
+     * @since 0.1.5
      */
     protected function getOptions(): array
     {

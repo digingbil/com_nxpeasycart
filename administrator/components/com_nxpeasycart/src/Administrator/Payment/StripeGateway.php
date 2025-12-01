@@ -11,6 +11,8 @@ use RuntimeException;
 
 /**
  * Stripe checkout + webhook integration (Checkout Sessions API).
+ *
+ * @since 0.1.5
  */
 class StripeGateway implements PaymentGatewayInterface
 {
@@ -124,6 +126,8 @@ class StripeGateway implements PaymentGatewayInterface
     /**
      * @param array<int, array<string, mixed>> $items
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function buildLineItems(array $items, string $currency): array
     {
@@ -146,6 +150,8 @@ class StripeGateway implements PaymentGatewayInterface
 
     /**
      * @return array<string, string>
+     *
+     * @since 0.1.5
      */
     private function buildMetadata(array $order): array
     {
@@ -191,6 +197,8 @@ class StripeGateway implements PaymentGatewayInterface
 
     /**
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function normaliseTransaction(array $event): array
     {

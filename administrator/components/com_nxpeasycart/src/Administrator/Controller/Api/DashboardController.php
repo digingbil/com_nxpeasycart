@@ -15,6 +15,8 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 
 /**
  * Dashboard JSON controller delivering summary metrics.
+ *
+ * @since 0.1.5
  */
 class DashboardController extends AbstractJsonController
 {
@@ -23,7 +25,14 @@ class DashboardController extends AbstractJsonController
         parent::__construct($config, $factory, $app);
     }
 
-    /** @inheritDoc */
+    /**
+     * {@inheritDoc}
+     *
+     * @param string $task The task name
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     public function execute($task)
     {
         $task = strtolower((string) $task);

@@ -15,6 +15,8 @@ use RuntimeException;
 
 /**
  * Categories management API.
+ *
+ * @since 0.1.5
  */
 class CategoriesController extends AbstractJsonController
 {
@@ -25,6 +27,8 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function execute($task)
     {
@@ -41,6 +45,10 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Return paginated categories.
+     *
+     * @return JsonResponse Paginated categories.
+     *
+     * @since 0.1.5
      */
     protected function list(): JsonResponse
     {
@@ -100,6 +108,11 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Create a category.
+     *
+     * @return JsonResponse Created category.
+     * @throws \Exception
+     *
+     * @since 0.1.5
      */
     protected function store(): JsonResponse
     {
@@ -141,6 +154,11 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Update a category.
+     *
+     * @return JsonResponse Updated category.
+     * @throws \Exception
+     *
+     * @since 0.1.5
      */
     protected function update(): JsonResponse
     {
@@ -188,6 +206,10 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Delete categories.
+     *
+     * @return JsonResponse Deleted categories.
+     *
+     * @since 0.1.5
      */
     protected function destroy(): JsonResponse
     {
@@ -269,6 +291,8 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Decode JSON payload.
+     *
+     * @since 0.1.5
      */
     private function decodePayload(): array
     {
@@ -289,6 +313,8 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Convert model item to API payload.
+     *
+     * @since 0.1.5
      */
     private function transformItem($item): array
     {
@@ -323,6 +349,8 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Shortcut for categories list model.
+     *
+     * @since 0.1.5
      */
     private function getCategoriesModel()
     {
@@ -331,6 +359,8 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Shortcut for category admin model.
+     *
+     * @since 0.1.5
      */
     private function getCategoryModel()
     {
@@ -343,6 +373,8 @@ class CategoriesController extends AbstractJsonController
      * @param array<int> $ids
      *
      * @return array<int, int>
+     *
+     * @since 0.1.5
      */
     private function getUsageCounts(array $ids): array
     {
@@ -391,6 +423,8 @@ class CategoriesController extends AbstractJsonController
      * @param array<int, object> $items
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function getParentTitles(array $items): array
     {
@@ -442,6 +476,10 @@ class CategoriesController extends AbstractJsonController
 
     /**
      * Resolve a database instance.
+     *
+     * @return DatabaseInterface DB instance.
+     *
+     * @since 0.1.5
      */
     private function getDatabase(): DatabaseInterface
     {

@@ -15,15 +15,19 @@ use RuntimeException;
 
 /**
  * Customers API controller placeholder.
+ *
+ * @since 0.1.5
  */
 class CustomersController extends AbstractJsonController
 {
     /**
      * Constructor.
      *
-     * @param array                     $config  Controller configuration
-     * @param MVCFactoryInterface|null  $factory MVC factory
-     * @param CMSApplicationInterface|null $app  Application instance
+     * @param array                        $config  Controller configuration
+     * @param MVCFactoryInterface|null     $factory MVC factory
+     * @param CMSApplicationInterface|null $app     Application instance
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
@@ -32,6 +36,11 @@ class CustomersController extends AbstractJsonController
 
     /**
      * {@inheritDoc}
+     *
+     * @param string $task The task name
+     * @return JsonResponse
+     *
+     * @since 0.1.5
      */
     public function execute($task)
     {
@@ -44,6 +53,13 @@ class CustomersController extends AbstractJsonController
         };
     }
 
+    /**
+     * List customers.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function list(): JsonResponse
     {
         $this->assertCan('core.manage');
@@ -60,6 +76,14 @@ class CustomersController extends AbstractJsonController
         return $this->respond($result);
     }
 
+    /**
+     * Show a single customer by email.
+     *
+     * @return JsonResponse
+     * @throws RuntimeException When email is missing or customer not found
+     *
+     * @since 0.1.5
+     */
     protected function show(): JsonResponse
     {
         $this->assertCan('core.manage');

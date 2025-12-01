@@ -13,6 +13,8 @@ use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 
 /**
  * Aggregates high-level metrics for the admin dashboard.
+ *
+ * @since 0.1.5
  */
 class DashboardService
 {
@@ -27,6 +29,8 @@ class DashboardService
 
     /**
      * Retrieve headline metrics for dashboard cards.
+     *
+     * @since 0.1.5
      */
     public function getSummary(): array
     {
@@ -47,6 +51,8 @@ class DashboardService
 
     /**
      * Assemble onboarding checklist items.
+     *
+     * @since 0.1.5
      */
     public function getChecklist(): array
     {

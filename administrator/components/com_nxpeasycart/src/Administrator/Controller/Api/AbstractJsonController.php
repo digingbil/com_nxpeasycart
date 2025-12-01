@@ -14,6 +14,9 @@ use RuntimeException;
 
 /**
  * Base controller for JSON API endpoints.
+ * Provides methods for rendering JSON responses and handling common tasks.
+ *
+ * @since 0.1.5
  */
 class AbstractJsonController extends BaseController
 {
@@ -23,6 +26,8 @@ class AbstractJsonController extends BaseController
      * @param array                     $config  Controller configuration
      * @param MVCFactoryInterface|null  $factory MVC factory
      * @param CMSApplicationInterface|null $app  Application instance
+     *
+     * @since 0.1.5
      */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null, Input $input = null)
     {
@@ -42,8 +47,10 @@ class AbstractJsonController extends BaseController
      * @param int   $code HTTP status code
      *
      * @return JsonResponse
+     *
+     * @since 0.1.5
      */
-    protected function respond($data, int $code = 200): JsonResponse
+    protected function respond(mixed $data, int $code = 200): JsonResponse
     {
         $hasError = $code >= 400;
 
@@ -87,6 +94,8 @@ class AbstractJsonController extends BaseController
      * Fetch an integer ID from the request.
      *
      * @return int
+     *
+     * @since 0.1.5
      */
     protected function requireId(): int
     {
@@ -105,6 +114,8 @@ class AbstractJsonController extends BaseController
      * @param string $task Task/action name
      *
      * @return mixed
+     *
+     * @since 0.1.5
      */
     public function execute($task)
     {
@@ -113,6 +124,12 @@ class AbstractJsonController extends BaseController
 
     /**
      * Ensure the user has the required permission.
+     *
+     * @param string $action Permission action
+     * @return void
+     * @throws RuntimeException
+     *
+     * @since 0.1.5
      */
     protected function assertCan(string $action): void
     {
@@ -125,6 +142,11 @@ class AbstractJsonController extends BaseController
 
     /**
      * Ensure the request has a valid Joomla token.
+     *
+     * @return void
+     * @throws RuntimeException Invalid token
+     *
+     * @since 0.1.5
      */
     protected function assertToken(): void
     {

@@ -13,11 +13,15 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 
 /**
  * Orders listing view.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $orders = [
         'items'      => [],
@@ -26,6 +30,8 @@ class HtmlView extends BaseHtmlView
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {
@@ -37,6 +43,8 @@ class HtmlView extends BaseHtmlView
 
     /**
      * Retrieve orders for the fallback server-rendered table.
+     *
+     * @since 0.1.5
      */
     private function fetchOrders(): array
     {

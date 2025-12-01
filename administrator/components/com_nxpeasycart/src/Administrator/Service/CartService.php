@@ -14,11 +14,15 @@ use RuntimeException;
 
 /**
  * Persisted cart storage service.
+ *
+ * @since 0.1.5
  */
 class CartService
 {
     /**
      * @var DatabaseInterface
+     *
+     * @since 0.1.5
      */
     private DatabaseInterface $db;
 
@@ -26,6 +30,8 @@ class CartService
      * CartService constructor.
      *
      * @param DatabaseInterface $db Database connector
+     *
+     * @since 0.1.5
      */
     public function __construct(DatabaseInterface $db)
     {
@@ -34,6 +40,8 @@ class CartService
 
     /**
      * Load a cart by identifier.
+     *
+     * @since 0.1.5
      */
     public function load(string $cartId): ?array
     {
@@ -56,6 +64,8 @@ class CartService
 
     /**
      * Load a cart bound to the given session identifier.
+     *
+     * @since 0.1.5
      */
     public function loadBySession(string $sessionId): ?array
     {
@@ -84,6 +94,8 @@ class CartService
 
     /**
      * Persist cart payload and return the stored representation.
+     *
+     * @since 0.1.5
      */
     public function persist(array $cart): array
     {
@@ -128,6 +140,8 @@ class CartService
 
     /**
      * Delete a cart record.
+     *
+     * @since 0.1.5
      */
     public function delete(string $cartId): void
     {
@@ -142,6 +156,8 @@ class CartService
 
     /**
      * Ensure a cart exists before attempting to use it.
+     *
+     * @since 0.1.5
      */
     private function exists(string $cartId): bool
     {
@@ -159,6 +175,8 @@ class CartService
     /**
      * Normalise the cart payload ensuring base currency compliance.
      * Automatically migrates cart to current base currency (Option A - single source of truth).
+     *
+     * @since 0.1.5
      */
     private function normaliseCartData(array $data): array
     {
@@ -188,6 +206,8 @@ class CartService
 
     /**
      * Convert a stored cart row into a domain array.
+     *
+     * @since 0.1.5
      */
     private function mapCartRow(object $row): array
     {
@@ -206,6 +226,8 @@ class CartService
 
     /**
      * Encode structured data as JSON.
+     *
+     * @since 0.1.5
      */
     private function encodeJson($payload): string
     {
@@ -218,6 +240,8 @@ class CartService
 
     /**
      * Decode JSON payload into a PHP array.
+     *
+     * @since 0.1.5
      */
     private function decodeJson(?string $payload): array
     {
@@ -236,6 +260,8 @@ class CartService
 
     /**
      * Cast value to nullable integer.
+     *
+     * @since 0.1.5
      */
     private function toNullableInt($value): ?int
     {
@@ -248,6 +274,8 @@ class CartService
 
     /**
      * Sanitise positive integer quantities.
+     *
+     * @since 0.1.5
      */
     private function toPositiveInt($value): int
     {
@@ -258,6 +286,8 @@ class CartService
 
     /**
      * Prepare a session identifier for storage.
+     *
+     * @since 0.1.5
      */
     private function prepareSessionId($sessionId): ?string
     {
@@ -276,6 +306,8 @@ class CartService
 
     /**
      * Release any carts currently linked to the provided session.
+     *
+     * @since 0.1.5
      */
     private function releaseSession(string $sessionId, string $cartId): void
     {

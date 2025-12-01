@@ -11,11 +11,15 @@ use Joomla\CMS\Uri\Uri;
 
 /**
  * Router rule ensuring landing view menu aliases resolve even when template routers bypass Joomla's menu lookup.
+ *
+ * @since 0.1.5
  */
 class LandingAliasRule
 {
     /**
      * Menu instance used to locate component menu items.
+     *
+     * @since 0.1.5
      */
     private AbstractMenu $menu;
 
@@ -23,6 +27,8 @@ class LandingAliasRule
      * Cached lookup keyed by lowercased route/alias.
      *
      * @var array<string, object>|null
+     *
+     * @since 0.1.5
      */
     private ?array $landingMenuMap = null;
 
@@ -33,6 +39,8 @@ class LandingAliasRule
 
     /**
      * Router parse hook registered during service provider bootstrap.
+     *
+     * @since 0.1.5
      */
     public function __invoke(SiteRouter $router, Uri $uri): void
     {
@@ -67,6 +75,8 @@ class LandingAliasRule
 
     /**
      * Locate a landing menu whose alias or stored route matches the provided path.
+     *
+     * @since 0.1.5
      */
     private function lookupLandingMenu(string $path): ?object
     {
@@ -85,6 +95,8 @@ class LandingAliasRule
 
     /**
      * Build a lookup of landing menu aliases/routes for quick comparison.
+     *
+     * @since 0.1.5
      */
     private function primeLandingMenuMap(): void
     {

@@ -11,21 +11,29 @@ use Joomla\Database\DatabaseInterface;
 
 /**
  * Orders list model for authenticated storefront users.
+ *
+ * @since 0.1.5
  */
 class OrdersModel extends BaseDatabaseModel
 {
     /**
      * @var array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private array $orders = [];
 
     /**
      * @var array<string, int>
+     *
+     * @since 0.1.5
      */
     private array $pagination = [];
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = null, $direction = null)
     {
@@ -43,6 +51,8 @@ class OrdersModel extends BaseDatabaseModel
      * Return the current user's orders.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     public function getItems(): array
     {
@@ -76,6 +86,8 @@ class OrdersModel extends BaseDatabaseModel
      * Pagination metadata for the orders list.
      *
      * @return array<string, int>
+     *
+     * @since 0.1.5
      */
     public function getPagination(): array
     {

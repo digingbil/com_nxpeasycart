@@ -12,6 +12,8 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 
 /**
  * Component entry point for the administrator application.
+ *
+ * @since 0.1.5
  */
 class NxpEasyCartComponent extends MVCComponent implements RouterServiceInterface
 {
@@ -22,6 +24,8 @@ class NxpEasyCartComponent extends MVCComponent implements RouterServiceInterfac
      *
      * @param ComponentDispatcherFactoryInterface $dispatcherFactory Dispatcher factory
      * @param MVCFactoryInterface                 $mvcFactory        MVC factory
+     *
+     * @since 0.1.5
      */
     public function __construct(
         ComponentDispatcherFactoryInterface $dispatcherFactory,

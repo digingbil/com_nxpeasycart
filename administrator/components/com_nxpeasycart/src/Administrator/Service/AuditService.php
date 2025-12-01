@@ -10,6 +10,8 @@ use Joomla\Database\ParameterType;
 
 /**
  * Lightweight audit log helper for recording state changes.
+ *
+ * @since 0.1.5
  */
 class AuditService
 {

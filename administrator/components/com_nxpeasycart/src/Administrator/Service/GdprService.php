@@ -11,6 +11,8 @@ use RuntimeException;
 
 /**
  * GDPR helper utilities to export or anonymise customer data.
+ *
+ * @since 0.1.5
  */
 class GdprService
 {
@@ -73,6 +75,8 @@ class GdprService
 
     /**
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function loadOrders(string $email): array
     {
@@ -108,6 +112,8 @@ class GdprService
 
     /**
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function loadOrderItems(int $orderId): array
     {
@@ -130,6 +136,8 @@ class GdprService
 
     /**
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function loadOrderTransactions(int $orderId): array
     {

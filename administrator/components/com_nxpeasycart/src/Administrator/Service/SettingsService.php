@@ -13,11 +13,15 @@ use RuntimeException;
 
 /**
  * Simple key/value settings storage for component configuration.
+ *
+ * @since 0.1.5
  */
 class SettingsService
 {
     /**
      * @var DatabaseInterface
+     *
+     * @since 0.1.5
      */
     private DatabaseInterface $db;
 
@@ -28,6 +32,8 @@ class SettingsService
 
     /**
      * Fetch a single setting by key.
+     *
+     * @since 0.1.5
      */
     public function get(string $key, $default = null)
     {
@@ -49,6 +55,8 @@ class SettingsService
 
     /**
      * Persist a setting value.
+     *
+     * @since 0.1.5
      */
     public function set(string $key, $value): void
     {
@@ -72,6 +80,8 @@ class SettingsService
 
     /**
      * Return all settings as associative array.
+     *
+     * @since 0.1.5
      */
     public function all(): array
     {

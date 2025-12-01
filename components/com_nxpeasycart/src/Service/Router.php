@@ -18,16 +18,22 @@ use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
 /**
  * Site router registered through Joomla's router factory.
+ *
+ * @since 0.1.5
  */
 class Router extends RouterView
 {
     /**
      * @var DatabaseInterface|null
+     *
+     * @since 0.1.5
      */
     private ?DatabaseInterface $db = null;
 
     /**
      * Constructor aligning with Joomla's router factory expectations.
+     *
+     * @since 0.1.5
      */
     public function __construct(
         CMSApplicationInterface $app,
@@ -66,6 +72,8 @@ class Router extends RouterView
 
     /**
      * Ensure menu-aligned links do not add redundant view parameters.
+     *
+     * @since 0.1.5
      */
     public function build(&$query)
     {
@@ -173,6 +181,8 @@ class Router extends RouterView
      * @param array  $query  The request query
      *
      * @return array  Segment array keyed by ID
+     *
+     * @since 0.1.5
      */
     public function getCategorySegment($slug, $query): array
     {
@@ -186,6 +196,8 @@ class Router extends RouterView
      * @param array  $query  The request query
      *
      * @return array  Segment array keyed by ID
+     *
+     * @since 0.1.5
      */
     public function getProductSegment($slug, $query): array
     {
@@ -199,6 +211,8 @@ class Router extends RouterView
      * @param array  $query  The request query
      *
      * @return array  Segment array keyed by ID
+     *
+     * @since 0.1.5
      */
     public function getOrderSegment($no, $query): array
     {
@@ -207,6 +221,8 @@ class Router extends RouterView
 
     /**
      * Map SEF segments back to Joomla query parameters.
+     *
+     * @since 0.1.5
      */
     public function parse(&$segments)
     {
@@ -319,6 +335,8 @@ class Router extends RouterView
      * @param array<string, mixed> $query
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function extractCategoryPath(array &$query): array
     {
@@ -350,6 +368,8 @@ class Router extends RouterView
      * Resolve a product's category path segments.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function resolveProductPathSegments(string $productSlug): array
     {
@@ -362,6 +382,8 @@ class Router extends RouterView
      * Resolve a category path by ID.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function resolveCategoryPathById(int $categoryId): array
     {
@@ -376,6 +398,8 @@ class Router extends RouterView
      * Resolve a category path by slug.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function resolveCategoryPathBySlug(string $slug): array
     {
@@ -392,6 +416,8 @@ class Router extends RouterView
      * @param array<int, string> $segments
      *
      * @return array{id: int, slug: string, path: array<int, string>}|null
+     *
+     * @since 0.1.5
      */
     private function resolveCategoryFromPath(array $segments): ?array
     {
@@ -406,6 +432,8 @@ class Router extends RouterView
      * Resolve the primary category path for a product (if defined).
      *
      * @return array{category_id?: int|null, path?: array<int, string>}|null
+     *
+     * @since 0.1.5
      */
     private function resolveProductPrimaryPath(string $productSlug): ?array
     {
@@ -440,6 +468,8 @@ class Router extends RouterView
 
     /**
      * Resolve database from the container when not injected.
+     *
+     * @since 0.1.5
      */
     private function resolveDatabase(): ?DatabaseInterface
     {

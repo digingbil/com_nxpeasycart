@@ -14,6 +14,8 @@ use RuntimeException;
 
 /**
  * Orchestrates payment gateway actions across Stripe and PayPal.
+ *
+ * @since 0.1.5
  */
 class PaymentGatewayManager
 {
@@ -42,6 +44,8 @@ class PaymentGatewayManager
      *
      * @param array<string, mixed> $order
      * @param array<string, mixed> $preferences
+     *
+     * @since 0.1.5
      */
     public function createHostedCheckout(string $gateway, array $order, array $preferences = []): array
     {
@@ -54,6 +58,8 @@ class PaymentGatewayManager
      * Handle webhook payloads from configured gateways.
      *
      * @param array<string, mixed> $context
+     *
+     * @since 0.1.5
      */
     public function handleWebhook(string $gateway, string $payload, array $context = []): array
     {

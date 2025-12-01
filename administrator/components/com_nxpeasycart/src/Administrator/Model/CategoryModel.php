@@ -12,6 +12,8 @@ use Joomla\Component\Nxpeasycart\Administrator\Table\CategoryTable;
 
 /**
  * Single category admin model.
+ *
+ * @since 0.1.5
  */
 class CategoryModel extends AdminModel
 {
@@ -19,6 +21,8 @@ class CategoryModel extends AdminModel
      * {@inheritDoc}
      *
      * @return CategoryTable
+     *
+     * @since 0.1.5
      */
     public function getTable($name = 'Category', $prefix = 'Table', $options = [])
     {
@@ -27,6 +31,8 @@ class CategoryModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function getForm($data = [], $loadData = true)
     {
@@ -41,6 +47,8 @@ class CategoryModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function loadFormData()
     {
@@ -51,6 +59,8 @@ class CategoryModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function validate($form, $data, $group = null)
     {
@@ -92,6 +102,8 @@ class CategoryModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function prepareTable($table)
     {
@@ -117,6 +129,8 @@ class CategoryModel extends AdminModel
 
     /**
      * Determine whether a category exists.
+     *
+     * @since 0.1.5
      */
     private function categoryExists(int $id): bool
     {
@@ -135,6 +149,8 @@ class CategoryModel extends AdminModel
 
     /**
      * Calculate the next sort position.
+     *
+     * @since 0.1.5
      */
     private function resolveNextSort(): int
     {

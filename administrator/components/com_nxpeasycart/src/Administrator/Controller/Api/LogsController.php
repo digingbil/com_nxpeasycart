@@ -14,11 +14,28 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 
 class LogsController extends AbstractJsonController
 {
+    /**
+     * Constructor.
+     *
+     * @param array                        $config  Controller configuration
+     * @param MVCFactoryInterface|null     $factory MVC factory
+     * @param CMSApplicationInterface|null $app     Application instance
+     *
+     * @since 0.1.5
+     */
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
         parent::__construct($config, $factory, $app);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param string $task The task name
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     public function execute($task)
     {
         $task = strtolower((string) $task ?: 'list');
@@ -29,6 +46,13 @@ class LogsController extends AbstractJsonController
         };
     }
 
+    /**
+     * List audit logs.
+     *
+     * @return JsonResponse
+     *
+     * @since 0.1.5
+     */
     protected function list(): JsonResponse
     {
         $this->assertCan('core.manage');

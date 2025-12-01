@@ -8,6 +8,8 @@ use Composer\Autoload\ClassLoader;
 
 /**
  * Conservative vendor loader for site runtime when the packaged vendor tree is absent.
+ *
+ * @since 0.1.5
  */
 class VendorLoader
 {

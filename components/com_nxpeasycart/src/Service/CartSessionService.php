@@ -12,6 +12,8 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 
 /**
  * Session-aware cart accessor for the storefront.
+ *
+ * @since 0.1.5
  */
 class CartSessionService
 {
@@ -20,11 +22,15 @@ class CartSessionService
 
     /**
      * @var CartService
+     *
+     * @since 0.1.5
      */
     private CartService $carts;
 
     /**
      * @var SessionInterface|Session
+     *
+     * @since 0.1.5
      */
     private $session;
 
@@ -33,6 +39,8 @@ class CartSessionService
      *
      * @param CartService               $carts   Persistent cart service
      * @param SessionInterface|Session  $session Joomla session
+     *
+     * @since 0.1.5
      */
     public function __construct(CartService $carts, $session)
     {
@@ -44,6 +52,8 @@ class CartSessionService
      * Ensure a cart exists for the current visitor and return it.
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     public function current(): array
     {
@@ -97,6 +107,8 @@ class CartSessionService
 
     /**
      * Ensure vendor autoload is available when DI bootstrapping did not load it.
+     *
+     * @since 0.1.5
      */
     private function ensureAutoload(): void
     {
@@ -138,6 +150,8 @@ class CartSessionService
 
     /**
      * Bootstrap the cart and expose it via the application input for views.
+     *
+     * @since 0.1.5
      */
     public function attachToApplication(): array
     {
@@ -151,6 +165,8 @@ class CartSessionService
 
     /**
      * Regenerate the session ID once a user is authenticated to prevent fixation.
+     *
+     * @since 0.1.5
      */
     private function regenerateOnAuthentication(): void
     {

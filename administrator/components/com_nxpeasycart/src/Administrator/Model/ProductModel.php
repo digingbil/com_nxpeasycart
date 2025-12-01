@@ -23,6 +23,8 @@ use Throwable;
 
 /**
  * Product admin model.
+ *
+ * @since 0.1.5
  */
 class ProductModel extends AdminModel
 {
@@ -30,6 +32,8 @@ class ProductModel extends AdminModel
      * {@inheritDoc}
      *
      * @return ProductTable
+     *
+     * @since 0.1.5
      */
     public function getTable($name = 'Product', $prefix = 'Table', $options = [])
     {
@@ -38,6 +42,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function getForm($data = [], $loadData = true)
     {
@@ -52,6 +58,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function loadFormData()
     {
@@ -66,6 +74,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function getItem($pk = null)
     {
@@ -80,6 +90,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function validate($form, $data, $group = null)
     {
@@ -111,6 +123,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function save($data)
     {
@@ -161,6 +175,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function prepareTable($table)
     {
@@ -199,6 +215,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function canDelete($record)
     {
@@ -209,6 +227,8 @@ class ProductModel extends AdminModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function canEdit($record)
     {
@@ -223,6 +243,8 @@ class ProductModel extends AdminModel
      * @param object $item Product row
      *
      * @return object
+     *
+     * @since 0.1.5
      */
     public function hydrateItem(object $item): object
     {
@@ -235,6 +257,8 @@ class ProductModel extends AdminModel
      * @param array<int, object> $items
      *
      * @return array<int, object>
+     *
+     * @since 0.1.5
      */
     public function hydrateItems(array $items): array
     {
@@ -282,6 +306,8 @@ class ProductModel extends AdminModel
 
     /**
      * Convert a stored images payload into an array.
+     *
+     * @since 0.1.5
      */
     private function decodeImages(?string $payload): array
     {
@@ -308,6 +334,8 @@ class ProductModel extends AdminModel
      * @param array $images Sanitised images
      *
      * @return string|null
+     *
+     * @since 0.1.5
      */
     private function encodeImages(array $images): ?string
     {
@@ -328,6 +356,8 @@ class ProductModel extends AdminModel
      * @param mixed $input Raw images input
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private function filterImages($input): array
     {
@@ -389,6 +419,8 @@ class ProductModel extends AdminModel
      * @param mixed $input Raw variants payload
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function filterVariants($input): array
     {
@@ -495,6 +527,8 @@ class ProductModel extends AdminModel
      * @param mixed $input Raw categories payload
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function filterCategories($input): array
     {
@@ -598,6 +632,8 @@ class ProductModel extends AdminModel
      * Convert price input to integer minor units.
      *
      * @throws RuntimeException If the price cannot be converted
+     *
+     * @since 0.1.5
      */
     private function resolvePriceCents(array $variant): int
     {
@@ -634,6 +670,8 @@ class ProductModel extends AdminModel
      * @param array $variants  Sanitised variant payload
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     private function syncVariants(int $productId, array $variants): void
     {
@@ -719,6 +757,8 @@ class ProductModel extends AdminModel
      * @param array $categories Sanitised categories payload
      *
      * @return array<int, array{id: int, primary: bool}>
+     *
+     * @since 0.1.5
      */
     private function syncCategories(int $productId, array $categories): array
     {
@@ -852,6 +892,8 @@ class ProductModel extends AdminModel
      * Select the canonical primary category ID for a product.
      *
      * @param array<int, array{id: int, primary: bool}> $resolvedCategories
+     *
+     * @since 0.1.5
      */
     private function selectPrimaryCategoryId(array $resolvedCategories, ?int $preferredId = null): ?int
     {
@@ -874,6 +916,8 @@ class ProductModel extends AdminModel
 
     /**
      * Persist the primary category mapping for a product.
+     *
+     * @since 0.1.5
      */
     private function persistPrimaryCategory(int $productId, ?int $categoryId): void
     {
@@ -896,6 +940,8 @@ class ProductModel extends AdminModel
 
     /**
      * Determine whether a category already exists.
+     *
+     * @since 0.1.5
      */
     private function categoryExists(int $categoryId): bool
     {
@@ -914,6 +960,8 @@ class ProductModel extends AdminModel
 
     /**
      * Find an existing category or create a new one.
+     *
+     * @since 0.1.5
      */
     private function findOrCreateCategory(string $title, string $slug): int
     {
@@ -961,6 +1009,8 @@ class ProductModel extends AdminModel
      * Convert a variants options payload into JSON.
      *
      * @param mixed $options Options payload
+     *
+     * @since 0.1.5
      */
     private function encodeOptions($options): ?string
     {
@@ -983,6 +1033,8 @@ class ProductModel extends AdminModel
      * Load variants for the product.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function loadVariants(int $productId): array
     {
@@ -1034,6 +1086,8 @@ class ProductModel extends AdminModel
      * @param array<int> $productIds
      *
      * @return array<int, array<int, array<string, mixed>>>
+     *
+     * @since 0.1.5
      */
     private function loadVariantsForProducts(array $productIds): array
     {
@@ -1092,6 +1146,8 @@ class ProductModel extends AdminModel
      * Load categories assigned to the product.
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function loadCategories(int $productId, ?int $primaryCategoryId = null): array
     {
@@ -1139,6 +1195,8 @@ class ProductModel extends AdminModel
      * @param array<int, int|null> $primaryCategoryMap
      *
      * @return array<int, array<int, array<string, mixed>>>
+     *
+     * @since 0.1.5
      */
     private function loadCategoriesForProducts(array $productIds, array $primaryCategoryMap = []): array
     {
@@ -1197,6 +1255,8 @@ class ProductModel extends AdminModel
      * Convert a JSON options payload to an array.
      *
      * @param string|null $payload Stored options JSON
+     *
+     * @since 0.1.5
      */
     private function decodeOptions(?string $payload): ?array
     {
@@ -1215,6 +1275,8 @@ class ProductModel extends AdminModel
 
     /**
      * Format cents as a string with two decimal places.
+     *
+     * @since 0.1.5
      */
     private function formatPriceCents(int $cents): string
     {

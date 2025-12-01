@@ -10,6 +10,8 @@ use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Default site controller for routing storefront views.
+ *
+ * @since 0.1.5
  */
 class DisplayController extends BaseController
 {
@@ -17,11 +19,15 @@ class DisplayController extends BaseController
      * Default view name.
      *
      * @var string
+     *
+     * @since 0.1.5
      */
     protected $default_view = 'category';
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($cachable = false, $urlparams = [])
     {

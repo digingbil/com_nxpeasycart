@@ -10,6 +10,8 @@ use Joomla\CMS\Factory;
 
 /**
  * Lightweight, cache-backed rate limiter.
+ *
+ * @since 0.1.5
  */
 class RateLimiter
 {
@@ -19,6 +21,8 @@ class RateLimiter
      * In-memory fallback when cache storage is unavailable.
      *
      * @var array<string, array{count:int, expires_at:int}>
+     *
+     * @since 0.1.5
      */
     private static array $memory = [];
 
@@ -50,6 +54,8 @@ class RateLimiter
 
     /**
      * Increment the counter for a given key; returns true when under limit.
+     *
+     * @since 0.1.5
      */
     public function hit(string $key, int $limit, int $windowSeconds): bool
     {
@@ -79,6 +85,8 @@ class RateLimiter
      * Read the current counter for a key.
      *
      * @return array{count:int, expires_at:int}|null
+     *
+     * @since 0.1.5
      */
     public function load(string $key): ?array
     {

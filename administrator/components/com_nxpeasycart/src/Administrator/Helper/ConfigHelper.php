@@ -11,36 +11,50 @@ use RuntimeException;
 
 /**
  * Component configuration helper utilities.
+ *
+ * @since 0.1.5
  */
 class ConfigHelper
 {
     /**
      * Cached base currency value.
+     *
+     * @since 0.1.5
      */
     private static ?string $baseCurrency = null;
 
     /**
      * Cached checkout phone requirement flag.
+     *
+     * @since 0.1.5
      */
     private static ?bool $checkoutPhoneRequired = null;
 
     /**
      * Cached storefront category page size.
+     *
+     * @since 0.1.5
      */
     private static ?int $categoryPageSize = null;
 
     /**
      * Cached storefront category pagination mode.
+     *
+     * @since 0.1.5
      */
     private static ?string $categoryPaginationMode = null;
 
     /**
      * Cached auto-send order emails flag.
+     *
+     * @since 0.1.5
      */
     private static ?bool $autoSendOrderEmails = null;
 
     /**
      * Resolve the store's base currency (ISO 4217, uppercase).
+     *
+     * @since 0.1.5
      */
     public static function getBaseCurrency(): string
     {
@@ -64,6 +78,8 @@ class ConfigHelper
 
     /**
      * Whether checkout should require a phone number.
+     *
+     * @since 0.1.5
      */
     public static function isCheckoutPhoneRequired(): bool
     {
@@ -80,6 +96,8 @@ class ConfigHelper
 
     /**
      * Reset cached configuration values.
+     *
+     * @since 0.1.5
      */
     public static function clearCache(): void
     {
@@ -92,6 +110,8 @@ class ConfigHelper
 
     /**
      * Persist a new base currency to the component configuration.
+     *
+     * @since 0.1.5
      */
     public static function setBaseCurrency(string $currency): void
     {
@@ -129,6 +149,8 @@ class ConfigHelper
 
     /**
      * Persist checkout phone requirement flag.
+     *
+     * @since 0.1.5
      */
     public static function setCheckoutPhoneRequired(bool $required): void
     {
@@ -160,6 +182,8 @@ class ConfigHelper
 
     /**
      * Persist storefront category page size.
+     *
+     * @since 0.1.5
      */
     public static function setCategoryPageSize(int $limit): void
     {
@@ -193,6 +217,8 @@ class ConfigHelper
 
     /**
      * Persist storefront category pagination mode.
+     *
+     * @since 0.1.5
      */
     public static function setCategoryPaginationMode(string $mode): void
     {
@@ -226,6 +252,8 @@ class ConfigHelper
 
     /**
      * Resolve the storefront category page size.
+     *
+     * @since 0.1.5
      */
     public static function getCategoryPageSize(): int
     {
@@ -247,6 +275,8 @@ class ConfigHelper
 
     /**
      * Resolve the storefront category pagination mode.
+     *
+     * @since 0.1.5
      */
     public static function getCategoryPaginationMode(): string
     {
@@ -265,6 +295,8 @@ class ConfigHelper
 
     /**
      * Whether to auto-send order status notification emails.
+     *
+     * @since 0.1.5
      */
     public static function isAutoSendOrderEmails(): bool
     {
@@ -281,6 +313,8 @@ class ConfigHelper
 
     /**
      * Persist auto-send order emails flag.
+     *
+     * @since 0.1.5
      */
     public static function setAutoSendOrderEmails(bool $enabled): void
     {

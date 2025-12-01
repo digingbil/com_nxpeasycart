@@ -8,6 +8,8 @@ use NumberFormatter;
 
 /**
  * Money formatting utilities.
+ *
+ * @since 0.1.5
  */
 class MoneyHelper
 {
@@ -18,6 +20,8 @@ class MoneyHelper
 
     /**
      * Format cents into a currency string respecting locale + currency decimals.
+     *
+     * @since 0.1.5
      */
     public static function format(int $cents, string $currency, string $locale = 'en_GB'): string
     {
@@ -50,6 +54,8 @@ class MoneyHelper
 
     /**
      * Resolve currency decimal places (0 for zero-decimal currencies).
+     *
+     * @since 0.1.5
      */
     public static function getDecimals(string $currency): int
     {

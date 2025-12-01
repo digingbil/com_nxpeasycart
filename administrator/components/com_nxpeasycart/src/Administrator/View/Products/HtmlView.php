@@ -9,11 +9,15 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 
 /**
  * Products listing view placeholder.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {

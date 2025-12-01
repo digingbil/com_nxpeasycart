@@ -11,6 +11,8 @@ use RuntimeException;
 
 /**
  * PayPal Checkout (Orders API) integration.
+ *
+ * @since 0.1.5
  */
 class PayPalGateway implements PaymentGatewayInterface
 {
@@ -183,6 +185,8 @@ class PayPalGateway implements PaymentGatewayInterface
      * @param string $payload The raw webhook payload
      * @param array<string, mixed> $context Headers from the webhook request
      * @throws RuntimeException if verification fails
+     *
+     * @since 0.1.5
      */
     private function verifyWebhookSignature(string $payload, array $context): void
     {

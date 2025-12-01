@@ -15,6 +15,8 @@ use RuntimeException;
 
 /**
  * Order confirmation model powering storefront order summary.
+ *
+ * @since 0.1.5
  */
 class OrderModel extends BaseDatabaseModel
 {
@@ -24,6 +26,8 @@ class OrderModel extends BaseDatabaseModel
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     protected function populateState($ordering = null, $direction = null)
     {
@@ -47,6 +51,8 @@ class OrderModel extends BaseDatabaseModel
 
     /**
      * Retrieve the order payload for confirmation display.
+     *
+     * @since 0.1.5
      */
     public function getItem(): ?array
     {
@@ -209,6 +215,8 @@ class OrderModel extends BaseDatabaseModel
 
     /**
      * @param mixed $address
+     *
+     * @since 0.1.5
      */
     private function maskAddress($address): array
     {

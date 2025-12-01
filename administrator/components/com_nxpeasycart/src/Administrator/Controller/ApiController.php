@@ -14,6 +14,8 @@ use RuntimeException;
 
 /**
  * Router controller that proxies API tasks to resource controllers.
+ *
+ * @since 0.1.5
  */
 class ApiController extends BaseController
 {
@@ -23,9 +25,12 @@ class ApiController extends BaseController
      * @param string $task The API task string ("resource.action").
      *
      * @return mixed
+     *
+     * @since 0.1.5
      */
-    public function execute($task)
-    {
+    public function execute($task): mixed {
+
+        //We need to use RAW input here because the task parameter can contain dots.
         $rawTaskParam = $_GET['task'] ?? $_POST['task'] ?? $this->input->get('task', '', 'RAW');
 
         if (!\is_string($rawTaskParam)) {
@@ -65,6 +70,8 @@ class ApiController extends BaseController
      * @param string $resource Resource identifier
      *
      * @return AbstractJsonController
+     *
+     * @since 0.1.5
      */
     private function loadResourceController(string $resource): AbstractJsonController
     {
@@ -96,6 +103,10 @@ class ApiController extends BaseController
     /**
      * Enforce CSRF protection for non-idempotent HTTP verbs so stateful endpoints
      * cannot be hit without a valid token.
+     *
+     * @return void
+     *
+     * @since 0.1.5
      */
     private function assertTokenForUnsafeRequests(): void
     {
@@ -108,6 +119,15 @@ class ApiController extends BaseController
         }
     }
 
+    /**
+     * Logs a debug message to the system log. If an error occurs during the logging process, it will be silently ignored.
+     *
+     * @param   string  $message  The debug message to be logged.
+     *
+     * @return void
+     *
+     * @since 0.1.5
+     */
     private function debug(string $message): void
     {
         try {

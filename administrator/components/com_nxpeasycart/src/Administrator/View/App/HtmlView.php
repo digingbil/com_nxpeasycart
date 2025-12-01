@@ -13,6 +13,8 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 
 /**
  * Basic HTML view for the admin dashboard wrapper.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
@@ -22,6 +24,8 @@ class HtmlView extends BaseHtmlView
      * @param string|null $tpl Template file to use
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {

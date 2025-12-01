@@ -18,6 +18,8 @@ use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Checkout model aggregating cart + configuration data.
+ *
+ * @since 0.1.5
  */
 class CheckoutModel extends BaseDatabaseModel
 {
@@ -25,6 +27,8 @@ class CheckoutModel extends BaseDatabaseModel
 
     /**
      * Return the checkout payload consumed by the template + Vue island.
+     *
+     * @since 0.1.5
      */
     public function getCheckout(): array
     {
@@ -155,6 +159,8 @@ class CheckoutModel extends BaseDatabaseModel
      * Build a lightweight prefill array for authenticated users.
      *
      * @return array<string, mixed>
+     *
+     * @since 0.1.5
      */
     private function getUserPrefill(): array
     {

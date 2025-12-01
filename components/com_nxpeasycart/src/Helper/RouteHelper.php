@@ -18,6 +18,8 @@ use Joomla\Database\DatabaseInterface;
  * the active menu item as the base, which causes issues like:
  * - /shop/all-products/cart instead of /shop/cart
  * - Non-SEF product URLs when no product menu exists
+ *
+ * @since 0.1.5
  */
 class RouteHelper
 {
@@ -25,6 +27,8 @@ class RouteHelper
      * Cached menu item IDs by view.
      *
      * @var array<string, int|null>
+     *
+     * @since 0.1.5
      */
     private static array $menuCache = [];
 
@@ -32,6 +36,8 @@ class RouteHelper
      * Cached primary category paths keyed by product slug.
      *
      * @var array<string, array<int, string>|null>
+     *
+     * @since 0.1.5
      */
     private static array $productPathCache = [];
 
@@ -41,6 +47,8 @@ class RouteHelper
      * @param bool $xhtml Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getCartRoute(bool $xhtml = true): string
     {
@@ -61,6 +69,8 @@ class RouteHelper
      * @param bool $xhtml Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getCheckoutRoute(bool $xhtml = true): string
     {
@@ -81,6 +91,8 @@ class RouteHelper
      * @param bool $xhtml Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getLandingRoute(bool $xhtml = true): string
     {
@@ -103,6 +115,8 @@ class RouteHelper
      * @param bool        $xhtml        Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getProductRoute(string $slug, ?string $categoryPath = null, bool $xhtml = true): string
     {
@@ -142,6 +156,8 @@ class RouteHelper
      * @param bool        $xhtml Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getCategoryRoute(?string $slug = null, ?int $categoryId = null, bool $xhtml = true): string
     {
@@ -181,6 +197,8 @@ class RouteHelper
      * @param bool   $xhtml   Whether to encode ampersands for XHTML
      *
      * @return string
+     *
+     * @since 0.1.5
      */
     public static function getOrderRoute(string $orderNo, bool $xhtml = true, ?string $publicToken = null): string
     {
@@ -203,6 +221,8 @@ class RouteHelper
 
     /**
      * Get a SEF URL for the authenticated orders list.
+     *
+     * @since 0.1.5
      */
     public static function getOrdersRoute(bool $xhtml = true): string
     {
@@ -221,6 +241,8 @@ class RouteHelper
      * Resolve and cache the primary category path for a product.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     private static function getPrimaryPathForProduct(DatabaseInterface $db, string $slug): array
     {
@@ -245,6 +267,8 @@ class RouteHelper
 
     /**
      * Fetch the database connection when available.
+     *
+     * @since 0.1.5
      */
     private static function getDatabase(): ?DatabaseInterface
     {
@@ -261,6 +285,8 @@ class RouteHelper
      * @param string $view The view name
      *
      * @return int|null
+     *
+     * @since 0.1.5
      */
     public static function findMenuItemId(string $view): ?int
     {
@@ -294,6 +320,8 @@ class RouteHelper
      * Clear the menu cache (useful in tests or after menu changes).
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public static function clearCache(): void
     {

@@ -24,6 +24,8 @@ use Joomla\DI\Container;
 
 /**
  * AJAX controller handling cart mutations on the storefront.
+ *
+ * @since 0.1.5
  */
 class CartController extends BaseController
 {
@@ -33,6 +35,8 @@ class CartController extends BaseController
      * @return void
      *
      * @throws \Throwable When persistence fails mid-transaction.
+     *
+     * @since 0.1.5
      */
     public function add(): void
     {
@@ -158,6 +162,8 @@ class CartController extends BaseController
      * Remove a line item from the active cart session.
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function remove(): void
     {
@@ -239,6 +245,8 @@ class CartController extends BaseController
      * Update the quantity of an existing cart item.
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function update(): void
     {
@@ -343,6 +351,8 @@ class CartController extends BaseController
      * @return void
      *
      * @throws \Throwable When cart retrieval fails.
+     *
+     * @since 0.1.5
      */
     public function summary(): void
     {
@@ -379,6 +389,8 @@ class CartController extends BaseController
      * @param int               $variantId Variant identifier
      *
      * @return object|null Active variant row or null when missing
+     *
+     * @since 0.1.5
      */
     private function loadVariant(DatabaseInterface $db, int $variantId): ?object
     {
@@ -405,6 +417,8 @@ class CartController extends BaseController
      * @param int               $productId Product identifier
      *
      * @return object|null Active product row or null when missing
+     *
+     * @since 0.1.5
      */
     private function loadProduct(DatabaseInterface $db, int $productId): ?object
     {
@@ -446,6 +460,8 @@ class CartController extends BaseController
 
     /**
      * Ensure cart-related services are registered when the provider was not executed.
+     *
+     * @since 0.1.5
      */
     private function ensureCartServices(Container $container): void
     {
@@ -472,6 +488,8 @@ class CartController extends BaseController
 
     /**
      * Ensure the Ramsey UUID autoloader is available for CartService.
+     *
+     * @since 0.1.5
      */
     private function ensureUuidAutoload(): void
     {
@@ -515,6 +533,8 @@ class CartController extends BaseController
      * @param int                              $qty
      *
      * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.5
      */
     private function upsertCartItem(array $items, object $product, object $variant, int $qty): array
     {
@@ -563,6 +583,8 @@ class CartController extends BaseController
 
     /**
      * Throttle cart mutations to reduce bot abuse.
+     *
+     * @since 0.1.5
      */
     private function enforceRateLimit(): void
     {
@@ -624,6 +646,8 @@ class CartController extends BaseController
      * Apply a coupon code to the current cart.
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function applyCoupon(): void
     {
@@ -755,6 +779,8 @@ class CartController extends BaseController
      * Remove the applied coupon from the current cart.
      *
      * @return void
+     *
+     * @since 0.1.5
      */
     public function removeCoupon(): void
     {
@@ -818,6 +844,8 @@ class CartController extends BaseController
      * @param DatabaseInterface $db
      * @param int $variantId
      * @return object|null
+     *
+     * @since 0.1.5
      */
     private function loadVariantForCoupon(DatabaseInterface $db, int $variantId): ?object
     {

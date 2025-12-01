@@ -6,6 +6,8 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Helper;
 
 /**
  * Product status helper for mapping active/inactive/out-of-stock values.
+ *
+ * @since 0.1.5
  */
 final class ProductStatus
 {
@@ -17,6 +19,8 @@ final class ProductStatus
      * Normalise an incoming status value into one of the supported constants.
      *
      * @param mixed $value Raw status input
+     *
+     * @since 0.1.5
      */
     public static function normalise($value): int
     {
@@ -45,16 +49,31 @@ final class ProductStatus
         return self::ACTIVE;
     }
 
+    /**
+     * Check if a product status is purchasable.
+     *
+     * @since 0.1.5
+     */
     public static function isPurchasable(int $status): bool
     {
         return $status === self::ACTIVE;
     }
 
+    /**
+     * Check if a product status is out of stock.
+     *
+     * @since 0.1.5
+     */
     public static function isOutOfStock(int $status): bool
     {
         return $status === self::OUT_OF_STOCK;
     }
 
+    /**
+     * Check if a product status is visible.
+     *
+     * @since 0.1.5
+     */
     public static function isVisible(int $status): bool
     {
         return $status !== self::INACTIVE;

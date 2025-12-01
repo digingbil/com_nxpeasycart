@@ -9,6 +9,8 @@ use Joomla\Database\ParameterType;
 
 /**
  * Utilities for resolving category paths and canonical slugs.
+ *
+ * @since 0.1.5
  */
 class CategoryPathHelper
 {
@@ -16,6 +18,8 @@ class CategoryPathHelper
      * Cached category rows keyed by ID.
      *
      * @var array<int, array{id: int, slug: string, parent_id: int|null}|null>
+     *
+     * @since 0.1.5
      */
     private static array $categoryCache = [];
 
@@ -23,6 +27,8 @@ class CategoryPathHelper
      * Cached category IDs keyed by lower-cased slug.
      *
      * @var array<string, int|null>
+     *
+     * @since 0.1.5
      */
     private static array $slugCache = [];
 
@@ -30,6 +36,8 @@ class CategoryPathHelper
      * Cached slug paths keyed by category ID.
      *
      * @var array<int, array<int, string>>
+     *
+     * @since 0.1.5
      */
     private static array $pathCache = [];
 
@@ -37,6 +45,8 @@ class CategoryPathHelper
      * Cached primary category lookups keyed by product slug.
      *
      * @var array<string, array{category_id: int, path: array<int, string>}|null>
+     *
+     * @since 0.1.5
      */
     private static array $productPrimaryCache = [];
 
@@ -46,6 +56,8 @@ class CategoryPathHelper
      * @param mixed $path Raw path string, array, or null
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     public static function normalisePathSegments($path): array
     {
@@ -84,6 +96,8 @@ class CategoryPathHelper
      * Build the slug path for the given category ID.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     public static function getPath(DatabaseInterface $db, ?int $categoryId): array
     {
@@ -122,6 +136,8 @@ class CategoryPathHelper
      * Resolve a category row by slug.
      *
      * @return array{id: int, slug: string, parent_id: int|null}|null
+     *
+     * @since 0.1.5
      */
     public static function resolveBySlug(DatabaseInterface $db, string $slug): ?array
     {
@@ -170,6 +186,8 @@ class CategoryPathHelper
      * Resolve a category path by slug.
      *
      * @return array<int, string>
+     *
+     * @since 0.1.5
      */
     public static function getPathForSlug(DatabaseInterface $db, string $slug): array
     {
@@ -188,6 +206,8 @@ class CategoryPathHelper
      * @param array<int, string> $segments
      *
      * @return array{id: int, slug: string, path: array<int, string>}|null
+     *
+     * @since 0.1.5
      */
     public static function resolveByPath(DatabaseInterface $db, array $segments): ?array
     {
@@ -221,6 +241,8 @@ class CategoryPathHelper
      * Resolve the primary category path for a product.
      *
      * @return array{category_id: int, path: array<int, string>}|null
+     *
+     * @since 0.1.5
      */
     public static function getPrimaryPathForProduct(DatabaseInterface $db, string $productSlug): ?array
     {
@@ -262,6 +284,8 @@ class CategoryPathHelper
 
     /**
      * Reset caches (useful in tests).
+     *
+     * @since 0.1.5
      */
     public static function reset(): void
     {
@@ -275,6 +299,8 @@ class CategoryPathHelper
      * Load a category row and cache it.
      *
      * @return array{id: int, slug: string, parent_id: int|null}|null
+     *
+     * @since 0.1.5
      */
     private static function loadCategory(DatabaseInterface $db, int $categoryId): ?array
     {
@@ -319,6 +345,8 @@ class CategoryPathHelper
      *
      * @param array<int, string> $canonical
      * @param array<int, string> $incoming
+     *
+     * @since 0.1.5
      */
     private static function pathsMatch(array $canonical, array $incoming): bool
     {
@@ -344,6 +372,8 @@ class CategoryPathHelper
      * @param int $categoryId The parent category ID
      *
      * @return array<int, int> Array of category IDs including the parent
+     *
+     * @since 0.1.5
      */
     public static function getDescendantIds(DatabaseInterface $db, int $categoryId): array
     {

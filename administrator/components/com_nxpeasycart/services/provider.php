@@ -34,7 +34,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\PaymentGatewayService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
-use Joomla\Component\Nxpeasycart\Site\Service\Router as EasyCartRouter;
+use Joomla\Component\Nxpeasycart\Site\Service\Router as NxpEasyCartRouter;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Router\LandingAliasRule;
@@ -79,7 +79,7 @@ return new class () implements ServiceProviderInterface {
      * @param Container $container The DI container
      *
      * @return void
-     */
+      */
     public function register(Container $container): void
     {
         \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Administrator', __DIR__ . '/../src/Administrator', false, false, 'psr4');
@@ -224,7 +224,7 @@ return new class () implements ServiceProviderInterface {
         if (!$container->has(SiteRouter::class)) {
             $container->set(
                 SiteRouter::class,
-                static function (Container $container): EasyCartRouter {
+                static function (Container $container): NxpEasyCartRouter {
                     $app = $container->has(CMSApplicationInterface::class)
                         ? $container->get(CMSApplicationInterface::class)
                         : JoomlaFactory::getApplication();
@@ -233,7 +233,7 @@ return new class () implements ServiceProviderInterface {
                         $app = JoomlaFactory::getApplication('site');
                     }
 
-                    return new EasyCartRouter(
+                    return new NxpEasyCartRouter(
                         $app,
                         $app->getMenu(),
                         null,
@@ -269,7 +269,10 @@ return new class () implements ServiceProviderInterface {
 
     /**
      * Attach the landing alias router rule immediately so template routers can't bypass it.
-     */
+     *
+     * @param Container $container
+     * @return void
+      */
     private function attachLandingAliasRule(Container $container): void
     {
         static $attached = false;
@@ -286,7 +289,10 @@ return new class () implements ServiceProviderInterface {
             return;
         }
 
-        $router = $app->getRouter();
+        // Old (deprecated):
+        // $router = $app->getRouter();
+
+        $router = $container->get(SiteRouter::class);
 
         if (!$router instanceof SiteRouter) {
             return;

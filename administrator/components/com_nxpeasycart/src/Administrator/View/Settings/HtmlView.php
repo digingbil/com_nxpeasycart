@@ -15,16 +15,22 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 
 /**
  * Settings view placeholder.
+ *
+ * @since 0.1.5
  */
 class HtmlView extends BaseHtmlView
 {
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $settingsData = [];
 
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $taxRates = [
         'items'      => [],
@@ -33,6 +39,8 @@ class HtmlView extends BaseHtmlView
 
     /**
      * @var array<string, mixed>
+     *
+     * @since 0.1.5
      */
     protected array $shippingRules = [
         'items'      => [],
@@ -41,6 +49,8 @@ class HtmlView extends BaseHtmlView
 
     /**
      * {@inheritDoc}
+     *
+     * @since 0.1.5
      */
     public function display($tpl = null): void
     {

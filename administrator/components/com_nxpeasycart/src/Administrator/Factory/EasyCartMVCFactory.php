@@ -8,6 +8,8 @@ use Joomla\CMS\MVC\Factory\MVCFactory;
 
 /**
  * Custom MVC factory aware of the admin/site namespace split.
+ *
+ * @since 0.1.5
  */
 class EasyCartMVCFactory extends MVCFactory
 {
@@ -18,6 +20,8 @@ class EasyCartMVCFactory extends MVCFactory
      * @param string $prefix Application prefix (Administrator, Site, Api).
      *
      * @return string|null
+     *
+     * @since 0.1.5
      */
     protected function getClassName(string $suffix, string $prefix)
     {
