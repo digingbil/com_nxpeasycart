@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `total_cents` INT NOT NULL DEFAULT 0,
   `currency` CHAR(3) NOT NULL,
   `state` ENUM('cart','pending','paid','fulfilled','refunded','canceled') NOT NULL DEFAULT 'cart',
+  `payment_method` VARCHAR(32) NULL,
   `status_updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `locale` VARCHAR(10) NOT NULL DEFAULT 'en-GB',
   `carrier` VARCHAR(50) NULL,
@@ -92,7 +93,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   UNIQUE KEY `idx_nxp_orders_order_no` (`order_no`),
   UNIQUE KEY `idx_nxp_orders_public_token` (`public_token`),
   KEY `idx_nxp_orders_user` (`user_id`),
-  KEY `idx_nxp_orders_state` (`state`)
+  KEY `idx_nxp_orders_state` (`state`),
+  KEY `idx_nxp_orders_payment_method` (`payment_method`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_order_items` (

@@ -427,9 +427,19 @@ class PayPalGateway implements PaymentGatewayInterface
             $paypalStatus = 'COMPLETED';
         }
 
-        $status = $paypalStatus === 'COMPLETED'
-            ? 'paid'
-            : ($resource['status'] ?? 'PENDING');
+        // Determine status for order state transition:
+        // - COMPLETED capture → paid
+        // - CHECKOUT.ORDER.APPROVED with successful capture → paid (even if capture is PENDING)
+        // - Otherwise → use resource status as-is
+        if ($paypalStatus === 'COMPLETED') {
+            $status = 'paid';
+        } elseif ($eventType === 'CHECKOUT.ORDER.APPROVED' && $externalId !== null && $externalId !== $resource['id']) {
+            // We successfully captured (external_id changed from order ID to capture ID)
+            // Even if capture status is PENDING, the order is approved and funds authorized
+            $status = 'paid';
+        } else {
+            $status = strtolower($resource['status'] ?? 'pending');
+        }
 
         return [
             'order_id' => $orderId,

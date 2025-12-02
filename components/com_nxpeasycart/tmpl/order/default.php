@@ -117,6 +117,11 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                 </span>
             <?php endif; ?>
         </div>
+        <?php if ($state === 'pending' && !empty($order['payment_method']) && strtolower((string) $order['payment_method']) === 'paypal') : ?>
+            <p class="nxp-ec-order-confirmation__notice nxp-ec-order-confirmation__notice--info">
+                <?php echo Text::_('COM_NXPEASYCART_ORDER_PAYPAL_PENDING_NOTICE'); ?>
+            </p>
+        <?php endif; ?>
         <?php if (!empty($this->isPublic) && empty($this->isOwner)) : ?>
             <p class="nxp-ec-order-confirmation__notice">
                 <?php echo Text::_('COM_NXPEASYCART_ORDER_PUBLIC_MASKING_NOTICE'); ?>

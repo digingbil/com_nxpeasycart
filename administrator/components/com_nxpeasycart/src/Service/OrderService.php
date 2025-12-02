@@ -124,6 +124,7 @@ class OrderService
                 'total_cents'    => $totals['total_cents'],
                 'currency'       => $normalised['currency'],
                 'state'          => $normalised['state'],
+                'payment_method' => $normalised['payment_method'],
                 'locale'         => $normalised['locale'],
                 'public_token'   => $publicToken,
                 'status_updated_at' => $statusTimestamp,
@@ -840,6 +841,9 @@ class OrderService
         $locale = (string) ($payload['locale'] ?? 'en-GB');
         $locale = $locale !== '' ? $locale : 'en-GB';
 
+        $paymentMethod = isset($payload['payment_method']) ? trim((string) $payload['payment_method']) : null;
+        $paymentMethod = $paymentMethod !== '' ? strtolower($paymentMethod) : null;
+
         return [
             'order_no'       => $orderNo,
             'user_id'        => $this->toNullableInt($payload['user_id'] ?? null),
@@ -848,6 +852,7 @@ class OrderService
             'shipping'       => $shipping,
             'currency'       => $currency,
             'state'          => $state,
+            'payment_method' => $paymentMethod,
             'locale'         => $locale,
             'tax_cents'      => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
             'shipping_cents' => $this->toNonNegativeInt($payload['shipping_cents'] ?? 0),
@@ -1016,6 +1021,7 @@ class OrderService
             'total_cents'    => (int) $row->total_cents,
             'currency'       => (string) $row->currency,
             'state'          => (string) $row->state,
+            'payment_method' => isset($row->payment_method) ? (string) $row->payment_method : null,
             'status_updated_at' => $statusUpdatedAt,
             'locale'         => (string) $row->locale,
             'carrier'        => $row->carrier !== null ? (string) $row->carrier : null,

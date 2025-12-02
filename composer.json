@@ -2,7 +2,7 @@
   "name": "nxp/easy-cart",
   "description": "Joomla e-commerce component focused on clarity and speed to a first sale.",
   "type": "library",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "license": "GPL-3.0-or-later",
   "require": {
     "php": "^8.0",
