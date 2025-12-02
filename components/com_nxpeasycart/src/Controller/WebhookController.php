@@ -97,12 +97,13 @@ class WebhookController extends BaseController
         $server = $app->getInput()->server;
 
         $headers = [
-            'Stripe-Signature'         => $server->getString('HTTP_STRIPE_SIGNATURE', ''),
-            'PayPal-Transmission-Id'   => $server->getString('HTTP_PAYPAL_TRANSMISSION_ID', ''),
-            'PayPal-Transmission-Sig'  => $server->getString('HTTP_PAYPAL_TRANSMISSION_SIG', ''),
-            'PayPal-Cert-Url'          => $server->getString('HTTP_PAYPAL_CERT_URL', ''),
-            'PayPal-Auth-Algo'         => $server->getString('HTTP_PAYPAL_AUTH_ALGO', ''),
-            'PayPal-Transmission-Time' => $server->getString('HTTP_PAYPAL_TRANSMISSION_TIME', ''),
+            // Use RAW to avoid stripping characters from signatures (e.g., +, /, =)
+            'Stripe-Signature'         => $server->get('HTTP_STRIPE_SIGNATURE', $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '', 'RAW'),
+            'PayPal-Transmission-Id'   => $server->get('HTTP_PAYPAL_TRANSMISSION_ID', $_SERVER['HTTP_PAYPAL_TRANSMISSION_ID'] ?? '', 'RAW'),
+            'PayPal-Transmission-Sig'  => $server->get('HTTP_PAYPAL_TRANSMISSION_SIG', $_SERVER['HTTP_PAYPAL_TRANSMISSION_SIG'] ?? '', 'RAW'),
+            'PayPal-Cert-Url'          => $server->get('HTTP_PAYPAL_CERT_URL', $_SERVER['HTTP_PAYPAL_CERT_URL'] ?? '', 'RAW'),
+            'PayPal-Auth-Algo'         => $server->get('HTTP_PAYPAL_AUTH_ALGO', $_SERVER['HTTP_PAYPAL_AUTH_ALGO'] ?? '', 'RAW'),
+            'PayPal-Transmission-Time' => $server->get('HTTP_PAYPAL_TRANSMISSION_TIME', $_SERVER['HTTP_PAYPAL_TRANSMISSION_TIME'] ?? '', 'RAW'),
         ];
 
         return array_filter($headers, static fn ($value) => $value !== '');
@@ -158,4 +159,5 @@ class WebhookController extends BaseController
             );
         }
     }
+
 }
