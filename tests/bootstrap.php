@@ -8,6 +8,8 @@ use Tests\Stubs\StubApplication;
 use Tests\Stubs\StubLanguage;
 use Tests\Stubs\StubRouter;
 use Joomla\Registry\Registry;
+use Joomla\CMS\Cache\CacheController;
+use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 
 if (!\defined('_JEXEC')) {
     \define('_JEXEC', 1);
@@ -19,6 +21,10 @@ if (!\defined('JPATH_SITE')) {
 
 if (!\defined('JPATH_ADMINISTRATOR')) {
     \define('JPATH_ADMINISTRATOR', JPATH_SITE . '/administrator');
+}
+
+if (!\defined('JPATH_CACHE')) {
+    \define('JPATH_CACHE', sys_get_temp_dir());
 }
 
 $_SERVER['HTTP_HOST']     = $_SERVER['HTTP_HOST']     ?? 'localhost';
@@ -36,7 +42,7 @@ require_once __DIR__ . '/Stubs/TrackingQuery.php';
 spl_autoload_register(static function (string $class): void {
     $prefixes = [
         'Joomla\\Component\\Nxpeasycart\\Site\\'            => __DIR__ . '/../components/com_nxpeasycart/src/',
-        'Joomla\\Component\\Nxpeasycart\\Administrator\\'   => __DIR__ . '/../administrator/components/com_nxpeasycart/src/Administrator/',
+        'Joomla\\Component\\Nxpeasycart\\Administrator\\'   => __DIR__ . '/../administrator/components/com_nxpeasycart/src/',
     ];
 
     foreach ($prefixes as $prefix => $baseDir) {
@@ -59,6 +65,14 @@ Factory::$application  = new StubApplication();
 $container = new Container();
 $container->set('SiteRouter', function () {
     return new StubRouter();
+});
+$container->set(CacheControllerFactoryInterface::class, static function () {
+    return new class () implements CacheControllerFactoryInterface {
+        public function createCacheController($type = 'output', $options = []): CacheController
+        {
+            return new CacheController($options);
+        }
+    };
 });
 $container->share('config', new Registry(['live_site' => 'http://localhost']));
 

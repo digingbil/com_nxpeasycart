@@ -20,7 +20,7 @@ foreach (
 
 \JLoader::registerNamespace(
     'Joomla\\Component\\Nxpeasycart\\Administrator',
-    __DIR__ . '/../administrator/components/com_nxpeasycart/src/Administrator',
+    __DIR__ . '/../administrator/components/com_nxpeasycart/src',
     false,
     false,
     'psr4'

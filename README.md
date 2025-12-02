@@ -243,7 +243,7 @@ class PlgSystemMyeasycart extends CMSPlugin
 }
 ```
 
-Events are dispatched via `EasycartEventDispatcher` (see `src/Administrator/Event/EasycartEventDispatcher.php`). All event handlers are non-blocking—exceptions in plugins are swallowed to prevent blocking core functionality.
+Events are dispatched via `EasycartEventDispatcher` (see `src/Event/EasycartEventDispatcher.php`). All event handlers are non-blocking—exceptions in plugins are swallowed to prevent blocking core functionality.
 
 ## Testing & Security
 

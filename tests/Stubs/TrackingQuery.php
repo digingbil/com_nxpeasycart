@@ -62,4 +62,11 @@ class TrackingQuery
 
         return $this;
     }
+
+    public function clear(): self
+    {
+        $this->bindings = [];
+
+        return $this;
+    }
 }

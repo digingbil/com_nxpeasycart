@@ -8,7 +8,7 @@ NXP Easy Cart implements multi-layer rate limiting to protect checkout and payme
 
 ### RateLimiter Service
 
-**Location:** `administrator/components/com_nxpeasycart/src/Administrator/Service/RateLimiter.php`
+**Location:** `administrator/components/com_nxpeasycart/src/Service/RateLimiter.php`
 
 The `RateLimiter` service provides three tracking scopes:
 
@@ -90,7 +90,7 @@ const securityDraft = reactive({
 ```
 
 ### API Endpoint
-**Location:** `administrator/components/com_nxpeasycart/src/Administrator/Controller/Api/SettingsController.php`
+**Location:** `administrator/components/com_nxpeasycart/src/Controller/Api/SettingsController.php`
 
 - **GET** `/administrator/index.php?option=com_nxpeasycart&task=api.settings.show` – Loads current settings
 - **POST** `/administrator/index.php?option=com_nxpeasycart&task=api.settings.update` – Saves settings
@@ -165,8 +165,8 @@ The backend converts `_minutes` fields to seconds before persisting to the datab
    ```
 
 **Files Changed**:
-- `administrator/components/com_nxpeasycart/src/Administrator/Controller/Api/SettingsController.php:47-70` (show method)
-- `administrator/components/com_nxpeasycart/src/Administrator/Controller/Api/SettingsController.php:190-192` (update method)
+- `administrator/components/com_nxpeasycart/src/Controller/Api/SettingsController.php:47-70` (show method)
+- `administrator/components/com_nxpeasycart/src/Controller/Api/SettingsController.php:190-192` (update method)
 - `media/com_nxpeasycart/src/app/components/SettingsPanel.vue:2280-2288` (securityDraft initialization)
 - `media/com_nxpeasycart/src/app/components/SettingsPanel.vue:2391-2413` (applySettings function)
 - `media/com_nxpeasycart/src/app/components/SettingsPanel.vue:2517-2529` (saveSecurity function)

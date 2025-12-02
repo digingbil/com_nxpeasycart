@@ -87,7 +87,7 @@ Tested with malicious payloads:
 ### Part A: Stripe Webhook Security
 
 #### Vulnerability Details
-- **Location**: `administrator/components/com_nxpeasycart/src/Administrator/Payment/StripeGateway.php:80-90`
+- **Location**: `administrator/components/com_nxpeasycart/src/Payment/StripeGateway.php:80-90`
 - **Severity**: CRITICAL (9.0/10)
 - **Type**: Authentication Bypass / Webhook Forgery
 
@@ -150,7 +150,7 @@ Merchants **must** configure the Stripe webhook secret in the admin panel before
 ### Part B: PayPal Webhook Security
 
 #### Vulnerability Details
-- **Location**: `administrator/components/com_nxpeasycart/src/Administrator/Payment/PayPalGateway.php:102-129`
+- **Location**: `administrator/components/com_nxpeasycart/src/Payment/PayPalGateway.php:102-129`
 - **Severity**: CRITICAL (9.5/10)
 - **Type**: Zero Authentication / Webhook Forgery
 

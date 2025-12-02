@@ -5,9 +5,9 @@
 - `administrator/components/com_nxpeasycart`
     - `services/provider.php`: registers the component, custom MVC factory, and dispatcher with Joomla's DI container (Joomla 5 bootstraps the component without an entry PHP file).
         - Also attaches the storefront `LandingAliasRule` during `onAfterInitialise` so menu aliases such as `/shop-landing` resolve even when a template swaps in its own site router (JA Purity IV, Helix, etc.).
-    - `src/Administrator/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Joomla\Component\Nxpeasycart\Site` namespace while keeping administrator and API traffic on `Joomla\Component\Nxpeasycart\Administrator`.
+    - `src/Factory/EasyCartMVCFactory.php`: extends Joomla's MVC factory to point site requests at the `Joomla\Component\Nxpeasycart\Site` namespace while keeping administrator and API traffic on `Joomla\Component\Nxpeasycart\Administrator`.
     - `nxpeasycart.xml`: component manifest (filename omits the `com_` prefix so Joomla Discover picks it up).
-    - `src/Administrator/`: PSR-4 namespaced administrator classes (`Joomla\Component\Nxpeasycart\Administrator\…`).
+    - `src/`: PSR-4 namespaced administrator classes (`Joomla\Component\Nxpeasycart\Administrator\…`).
         - `Controller/ApiController.php`: task router delegating to JSON resource controllers.
         - `Controller/Api/*Controller.php`: JSON endpoints returning RFC-7807-style payloads.
         - `Model/*.php`: table-backed product storage and listing with transactional saves for variants/categories.
@@ -293,7 +293,7 @@ The component dispatches Joomla plugin events at key lifecycle points to enable 
 
 ### Event Dispatcher
 
-The `EasycartEventDispatcher` helper class (`src/Administrator/Event/EasycartEventDispatcher.php`) provides static methods for dispatching each event:
+The `EasycartEventDispatcher` helper class (`src/Event/EasycartEventDispatcher.php`) provides static methods for dispatching each event:
 
 ```php
 use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;

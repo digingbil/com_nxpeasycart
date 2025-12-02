@@ -82,7 +82,7 @@ return new class () implements ServiceProviderInterface {
       */
     public function register(Container $container): void
     {
-        \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Administrator', __DIR__ . '/../src/Administrator', false, false, 'psr4');
+        \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Administrator', __DIR__ . '/../src', false, false, 'psr4');
         \JLoader::registerNamespace('Joomla\\Component\\Nxpeasycart\\Site', JPATH_SITE . '/components/com_nxpeasycart/src', false, false, 'psr4');
 
         FormHelper::addFieldPrefix([
@@ -90,7 +90,7 @@ return new class () implements ServiceProviderInterface {
             'Joomla\\Component\\Nxpeasycart\\Site\\Field',
         ]);
 
-        Form::addFieldPath(__DIR__ . '/../src/Administrator/Field');
+        Form::addFieldPath(__DIR__ . '/../src/Field');
         Form::addFieldPath(JPATH_SITE . '/components/com_nxpeasycart/src/Field');
 
         $namespace = '\\Joomla\\Component\\Nxpeasycart\\Administrator';

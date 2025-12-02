@@ -18,7 +18,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Joomla\\\\Component\\\\Nxpeasycart\\\\Administrator\\\\": "administrator/components/com_nxpeasycart/src/Administrator/",
+      "Joomla\\\\Component\\\\Nxpeasycart\\\\Administrator\\\\": "administrator/components/com_nxpeasycart/src/",
       "Joomla\\\\Component\\\\Nxpeasycart\\\\Site\\\\": "components/com_nxpeasycart/src/"
     }
   },

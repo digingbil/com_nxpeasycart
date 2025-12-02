@@ -43,7 +43,7 @@ if ($needsVendor) {
 foreach (
     [
         'Joomla\\Component\\Nxpeasycart\\Site' => JPATH_SITE . '/components/com_nxpeasycart/src',
-        'Joomla\\Component\\Nxpeasycart\\Administrator' => JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src/Administrator',
+        'Joomla\\Component\\Nxpeasycart\\Administrator' => JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/src',
     ] as $namespace => $path
 ) {
     \JLoader::registerNamespace($namespace, $path, false, false, 'psr4');
