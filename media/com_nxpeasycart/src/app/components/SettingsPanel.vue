@@ -1539,6 +1539,65 @@
                             )
                         }}
                     </legend>
+
+                    <!-- Setup Guide Toggle -->
+                    <div class="nxp-ec-setup-guide">
+                        <button
+                            type="button"
+                            class="nxp-ec-setup-guide__toggle"
+                            @click="stripeGuideOpen = !stripeGuideOpen"
+                            :aria-expanded="stripeGuideOpen"
+                        >
+                            <i :class="stripeGuideOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right'" aria-hidden="true"></i>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_SETUP_GUIDE",
+                                    "Setup Guide – How to get your Stripe credentials",
+                                    [],
+                                    "settingsPaymentsStripeSetupGuide"
+                                )
+                            }}
+                        </button>
+                        <div v-show="stripeGuideOpen" class="nxp-ec-setup-guide__content">
+                            <ol class="nxp-ec-setup-steps">
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP1", "Log in to your", [], "stripeStep1") }}
+                                    <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer">
+                                        {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_DASHBOARD", "Stripe Dashboard", [], "stripeDashboard") }}
+                                        <i class="fa-solid fa-external-link-alt" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP2", "Go to Developers → API keys to find your Publishable key and Secret key.", [], "stripeStep2") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP3", "Go to Developers → Webhooks and click \"Add endpoint\".", [], "stripeStep3") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP4", "Use this URL as your webhook endpoint:", [], "stripeStep4") }}
+                                    <div class="nxp-ec-webhook-url">
+                                        <code>{{ stripeWebhookUrl }}</code>
+                                        <button
+                                            type="button"
+                                            class="nxp-ec-btn nxp-ec-btn--small"
+                                            @click="copyToClipboard(stripeWebhookUrl, 'COM_NXPEASYCART_COPIED', 'Copied!')"
+                                            :title="__('COM_NXPEASYCART_COPY', 'Copy', [], 'copy')"
+                                        >
+                                            <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                                            {{ __("COM_NXPEASYCART_COPY", "Copy", [], "copy") }}
+                                        </button>
+                                    </div>
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP5", "Select these events: checkout.session.completed, payment_intent.succeeded, payment_intent.payment_failed", [], "stripeStep5") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_STEP6", "After creating the webhook, click to reveal the \"Signing secret\" (starts with whsec_) and paste it below.", [], "stripeStep6") }}
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
                     <div class="nxp-ec-form-field">
                         <label
                             class="nxp-ec-form-label"
@@ -1558,6 +1617,7 @@
                             class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.stripe.publishable_key"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_PUBLISHABLE_PLACEHOLDER', 'pk_test_... or pk_live_...', [], 'stripePublishablePlaceholder')"
                         />
                     </div>
 
@@ -1578,6 +1638,7 @@
                             type="password"
                             v-model.trim="paymentsDraft.stripe.secret_key"
                             autocomplete="off"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_SECRET_PLACEHOLDER', 'sk_test_... or sk_live_...', [], 'stripeSecretPlaceholder')"
                         />
                     </div>
 
@@ -1591,6 +1652,7 @@
                                     "settingsPaymentsStripeWebhook"
                                 )
                             }}
+                            <span class="nxp-ec-form-label__required">*</span>
                         </label>
                         <input
                             id="nxp-ec-stripe-webhook"
@@ -1598,14 +1660,15 @@
                             type="password"
                             v-model.trim="paymentsDraft.stripe.webhook_secret"
                             autocomplete="off"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_WEBHOOK_PLACEHOLDER', 'whsec_...', [], 'stripeWebhookPlaceholder')"
                         />
                         <p class="nxp-ec-form-help">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_HELP",
-                                    "Copy the signing secret from your Stripe webhook configuration.",
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_WEBHOOK_REQUIRED",
+                                    "Required for security. Without this, payment confirmations won't work.",
                                     [],
-                                    "settingsPaymentsStripeHelp"
+                                    "settingsPaymentsStripeWebhookRequired"
                                 )
                             }}
                         </p>
@@ -1648,6 +1711,17 @@
                                 }}
                             </option>
                         </select>
+                        <p class="nxp-ec-form-help nxp-ec-form-help--info">
+                            <i class="fa-solid fa-info-circle" aria-hidden="true"></i>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_MODE_HINT",
+                                    "Use Test mode with test API keys while setting up. Switch to Live mode with live keys when ready to accept real payments.",
+                                    [],
+                                    "settingsPaymentsModeHint"
+                                )
+                            }}
+                        </p>
                     </div>
                 </fieldset>
 
@@ -1662,6 +1736,68 @@
                             )
                         }}
                     </legend>
+
+                    <!-- Setup Guide Toggle -->
+                    <div class="nxp-ec-setup-guide">
+                        <button
+                            type="button"
+                            class="nxp-ec-setup-guide__toggle"
+                            @click="paypalGuideOpen = !paypalGuideOpen"
+                            :aria-expanded="paypalGuideOpen"
+                        >
+                            <i :class="paypalGuideOpen ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right'" aria-hidden="true"></i>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_SETUP_GUIDE",
+                                    "Setup Guide – How to get your PayPal credentials",
+                                    [],
+                                    "settingsPaymentsPayPalSetupGuide"
+                                )
+                            }}
+                        </button>
+                        <div v-show="paypalGuideOpen" class="nxp-ec-setup-guide__content">
+                            <ol class="nxp-ec-setup-steps">
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP1", "Log in to the", [], "paypalStep1") }}
+                                    <a href="https://developer.paypal.com/dashboard/" target="_blank" rel="noopener noreferrer">
+                                        {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_DASHBOARD", "PayPal Developer Dashboard", [], "paypalDashboard") }}
+                                        <i class="fa-solid fa-external-link-alt" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP2", "Go to Apps & Credentials and create a new app (or use an existing one).", [], "paypalStep2") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP3", "Copy the Client ID and Secret from your app credentials.", [], "paypalStep3") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP4", "In your app, go to Webhooks and click \"Add Webhook\".", [], "paypalStep4") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP5", "Use this URL as your webhook endpoint:", [], "paypalStep5") }}
+                                    <div class="nxp-ec-webhook-url">
+                                        <code>{{ paypalWebhookUrl }}</code>
+                                        <button
+                                            type="button"
+                                            class="nxp-ec-btn nxp-ec-btn--small"
+                                            @click="copyToClipboard(paypalWebhookUrl, 'COM_NXPEASYCART_COPIED', 'Copied!')"
+                                            :title="__('COM_NXPEASYCART_COPY', 'Copy', [], 'copy')"
+                                        >
+                                            <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                                            {{ __("COM_NXPEASYCART_COPY", "Copy", [], "copy") }}
+                                        </button>
+                                    </div>
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP6", "Subscribe to these events: PAYMENT.CAPTURE.COMPLETED, CHECKOUT.ORDER.APPROVED", [], "paypalStep6") }}
+                                </li>
+                                <li>
+                                    {{ __("COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_STEP7", "After saving, copy the Webhook ID (found in the webhook details) and paste it below.", [], "paypalStep7") }}
+                                </li>
+                            </ol>
+                        </div>
+                    </div>
+
                     <div class="nxp-ec-form-field">
                         <label
                             class="nxp-ec-form-label"
@@ -1681,6 +1817,7 @@
                             class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.paypal.client_id"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_CLIENT_ID_PLACEHOLDER', 'AY...', [], 'paypalClientIdPlaceholder')"
                         />
                     </div>
 
@@ -1704,6 +1841,7 @@
                             type="password"
                             v-model.trim="paymentsDraft.paypal.client_secret"
                             autocomplete="off"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_CLIENT_SECRET_PLACEHOLDER', 'EL...', [], 'paypalClientSecretPlaceholder')"
                         />
                     </div>
 
@@ -1720,20 +1858,22 @@
                                     "settingsPaymentsPayPalWebhook"
                                 )
                             }}
+                            <span class="nxp-ec-form-label__required">*</span>
                         </label>
                         <input
                             id="nxp-ec-paypal-webhook-id"
                             class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.paypal.webhook_id"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_WEBHOOK_PLACEHOLDER', 'WH-...', [], 'paypalWebhookPlaceholder')"
                         />
                         <p class="nxp-ec-form-help">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_HELP",
-                                    "Use the webhook ID from your PayPal app to verify notifications.",
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_WEBHOOK_REQUIRED",
+                                    "Required for security. Without this, payment confirmations won't work.",
                                     [],
-                                    "settingsPaymentsPayPalHelp"
+                                    "settingsPaymentsPayPalWebhookRequired"
                                 )
                             }}
                         </p>
@@ -2381,6 +2521,10 @@ const props = defineProps({
         type: String,
         default: "general",
     },
+    siteRoot: {
+        type: String,
+        default: "",
+    },
 });
 
 const emit = defineEmits([
@@ -2406,6 +2550,46 @@ const validTabs = ["general", "security", "tax", "shipping", "payments", "visual
 const activeTab = ref(
     validTabs.includes(props.initialTab) ? props.initialTab : "general"
 );
+
+// Setup guide toggle states
+const stripeGuideOpen = ref(false);
+const paypalGuideOpen = ref(false);
+
+// Webhook URLs computed from site root
+const stripeWebhookUrl = computed(() => {
+    const root = props.siteRoot || (typeof window !== "undefined" ? window.location.origin : "");
+    if (!root) return "";
+    return `${root}/index.php?option=com_nxpeasycart&task=webhook.stripe`;
+});
+
+const paypalWebhookUrl = computed(() => {
+    const root = props.siteRoot || (typeof window !== "undefined" ? window.location.origin : "");
+    if (!root) return "";
+    return `${root}/index.php?option=com_nxpeasycart&task=webhook.paypal`;
+});
+
+// Copy to clipboard helper
+const copyToClipboard = async (text, successKey, successFallback) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        alert(__(successKey, successFallback, [], "clipboardCopied"));
+    } catch (error) {
+        // Fallback for older browsers
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand("copy");
+            alert(__(successKey, successFallback, [], "clipboardCopied"));
+        } catch {
+            alert(__("COM_NXPEASYCART_COPY_FAILED", "Failed to copy. Please copy manually.", [], "copyFailed"));
+        }
+        document.body.removeChild(textarea);
+    }
+};
 
 const baseCurrency = computed(() => {
     const fallback = props.baseCurrency || "USD";
@@ -3213,5 +3397,146 @@ const shippingTypeLabel = (type) => {
     margin: 0;
     color: var(--nxp-ec-color-muted);
     font-size: 0.875rem;
+}
+
+/* Setup Guide Styles */
+.nxp-ec-setup-guide {
+    margin-bottom: 1rem;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.5rem;
+    background: var(--nxp-ec-surface, #fff);
+}
+
+.nxp-ec-setup-guide__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--nxp-ec-primary, #4f46e5);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.nxp-ec-setup-guide__toggle:hover {
+    background: var(--nxp-ec-surface-alt, #f9fafb);
+}
+
+.nxp-ec-setup-guide__toggle i {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+}
+
+.nxp-ec-setup-guide__content {
+    padding: 0 1rem 1rem;
+    border-top: 1px solid var(--nxp-ec-border, #e4e7ec);
+    background: var(--nxp-ec-surface-alt, #f9fafb);
+}
+
+.nxp-ec-setup-steps {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--nxp-ec-text, #212529);
+}
+
+.nxp-ec-setup-steps li {
+    margin-bottom: 0.75rem;
+}
+
+.nxp-ec-setup-steps li:last-child {
+    margin-bottom: 0;
+}
+
+.nxp-ec-setup-steps a {
+    color: var(--nxp-ec-primary, #4f46e5);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nxp-ec-setup-steps a:hover {
+    text-decoration: underline;
+}
+
+.nxp-ec-setup-steps a i {
+    margin-left: 0.25rem;
+    font-size: 0.75rem;
+}
+
+/* Webhook URL Display */
+.nxp-ec-webhook-url {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--nxp-ec-surface, #fff);
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.375rem;
+}
+
+.nxp-ec-webhook-url code {
+    flex: 1;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    color: var(--nxp-ec-text, #212529);
+    word-break: break-all;
+}
+
+.nxp-ec-btn--small {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.nxp-ec-btn--small i {
+    margin-right: 0.25rem;
+}
+
+/* Required field indicator */
+.nxp-ec-form-label__required {
+    color: #dc2626;
+    margin-left: 0.125rem;
+}
+
+/* Info help text variant */
+.nxp-ec-form-help--info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 0.375rem;
+    color: #1e40af;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.nxp-ec-form-help--info i {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+@media (max-width: 768px) {
+    .nxp-ec-webhook-url {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nxp-ec-webhook-url code {
+        padding: 0.25rem 0;
+    }
+
+    .nxp-ec-webhook-url .nxp-ec-btn--small {
+        align-self: flex-start;
+    }
 }
 </style>

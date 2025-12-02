@@ -143,6 +143,7 @@
             :translate="__"
             :base-currency="baseCurrency"
             :initial-tab="settingsInitialTab"
+            :site-root="siteRoot"
             @refresh-settings="onSettingsRefresh"
             @save-settings="onSettingsSave"
             @refresh-tax="onTaxRefresh"
