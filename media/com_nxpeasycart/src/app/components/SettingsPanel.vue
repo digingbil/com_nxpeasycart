@@ -2555,17 +2555,21 @@ const activeTab = ref(
 const stripeGuideOpen = ref(false);
 const paypalGuideOpen = ref(false);
 
+// Computed site root URL used for webhook URLs
+const siteRootUrl = computed(() => {
+    const root = props.siteRoot || (typeof window !== "undefined" ? window.location.origin : "");
+    return root || "";
+});
+
 // Webhook URLs computed from site root
 const stripeWebhookUrl = computed(() => {
-    const root = props.siteRoot || (typeof window !== "undefined" ? window.location.origin : "");
-    if (!root) return "";
-    return `${root}/index.php?option=com_nxpeasycart&task=webhook.stripe`;
+    if (!siteRootUrl.value) return "";
+    return `${siteRootUrl.value}/index.php?option=com_nxpeasycart&task=webhook.stripe`;
 });
 
 const paypalWebhookUrl = computed(() => {
-    const root = props.siteRoot || (typeof window !== "undefined" ? window.location.origin : "");
-    if (!root) return "";
-    return `${root}/index.php?option=com_nxpeasycart&task=webhook.paypal`;
+    if (!siteRootUrl.value) return "";
+    return `${siteRootUrl.value}/index.php?option=com_nxpeasycart&task=webhook.paypal`;
 });
 
 // Copy to clipboard helper
