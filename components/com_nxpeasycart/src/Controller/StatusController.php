@@ -155,8 +155,9 @@ class StatusController extends BaseController
 
         $app->setHeader('Content-Type', 'application/json', true);
         $app->setHeader('Status', (string) $code, true);
-        $app->setBody((new JsonResponse($payload, '', $hasError))->toString());
-        $app->sendResponse();
+        $response = new JsonResponse($payload, '', $hasError);
+
+        echo $response;
         $app->close();
     }
 }

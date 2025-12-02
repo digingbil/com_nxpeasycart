@@ -164,6 +164,30 @@ class CartSessionService
     }
 
     /**
+     * Clear the current cart for this session/user.
+     *
+     * @since 0.1.5
+     */
+    public function clear(): void
+    {
+        try {
+            $cart = $this->current();
+
+            $this->carts->persist([
+                'id'         => $cart['id']         ?? null,
+                'session_id' => $this->session->getId(),
+                'user_id'    => $cart['user_id']    ?? null,
+                'data'       => [
+                    'currency' => ConfigHelper::getBaseCurrency(),
+                    'items'    => [],
+                ],
+            ]);
+        } catch (\Throwable $exception) {
+            // Non-fatal: leave cart untouched if clear fails.
+        }
+    }
+
+    /**
      * Regenerate the session ID once a user is authenticated to prevent fixation.
      *
      * @since 0.1.5

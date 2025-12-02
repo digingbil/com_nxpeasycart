@@ -9,6 +9,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\Component\Nxpeasycart\Site\Helper\SessionSecurityHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\SiteAssetHelper;
+use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 
 /**
  * Order confirmation view.
@@ -47,6 +48,11 @@ class HtmlView extends BaseHtmlView
         $this->isPublic = $model && method_exists($model, 'isPublicView') ? (bool) $model->isPublicView() : false;
         $this->isOwner  = $model && method_exists($model, 'isOwnerView') ? (bool) $model->isOwnerView() : false;
 
+        // Clear the cart for the current session after a successful checkout redirect.
+        if ($this->order && $app->input->getCmd('status') === 'success') {
+            $this->clearCartSession();
+        }
+
         if ($this->order) {
             $document->setTitle(Text::sprintf('COM_NXPEASYCART_ORDER_CONFIRMED_TITLE', $this->order['order_no'] ?? ''));
         } else {
@@ -54,5 +60,28 @@ class HtmlView extends BaseHtmlView
         }
 
         parent::display($tpl);
+    }
+
+    /**
+     * Clear the cart for the active session when landing on the success page.
+     *
+     * @since 0.1.5
+     */
+    private function clearCartSession(): void
+    {
+        $container = Factory::getContainer();
+        $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+        if (!$container->has(CartSessionService::class) && is_file($providerPath)) {
+            $container->registerServiceProvider(require $providerPath);
+        }
+
+        if ($container->has(CartSessionService::class)) {
+            try {
+                $container->get(CartSessionService::class)->clear();
+            } catch (\Throwable $exception) {
+                // Non-fatal: leave cart untouched if clear fails.
+            }
+        }
     }
 }

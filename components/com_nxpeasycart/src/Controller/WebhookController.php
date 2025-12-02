@@ -62,13 +62,24 @@ class WebhookController extends BaseController
         try {
             $event    = $manager->handleWebhook($gateway, $payload, $context);
             $response = new JsonResponse(['status' => 'ok', 'event' => $event]);
+            $code     = 200;
         } catch (RuntimeException $exception) {
-            $response = new JsonResponse(['status' => 'error', 'message' => $exception->getMessage()], 400);
+            $response = new JsonResponse(
+                ['status' => 'error', 'message' => $exception->getMessage()],
+                null,
+                true
+            );
+            $code = 400;
         }
 
         $app->setHeader('Content-Type', 'application/json', true);
-        $app->setBody($response->toString());
-        $app->sendResponse();
+        $app->setHeader('Status', (string) $code, true);
+
+        if (\function_exists('http_response_code')) {
+            http_response_code($code);
+        }
+
+        echo $response;
         $app->close();
     }
 
