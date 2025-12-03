@@ -20,8 +20,9 @@ Run the release script from the repository root:
 
 1. **Component version**: Choose major/minor/patch increment or keep current
 2. **Module version**: Sync with component, keep current, or set custom
-3. **Git operations**: Confirm commit and tag creation
-4. **Push**: Confirm push to remote
+3. **Plugin version**: Sync with component, keep current, or set custom
+4. **Git operations**: Confirm commit and tag creation
+5. **Push**: Confirm push to remote
 
 ## What the Script Does
 
@@ -33,6 +34,7 @@ Run the release script from the repository root:
 2. **Version management**
     - Updates version in `nxpeasycart.xml` (component)
     - Updates version in `mod_nxpeasycart_cart.xml` (module)
+    - Updates version in `nxpeasycartcleanup.xml` (plugin)
     - Updates version in `composer.json`
 
 3. **Build production assets**
@@ -57,41 +59,56 @@ Run the release script from the repository root:
 
 ## Package Contents
 
-The generated ZIP includes:
+The generated ZIP is a Joomla package containing:
 
 ```
-com_nxpeasycart_vX.Y.Z.zip
-├── administrator/
-│   └── components/
-│       └── com_nxpeasycart/
-│           ├── forms/
-│           ├── language/
-│           ├── services/
-│           ├── sql/
-│           ├── src/
-│           ├── templates/
-│           ├── tmpl/
-│           ├── vendor/          # Runtime dependencies only
-│           ├── nxpeasycart.xml  # Component manifest
-│           └── script.php
-├── components/
-│   └── com_nxpeasycart/
-│       ├── src/
-│       └── tmpl/
+pkg_nxpeasycart_vX.Y.Z.zip
+├── pkg_nxpeasycart.xml          # Package manifest
+└── packages/
+    ├── com_nxpeasycart.zip      # Component
+    ├── mod_nxpeasycart_cart.zip # Cart summary module
+    └── plg_task_nxpeasycartcleanup.zip # Cleanup scheduler plugin
+```
+
+### Component Contents (com_nxpeasycart.zip)
+```
+├── nxpeasycart.xml              # Component manifest
+├── script.php
+├── sql/
+├── admin/
+│   ├── forms/
+│   ├── language/
+│   ├── services/
+│   ├── sql/
+│   ├── src/
+│   ├── templates/
+│   ├── tmpl/
+│   └── vendor/                  # Runtime dependencies only
+├── site/
+│   ├── src/
+│   └── tmpl/
 ├── media/
-│   └── com_nxpeasycart/
-│       ├── css/                 # Built CSS
-│       ├── js/                  # Built JS (admin.iife.js, site.*.js)
-│       └── joomla.asset.json
-├── modules/
-│   └── mod_nxpeasycart_cart/
-│       ├── language/
-│       ├── tmpl/
-│       ├── mod_nxpeasycart_cart.php
-│       └── mod_nxpeasycart_cart.xml
+│   ├── css/                     # Built CSS
+│   ├── js/                      # Built JS (admin.iife.js, site.*.js)
+│   └── joomla.asset.json
 └── language/
     └── en-GB/
-        └── com_nxpeasycart.ini
+```
+
+### Module Contents (mod_nxpeasycart_cart.zip)
+```
+├── mod_nxpeasycart_cart.xml
+├── mod_nxpeasycart_cart.php
+├── language/
+└── tmpl/
+```
+
+### Plugin Contents (plg_task_nxpeasycartcleanup.zip)
+```
+├── nxpeasycartcleanup.xml
+├── services/
+├── src/
+└── language/
 ```
 
 ## Excluded from Package
@@ -159,3 +176,5 @@ After installing on a staging site:
 4. ✅ Cart functionality works
 5. ✅ Checkout flow completes (sandbox payments)
 6. ✅ Mini cart module displays correctly
+7. ✅ Cleanup plugin appears in System → Scheduled Tasks
+8. ✅ Cleanup task can be configured and enabled
