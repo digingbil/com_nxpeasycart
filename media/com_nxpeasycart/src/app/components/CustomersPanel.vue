@@ -253,7 +253,7 @@
                                 {{ state.activeCustomer.email }}
                             </h3>
                             <button
-                                class="nxp-ec-link-button nxp-ec-btn--icon"
+                                class="nxp-ec-link-button nxp-ec-btn--icon nxp-ec-modal__close-btn"
                                 type="button"
                                 @click="emitClose"
                                 :title="__(
@@ -364,64 +364,66 @@
                             </dl>
                         </section>
 
-                        <section class="nxp-ec-admin-panel__section">
-                            <h4>
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_BILLING",
-                                        "Billing address",
-                                        [],
-                                        "customersDetailsBilling"
-                                    )
-                                }}
-                            </h4>
-                            <address class="nxp-ec-admin-address">
-                                <span
-                                    v-for="line in addressLines(
-                                        state.activeCustomer.meta?.billing
-                                    )"
-                                    :key="line.key"
-                                >
-                                    {{ line.value }}
-                                </span>
-                            </address>
-                        </section>
+                        <div class="nxp-ec-admin-panel__addresses">
+                            <section class="nxp-ec-admin-panel__section">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_CUSTOMERS_DETAILS_BILLING",
+                                            "Billing address",
+                                            [],
+                                            "customersDetailsBilling"
+                                        )
+                                    }}
+                                </h4>
+                                <address class="nxp-ec-admin-address">
+                                    <span
+                                        v-for="line in addressLines(
+                                            state.activeCustomer.meta?.billing
+                                        )"
+                                        :key="line.key"
+                                    >
+                                        {{ line.value }}
+                                    </span>
+                                </address>
+                            </section>
 
-                        <section class="nxp-ec-admin-panel__section">
-                            <h4>
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_SHIPPING",
-                                        "Shipping address",
-                                        [],
-                                        "customersDetailsShipping"
-                                    )
-                                }}
-                            </h4>
-                            <address
-                                class="nxp-ec-admin-address"
-                                v-if="state.activeCustomer.meta?.shipping"
-                            >
-                                <span
-                                    v-for="line in addressLines(
-                                        state.activeCustomer.meta.shipping
-                                    )"
-                                    :key="line.key"
+                            <section class="nxp-ec-admin-panel__section">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_CUSTOMERS_DETAILS_SHIPPING",
+                                            "Shipping address",
+                                            [],
+                                            "customersDetailsShipping"
+                                        )
+                                    }}
+                                </h4>
+                                <address
+                                    class="nxp-ec-admin-address"
+                                    v-if="state.activeCustomer.meta?.shipping"
                                 >
-                                    {{ line.value }}
-                                </span>
-                            </address>
-                            <p v-else class="nxp-ec-admin-panel__muted">
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING",
-                                        "No shipping address on file.",
-                                        [],
-                                        "customersDetailsNoShipping"
-                                    )
-                                }}
-                            </p>
-                        </section>
+                                    <span
+                                        v-for="line in addressLines(
+                                            state.activeCustomer.meta.shipping
+                                        )"
+                                        :key="line.key"
+                                    >
+                                        {{ line.value }}
+                                    </span>
+                                </address>
+                                <p v-else class="nxp-ec-admin-panel__muted">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_CUSTOMERS_DETAILS_NO_SHIPPING",
+                                            "No shipping address on file.",
+                                            [],
+                                            "customersDetailsNoShipping"
+                                        )
+                                    }}
+                                </p>
+                            </section>
+                        </div>
 
                         <section class="nxp-ec-admin-panel__section">
                             <h4>
@@ -668,6 +670,33 @@ const formatTimestamp = (timestamp) => {
 </script>
 
 <style scoped>
+.nxp-ec-modal__close-btn {
+    width: auto;
+    height: auto;
+    padding: 0;
+}
+
+.nxp-ec-modal__close-btn i {
+    font-size: 1.25rem;
+}
+
+.nxp-ec-modal__close-btn:hover {
+    text-decoration: none;
+    opacity: 0.7;
+}
+
+/* Side by side addresses */
+.nxp-ec-admin-panel__addresses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.nxp-ec-admin-panel__addresses .nxp-ec-admin-panel__section {
+    margin-bottom: 0;
+}
+
 .nxp-ec-admin-panel--customers .nxp-ec-admin-panel__table {
     flex: 1;
 }
@@ -758,6 +787,11 @@ const formatTimestamp = (timestamp) => {
 /* Mobile breakpoint */
 @media (max-width: 480px) {
     .nxp-ec-admin-summary {
+        grid-template-columns: 1fr;
+    }
+
+    /* Stack addresses on mobile */
+    .nxp-ec-admin-panel__addresses {
         grid-template-columns: 1fr;
     }
 }

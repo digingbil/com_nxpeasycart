@@ -493,7 +493,7 @@
                     role="document"
                 >
                     <aside
-                        class="nxp-ec-admin-panel__sidebar"
+                        class="nxp-ec-admin-panel__sidebar nxp-ec-admin-panel__sidebar--orders"
                         aria-live="polite"
                     >
                         <header class="nxp-ec-admin-panel__sidebar-header">
@@ -511,7 +511,7 @@
                             <button
                                 class="nxp-ec-link-button nxp-ec-btn--icon"
                                 type="button"
-                                @click="emitClose"
+                @click="emitClose"
                                 :title="__(
                                     'COM_NXPEASYCART_ORDERS_DETAILS_CLOSE',
                                     'Close details',
@@ -539,6 +539,7 @@
                             </button>
                         </header>
 
+                        <div class="nxp-ec-admin-panel__sidebar-content">
                         <div
                             v-if="state.transitionError"
                             class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
@@ -607,7 +608,7 @@
                             >
                                 {{ copyMessage }}
                             </p>
-                            <div class="nxp-ec-admin-copy">
+                            <div class="nxp-ec-admin-copy" style="margin-top: 0.75rem;">
                                 <button
                                     class="nxp-ec-btn nxp-ec-btn--small"
                                     type="button"
@@ -696,64 +697,66 @@
                             </p>
                         </section>
 
-                        <section class="nxp-ec-admin-panel__section">
-                            <h4>
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_ORDERS_BILLING_LABEL",
-                                        "Billing",
-                                        [],
-                                        "ordersBillingLabel"
-                                    )
-                                }}
-                            </h4>
-                            <address class="nxp-ec-admin-address">
-                                <span
-                                    v-for="line in addressLines(
-                                        state.activeOrder.billing
-                                    )"
-                                    :key="line.key"
-                                >
-                                    {{ line.value }}
-                                </span>
-                            </address>
-                        </section>
+                        <div class="nxp-ec-admin-panel__addresses">
+                            <section class="nxp-ec-admin-panel__section">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_BILLING_LABEL",
+                                            "Billing",
+                                            [],
+                                            "ordersBillingLabel"
+                                        )
+                                    }}
+                                </h4>
+                                <address class="nxp-ec-admin-address">
+                                    <span
+                                        v-for="line in addressLines(
+                                            state.activeOrder.billing
+                                        )"
+                                        :key="line.key"
+                                    >
+                                        {{ line.value }}
+                                    </span>
+                                </address>
+                            </section>
 
-                        <section class="nxp-ec-admin-panel__section">
-                            <h4>
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_ORDERS_SHIPPING_LABEL",
-                                        "Shipping",
-                                        [],
-                                        "ordersShippingLabel"
-                                    )
-                                }}
-                            </h4>
-                            <address
-                                class="nxp-ec-admin-address"
-                                v-if="state.activeOrder.shipping"
-                            >
-                                <span
-                                    v-for="line in addressLines(
-                                        state.activeOrder.shipping
-                                    )"
-                                    :key="line.key"
+                            <section class="nxp-ec-admin-panel__section">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_SHIPPING_LABEL",
+                                            "Shipping",
+                                            [],
+                                            "ordersShippingLabel"
+                                        )
+                                    }}
+                                </h4>
+                                <address
+                                    class="nxp-ec-admin-address"
+                                    v-if="state.activeOrder.shipping"
                                 >
-                                    {{ line.value }}
-                                </span>
-                            </address>
-                            <p v-else class="nxp-ec-admin-panel__muted">
-                                {{
-                                    __(
-                                        "COM_NXPEASYCART_ORDERS_NO_SHIPPING",
-                                        "Shipping information not provided.",
-                                        [],
-                                        "ordersNoShipping"
-                                    )
-                                }}
-                            </p>
-                        </section>
+                                    <span
+                                        v-for="line in addressLines(
+                                            state.activeOrder.shipping
+                                        )"
+                                        :key="line.key"
+                                    >
+                                        {{ line.value }}
+                                    </span>
+                                </address>
+                                <p v-else class="nxp-ec-admin-panel__muted">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_NO_SHIPPING",
+                                            "Shipping information not provided.",
+                                            [],
+                                            "ordersNoShipping"
+                                        )
+                                    }}
+                                </p>
+                            </section>
+                        </div>
 
                         <section class="nxp-ec-admin-panel__section">
                             <h4>
@@ -1046,7 +1049,7 @@
                                     v-model="paymentDraft.note"
                                 ></textarea>
                             </div>
-                            <div class="nxp-ec-admin-form__actions">
+                            <div class="nxp-ec-admin-form__actions" style="margin-top: 0.75rem;">
                                 <button
                                     class="nxp-ec-btn nxp-ec-btn--primary"
                                     type="button"
@@ -1189,6 +1192,7 @@
                                 }}
                             </p>
                         </section>
+                        </div>
                     </aside>
                 </div>
             </div>
@@ -1878,6 +1882,49 @@ const formatTimestamp = (timestamp) => {
 </script>
 
 <style scoped>
+/* Order details modal with fixed header */
+.nxp-ec-admin-panel__sidebar--orders {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+}
+
+.nxp-ec-admin-panel__sidebar--orders .nxp-ec-admin-panel__sidebar-header {
+    flex-shrink: 0;
+    background: var(--nxp-ec-sidebar-bg, #f8f9fa);
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--nxp-ec-border, #dee2e6);
+    margin: 0;
+}
+
+.nxp-ec-admin-panel__sidebar--orders .nxp-ec-admin-panel__sidebar-header .nxp-ec-btn--icon i {
+    font-size: 1.25rem;
+}
+
+.nxp-ec-admin-panel__sidebar--orders .nxp-ec-admin-panel__sidebar-header .nxp-ec-btn--icon:hover {
+    text-decoration: none;
+    opacity: 0.7;
+}
+
+.nxp-ec-admin-panel__sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+}
+
+/* Side by side addresses */
+.nxp-ec-admin-panel__addresses {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.nxp-ec-admin-panel__addresses .nxp-ec-admin-panel__section {
+    margin-bottom: 0;
+}
+
 .nxp-ec-admin-panel__selection {
     display: flex;
     align-items: center;
@@ -1984,6 +2031,20 @@ const formatTimestamp = (timestamp) => {
     .nxp-ec-admin-checkbox {
         width: 1.5rem;
         height: 1.5rem;
+    }
+
+    /* Stack addresses on mobile */
+    .nxp-ec-admin-panel__addresses {
+        grid-template-columns: 1fr;
+    }
+
+    /* Adjust header and content padding on mobile */
+    .nxp-ec-admin-panel__sidebar--orders .nxp-ec-admin-panel__sidebar-header {
+        padding: 1rem;
+    }
+
+    .nxp-ec-admin-panel__sidebar-content {
+        padding: 1rem;
     }
 }
 </style>

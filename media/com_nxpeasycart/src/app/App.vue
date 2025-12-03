@@ -27,8 +27,9 @@
             </div>
             <button
                 v-show="hasIncompleteOnboarding"
-                class="nxp-ec-btn nxp-ec-btn--ghost"
+                class="nxp-ec-btn nxp-ec-btn--onboarding-progress"
                 type="button"
+                :style="onboardingButtonStyle"
                 @click="openOnboarding"
             >
                 {{
@@ -39,6 +40,9 @@
                         "onboardingOpen"
                     )
                 }}
+                <span class="nxp-ec-btn__progress-label">
+                    {{ onboardingProgressLabel }}
+                </span>
             </button>
         </header>
 
@@ -229,6 +233,7 @@ import { useTaxRates } from "./composables/useTaxRates.js";
 import { useShippingRules } from "./composables/useShippingRules.js";
 import { useLogs } from "./composables/useLogs.js";
 import { usePayments } from "./composables/usePayments.js";
+import { clearCachedData } from "./composables/usePerformance.js";
 
 const props = defineProps({
     csrfToken: {
@@ -691,6 +696,39 @@ const onboardingSteps = computed(() => {
 const hasIncompleteOnboarding = computed(() =>
     onboardingSteps.value.some((step) => !step.completed)
 );
+
+const onboardingProgress = computed(() => {
+    const steps = onboardingSteps.value;
+    if (!steps.length) {
+        return { completed: 0, total: 0, percent: 0 };
+    }
+    const completed = steps.filter((step) => step.completed).length;
+    return {
+        completed,
+        total: steps.length,
+        percent: Math.round((completed / steps.length) * 100),
+    };
+});
+
+const onboardingProgressLabel = computed(() => {
+    const { completed, total } = onboardingProgress.value;
+    return `${completed}/${total}`;
+});
+
+const onboardingButtonStyle = computed(() => {
+    const { percent } = onboardingProgress.value;
+    // Use a gradient that shows progress: primary color fills from left based on %
+    // When 0% complete: full ghost style
+    // When partially complete: gradient showing progress
+    // Primary color: var(--nxp-ec-primary, #0d6efd)
+    // Base background: slightly darker than surface for visibility (#e9ecef)
+    return {
+        background: `linear-gradient(90deg, var(--nxp-ec-primary, #0d6efd) ${percent}%, #e9ecef ${percent}%)`,
+        borderColor: 'var(--nxp-ec-primary, #0d6efd)',
+        color: percent >= 50 ? '#fff' : 'var(--nxp-ec-text, #212529)',
+    };
+});
+
 const onboardingVisible = ref(false);
 const onboardingStorageKey = "nxp:admin:onboarding:dismissed";
 
@@ -887,6 +925,9 @@ const onProductCreate = async (payload) => {
         await createProduct(payload);
         refreshProducts();
         refreshCategories();
+        // Refresh dashboard to update onboarding checklist (first product created)
+        clearCachedData("dashboard");
+        refreshDashboard(true);
     } catch (error) {
         // Errors surface via products state; suppress unhandled promise rejections.
     }
@@ -1148,6 +1189,9 @@ const onSettingsRefresh = () => {
 const onSettingsSave = async (payload) => {
     try {
         await saveSettingsValues(payload);
+        // Refresh dashboard to update onboarding checklist (e.g., currency set)
+        clearCachedData("dashboard");
+        refreshDashboard(true);
     } catch (error) {
         // Validation errors bubble via settingsState.error.
     }
@@ -1219,5 +1263,8 @@ const onPaymentsRefresh = () => {
 
 const onPaymentsSave = async (config) => {
     await savePaymentsConfig(config);
+    // Refresh dashboard to update onboarding checklist (payments configured)
+    clearCachedData("dashboard");
+    refreshDashboard(true);
 };
 </script>

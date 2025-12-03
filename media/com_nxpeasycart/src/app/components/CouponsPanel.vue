@@ -331,7 +331,7 @@
                                 }}
                             </h3>
                             <button
-                                class="nxp-ec-link-button nxp-ec-btn--icon"
+                                class="nxp-ec-link-button nxp-ec-btn--icon nxp-ec-modal__close-btn"
                                 type="button"
                                 @click="cancelEdit"
                                 :title="__(
@@ -760,6 +760,21 @@ watch(
 </script>
 
 <style scoped>
+.nxp-ec-modal__close-btn {
+    width: auto;
+    height: auto;
+    padding: 0;
+}
+
+.nxp-ec-modal__close-btn i {
+    font-size: 1.25rem;
+}
+
+.nxp-ec-modal__close-btn:hover {
+    text-decoration: none;
+    opacity: 0.7;
+}
+
 .nxp-ec-admin-panel--coupons .nxp-ec-admin-panel__table {
     flex: 1;
 }

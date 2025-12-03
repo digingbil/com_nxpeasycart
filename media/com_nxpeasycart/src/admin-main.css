@@ -235,6 +235,35 @@
     background: var(--nxp-ec-surface-alt);
 }
 
+/* Onboarding progress button */
+.nxp-ec-btn--onboarding-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    transition:
+        background 0.3s ease,
+        color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.nxp-ec-btn--onboarding-progress:hover {
+    filter: brightness(0.95);
+}
+
+.nxp-ec-btn__progress-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--nxp-ec-primary, #0d6efd);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    min-width: 2rem;
+}
+
 /* Icon buttons with text fallback */
 .nxp-ec-btn--icon {
     display: inline-flex;

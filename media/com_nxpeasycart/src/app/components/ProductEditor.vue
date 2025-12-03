@@ -59,11 +59,13 @@
                     </button>
                     <button
                         type="button"
-                        class="nxp-ec-modal__close"
+                        class="nxp-ec-link-button nxp-ec-btn--icon nxp-ec-modal__close-btn"
                         @click="cancel"
+                        :title="__('JCLOSE', 'Close')"
                         :aria-label="__('JCLOSE', 'Close')"
                     >
-                        &times;
+                        <i class="fa-solid fa-circle-xmark"></i>
+                        <span class="nxp-ec-sr-only">{{ __('JCLOSE', 'Close') }}</span>
                     </button>
                 </div>
             </header>
@@ -1869,6 +1871,21 @@ watch(
 
 .nxp-ec-btn--icon i {
     font-size: 1rem;
+}
+
+.nxp-ec-modal__close-btn {
+    width: auto;
+    height: auto;
+    padding: 0;
+}
+
+.nxp-ec-modal__close-btn i {
+    font-size: 1.25rem;
+}
+
+.nxp-ec-modal__close-btn:hover {
+    text-decoration: none;
+    opacity: 0.7;
 }
 
 .nxp-ec-image-list {
