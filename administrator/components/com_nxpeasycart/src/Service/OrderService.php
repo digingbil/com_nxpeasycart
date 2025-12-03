@@ -1512,6 +1512,11 @@ class OrderService
             return $this->get($orderId);
         }
 
+        $transactionAmount   = (int) ($transaction['amount_cents'] ?? 0);
+        $transactionCurrency = strtoupper((string) ($transaction['currency'] ?? ''));
+        $orderCurrency       = strtoupper((string) ($order['currency'] ?? ''));
+        $expectedAmount      = (int) ($order['total_cents'] ?? 0);
+
         $object = (object) [
             'order_id'     => $orderId,
             'gateway'      => $gateway,
@@ -1524,13 +1529,53 @@ class OrderService
             'event_idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
         ];
 
-        $this->db->insertObject('#__nxp_easycart_transactions', $object);
+        $statusNormalised = strtolower((string) $object->status);
+        $shouldMarkPaid   = $statusNormalised === 'paid';
+        $shouldCancel     = \in_array($statusNormalised, ['failed', 'canceled', 'cancelled', 'expired', 'denied'], true);
 
-        $shouldMarkPaid = strtolower((string) ($object->status ?? '')) === 'paid';
+        if ($shouldMarkPaid) {
+            $hasMismatch = false;
+
+            if ($transactionCurrency !== '' && $orderCurrency !== '' && $transactionCurrency !== $orderCurrency) {
+                $hasMismatch = true;
+            }
+
+            if ($transactionAmount > 0 && $expectedAmount > 0 && $transactionAmount !== $expectedAmount) {
+                $hasMismatch = true;
+            }
+
+            if ($hasMismatch) {
+                $object->status   = 'mismatch';
+                $statusNormalised = 'mismatch';
+                $shouldMarkPaid   = false;
+
+                $this->getAuditService()->record(
+                    'order',
+                    $orderId,
+                    'order.payment.mismatch',
+                    [
+                        'gateway'             => $gateway,
+                        'order_currency'      => $orderCurrency,
+                        'transaction_currency'=> $transactionCurrency,
+                        'expected_cents'      => $expectedAmount,
+                        'received_cents'      => $transactionAmount,
+                    ]
+                );
+            }
+        }
+
+        $this->db->insertObject('#__nxp_easycart_transactions', $object);
 
         if ($shouldMarkPaid && $order['state'] !== 'paid' && $order['state'] !== 'fulfilled') {
             $this->transitionState($orderId, 'paid');
             // Inventory already reserved on creation; avoid double decrement.
+        }
+
+        if (
+            $shouldCancel
+            && !\in_array($order['state'], ['canceled', 'refunded', 'fulfilled', 'paid'], true)
+        ) {
+            $this->transitionState($orderId, 'canceled');
         }
 
         $this->getAuditService()->record(

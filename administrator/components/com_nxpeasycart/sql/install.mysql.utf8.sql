@@ -130,7 +130,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_transactions` (
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_nxp_transactions_order` (`order_id`),
-  KEY `idx_nxp_transactions_external` (`gateway`, `ext_id`),
+  UNIQUE KEY `idx_nxp_transactions_external` (`gateway`, `ext_id`),
+  UNIQUE KEY `idx_nxp_transactions_idempotency` (`gateway`, `event_idempotency_key`),
   CONSTRAINT `fk_nxp_transactions_order`
     FOREIGN KEY (`order_id`) REFERENCES `#__nxp_easycart_orders` (`id`)
     ON DELETE CASCADE

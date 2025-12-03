@@ -282,8 +282,14 @@ class PaymentController extends BaseController
         $manager = $container->get(PaymentGatewayManager::class);
 
         $preferences = [
-            'success_url' => $payload['success_url'] ?? ($this->buildOrderUrl($order['order_no'], $publicToken) . '&status=success'),
-            'cancel_url'  => $payload['cancel_url']  ?? (Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'),
+            'success_url' => $this->sanitizeRedirectUrl(
+                $payload['success_url'] ?? null,
+                $this->buildOrderUrl($order['order_no'], $publicToken) . '&status=success'
+            ),
+            'cancel_url'  => $this->sanitizeRedirectUrl(
+                $payload['cancel_url'] ?? null,
+                Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'
+            ),
         ];
 
         $orderUrl = $this->buildOrderUrl($order['order_no'], $publicToken);
@@ -442,6 +448,45 @@ class PaymentController extends BaseController
         }
 
         return Uri::root() . ltrim($route, '/');
+    }
+
+    /**
+     * Ensure redirect targets stay on the current origin; fall back when invalid.
+     *
+     * @since 0.1.5
+     */
+    private function sanitizeRedirectUrl(?string $url, string $fallback): string
+    {
+        $url = trim((string) $url);
+
+        if ($url === '') {
+            return $fallback;
+        }
+
+        $root = Uri::root();
+        $rootParts = parse_url($root);
+
+        // Normalise relative paths to absolute using the site root.
+        if (str_starts_with($url, '/')) {
+            $url = rtrim($root, '/') . $url;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false || empty($parts['host']) || empty($rootParts['host'])) {
+            return $fallback;
+        }
+
+        $sameHost  = strcasecmp((string) $parts['host'], (string) $rootParts['host']) === 0;
+        $sameProto = empty($parts['scheme']) || empty($rootParts['scheme'])
+            ? true
+            : strcasecmp((string) $parts['scheme'], (string) $rootParts['scheme']) === 0;
+
+        if (!$sameHost || !$sameProto) {
+            return $fallback;
+        }
+
+        return $url;
     }
 
     private function respond(array $payload, int $code = 200): void
