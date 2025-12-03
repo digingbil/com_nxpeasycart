@@ -395,13 +395,12 @@ class OrderService
     private function sendShippedEmail(array $order): void
     {
         try {
-            $container = Factory::getContainer();
+            $mailService = $this->getMailService();
 
-            if (!$container->has(MailService::class)) {
+            if ($mailService === null) {
                 return;
             }
 
-            $mailService = $container->get(MailService::class);
             $mailService->sendOrderShipped($order, [
                 'carrier'         => $order['carrier'] ?? null,
                 'tracking_number' => $order['tracking_number'] ?? null,
@@ -426,13 +425,12 @@ class OrderService
     private function sendRefundedEmail(array $order): void
     {
         try {
-            $container = Factory::getContainer();
+            $mailService = $this->getMailService();
 
-            if (!$container->has(MailService::class)) {
+            if ($mailService === null) {
                 return;
             }
 
-            $mailService = $container->get(MailService::class);
             $mailService->sendOrderRefunded($order, [
                 'amount_cents' => $order['total_cents'] ?? 0,
             ]);
@@ -444,6 +442,55 @@ class OrderService
                 'order.email.failed',
                 ['type' => 'refunded', 'error' => $e->getMessage()]
             );
+        }
+    }
+
+    /**
+     * Resolve the MailService, ensuring the service provider is registered.
+     *
+     * @return MailService|null
+     *
+     * @since 0.1.9
+     */
+    private function getMailService(): ?MailService
+    {
+        $container = Factory::getContainer();
+
+        // Ensure service provider is loaded if MailService isn't registered yet
+        if (!$container->has(MailService::class)) {
+            $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+            if (is_file($providerPath)) {
+                try {
+                    $container->registerServiceProvider(require $providerPath);
+                } catch (\Throwable $e) {
+                    // Provider already registered or failed - continue
+                }
+            }
+        }
+
+        // Still not available? Try creating manually as fallback
+        if (!$container->has(MailService::class)) {
+            if (!$container->has(\Joomla\CMS\Mail\MailerFactoryInterface::class)) {
+                return null;
+            }
+
+            try {
+                $container->set(
+                    MailService::class,
+                    static fn ($container) => new MailService(
+                        $container->get(\Joomla\CMS\Mail\MailerFactoryInterface::class)->createMailer()
+                    )
+                );
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
+
+        try {
+            return $container->get(MailService::class);
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 
