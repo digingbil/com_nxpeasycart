@@ -68,6 +68,18 @@ Order state machine guards, webhook amount validation, and stale order cleanup.
 - Stale order cleanup task plugin
 - Graceful error handling for invalid transitions
 
+### [manual-transactions.md](manual-transactions.md) ⭐ **NEW v0.1.9**
+
+Manual transaction recording for offline payment methods (COD, Bank Transfer).
+
+**Topics covered:**
+
+- Recording payments for Cash on Delivery orders
+- Recording payments for Bank Transfer orders
+- Admin UI integration and form fields
+- API endpoint documentation
+- Audit trail and security considerations
+
 ---
 
 ## 📧 Email & Communications
@@ -207,6 +219,7 @@ Before going live, ensure:
 - [ ] Configure stale order cleanup threshold (see `order-state-machine.md`)
 - [ ] Install and enable the cleanup task plugin
 - [ ] Test order state transitions for proper validation
+- [ ] Test manual payment recording for COD/Bank Transfer orders (see `manual-transactions.md`)
 
 ---
 

@@ -1,10 +1,11 @@
-import { createApp, reactive, computed } from "vue";
+import { createApp, reactive, computed, ref } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
 
 export default function mountCartIsland(el) {
     const locale = el.dataset.nxpLocale || undefined;
     const currencyAttr = (el.dataset.nxpCurrency || "").trim() || undefined;
+    const showCanceled = el.dataset.nxpCanceled === "1";
     const payload = parsePayload(el.dataset.nxpCart, {
         items: [],
         summary: {},
@@ -35,6 +36,11 @@ export default function mountCartIsland(el) {
         tax: labelsPayload.tax || "Tax",
         total_label: labelsPayload.total_label || "Total",
         checkout: labelsPayload.checkout || "Proceed to checkout",
+        canceled_title:
+            labelsPayload.canceled_title || "Payment canceled",
+        canceled_message:
+            labelsPayload.canceled_message ||
+            "Your payment was canceled. Your cart items are still saved - you can try again when you're ready.",
     };
     const links = {
         browse:
@@ -53,6 +59,16 @@ export default function mountCartIsland(el) {
     const app = createApp({
         template: `
       <div class="nxp-ec-cart" v-cloak>
+        <div v-if="canceled" class="nxp-ec-alert nxp-ec-alert--warning" role="alert">
+          <strong>{{ labels.canceled_title }}</strong>
+          <p>{{ labels.canceled_message }}</p>
+          <button type="button" class="nxp-ec-alert__close" @click="dismissCanceled" aria-label="Dismiss">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
         <header class="nxp-ec-cart__header">
           <h1 class="nxp-ec-cart__title">{{ labels.title }}</h1>
           <p class="nxp-ec-cart__lead">
@@ -159,6 +175,15 @@ export default function mountCartIsland(el) {
             const currency = payload.summary?.currency || currencyAttr || "USD";
             let taxRate = Number(payload.summary?.tax_rate ?? 0);
             let taxInclusive = Boolean(payload.summary?.tax_inclusive);
+            const canceled = ref(showCanceled);
+
+            const dismissCanceled = () => {
+                canceled.value = false;
+                // Remove the canceled param from URL without reload
+                const url = new URL(window.location.href);
+                url.searchParams.delete("canceled");
+                window.history.replaceState({}, "", url.toString());
+            };
 
             const computeTax = (subtotal) => {
                 if (!taxRate) {
@@ -387,6 +412,8 @@ export default function mountCartIsland(el) {
                 items,
                 summary,
                 showTax,
+                canceled,
+                dismissCanceled,
                 remove,
                 updateQty,
                 format: (cents) => formatMoney(cents, currency, locale),

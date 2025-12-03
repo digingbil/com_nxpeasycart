@@ -427,12 +427,20 @@ class PayPalGateway implements PaymentGatewayInterface
             $paypalStatus = 'COMPLETED';
         }
 
+        // Handle denied/failed captures - these should cancel the order
+        if ($eventType === 'PAYMENT.CAPTURE.DENIED' || $eventType === 'PAYMENT.CAPTURE.DECLINED') {
+            $paypalStatus = 'DENIED';
+        }
+
         // Determine status for order state transition:
         // - COMPLETED capture → paid
+        // - DENIED/DECLINED capture → failed (will trigger order cancellation)
         // - CHECKOUT.ORDER.APPROVED with successful capture → paid (even if capture is PENDING)
         // - Otherwise → use resource status as-is
         if ($paypalStatus === 'COMPLETED') {
             $status = 'paid';
+        } elseif ($paypalStatus === 'DENIED' || $paypalStatus === 'DECLINED') {
+            $status = 'failed';
         } elseif ($eventType === 'CHECKOUT.ORDER.APPROVED' && $externalId !== null && $externalId !== $resource['id']) {
             // We successfully captured (external_id changed from order ID to capture ID)
             // Even if capture status is PENDING, the order is approved and funds authorized

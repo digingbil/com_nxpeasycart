@@ -8,6 +8,7 @@
     --nxp-ec-color-surface: #ffffff;
     --nxp-ec-color-surface-alt: #f5f7fa;
     --nxp-ec-color-success: #027a48;
+    --nxp-ec-color-warning: #f59e0b;
     --nxp-ec-color-error: #b42318;
     --nxp-ec-radius-md: 0.75rem;
     --nxp-ec-radius-lg: 1rem;
@@ -749,6 +750,84 @@
 .nxp-ec-quick-add__icon {
     width: 1.25rem;
     height: 1.25rem;
+}
+
+// Alert component
+.nxp-ec-alert {
+    --_alert-bg: var(--nxp-ec-color-surface);
+    --_alert-border: var(--nxp-ec-color-border);
+    --_alert-color: var(--nxp-ec-color-text);
+    --_alert-muted: var(--nxp-ec-color-muted);
+
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--nxp-ec-radius-md);
+    margin-bottom: 1.5rem;
+    background: var(--_alert-bg);
+    border: 1px solid var(--_alert-border);
+    color: var(--_alert-color);
+
+    strong {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--_alert-color);
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--_alert-muted);
+    }
+
+    &--warning {
+        --_alert-bg: color-mix(in srgb, var(--nxp-ec-color-warning) 12%, var(--nxp-ec-color-surface));
+        --_alert-border: var(--nxp-ec-color-warning);
+        --_alert-color: color-mix(in srgb, var(--nxp-ec-color-warning) 70%, #000);
+        --_alert-muted: color-mix(in srgb, var(--nxp-ec-color-warning) 55%, #000);
+    }
+
+    &--error {
+        --_alert-bg: color-mix(in srgb, var(--nxp-ec-color-error) 10%, var(--nxp-ec-color-surface));
+        --_alert-border: var(--nxp-ec-color-error);
+        --_alert-color: color-mix(in srgb, var(--nxp-ec-color-error) 85%, #000);
+        --_alert-muted: color-mix(in srgb, var(--nxp-ec-color-error) 70%, #000);
+    }
+
+    &--success {
+        --_alert-bg: color-mix(in srgb, var(--nxp-ec-color-success) 10%, var(--nxp-ec-color-surface));
+        --_alert-border: var(--nxp-ec-color-success);
+        --_alert-color: color-mix(in srgb, var(--nxp-ec-color-success) 85%, #000);
+        --_alert-muted: color-mix(in srgb, var(--nxp-ec-color-success) 70%, #000);
+    }
+
+    &__close {
+        flex-shrink: 0;
+        margin-left: auto;
+        padding: 0.25rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--_alert-color);
+        opacity: 0.6;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.15s ease, background 0.15s ease;
+
+        &:hover {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        svg {
+            width: 1rem;
+            height: 1rem;
+        }
+    }
 }
 
 .nxp-ec-cart {

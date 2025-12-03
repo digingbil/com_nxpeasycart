@@ -288,7 +288,7 @@ class PaymentController extends BaseController
             ),
             'cancel_url'  => $this->sanitizeRedirectUrl(
                 $payload['cancel_url'] ?? null,
-                Uri::root() . 'index.php?option=com_nxpeasycart&view=cart'
+                Uri::root() . 'index.php?option=com_nxpeasycart&view=cart&canceled=1'
             ),
         ];
 

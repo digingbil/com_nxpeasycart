@@ -280,3 +280,11 @@ Events are dispatched via `EasycartEventDispatcher` (see `src/Event/EasycartEven
     - **Graceful error handling**: Invalid state transitions return HTTP 400 with specific error messages displayed in the admin UI instead of throwing critical 500 errors.
     - **Admin panel UX fix**: Error alerts now display alongside data tables instead of replacing them, ensuring users can still see and interact with data while addressing errors.
     - See `docs/order-state-machine.md` for complete state machine documentation and transition rules.
+- **Manual transaction recording (v0.1.9)**: Administrators can now manually record payments for offline payment methods:
+    - **COD (Cash on Delivery)**: Record payment when cash is collected upon delivery.
+    - **Bank Transfer**: Confirm payment when transfer is received and verified.
+    - **UI integration**: "Record Payment" section appears in order details when order is `pending` and payment method is `cod` or `bank_transfer`.
+    - **Flexible recording**: Amount defaults to order total but can be adjusted; optional reference (receipt/bank ref) and note fields for audit trail.
+    - **Auto state transition**: Recording a payment automatically transitions the order from `pending` to `paid`.
+    - **Audit logging**: All manual payments are logged with `order.payment.manual` action including recorder ID, amount, and reference.
+    - See `docs/manual-transactions.md` for complete documentation.

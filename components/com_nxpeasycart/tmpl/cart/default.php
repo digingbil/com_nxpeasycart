@@ -2,6 +2,7 @@
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
@@ -10,6 +11,10 @@ use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 /** @var array<string, mixed> $this->cart */
 $cart = $this->cart ?? ['items' => [], 'summary' => []];
 $theme = $this->theme ?? [];
+
+// Check if user returned from canceled payment
+$app = Factory::getApplication();
+$canceled = $app->getInput()->getInt('canceled', 0) === 1;
 
 $items   = $cart['items']   ?? [];
 $summary = $cart['summary'] ?? [];
@@ -38,23 +43,25 @@ $cartJson = htmlspecialchars(
     'UTF-8'
 );
 $labels = [
-    'title'         => Text::_('COM_NXPEASYCART_CART_TITLE'),
-    'lead'          => Text::_('COM_NXPEASYCART_CART_LEAD'),
-    'empty'         => Text::_('COM_NXPEASYCART_CART_EMPTY'),
-    'continue'      => Text::_('COM_NXPEASYCART_CART_CONTINUE_BROWSING'),
-    'product'       => Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'),
-    'price'         => Text::_('COM_NXPEASYCART_CART_HEADING_PRICE'),
-    'qty'           => Text::_('COM_NXPEASYCART_CART_HEADING_QTY'),
-    'total'         => Text::_('COM_NXPEASYCART_CART_HEADING_TOTAL'),
-    'actions'       => Text::_('COM_NXPEASYCART_CART_ACTIONS'),
-    'remove'        => Text::_('COM_NXPEASYCART_CART_REMOVE'),
-    'summary'       => Text::_('COM_NXPEASYCART_CART_SUMMARY'),
-    'subtotal'      => Text::_('COM_NXPEASYCART_CART_SUBTOTAL'),
-    'tax'           => Text::_('COM_NXPEASYCART_CART_TAX'),
-    'shipping'      => Text::_('COM_NXPEASYCART_CART_SHIPPING'),
-    'shipping_note' => Text::_('COM_NXPEASYCART_CART_CALCULATED_AT_CHECKOUT'),
-    'total_label'   => Text::_('COM_NXPEASYCART_CART_TOTAL'),
-    'checkout'      => Text::_('COM_NXPEASYCART_CART_TO_CHECKOUT'),
+    'title'            => Text::_('COM_NXPEASYCART_CART_TITLE'),
+    'lead'             => Text::_('COM_NXPEASYCART_CART_LEAD'),
+    'empty'            => Text::_('COM_NXPEASYCART_CART_EMPTY'),
+    'continue'         => Text::_('COM_NXPEASYCART_CART_CONTINUE_BROWSING'),
+    'product'          => Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'),
+    'price'            => Text::_('COM_NXPEASYCART_CART_HEADING_PRICE'),
+    'qty'              => Text::_('COM_NXPEASYCART_CART_HEADING_QTY'),
+    'total'            => Text::_('COM_NXPEASYCART_CART_HEADING_TOTAL'),
+    'actions'          => Text::_('COM_NXPEASYCART_CART_ACTIONS'),
+    'remove'           => Text::_('COM_NXPEASYCART_CART_REMOVE'),
+    'summary'          => Text::_('COM_NXPEASYCART_CART_SUMMARY'),
+    'subtotal'         => Text::_('COM_NXPEASYCART_CART_SUBTOTAL'),
+    'tax'              => Text::_('COM_NXPEASYCART_CART_TAX'),
+    'shipping'         => Text::_('COM_NXPEASYCART_CART_SHIPPING'),
+    'shipping_note'    => Text::_('COM_NXPEASYCART_CART_CALCULATED_AT_CHECKOUT'),
+    'total_label'      => Text::_('COM_NXPEASYCART_CART_TOTAL'),
+    'checkout'         => Text::_('COM_NXPEASYCART_CART_TO_CHECKOUT'),
+    'canceled_title'   => Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_TITLE'),
+    'canceled_message' => Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_MESSAGE'),
 ];
 $labelsJson = htmlspecialchars(
     json_encode($labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -76,9 +83,17 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
     data-nxp-labels="<?php echo $labelsJson; ?>"
     data-nxp-locale="<?php echo htmlspecialchars($locale, ENT_QUOTES, 'UTF-8'); ?>"
     data-nxp-currency="<?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>"
+    <?php if ($canceled) : ?>data-nxp-canceled="1"<?php endif; ?>
     <?php if ($cssVars !== '') : ?>style="<?php echo htmlspecialchars($cssVars, ENT_QUOTES, 'UTF-8'); ?>"<?php endif; ?>
 >
     <noscript>
+        <?php if ($canceled) : ?>
+            <div class="nxp-ec-alert nxp-ec-alert--warning" role="alert">
+                <strong><?php echo Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_TITLE'); ?></strong>
+                <p><?php echo Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_MESSAGE'); ?></p>
+            </div>
+        <?php endif; ?>
+
         <header class="nxp-ec-cart__header">
             <h1 class="nxp-ec-cart__title"><?php echo Text::_('COM_NXPEASYCART_CART_TITLE'); ?></h1>
             <p class="nxp-ec-cart__lead">
