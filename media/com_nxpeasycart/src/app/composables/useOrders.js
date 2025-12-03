@@ -274,29 +274,30 @@ export function useOrders({
 
         state.transitionError = "";
 
-        if (order.items && order.items.length && order.billing) {
-            state.activeOrder = order;
-
-            return;
-        }
-
         try {
             const detailed = await fetchOrder(order.id, order.order_no);
 
-            state.activeOrder = detailed || {
-                ...order,
-                items: Array.isArray(order.items) ? order.items : [],
-                transactions: order.transactions ?? [],
-                timeline: order.timeline ?? [],
-                billing: order.billing ?? {},
-            };
+            state.activeOrder =
+                detailed || {
+                    ...order,
+                    items: Array.isArray(order.items) ? order.items : [],
+                    transactions: Array.isArray(order.transactions)
+                        ? order.transactions
+                        : [],
+                    timeline: Array.isArray(order.timeline)
+                        ? order.timeline
+                        : [],
+                    billing: order.billing ?? {},
+                };
         } catch (error) {
             state.transitionError = error?.message ?? "Unknown error";
             state.activeOrder = {
                 ...order,
                 items: Array.isArray(order.items) ? order.items : [],
-                transactions: order.transactions ?? [],
-                timeline: order.timeline ?? [],
+                transactions: Array.isArray(order.transactions)
+                    ? order.transactions
+                    : [],
+                timeline: Array.isArray(order.timeline) ? order.timeline : [],
                 billing: order.billing ?? {},
             };
         }

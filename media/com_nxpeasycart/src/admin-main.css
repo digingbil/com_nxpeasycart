@@ -409,7 +409,7 @@
 }
 
 .nxp-ec-modal__dialog--panel {
-    width: min(560px, calc(100% - 2rem));
+    width: min(640px, calc(100% - 2rem));
     padding: 0;
 }
 
