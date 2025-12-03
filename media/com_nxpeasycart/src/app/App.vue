@@ -932,7 +932,11 @@ const onOrdersClose = () => {
 };
 
 const onOrdersTransition = async ({ id, state }) => {
-    await transitionOrder(id, state);
+    try {
+        await transitionOrder(id, state);
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
 };
 
 const onOrdersPage = (page) => {
@@ -940,7 +944,11 @@ const onOrdersPage = (page) => {
 };
 
 const onOrdersBulkTransition = async ({ ids, state }) => {
-    await bulkTransitionOrders(ids, state);
+    try {
+        await bulkTransitionOrders(ids, state);
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
 };
 
 const onOrdersToggleSelection = (orderId) => {

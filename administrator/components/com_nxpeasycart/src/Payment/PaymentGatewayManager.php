@@ -61,6 +61,11 @@ class PaymentGatewayManager
      *
      * @since 0.1.5
      */
+    /**
+     * Maximum allowed variance in cents before flagging for review.
+     */
+    private const AMOUNT_VARIANCE_TOLERANCE_CENTS = 1;
+
     public function handleWebhook(string $gateway, string $payload, array $context = []): array
     {
         $driver = $this->resolveGateway($gateway);
@@ -71,6 +76,7 @@ class PaymentGatewayManager
 
         if ($orderId > 0 && isset($event['transaction'])) {
             $transaction = $event['transaction'];
+            $webhookAmountCents = (int) ($transaction['amount_cents'] ?? 0);
 
             $order = $this->orders->recordTransaction(
                 $orderId,
@@ -78,12 +84,17 @@ class PaymentGatewayManager
                     'gateway'         => $gateway,
                     'external_id'     => $transaction['external_id'] ?? null,
                     'status'          => $transaction['status']      ?? 'pending',
-                    'amount_cents'    => (int) ($transaction['amount_cents'] ?? 0),
+                    'amount_cents'    => $webhookAmountCents,
                     'currency'        => $transaction['currency'] ?? ($event['currency'] ?? 'USD'),
                     'payload'         => $event['payload']        ?? [],
                     'idempotency_key' => $event['id']             ?? null,
                 ]
             );
+
+            // Check for payment amount mismatch after transaction is recorded
+            if ($order && $webhookAmountCents > 0) {
+                $this->checkAmountVariance($order, $webhookAmountCents, $gateway);
+            }
         }
 
         if ($order && ($order['state'] ?? '') === 'paid') {
@@ -98,6 +109,34 @@ class PaymentGatewayManager
         }
 
         return $event;
+    }
+
+    /**
+     * Check for payment amount variance and flag order for review if mismatch detected.
+     *
+     * @param array  $order              The order record
+     * @param int    $webhookAmountCents Amount received from webhook
+     * @param string $gateway            Payment gateway name
+     *
+     * @since 0.1.9
+     */
+    private function checkAmountVariance(array $order, int $webhookAmountCents, string $gateway): void
+    {
+        $orderTotalCents = (int) ($order['total_cents'] ?? 0);
+        $variance = abs($webhookAmountCents - $orderTotalCents);
+
+        if ($variance > self::AMOUNT_VARIANCE_TOLERANCE_CENTS) {
+            $this->orders->flagForReview(
+                (int) $order['id'],
+                'payment_amount_mismatch',
+                [
+                    'expected_cents' => $orderTotalCents,
+                    'received_cents' => $webhookAmountCents,
+                    'variance_cents' => $variance,
+                    'gateway'        => $gateway,
+                ]
+            );
+        }
     }
 
     private function resolveGateway(string $gateway): PaymentGatewayInterface

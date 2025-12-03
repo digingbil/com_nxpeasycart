@@ -91,11 +91,11 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+        <div v-if="state.loading" class="nxp-ec-admin-panel__body">
             <SkeletonLoader type="table" :rows="5" :columns="5" />
         </div>
 
-        <div v-else class="nxp-ec-admin-panel__body">
+        <div v-if="!state.loading" class="nxp-ec-admin-panel__body">
             <ProductTable
                 :items="state.items"
                 :translate="__"

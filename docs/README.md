@@ -55,6 +55,19 @@ Rate limiting implementation for cart and payment endpoints.
 - Configuration via admin panel
 - Per-IP, per-email, per-session limits
 
+### [order-state-machine.md](order-state-machine.md) ⭐ **NEW v0.1.9**
+
+Order state machine guards, webhook amount validation, and stale order cleanup.
+
+**Topics covered:**
+
+- Order state transition rules and validation
+- Terminal states (refunded, canceled)
+- Webhook amount variance detection (1 cent tolerance)
+- Order review flag system (`needs_review`, `review_reason`)
+- Stale order cleanup task plugin
+- Graceful error handling for invalid transitions
+
 ---
 
 ## 📧 Email & Communications
@@ -191,6 +204,9 @@ Before going live, ensure:
 - [ ] Test all email templates (confirmation, shipped, refunded)
 - [ ] Document GDPR data retention policy (see `gdpr.md`)
 - [ ] Test GDPR export/anonymise endpoints
+- [ ] Configure stale order cleanup threshold (see `order-state-machine.md`)
+- [ ] Install and enable the cleanup task plugin
+- [ ] Test order state transitions for proper validation
 
 ---
 
@@ -215,5 +231,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-11-28
-**Component Version**: MVP (pre-release)
+**Last Updated**: 2025-12-03
+**Component Version**: 0.1.9

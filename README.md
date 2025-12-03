@@ -272,3 +272,11 @@ Events are dispatched via `EasycartEventDispatcher` (see `src/Event/EasycartEven
     - **PayPal sandbox PENDING handling**: PayPal sandbox often returns `PENDING` capture status even for successful payments. The webhook handler now detects successful captures (when `external_id` changes from order ID to capture ID) and marks orders as paid regardless of the sandbox's PENDING quirk.
     - **User-friendly pending notice**: Order confirmation page displays a prominent amber notice for PayPal orders still in pending state, instructing customers to refresh after ~1 minute while the webhook processes.
     - See `docs/paypal-webhook-flow.md` for complete PayPal integration details.
+- **Order security & integrity hardening (v0.1.9)**:
+    - **Order state machine guards**: Implemented strict state transition validation via `VALID_TRANSITIONS` constant in `OrderService`. Invalid transitions (e.g., `paid→pending`, `canceled→paid`) are rejected with user-friendly error messages instead of silently succeeding. Terminal states (`refunded`, `canceled`) cannot transition to any other state.
+    - **Webhook amount variance detection**: `PaymentGatewayManager::checkAmountVariance()` compares webhook payment amounts against order totals (1 cent tolerance). Mismatches automatically flag orders for review with detailed metadata, protecting against price manipulation attacks.
+    - **Order review flag system**: New `needs_review` and `review_reason` columns allow orders to be flagged for manual review. Flagged orders display a "Review" badge in the admin panel with the specific reason (e.g., `payment_amount_mismatch`).
+    - **Stale order cleanup task**: New Joomla 5 Scheduled Task plugin (`plg_task_nxpeasycartcleanup`) automatically cancels abandoned pending orders and releases reserved stock. Configurable threshold (1-720 hours, default 48) with enable/disable toggle in Settings → General.
+    - **Graceful error handling**: Invalid state transitions return HTTP 400 with specific error messages displayed in the admin UI instead of throwing critical 500 errors.
+    - **Admin panel UX fix**: Error alerts now display alongside data tables instead of replacing them, ensuring users can still see and interact with data while addressing errors.
+    - See `docs/order-state-machine.md` for complete state machine documentation and transition rules.

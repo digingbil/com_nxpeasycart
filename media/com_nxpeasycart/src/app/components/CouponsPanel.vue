@@ -98,7 +98,7 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__loading">
+        <div v-if="state.loading" class="nxp-ec-admin-panel__loading">
             {{
                 __(
                     "COM_NXPEASYCART_COUPONS_LOADING",
@@ -109,7 +109,7 @@
             }}
         </div>
 
-        <div v-else class="nxp-ec-admin-panel__body">
+        <div v-if="!state.loading" class="nxp-ec-admin-panel__body">
             <div class="nxp-ec-admin-panel__table">
                 <table class="nxp-ec-admin-table">
                     <thead>

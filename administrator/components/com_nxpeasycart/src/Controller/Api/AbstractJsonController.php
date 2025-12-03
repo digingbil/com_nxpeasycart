@@ -43,18 +43,25 @@ class AbstractJsonController extends BaseController
     /**
      * Render a JSON response payload.
      *
-     * @param mixed $data Payload to return
-     * @param int   $code HTTP status code
+     * @param mixed  $data    Payload to return
+     * @param int    $code    HTTP status code
+     * @param string $message Optional message (used for errors)
      *
      * @return JsonResponse
      *
      * @since 0.1.5
      */
-    protected function respond(mixed $data, int $code = 200): JsonResponse
+    protected function respond(mixed $data, int $code = 200, string $message = ''): JsonResponse
     {
         $hasError = $code >= 400;
 
-        $response = new JsonResponse($data, '', $hasError);
+        // Extract message from data if not provided explicitly
+        if ($hasError && $message === '' && \is_array($data) && isset($data['message'])) {
+            $message = (string) $data['message'];
+            unset($data['message']);
+        }
+
+        $response = new JsonResponse($data, $message, $hasError);
         $body     = (string) $response;
 
         if (\method_exists($response, 'setHttpStatusCode')) {

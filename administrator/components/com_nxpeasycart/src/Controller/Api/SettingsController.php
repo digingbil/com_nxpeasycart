@@ -74,6 +74,9 @@ class SettingsController extends AbstractJsonController
             'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
             'category_page_size' => ConfigHelper::getCategoryPageSize(),
             'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),
+            'auto_send_order_emails' => ConfigHelper::isAutoSendOrderEmails(),
+            'stale_order_cleanup_enabled' => ConfigHelper::isStaleOrderCleanupEnabled(),
+            'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
                 'text_color'    => (string) $service->get('visual.text_color', ''),
@@ -122,6 +125,12 @@ class SettingsController extends AbstractJsonController
         $autoSendOrderEmails = isset($payload['auto_send_order_emails'])
             ? (bool) $payload['auto_send_order_emails']
             : null;
+        $staleOrderCleanupEnabled = isset($payload['stale_order_cleanup_enabled'])
+            ? (bool) $payload['stale_order_cleanup_enabled']
+            : null;
+        $staleOrderHours = isset($payload['stale_order_hours'])
+            ? (int) $payload['stale_order_hours']
+            : null;
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -166,6 +175,14 @@ class SettingsController extends AbstractJsonController
 
         if ($paginationModeInput !== null) {
             ConfigHelper::setCategoryPaginationMode((string) $paginationModeInput);
+        }
+
+        if ($staleOrderCleanupEnabled !== null) {
+            ConfigHelper::setStaleOrderCleanupEnabled((bool) $staleOrderCleanupEnabled);
+        }
+
+        if ($staleOrderHours !== null) {
+            ConfigHelper::setStaleOrderHours((int) $staleOrderHours);
         }
 
         $service = $this->getService();
@@ -226,6 +243,9 @@ class SettingsController extends AbstractJsonController
                 'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
                 'category_page_size' => ConfigHelper::getCategoryPageSize(),
                 'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),
+                'auto_send_order_emails' => ConfigHelper::isAutoSendOrderEmails(),
+                'stale_order_cleanup_enabled' => ConfigHelper::isStaleOrderCleanupEnabled(),
+                'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
                 'visual' => [
                     'primary_color' => (string) $service->get('visual.primary_color', ''),
                     'text_color'    => (string) $service->get('visual.text_color', ''),

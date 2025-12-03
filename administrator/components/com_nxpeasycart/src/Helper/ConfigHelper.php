@@ -52,6 +52,20 @@ class ConfigHelper
     private static ?bool $autoSendOrderEmails = null;
 
     /**
+     * Cached stale order cleanup enabled flag.
+     *
+     * @since 0.1.9
+     */
+    private static ?bool $staleOrderCleanupEnabled = null;
+
+    /**
+     * Cached stale order hours threshold.
+     *
+     * @since 0.1.9
+     */
+    private static ?int $staleOrderHours = null;
+
+    /**
      * Resolve the store's base currency (ISO 4217, uppercase).
      *
      * @since 0.1.5
@@ -106,6 +120,8 @@ class ConfigHelper
         self::$categoryPageSize = null;
         self::$categoryPaginationMode = null;
         self::$autoSendOrderEmails = null;
+        self::$staleOrderCleanupEnabled = null;
+        self::$staleOrderHours = null;
     }
 
     /**
@@ -342,5 +358,118 @@ class ConfigHelper
         }
 
         self::$autoSendOrderEmails = $enabled;
+    }
+
+    /**
+     * Whether stale order cleanup is enabled.
+     *
+     * @since 0.1.9
+     */
+    public static function isStaleOrderCleanupEnabled(): bool
+    {
+        if (self::$staleOrderCleanupEnabled !== null) {
+            return self::$staleOrderCleanupEnabled;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+
+        self::$staleOrderCleanupEnabled = (bool) ((int) $params->get('stale_order_cleanup_enabled', 0));
+
+        return self::$staleOrderCleanupEnabled;
+    }
+
+    /**
+     * Persist stale order cleanup enabled flag.
+     *
+     * @since 0.1.9
+     */
+    public static function setStaleOrderCleanupEnabled(bool $enabled): void
+    {
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('stale_order_cleanup_enabled', $enabled ? 1 : 0);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save stale order cleanup setting.');
+        }
+
+        self::$staleOrderCleanupEnabled = $enabled;
+    }
+
+    /**
+     * Get stale order hours threshold.
+     *
+     * @since 0.1.9
+     */
+    public static function getStaleOrderHours(): int
+    {
+        if (self::$staleOrderHours !== null) {
+            return self::$staleOrderHours;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+        $hours  = (int) $params->get('stale_order_hours', 48);
+
+        // Clamp between 1 and 720 hours (1 hour to 30 days)
+        if ($hours < 1) {
+            $hours = 48;
+        } elseif ($hours > 720) {
+            $hours = 720;
+        }
+
+        self::$staleOrderHours = $hours;
+
+        return self::$staleOrderHours;
+    }
+
+    /**
+     * Persist stale order hours threshold.
+     *
+     * @since 0.1.9
+     */
+    public static function setStaleOrderHours(int $hours): void
+    {
+        // Clamp between 1 and 720 hours
+        $hours = max(1, min(720, $hours));
+
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('stale_order_hours', $hours);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save stale order hours setting.');
+        }
+
+        self::$staleOrderHours = $hours;
     }
 }

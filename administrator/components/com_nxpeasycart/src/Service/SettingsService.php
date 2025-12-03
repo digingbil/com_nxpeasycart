@@ -108,6 +108,8 @@ class SettingsService
         $settings['auto_send_order_emails'] = ConfigHelper::isAutoSendOrderEmails();
         $settings['category_page_size'] = ConfigHelper::getCategoryPageSize();
         $settings['category_pagination_mode'] = ConfigHelper::getCategoryPaginationMode();
+        $settings['stale_order_cleanup_enabled'] = ConfigHelper::isStaleOrderCleanupEnabled();
+        $settings['stale_order_hours'] = ConfigHelper::getStaleOrderHours();
 
         return $settings;
     }

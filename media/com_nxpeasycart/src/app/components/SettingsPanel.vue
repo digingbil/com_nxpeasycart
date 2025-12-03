@@ -444,6 +444,89 @@
                     </p>
                 </div>
 
+                <fieldset class="nxp-ec-form-fieldset">
+                    <legend class="nxp-ec-form-legend">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_CLEANUP",
+                                "Stale Order Cleanup",
+                                [],
+                                "settingsGeneralStaleOrderCleanup"
+                            )
+                        }}
+                    </legend>
+
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-stale-order-cleanup-enabled"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_ENABLED",
+                                    "Enable stale order cleanup",
+                                    [],
+                                    "settingsGeneralStaleOrderEnabled"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-stale-order-cleanup-enabled"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.staleOrderCleanupEnabled"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_ENABLED_HELP",
+                                    "Automatically cancel pending orders older than the threshold below. Requires the NXP Easy Cart Cleanup task plugin to be enabled in System > Scheduled Tasks.",
+                                    [],
+                                    "settingsGeneralStaleOrderEnabledHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="settingsDraft.staleOrderCleanupEnabled"
+                        class="nxp-ec-form-field"
+                    >
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-stale-order-hours"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_HOURS",
+                                    "Hours before cleanup",
+                                    [],
+                                    "settingsGeneralStaleOrderHours"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-stale-order-hours"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="1"
+                            max="720"
+                            step="1"
+                            v-model.number="settingsDraft.staleOrderHours"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_HOURS_HELP",
+                                    "Pending orders older than this will be automatically canceled and their reserved stock released (1-720 hours, default 48 = 2 days).",
+                                    [],
+                                    "settingsGeneralStaleOrderHoursHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
                 <div class="nxp-ec-settings-actions">
                     <button
                         class="nxp-ec-btn"
@@ -2434,6 +2517,8 @@ const settingsDraft = reactive({
     baseCurrency: "",
     categoryPageSize: 12,
     categoryPaginationMode: "paged",
+    staleOrderCleanupEnabled: false,
+    staleOrderHours: 48,
 });
 
 const securityDraft = reactive({
@@ -2545,6 +2630,10 @@ const applySettings = (values = {}) => {
             values?.category_pagination_mode === "infinite"
                 ? "infinite"
                 : "paged",
+        staleOrderCleanupEnabled: Boolean(values?.stale_order_cleanup_enabled ?? false),
+        staleOrderHours: Number.isFinite(Number(values?.stale_order_hours))
+            ? Math.max(1, Math.min(720, Number(values.stale_order_hours)))
+            : 48,
     });
 
     Object.assign(visualDraft, {
@@ -2656,6 +2745,10 @@ const saveGeneral = () => {
             settingsDraft.categoryPaginationMode === "infinite"
                 ? "infinite"
                 : "paged",
+        stale_order_cleanup_enabled: Boolean(settingsDraft.staleOrderCleanupEnabled),
+        stale_order_hours: Number.isFinite(Number(settingsDraft.staleOrderHours))
+            ? Math.max(1, Math.min(720, Number(settingsDraft.staleOrderHours)))
+            : 48,
     });
 };
 

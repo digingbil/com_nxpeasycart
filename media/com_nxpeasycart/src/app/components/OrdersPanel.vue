@@ -146,11 +146,15 @@
             {{ state.error }}
         </div>
 
-        <div v-else-if="state.loading" class="nxp-ec-admin-panel__body">
+        <div v-if="state.transitionError && !state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
+            {{ state.transitionError }}
+        </div>
+
+        <div v-if="state.loading && !state.error" class="nxp-ec-admin-panel__body">
             <SkeletonLoader type="table" :rows="5" :columns="7" />
         </div>
 
-        <div v-else class="nxp-ec-admin-panel__body nxp-ec-admin-panel__body--orders">
+        <div v-if="!state.loading && !state.error" class="nxp-ec-admin-panel__body nxp-ec-admin-panel__body--orders">
             <div class="nxp-ec-admin-panel__table">
                 <div class="nxp-ec-admin-panel__selection" v-if="hasSelection">
                     <span>{{ selectionSummary }}</span>
@@ -376,6 +380,13 @@
                                 <span class="nxp-ec-badge">
                                     {{ stateLabel(order.state) }}
                                 </span>
+                                <span
+                                    v-if="order.needs_review"
+                                    class="nxp-ec-badge nxp-ec-badge--warning"
+                                    :title="order.review_reason || __('COM_NXPEASYCART_ORDERS_NEEDS_REVIEW', 'Needs review')"
+                                >
+                                    {{ __("COM_NXPEASYCART_ORDERS_NEEDS_REVIEW_SHORT", "Review") }}
+                                </span>
                             </td>
                             <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_UPDATED', 'Updated')">
                                 {{
@@ -533,6 +544,23 @@
                             class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
                         >
                             {{ state.transitionError }}
+                        </div>
+
+                        <div
+                            v-if="state.activeOrder?.needs_review"
+                            class="nxp-ec-admin-alert nxp-ec-admin-alert--warning"
+                        >
+                            <strong>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_NEEDS_REVIEW",
+                                        "Needs Review",
+                                        [],
+                                        "ordersNeedsReview"
+                                    )
+                                }}:
+                            </strong>
+                            {{ formatReviewReason(state.activeOrder?.review_reason) }}
                         </div>
 
                         <section
@@ -1162,6 +1190,21 @@ const formatDate = (iso) => {
     }
 
     return date.toLocaleString();
+};
+
+const formatReviewReason = (reason) => {
+    if (!reason) {
+        return __("COM_NXPEASYCART_ORDERS_REVIEW_UNKNOWN", "Unknown reason");
+    }
+
+    const reasonMap = {
+        payment_amount_mismatch: __(
+            "COM_NXPEASYCART_ORDERS_REVIEW_AMOUNT_MISMATCH",
+            "Payment amount does not match order total. Please verify the transaction in your payment gateway dashboard."
+        ),
+    };
+
+    return reasonMap[reason] || reason;
 };
 
 const itemsLabel = (count) => {

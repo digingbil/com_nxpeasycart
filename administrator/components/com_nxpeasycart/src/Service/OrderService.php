@@ -29,6 +29,21 @@ class OrderService
     private const ORDER_STATES = ['cart', 'pending', 'paid', 'fulfilled', 'refunded', 'canceled'];
 
     /**
+     * Valid state transitions for the order state machine.
+     * Format: 'from_state' => ['allowed_to_state_1', 'allowed_to_state_2', ...]
+     *
+     * @since 0.1.9
+     */
+    private const VALID_TRANSITIONS = [
+        'cart'      => ['pending', 'canceled'],
+        'pending'   => ['paid', 'canceled'],
+        'paid'      => ['fulfilled', 'refunded', 'canceled'],
+        'fulfilled' => ['refunded'],
+        'refunded'  => [],  // terminal state
+        'canceled'  => [],  // terminal state
+    ];
+
+    /**
      * @var DatabaseInterface
      *
      * @since 0.1.5
@@ -290,6 +305,17 @@ class OrderService
 
         if ($current['state'] === $state) {
             return $current;
+        }
+
+        // Validate state transition using state machine guards
+        if (!$this->isValidTransition($current['state'], $state)) {
+            throw new RuntimeException(
+                Text::sprintf(
+                    'COM_NXPEASYCART_ERROR_ORDER_STATE_TRANSITION_INVALID',
+                    $current['state'],
+                    $state
+                )
+            );
         }
 
         $timestamp = $this->currentTimestamp();
@@ -1022,6 +1048,8 @@ class OrderService
             'currency'       => (string) $row->currency,
             'state'          => (string) $row->state,
             'payment_method' => isset($row->payment_method) ? (string) $row->payment_method : null,
+            'needs_review'   => (bool) ($row->needs_review ?? 0),
+            'review_reason'  => isset($row->review_reason) ? (string) $row->review_reason : null,
             'status_updated_at' => $statusUpdatedAt,
             'locale'         => (string) $row->locale,
             'carrier'        => $row->carrier !== null ? (string) $row->carrier : null,
@@ -1926,5 +1954,205 @@ class OrderService
         }
 
         return $normalised;
+    }
+
+    /**
+     * Check if a state transition is valid according to the state machine.
+     *
+     * @param string $from Current state
+     * @param string $to   Target state
+     *
+     * @return bool True if transition is allowed
+     *
+     * @since 0.1.9
+     */
+    private function isValidTransition(string $from, string $to): bool
+    {
+        $allowed = self::VALID_TRANSITIONS[$from] ?? [];
+
+        return \in_array($to, $allowed, true);
+    }
+
+    /**
+     * Flag an order for manual review with a reason.
+     *
+     * @param int         $orderId Order ID
+     * @param string      $reason  Reason for flagging (e.g., 'payment_amount_mismatch')
+     * @param array       $context Additional context data for audit log
+     * @param int|null    $actorId Actor performing the action
+     *
+     * @return array Updated order record
+     *
+     * @since 0.1.9
+     */
+    public function flagForReview(int $orderId, string $reason, array $context = [], ?int $actorId = null): array
+    {
+        $order = $this->get($orderId);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        $reason = substr(trim($reason), 0, 255);
+        $needsReview = 1;
+
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_orders'))
+            ->set($this->db->quoteName('needs_review') . ' = :needsReview')
+            ->set($this->db->quoteName('review_reason') . ' = :reason')
+            ->where($this->db->quoteName('id') . ' = :id')
+            ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
+            ->bind(':reason', $reason, ParameterType::STRING)
+            ->bind(':id', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+
+        // Record in audit trail
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.flagged_for_review',
+            array_merge(['reason' => $reason], $context),
+            $actorId
+        );
+
+        return $this->get($orderId);
+    }
+
+    /**
+     * Clear the review flag on an order.
+     *
+     * @param int      $orderId Order ID
+     * @param int|null $actorId Actor performing the action
+     *
+     * @return array Updated order record
+     *
+     * @since 0.1.9
+     */
+    public function clearReviewFlag(int $orderId, ?int $actorId = null): array
+    {
+        $order = $this->get($orderId);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
+        }
+
+        $needsReview = 0;
+
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_orders'))
+            ->set($this->db->quoteName('needs_review') . ' = :needsReview')
+            ->set($this->db->quoteName('review_reason') . ' = NULL')
+            ->where($this->db->quoteName('id') . ' = :id')
+            ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
+            ->bind(':id', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+
+        // Record in audit trail
+        $this->getAuditService()->record(
+            'order',
+            $orderId,
+            'order.review_cleared',
+            [],
+            $actorId
+        );
+
+        return $this->get($orderId);
+    }
+
+    /**
+     * Cancel stale pending orders older than the specified hours.
+     * Used by the scheduled task plugin.
+     *
+     * @param int      $hoursOld Number of hours before order is considered stale
+     * @param int|null $actorId  Actor performing the action (null for system/cron)
+     *
+     * @return array List of canceled order IDs
+     *
+     * @since 0.1.9
+     */
+    public function cancelStaleOrders(int $hoursOld, ?int $actorId = null): array
+    {
+        $hoursOld = max(1, $hoursOld);
+        $cutoff   = (new \DateTime())->modify("-{$hoursOld} hours")->format('Y-m-d H:i:s');
+
+        $query = $this->db->getQuery(true)
+            ->select($this->db->quoteName('id'))
+            ->from($this->db->quoteName('#__nxp_easycart_orders'))
+            ->where($this->db->quoteName('state') . ' = ' . $this->db->quote('pending'))
+            ->where($this->db->quoteName('created') . ' < ' . $this->db->quote($cutoff));
+
+        $this->db->setQuery($query);
+        $staleIds = $this->db->loadColumn();
+
+        $canceled = [];
+
+        foreach ($staleIds as $orderId) {
+            try {
+                $this->transitionState((int) $orderId, 'canceled', $actorId);
+                $this->releaseStockForOrder((int) $orderId);
+
+                $this->getAuditService()->record(
+                    'order',
+                    (int) $orderId,
+                    'order.stale_canceled',
+                    ['hours_threshold' => $hoursOld, 'cutoff' => $cutoff]
+                );
+
+                $canceled[] = (int) $orderId;
+            } catch (Throwable $e) {
+                // Log but continue processing other orders
+                $this->getAuditService()->record(
+                    'order',
+                    (int) $orderId,
+                    'order.stale_cancel_failed',
+                    ['error' => $e->getMessage()]
+                );
+            }
+        }
+
+        return $canceled;
+    }
+
+    /**
+     * Release reserved stock for a canceled/stale order.
+     *
+     * @param int $orderId Order ID
+     *
+     * @since 0.1.9
+     */
+    private function releaseStockForOrder(int $orderId): void
+    {
+        $query = $this->db->getQuery(true)
+            ->select([
+                $this->db->quoteName('variant_id'),
+                $this->db->quoteName('qty'),
+            ])
+            ->from($this->db->quoteName('#__nxp_easycart_order_items'))
+            ->where($this->db->quoteName('order_id') . ' = :orderId')
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $items = $this->db->loadObjectList();
+
+        foreach ($items as $item) {
+            if ((int) $item->variant_id <= 0) {
+                continue;
+            }
+
+            // Restore stock to variant
+            $update = $this->db->getQuery(true)
+                ->update($this->db->quoteName('#__nxp_easycart_variants'))
+                ->set($this->db->quoteName('stock') . ' = ' . $this->db->quoteName('stock') . ' + :qty')
+                ->where($this->db->quoteName('id') . ' = :variantId')
+                ->bind(':qty', $item->qty, ParameterType::INTEGER)
+                ->bind(':variantId', $item->variant_id, ParameterType::INTEGER);
+
+            $this->db->setQuery($update);
+            $this->db->execute();
+        }
     }
 }

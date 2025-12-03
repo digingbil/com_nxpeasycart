@@ -33,11 +33,16 @@ const normaliseSettings = (data = {}) => {
         },
         base_currency: baseCurrency,
         checkout_phone_required: Boolean(data.checkout_phone_required),
+        auto_send_order_emails: Boolean(data.auto_send_order_emails),
         category_page_size: Number.isFinite(Number(data.category_page_size))
             ? Number(data.category_page_size)
             : 12,
         category_pagination_mode:
             data.category_pagination_mode === "infinite" ? "infinite" : "paged",
+        stale_order_cleanup_enabled: Boolean(data.stale_order_cleanup_enabled),
+        stale_order_hours: Number.isFinite(Number(data.stale_order_hours))
+            ? Math.max(1, Math.min(720, Number(data.stale_order_hours)))
+            : 48,
         visual: {
             primary_color: visual.primary_color ?? "",
             text_color: visual.text_color ?? "",

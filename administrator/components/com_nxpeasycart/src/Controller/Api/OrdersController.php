@@ -167,7 +167,20 @@ class OrdersController extends AbstractJsonController
 
         $service = $this->getOrderService();
         $actorId = $this->app?->getIdentity()?->id ?? null;
-        $order   = $service->transitionState($id, $state, $actorId);
+
+        try {
+            $order = $service->transitionState($id, $state, $actorId);
+        } catch (RuntimeException $e) {
+            // Check if this is an invalid state transition error
+            if (str_contains($e->getMessage(), 'Invalid state transition')) {
+                return $this->respond([
+                    'error'   => true,
+                    'message' => $e->getMessage(),
+                ], 400);
+            }
+
+            throw $e;
+        }
 
         return $this->respond(['order' => $order]);
     }
