@@ -69,12 +69,17 @@ export default function mountCheckoutIsland(el) {
             <h2>{{ labels.order_summary }}</h2>
             <div class="nxp-ec-checkout__cart" v-if="cartItems.length">
               <ul>
-                <li v-for="item in cartItems" :key="item.id">
-                  <div>
-                    <strong>{{ item.product_title || item.title }}</strong>
-                    <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
+                <li v-for="item in cartItems" :key="item.id" class="nxp-ec-checkout__item">
+                  <div v-if="item.image" class="nxp-ec-checkout__item-image">
+                    <img :src="item.image" :alt="item.product_title || item.title" loading="lazy" />
                   </div>
-                  <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                  <div class="nxp-ec-checkout__item-details">
+                    <div>
+                      <strong>{{ item.product_title || item.title }}</strong>
+                      <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
+                    </div>
+                    <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                  </div>
                 </li>
               </ul>
 

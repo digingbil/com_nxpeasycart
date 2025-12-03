@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
+use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\CMS\Uri\Uri;
 
 /**
@@ -123,6 +124,9 @@ class CartPresentationService
                         $displayTitle = $baseTitle . ' (' . $variantLabel . ')';
                     }
 
+                    $productSlug = $product['slug'] ?? null;
+                    $productUrl  = $productSlug ? RouteHelper::getProductRoute($productSlug, null, false) : null;
+
                     return [
                         'id'               => $variantId ?? $productId ?? spl_object_id((object) $item),
                         'product_id'       => $productId,
@@ -136,6 +140,7 @@ class CartPresentationService
                         'total_cents'      => $priceCents * $qty,
                         'sku'              => $variant['sku']     ?? ($item['sku'] ?? null),
                         'image'            => $variant['image']   ?? ($product['image'] ?? null),
+                        'url'              => $productUrl,
                         'options'          => $variant['options'] ?? [],
                     ];
                 },
@@ -159,6 +164,7 @@ class CartPresentationService
             ->select([
                 $this->db->quoteName('id'),
                 $this->db->quoteName('title'),
+                $this->db->quoteName('slug'),
                 $this->db->quoteName('images'),
             ])
             ->from($this->db->quoteName('#__nxp_easycart_products'))
@@ -198,6 +204,7 @@ class CartPresentationService
             $products[(int) $row->id] = [
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
+                'slug'  => (string) $row->slug,
                 'image' => $image,
             ];
         }

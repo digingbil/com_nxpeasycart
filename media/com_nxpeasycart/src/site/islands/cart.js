@@ -87,6 +87,9 @@ export default function mountCartIsland(el) {
           <table class="nxp-ec-cart__table">
             <thead>
               <tr>
+                <th scope="col" class="nxp-ec-cart__image-col">
+                  <span class="nxp-ec-sr-only">Image</span>
+                </th>
                 <th scope="col">{{ labels.product }}</th>
                 <th scope="col">{{ labels.price }}</th>
                 <th scope="col" class="nxp-ec-cart__qty">{{ labels.qty }}</th>
@@ -98,8 +101,19 @@ export default function mountCartIsland(el) {
             </thead>
             <tbody>
               <tr v-for="item in items" :key="item.id">
+                <td class="nxp-ec-cart__image-cell">
+                  <a v-if="item.image && item.url" :href="item.url" class="nxp-ec-cart__thumb">
+                    <img :src="item.image" :alt="item.product_title || item.title" loading="lazy" />
+                  </a>
+                  <div v-else-if="item.image" class="nxp-ec-cart__thumb">
+                    <img :src="item.image" :alt="item.product_title || item.title" loading="lazy" />
+                  </div>
+                </td>
                 <td :data-label="labels.product">
-                  <strong>{{ item.product_title || item.title }}</strong>
+                  <a v-if="item.url" :href="item.url" class="nxp-ec-cart__product-link">
+                    <strong>{{ item.product_title || item.title }}</strong>
+                  </a>
+                  <strong v-else>{{ item.product_title || item.title }}</strong>
                   <ul v-if="item.options && item.options.length" class="nxp-ec-cart__options">
                     <li v-for="(option, index) in item.options" :key="index">
                       <span>{{ option.name }}:</span> {{ option.value }}

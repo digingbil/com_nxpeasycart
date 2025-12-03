@@ -906,18 +906,8 @@ class CartController extends BaseController
                 $db->quoteName('price_cents'),
                 $db->quoteName('active'),
             ])
-            ->from($db->quoteName('#__nxp_easycart_variants'));
-
-        $placeholders = [];
-
-        foreach ($variantIds as $index => $variantId) {
-            $placeholder = ':variantId' . $index;
-            $placeholders[] = $placeholder;
-            $boundId = (int) $variantId;
-            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
-        }
-
-        $query->where($db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')');
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->whereIn($db->quoteName('id'), $variantIds);
 
         $db->setQuery($query);
 

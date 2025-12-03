@@ -846,13 +846,10 @@ class PaymentController extends BaseController
                 $db->quoteName('stock'),
                 $db->quoteName('active'),
             ])
-            ->from($db->quoteName('#__nxp_easycart_variants'))
-            ->where($db->quoteName('id') . ' IN (' . implode(',', array_fill(0, \count($variantIds), '?')) . ')');
+            ->from($db->quoteName('#__nxp_easycart_variants'));
 
-        foreach ($variantIds as $index => $variantId) {
-            $boundVariantId = (int) $variantId;
-            $query->bind($index + 1, $boundVariantId, ParameterType::INTEGER);
-        }
+        // Use whereIn for safe parameterized IN clause
+        $query->whereIn($db->quoteName('id'), $variantIds);
 
         $db->setQuery($query);
 
@@ -871,19 +868,21 @@ class PaymentController extends BaseController
             }
 
             $row = $lookup[$variantId] ?? null;
+            $productTitle = $item['title'] ?? $item['product_title'] ?? ($row->sku ?? Text::_('COM_NXPEASYCART_UNKNOWN_PRODUCT'));
 
             if (!$row || !(bool) $row->active) {
                 $this->respond(
-                    ['message' => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK')],
+                    ['message' => Text::sprintf('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK_NAMED', $productTitle)],
                     400
                 );
             }
 
             $requestedQty = max(1, (int) ($item['qty'] ?? 1));
+            $availableStock = (int) ($row->stock ?? 0);
 
-            if ((int) ($row->stock ?? 0) < $requestedQty) {
+            if ($availableStock < $requestedQty) {
                 $this->respond(
-                    ['message' => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK')],
+                    ['message' => Text::sprintf('COM_NXPEASYCART_PRODUCT_INSUFFICIENT_STOCK', $productTitle, $availableStock)],
                     400
                 );
             }
@@ -1260,18 +1259,8 @@ class PaymentController extends BaseController
                 $db->quoteName('stock'),
                 $db->quoteName('active'),
             ])
-            ->from($db->quoteName('#__nxp_easycart_variants'));
-
-        $placeholders = [];
-
-        foreach ($variantIds as $index => $variantId) {
-            $placeholder = ':variantId' . $index;
-            $placeholders[] = $placeholder;
-            $boundId = (int) $variantId;
-            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
-        }
-
-        $query->where($db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')');
+            ->from($db->quoteName('#__nxp_easycart_variants'))
+            ->whereIn($db->quoteName('id'), $variantIds);
 
         $db->setQuery($query);
 

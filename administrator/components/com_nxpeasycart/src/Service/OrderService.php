@@ -1176,18 +1176,8 @@ class OrderService
         $query = $this->db->getQuery(true)
             ->select('*')
             ->from($this->db->quoteName('#__nxp_easycart_order_items'))
+            ->whereIn($this->db->quoteName('order_id'), $orderIds)
             ->order($this->db->quoteName('order_id') . ' ASC, ' . $this->db->quoteName('id') . ' ASC');
-
-        $placeholders = [];
-
-        foreach ($orderIds as $index => $orderId) {
-            $placeholder    = ':orderId' . $index;
-            $placeholders[] = $placeholder;
-            $boundId        = (int) $orderId;
-            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
-        }
-
-        $query->where($this->db->quoteName('order_id') . ' IN (' . implode(',', $placeholders) . ')');
 
         $this->db->setQuery($query);
 

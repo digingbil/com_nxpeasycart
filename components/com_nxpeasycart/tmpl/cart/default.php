@@ -113,6 +113,9 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                 <table class="nxp-ec-cart__table">
                     <thead>
                         <tr>
+                            <th scope="col" class="nxp-ec-cart__image-col">
+                                <span class="nxp-ec-sr-only"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_IMAGE'); ?></span>
+                            </th>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'); ?></th>
                             <th scope="col"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRICE'); ?></th>
                             <th scope="col" class="nxp-ec-cart__qty"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_QTY'); ?></th>
@@ -125,8 +128,35 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                     <tbody>
                         <?php foreach ($items as $item) : ?>
                             <tr>
+                                <td class="nxp-ec-cart__image-cell">
+                                    <?php if (!empty($item['image'])) : ?>
+                                        <?php if (!empty($item['url'])) : ?>
+                                            <a href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>" class="nxp-ec-cart__thumb">
+                                                <img
+                                                    src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    alt="<?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    loading="lazy"
+                                                />
+                                            </a>
+                                        <?php else : ?>
+                                            <div class="nxp-ec-cart__thumb">
+                                                <img
+                                                    src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    alt="<?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    loading="lazy"
+                                                />
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </td>
                                 <td data-label="<?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRODUCT'); ?>">
-                                    <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    <?php if (!empty($item['url'])) : ?>
+                                        <a href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>" class="nxp-ec-cart__product-link">
+                                            <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                        </a>
+                                    <?php else : ?>
+                                        <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    <?php endif; ?>
                                     <?php if (!empty($item['options'])) : ?>
                                         <ul class="nxp-ec-cart__options">
                                             <?php foreach ($item['options'] as $option) : ?>

@@ -232,14 +232,25 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                 <?php else : ?>
                     <ul>
                         <?php foreach ($cart['items'] as $item) : ?>
-                            <li>
-                                <div>
-                                    <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                    <span class="nxp-ec-checkout__qty">× <?php echo (int) $item['qty']; ?></span>
-                                </div>
-                                <div class="nxp-ec-checkout__price">
-                                    <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
+                            <li class="nxp-ec-checkout__item">
+                                <?php if (!empty($item['image'])) : ?>
+                                    <div class="nxp-ec-checkout__item-image">
+                                        <img
+                                            src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            alt="<?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                <?php endif; ?>
+                                <div class="nxp-ec-checkout__item-details">
+                                    <div>
+                                        <strong><?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                        <span class="nxp-ec-checkout__qty">× <?php echo (int) $item['qty']; ?></span>
+                                    </div>
+                                    <div class="nxp-ec-checkout__price">
+                                        <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
+                                    </div>
                                 </div>
                             </li>
                         <?php endforeach; ?>
