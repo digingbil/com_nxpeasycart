@@ -1164,6 +1164,29 @@ watch(
     { immediate: true }
 );
 
+// Reset selections to actual order states when a transition error occurs
+watch(
+    () => props.state.transitionError,
+    (error) => {
+        if (!error) {
+            return;
+        }
+
+        const items = props.state?.items;
+
+        if (!Array.isArray(items)) {
+            return;
+        }
+
+        // Reset all selections back to actual order states
+        items.forEach((order) => {
+            if (order?.id && order.state) {
+                selections[order.id] = order.state;
+            }
+        });
+    }
+);
+
 const formatCurrency = (cents, currency) => {
     const amount = (Number(cents) || 0) / 100;
     const code = (currency || "").toUpperCase() || "USD";
