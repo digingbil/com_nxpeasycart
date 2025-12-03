@@ -63,7 +63,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
     - **order_shipped**: Triggered when admin adds tracking info or transitions order to 'fulfilled' state; includes carrier, tracking number, and tracking URL.
     - **order_refunded**: Triggered when order transitions to 'refunded' state; includes refund amount and support contact.
     - Templates live in `administrator/components/com_nxpeasycart/templates/email/` and use Joomla's configured mailer.
-    - **Full order breakdown**: All email templates now display complete pricing (subtotal, shipping, discount, total) for transparency and consistency across customer communications.
+    - **Full order breakdown**: All email templates now display complete pricing (subtotal, tax with inclusive/exclusive labels, shipping, discount, total) for transparency and consistency across customer communications.
     - **Fully translatable**: All static strings use Joomla language constants (`COM_NXPEASYCART_EMAIL_*`) for easy localisation.
 - **Email sending controls**: Administrators can now control how order notification emails are sent:
     - **Auto-send setting**: New "Auto-send order emails" checkbox in Settings → General (default: off). When enabled, shipped/refunded emails are sent automatically on state transitions.
