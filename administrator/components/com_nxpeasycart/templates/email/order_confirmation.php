@@ -167,6 +167,28 @@ $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_tran
             </td>
         </tr>
     <?php endif; ?>
+    <?php $taxCents = (int) ($order['tax_cents'] ?? 0); ?>
+    <?php if ($taxCents > 0) : ?>
+        <?php
+            $taxRate = isset($order['tax_rate']) ? (float) $order['tax_rate'] : 0;
+            $taxInclusive = !empty($order['tax_inclusive']);
+            $taxLabel = Text::_('COM_NXPEASYCART_CART_TAX');
+
+            if ($taxRate > 0) {
+                $taxLabel = $taxInclusive
+                    ? Text::sprintf('COM_NXPEASYCART_TAX_LABEL_INCLUSIVE', $taxRate)
+                    : Text::sprintf('COM_NXPEASYCART_TAX_LABEL_EXCLUSIVE', $taxRate);
+            }
+        ?>
+        <tr>
+            <td style="padding-top: 6px;">
+                <?php echo htmlspecialchars($taxLabel, ENT_QUOTES, 'UTF-8'); ?>
+            </td>
+            <td align="right" style="padding-top: 6px;">
+                <?php echo htmlspecialchars($formatMoney($taxCents), ENT_QUOTES, 'UTF-8'); ?>
+            </td>
+        </tr>
+    <?php endif; ?>
     <tr>
         <td style="padding-top: 12px; font-weight: bold;"><?php echo htmlspecialchars(Text::_('COM_NXPEASYCART_EMAIL_TABLE_TOTAL'), ENT_QUOTES, 'UTF-8'); ?></td>
         <td align="right" style="padding-top: 12px; font-weight: bold;">
