@@ -58,6 +58,7 @@ class OrdersController extends AbstractJsonController
             'sendemail' => $this->sendEmail(),
             'invoice' => $this->invoice(),
             'export' => $this->export(),
+            'recordtransaction', 'recordpayment' => $this->recordTransaction(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -444,6 +445,101 @@ class OrdersController extends AbstractJsonController
         }
 
         return $this->respond(['order' => $order]);
+    }
+
+    /**
+     * Manually record a transaction for COD or Bank Transfer orders.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.9
+     */
+    protected function recordTransaction(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+
+        $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+
+        if ($id <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $service = $this->getOrderService();
+        $order = $service->get($id);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        // Only allow manual transaction recording for offline payment methods
+        $allowedMethods = ['cod', 'bank_transfer'];
+        $paymentMethod = strtolower(trim($order['payment_method'] ?? ''));
+
+        if (!\in_array($paymentMethod, $allowedMethods, true)) {
+            throw new RuntimeException(
+                Text::_('COM_NXPEASYCART_ERROR_MANUAL_PAYMENT_NOT_ALLOWED'),
+                400
+            );
+        }
+
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+
+        // Build transaction data
+        $amountCents = isset($payload['amount_cents'])
+            ? (int) $payload['amount_cents']
+            : (int) ($order['total_cents'] ?? 0);
+
+        $reference = isset($payload['reference']) ? trim((string) $payload['reference']) : '';
+        $note = isset($payload['note']) ? trim((string) $payload['note']) : '';
+
+        $transaction = [
+            'gateway'     => $paymentMethod,
+            'external_id' => $reference !== '' ? $reference : null,
+            'status'      => 'paid',
+            'amount_cents' => $amountCents,
+            'currency'    => $order['currency'] ?? 'USD',
+            'payload'     => [
+                'note'        => $note,
+                'recorded_by' => $actorId,
+                'manual'      => true,
+            ],
+        ];
+
+        try {
+            $updated = $service->recordTransaction($id, $transaction);
+
+            // Log the manual payment recording
+            $container = Factory::getContainer();
+            $auditService = $container->has(AuditService::class)
+                ? $container->get(AuditService::class)
+                : null;
+
+            if ($auditService) {
+                $auditService->record(
+                    'order',
+                    $id,
+                    'order.payment.manual',
+                    [
+                        'gateway'      => $paymentMethod,
+                        'amount_cents' => $amountCents,
+                        'reference'    => $reference,
+                    ],
+                    $actorId
+                );
+            }
+
+            return $this->respond(['order' => $updated]);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_RECORD_PAYMENT_FAILED', $e->getMessage()),
+                500,
+                $e
+            );
+        }
     }
 
     /**

@@ -932,6 +932,140 @@
                             </div>
                         </section>
 
+                        <!-- Record Payment Section (COD/Bank Transfer) -->
+                        <section
+                            class="nxp-ec-admin-panel__section"
+                            v-if="canRecordPayment"
+                        >
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_RECORD_PAYMENT",
+                                        "Record Payment",
+                                        [],
+                                        "ordersRecordPayment"
+                                    )
+                                }}
+                            </h4>
+                            <p class="nxp-ec-form-help" style="margin-bottom: 0.75rem;">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_ORDERS_RECORD_PAYMENT_HELP",
+                                        "Manually record payment receipt for this order. This will mark the order as paid.",
+                                        [],
+                                        "ordersRecordPaymentHelp"
+                                    )
+                                }}
+                            </p>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-payment-amount"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_PAYMENT_AMOUNT",
+                                            "Amount",
+                                            [],
+                                            "ordersPaymentAmount"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="nxp-ec-payment-amount"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    v-model="paymentDraft.amount"
+                                    :placeholder="
+                                        formatCurrency(
+                                            state.activeOrder.total_cents,
+                                            state.activeOrder.currency
+                                        )
+                                    "
+                                />
+                                <small class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_PAYMENT_AMOUNT_HELP",
+                                            "Leave empty to use order total",
+                                            [],
+                                            "ordersPaymentAmountHelp"
+                                        )
+                                    }}
+                                </small>
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-payment-reference"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_PAYMENT_REFERENCE",
+                                            "Reference (optional)",
+                                            [],
+                                            "ordersPaymentReference"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="nxp-ec-payment-reference"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model="paymentDraft.reference"
+                                    :placeholder="
+                                        __(
+                                            'COM_NXPEASYCART_ORDERS_PAYMENT_REFERENCE_PLACEHOLDER',
+                                            'Receipt number, bank reference...',
+                                            [],
+                                            'ordersPaymentReferencePlaceholder'
+                                        )
+                                    "
+                                />
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    for="nxp-ec-payment-note"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_PAYMENT_NOTE",
+                                            "Note (optional)",
+                                            [],
+                                            "ordersPaymentNote"
+                                        )
+                                    }}
+                                </label>
+                                <textarea
+                                    id="nxp-ec-payment-note"
+                                    class="nxp-ec-form-textarea"
+                                    rows="2"
+                                    v-model="paymentDraft.note"
+                                ></textarea>
+                            </div>
+                            <div class="nxp-ec-admin-form__actions">
+                                <button
+                                    class="nxp-ec-btn nxp-ec-btn--primary"
+                                    type="button"
+                                    :disabled="state.saving"
+                                    @click="emitRecordPayment"
+                                >
+                                    <i class="icon-credit"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_RECORD_PAYMENT_SUBMIT",
+                                            "Record Payment",
+                                            [],
+                                            "ordersRecordPaymentSubmit"
+                                        )
+                                    }}
+                                </button>
+                            </div>
+                        </section>
+
                         <section
                             class="nxp-ec-admin-panel__section"
                             v-if="
@@ -1097,6 +1231,7 @@ const emit = defineEmits([
     "invoice",
     "export",
     "send-email",
+    "record-payment",
 ]);
 
 const __ = props.translate;
@@ -1113,6 +1248,12 @@ const trackingDraft = reactive({
     markFulfilled: false,
 });
 
+const paymentDraft = reactive({
+    amount: null,
+    reference: "",
+    note: "",
+});
+
 const selectedIds = computed(() => {
     const selection = props.state?.selection;
 
@@ -1124,6 +1265,19 @@ const selectedIds = computed(() => {
 });
 
 const hasSelection = computed(() => selectedIds.value.length > 0);
+
+const canRecordPayment = computed(() => {
+    const order = props.state?.activeOrder;
+    if (!order) return false;
+    const allowedMethods = ["cod", "bank_transfer"];
+    const paymentMethod = String(order.payment_method || "").toLowerCase();
+    return order.state === "pending" && allowedMethods.includes(paymentMethod);
+});
+
+const paymentReady = computed(() => {
+    // Always ready - amount defaults to order total if not specified
+    return canRecordPayment.value;
+});
 
 watch(selectedIds, (ids) => {
     if (!ids.length) {
@@ -1140,6 +1294,9 @@ watch(
         trackingDraft.tracking_number = order?.tracking_number ?? "";
         trackingDraft.tracking_url = order?.tracking_url ?? "";
         trackingDraft.markFulfilled = false;
+        paymentDraft.amount = null;
+        paymentDraft.reference = "";
+        paymentDraft.note = "";
     },
     { immediate: true }
 );
@@ -1487,6 +1644,30 @@ const emitSendEmail = (type) => {
         id: props.state.activeOrder.id,
         type: type,
     });
+};
+
+const emitRecordPayment = () => {
+    if (!props.state.activeOrder || !canRecordPayment.value) {
+        return;
+    }
+
+    const order = props.state.activeOrder;
+    const amountCents =
+        paymentDraft.amount !== null && paymentDraft.amount !== ""
+            ? Math.round(Number(paymentDraft.amount) * 100)
+            : order.total_cents;
+
+    emit("record-payment", {
+        id: order.id,
+        amountCents,
+        reference: paymentDraft.reference,
+        note: paymentDraft.note,
+    });
+
+    // Reset the form
+    paymentDraft.amount = null;
+    paymentDraft.reference = "";
+    paymentDraft.note = "";
 };
 
 /**

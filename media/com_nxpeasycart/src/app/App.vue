@@ -104,6 +104,7 @@
             @add-note="onOrdersAddNote"
             @save-tracking="onOrdersSaveTracking"
             @send-email="onOrdersSendEmail"
+            @record-payment="onOrdersRecordPayment"
             @invoice="onOrdersInvoice"
             @export="onOrdersExport"
         />
@@ -455,6 +456,7 @@ const {
     downloadInvoice: downloadOrderInvoice,
     exportOrders,
     sendEmail: sendOrderEmail,
+    recordTransaction: recordOrderTransaction,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -978,6 +980,22 @@ const onOrdersSendEmail = async (payload) => {
     }
 
     await sendOrderEmail(payload.id, payload.type);
+};
+
+const onOrdersRecordPayment = async (payload) => {
+    if (!payload?.id) {
+        return;
+    }
+
+    try {
+        await recordOrderTransaction(payload.id, {
+            amountCents: payload.amountCents,
+            reference: payload.reference,
+            note: payload.note,
+        });
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
 };
 
 const onOrdersInvoice = async (orderId) => {

@@ -51,6 +51,8 @@ export function useOrders({
         endpoints?.export ?? deriveEndpoint(listEndpoint, "export");
     const sendEmailEndpoint =
         endpoints?.sendEmail ?? deriveEndpoint(listEndpoint, "sendEmail");
+    const recordTransactionEndpoint =
+        endpoints?.recordTransaction ?? deriveEndpoint(listEndpoint, "recordTransaction");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -478,6 +480,42 @@ export function useOrders({
         }
     };
 
+    const recordTransaction = async (id, { amountCents, reference, note }) => {
+        if (!recordTransactionEndpoint) {
+            throw new Error("Record transaction endpoint unavailable.");
+        }
+
+        state.saving = true;
+        state.transitionError = "";
+
+        try {
+            const order = await api.recordTransaction({
+                endpoint: recordTransactionEndpoint,
+                id,
+                amountCents,
+                reference,
+                note,
+            });
+
+            if (order) {
+                updateOrderList(order);
+
+                if (state.activeOrder && state.activeOrder.id === order.id) {
+                    state.activeOrder = order;
+                }
+
+                clearCachedData(buildCacheKey());
+            }
+
+            return order;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Failed to record payment";
+            throw error;
+        } finally {
+            state.saving = false;
+        }
+    };
+
     const bulkTransition = async (ids, nextState) => {
         if (!bulkTransitionEndpoint) {
             throw new Error("Bulk transition endpoint unavailable.");
@@ -542,6 +580,7 @@ export function useOrders({
         downloadInvoice,
         exportOrders,
         sendEmail,
+        recordTransaction,
         toggleSelection,
         clearSelection,
         metrics: perf.metrics,

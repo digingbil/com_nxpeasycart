@@ -602,6 +602,20 @@ class ApiClient {
     }
 
     /**
+     * Record a manual transaction for COD or Bank Transfer orders.
+     */
+    async recordTransaction({ endpoint, id, amountCents, reference, note }) {
+        const payload = await this.post(endpoint, {
+            id,
+            amount_cents: amountCents,
+            reference: reference || undefined,
+            note: note || undefined,
+        });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
      * Create a product.
      */
     async createProduct({ endpoint, data }) {
