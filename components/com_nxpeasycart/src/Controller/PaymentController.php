@@ -156,11 +156,15 @@ class PaymentController extends BaseController
             }
         }
 
+        $subtotal = (int) ($orderPayload['subtotal_cents'] ?? 0);
+        $discount = max(0, (int) ($orderPayload['discount_cents'] ?? 0));
         $shippingCents = $this->resolveShippingAmount(
             isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
-            (int) ($orderPayload['subtotal_cents'] ?? 0)
+            $subtotal
         );
-        $tax = $this->calculateTaxAmount($payload, (int) ($orderPayload['subtotal_cents'] ?? 0));
+        // Tax must be calculated on subtotal AFTER discounts to avoid overcharging gateways
+        $taxableSubtotal = max(0, $subtotal - $discount);
+        $tax = $this->calculateTaxAmount($payload, $taxableSubtotal);
 
         $orderPayload['shipping_cents'] = $shippingCents;
         $orderPayload['tax_cents']      = $tax['amount'];
@@ -173,8 +177,6 @@ class PaymentController extends BaseController
         );
 
         // Recalculate total with final shipping, tax, and discount
-        $subtotal = (int) ($orderPayload['subtotal_cents'] ?? 0);
-        $discount = (int) ($orderPayload['discount_cents'] ?? 0);
         $taxAmount = $tax['inclusive'] ? 0 : $tax['amount'];
 
         $orderPayload['total_cents'] = $subtotal + $shippingCents + $taxAmount - $discount;
@@ -303,7 +305,12 @@ class PaymentController extends BaseController
             'billing'  => $order['billing'] ?? [],
             'items'    => $order['items'],
             'summary'  => [
-                'total_cents' => $order['total_cents'],
+                'subtotal_cents' => (int) ($order['subtotal_cents'] ?? 0),
+                'shipping_cents' => (int) ($order['shipping_cents'] ?? 0),
+                'tax_cents'      => (int) ($order['tax_cents'] ?? 0),
+                'tax_inclusive'  => !empty($order['tax_inclusive']),
+                'discount_cents' => (int) ($order['discount_cents'] ?? 0),
+                'total_cents'    => (int) ($order['total_cents'] ?? 0),
             ],
         ], $preferences);
 
@@ -358,6 +365,15 @@ class PaymentController extends BaseController
         $items     = [];
 
         // SECURITY: Recalculate ALL prices from database - never trust cart prices
+        // Collect all variant IDs first for batch query (performance optimization)
+        $variantIds = array_map(
+            static fn ($item) => (int) ($item['variant_id'] ?? 0),
+            $cart['items']
+        );
+
+        // Single batch query for all variants
+        $variantsLookup = $this->loadVariantsForCheckoutBatch($db, $variantIds);
+
         foreach ($cart['items'] as $item) {
             $variantId = (int) ($item['variant_id'] ?? 0);
             $qty       = max(1, (int) ($item['qty'] ?? 1));
@@ -366,8 +382,8 @@ class PaymentController extends BaseController
                 throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CART_INVALID_REQUEST'));
             }
 
-            // Fetch CURRENT price from database
-            $variant = $this->loadVariantForCheckout($db, $variantId);
+            // Get variant from batch lookup
+            $variant = $variantsLookup[$variantId] ?? null;
 
             if (!$variant) {
                 throw new RuntimeException(
@@ -1209,6 +1225,67 @@ class PaymentController extends BaseController
             return $result ?: null;
         } catch (\Throwable $exception) {
             return null;
+        }
+    }
+
+    /**
+     * Load multiple variants with current prices from database in a single query.
+     * SECURITY: This method ensures prices are ALWAYS fetched from database,
+     * never trusted from cart data. Batch version for performance.
+     *
+     * @param DatabaseInterface $db
+     * @param array<int> $variantIds
+     * @return array<int, object> Keyed by variant ID
+     *
+     * @since 0.1.11
+     */
+    private function loadVariantsForCheckoutBatch(DatabaseInterface $db, array $variantIds): array
+    {
+        $variantIds = array_values(array_unique(array_filter(
+            array_map('intval', $variantIds),
+            static fn (int $id): bool => $id > 0
+        )));
+
+        if (empty($variantIds)) {
+            return [];
+        }
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('id'),
+                $db->quoteName('product_id'),
+                $db->quoteName('sku'),
+                $db->quoteName('price_cents'),
+                $db->quoteName('currency'),
+                $db->quoteName('stock'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'));
+
+        $placeholders = [];
+
+        foreach ($variantIds as $index => $variantId) {
+            $placeholder = ':variantId' . $index;
+            $placeholders[] = $placeholder;
+            $boundId = (int) $variantId;
+            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
+        }
+
+        $query->where($db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')');
+
+        $db->setQuery($query);
+
+        try {
+            $rows = $db->loadObjectList() ?: [];
+            $lookup = [];
+
+            foreach ($rows as $row) {
+                $lookup[(int) $row->id] = $row;
+            }
+
+            return $lookup;
+        } catch (\Throwable $exception) {
+            return [];
         }
     }
 

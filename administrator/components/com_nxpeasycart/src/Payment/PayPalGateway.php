@@ -38,9 +38,14 @@ class PayPalGateway implements PaymentGatewayInterface
         }
 
         $accessToken = $this->fetchAccessToken($clientId, $clientSecret);
+        $summary     = $this->extractSummary($order);
         $currency    = strtoupper((string) ($order['currency'] ?? 'USD'));
-        $amountCents = (int) ($order['summary']['total_cents'] ?? 0);
-        $value       = number_format($amountCents / 100, 2, '.', '');
+        $amountCents = (int) $summary['total_cents'];
+        $value       = $this->formatAmount($amountCents);
+        $itemTotal   = $this->formatAmount((int) $summary['subtotal_cents']);
+        $shipping    = $this->formatAmount((int) $summary['shipping_cents']);
+        $taxValue    = $summary['tax_inclusive'] ? '0.00' : $this->formatAmount((int) $summary['tax_cents']);
+        $discount    = $this->formatAmount((int) min($summary['discount_cents'], $summary['subtotal_cents']));
 
         $body = [
             'intent'         => 'CAPTURE',
@@ -50,6 +55,24 @@ class PayPalGateway implements PaymentGatewayInterface
                     'amount'       => [
                         'currency_code' => $currency,
                         'value'         => $value,
+                        'breakdown'     => [
+                            'item_total' => [
+                                'currency_code' => $currency,
+                                'value'         => $itemTotal,
+                            ],
+                            'shipping' => [
+                                'currency_code' => $currency,
+                                'value'         => $shipping,
+                            ],
+                            'tax_total' => [
+                                'currency_code' => $currency,
+                                'value'         => $taxValue,
+                            ],
+                            'discount' => [
+                                'currency_code' => $currency,
+                                'value'         => $discount,
+                            ],
+                        ],
                     ],
                 ],
             ],
@@ -59,6 +82,12 @@ class PayPalGateway implements PaymentGatewayInterface
                 'shipping_preference' => 'NO_SHIPPING',
             ],
         ];
+
+        $items = $this->buildItems($order['items'] ?? [], $summary, $currency);
+
+        if ($items) {
+            $body['purchase_units'][0]['items'] = $items;
+        }
 
         if (!empty($order['id'])) {
             $body['purchase_units'][0]['custom_id'] = (string) $order['id'];
@@ -190,6 +219,62 @@ class PayPalGateway implements PaymentGatewayInterface
         $mode = strtolower((string) ($this->config['mode'] ?? 'sandbox'));
 
         return $mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+    }
+
+    /**
+     * @return array{subtotal_cents:int, shipping_cents:int, tax_cents:int, tax_inclusive:bool, discount_cents:int, total_cents:int}
+     */
+    private function extractSummary(array $order): array
+    {
+        $summary = isset($order['summary']) && \is_array($order['summary']) ? $order['summary'] : [];
+
+        return [
+            'subtotal_cents' => (int) ($summary['subtotal_cents'] ?? ($order['subtotal_cents'] ?? 0)),
+            'shipping_cents' => (int) ($summary['shipping_cents'] ?? ($order['shipping_cents'] ?? 0)),
+            'tax_cents'      => (int) ($summary['tax_cents'] ?? ($order['tax_cents'] ?? 0)),
+            'tax_inclusive'  => !empty($summary['tax_inclusive'] ?? ($order['tax_inclusive'] ?? false)),
+            'discount_cents' => (int) ($summary['discount_cents'] ?? ($order['discount_cents'] ?? 0)),
+            'total_cents'    => (int) ($summary['total_cents'] ?? ($order['total_cents'] ?? 0)),
+        ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildItems(array $items, array $summary, string $currency): array
+    {
+        $payload = [];
+
+        foreach ($items as $item) {
+            if (!\is_array($item)) {
+                continue;
+            }
+
+            $qty        = max(1, (int) ($item['qty'] ?? 1));
+            $totalCents = (int) ($item['total_cents'] ?? (($item['unit_price_cents'] ?? 0) * $qty));
+            $unitCents  = $qty > 0 ? (int) floor($totalCents / $qty) : 0;
+
+            if ($unitCents <= 0) {
+                continue;
+            }
+
+            $payload[] = [
+                'name'       => (string) ($item['title'] ?? ($item['sku'] ?? 'Item')),
+                'quantity'   => (string) $qty,
+                'unit_amount' => [
+                    'currency_code' => $currency,
+                    'value'         => $this->formatAmount($unitCents),
+                ],
+            ];
+        }
+
+        return $payload;
+    }
+
+    private function formatAmount(int $cents): string
+    {
+        return number_format($cents / 100, 2, '.', '');
     }
 
     /**

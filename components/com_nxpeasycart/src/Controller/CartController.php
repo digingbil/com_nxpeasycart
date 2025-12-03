@@ -704,6 +704,15 @@ class CartController extends BaseController
 
             // SECURITY: Calculate cart subtotal from DATABASE PRICES, not cart-stored prices
             // This prevents coupon discount manipulation via cart price tampering
+            // Collect all variant IDs first for batch query (performance optimization)
+            $variantIds = array_map(
+                static fn ($item) => (int) ($item['variant_id'] ?? 0),
+                $items
+            );
+
+            // Single batch query for all variants
+            $variantsLookup = $this->loadVariantsForCouponBatch($db, $variantIds);
+
             $subtotalCents = 0;
             foreach ($items as $item) {
                 $variantId = (int) ($item['variant_id'] ?? 0);
@@ -713,8 +722,8 @@ class CartController extends BaseController
                     continue;
                 }
 
-                // Fetch current price from database
-                $variant = $this->loadVariantForCoupon($db, $variantId);
+                // Get variant from batch lookup
+                $variant = $variantsLookup[$variantId] ?? null;
 
                 if (!$variant || !(bool) $variant->active) {
                     continue; // Skip inactive variants
@@ -866,6 +875,63 @@ class CartController extends BaseController
             return $result ?: null;
         } catch (\Throwable $exception) {
             return null;
+        }
+    }
+
+    /**
+     * Load multiple variants with current prices from database in a single query.
+     * SECURITY: This method ensures coupon discounts are calculated based on
+     * database prices, not cart-stored prices. Batch version for performance.
+     *
+     * @param DatabaseInterface $db
+     * @param array<int> $variantIds
+     * @return array<int, object> Keyed by variant ID
+     *
+     * @since 0.1.11
+     */
+    private function loadVariantsForCouponBatch(DatabaseInterface $db, array $variantIds): array
+    {
+        $variantIds = array_values(array_unique(array_filter(
+            array_map('intval', $variantIds),
+            static fn (int $id): bool => $id > 0
+        )));
+
+        if (empty($variantIds)) {
+            return [];
+        }
+
+        $query = $db->getQuery(true)
+            ->select([
+                $db->quoteName('id'),
+                $db->quoteName('price_cents'),
+                $db->quoteName('active'),
+            ])
+            ->from($db->quoteName('#__nxp_easycart_variants'));
+
+        $placeholders = [];
+
+        foreach ($variantIds as $index => $variantId) {
+            $placeholder = ':variantId' . $index;
+            $placeholders[] = $placeholder;
+            $boundId = (int) $variantId;
+            $query->bind($placeholder, $boundId, ParameterType::INTEGER);
+        }
+
+        $query->where($db->quoteName('id') . ' IN (' . implode(',', $placeholders) . ')');
+
+        $db->setQuery($query);
+
+        try {
+            $rows = $db->loadObjectList() ?: [];
+            $lookup = [];
+
+            foreach ($rows as $row) {
+                $lookup[(int) $row->id] = $row;
+            }
+
+            return $lookup;
+        } catch (\Throwable $exception) {
+            return [];
         }
     }
 }
