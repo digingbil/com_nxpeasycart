@@ -168,7 +168,7 @@
         />
 
         <LogsPanel
-            v-else-if="activeSection === 'logs'"
+            v-else-if="activeSection === 'logs' && showAdvancedMode"
             :state="logsState"
             :translate="__"
             @refresh="onLogsRefresh"
@@ -270,24 +270,36 @@ const parseJSON = (value, fallback) => {
     }
 };
 
+const showAdvancedMode = computed(() => {
+    return Boolean(settingsState?.values?.show_advanced_mode ?? false);
+});
+
 const navItems = computed(() => {
+    let items = [];
+
     if (Array.isArray(props.config?.navItems)) {
-        return props.config.navItems.map((item) => ({
+        items = props.config.navItems.map((item) => ({
             id: item.id,
             title: item.title,
             link: item.link,
         }));
+    } else {
+        const parsed = parseJSON(props.dataset?.navItems, []);
+        items = Array.isArray(parsed)
+            ? parsed.map((item) => ({
+                  id: item.id,
+                  title: item.title,
+                  link: item.link,
+              }))
+            : [];
     }
 
-    const items = parseJSON(props.dataset?.navItems, []);
+    // Filter out logs when advanced mode is disabled
+    if (!showAdvancedMode.value) {
+        items = items.filter((item) => item.id !== "logs");
+    }
 
-    return Array.isArray(items)
-        ? items.map((item) => ({
-              id: item.id,
-              title: item.title,
-              link: item.link,
-          }))
-        : [];
+    return items;
 });
 
 const navLinkFor = (id) => {

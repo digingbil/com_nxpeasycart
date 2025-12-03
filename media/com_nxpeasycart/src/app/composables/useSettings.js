@@ -43,6 +43,7 @@ const normaliseSettings = (data = {}) => {
         stale_order_hours: Number.isFinite(Number(data.stale_order_hours))
             ? Math.max(1, Math.min(720, Number(data.stale_order_hours)))
             : 48,
+        show_advanced_mode: Boolean(data.show_advanced_mode),
         visual: {
             primary_color: visual.primary_color ?? "",
             text_color: visual.text_color ?? "",
@@ -126,6 +127,7 @@ export function useSettings({
         loading: false,
         saving: false,
         error: "",
+        message: "",
         values: normaliseSettings(preload),
         lastUpdated: null,
     });
@@ -180,6 +182,7 @@ export function useSettings({
 
         state.saving = true;
         state.error = "";
+        state.message = "";
 
         try {
             const data = await api.updateSettings({
@@ -188,6 +191,7 @@ export function useSettings({
             });
             state.values = normaliseSettings(data);
             state.lastUpdated = new Date().toISOString();
+            state.message = "Settings saved.";
 
             clearCachedData("settings:data");
             setCachedData("settings:data", {

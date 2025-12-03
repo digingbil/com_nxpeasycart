@@ -66,6 +66,13 @@ class ConfigHelper
     private static ?int $staleOrderHours = null;
 
     /**
+     * Cached show advanced mode flag.
+     *
+     * @since 0.1.12
+     */
+    private static ?bool $showAdvancedMode = null;
+
+    /**
      * Resolve the store's base currency (ISO 4217, uppercase).
      *
      * @since 0.1.5
@@ -122,6 +129,7 @@ class ConfigHelper
         self::$autoSendOrderEmails = null;
         self::$staleOrderCleanupEnabled = null;
         self::$staleOrderHours = null;
+        self::$showAdvancedMode = null;
     }
 
     /**
@@ -471,5 +479,56 @@ class ConfigHelper
         }
 
         self::$staleOrderHours = $hours;
+    }
+
+    /**
+     * Whether advanced mode (Logs, Security settings) is visible.
+     *
+     * @since 0.1.12
+     */
+    public static function isShowAdvancedMode(): bool
+    {
+        if (self::$showAdvancedMode !== null) {
+            return self::$showAdvancedMode;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+
+        self::$showAdvancedMode = (bool) ((int) $params->get('show_advanced_mode', 0));
+
+        return self::$showAdvancedMode;
+    }
+
+    /**
+     * Persist show advanced mode flag.
+     *
+     * @since 0.1.12
+     */
+    public static function setShowAdvancedMode(bool $enabled): void
+    {
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('show_advanced_mode', $enabled ? 1 : 0);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save show advanced mode setting.');
+        }
+
+        self::$showAdvancedMode = $enabled;
     }
 }

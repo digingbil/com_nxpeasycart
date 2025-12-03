@@ -42,6 +42,7 @@
                 }}
             </button>
             <button
+                v-if="settingsDraft.showAdvancedMode"
                 type="button"
                 class="nxp-ec-settings-tab"
                 :class="{ 'is-active': activeTab === 'security' }"
@@ -140,282 +141,298 @@
 
             <form
                 v-else
-                class="nxp-ec-settings-form"
+                class="nxp-ec-settings-form nxp-ec-settings-form--payments"
                 @submit.prevent="saveGeneral"
             >
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="settings-store-name">
+                <fieldset>
+                    <legend>
                         {{
                             __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_NAME",
-                                "Store name",
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_INFO",
+                                "Store Information",
                                 [],
-                                "settingsGeneralStoreName"
+                                "settingsGeneralStoreInfo"
                             )
                         }}
-                    </label>
-                    <input
-                        id="settings-store-name"
-                        class="nxp-ec-form-input"
-                        type="text"
-                        v-model.trim="settingsDraft.storeName"
-                        maxlength="190"
-                    />
-                </div>
-
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="settings-store-email">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_EMAIL",
-                                "Support email",
-                                [],
-                                "settingsGeneralStoreEmail"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-store-email"
-                        class="nxp-ec-form-input"
-                        type="email"
-                        v-model.trim="settingsDraft.storeEmail"
-                    />
-                </div>
-
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="settings-store-phone">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_PHONE",
-                                "Support phone",
-                                [],
-                                "settingsGeneralStorePhone"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-store-phone"
-                        class="nxp-ec-form-input"
-                        type="text"
-                        v-model.trim="settingsDraft.storePhone"
-                        maxlength="64"
-                    />
-                </div>
-
-                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                    <label class="nxp-ec-form-label" for="settings-checkout-phone-required">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_REQUIRED",
-                                "Require phone at checkout",
-                                [],
-                                "settingsGeneralCheckoutPhoneRequired"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-checkout-phone-required"
-                        class="nxp-ec-form-checkbox"
-                        type="checkbox"
-                        v-model="settingsDraft.checkoutPhoneRequired"
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_HELP",
-                                "Collect a phone number during checkout (recommended for delivery issues).",
-                                [],
-                                "settingsGeneralCheckoutPhoneHelp"
-                            )
-                        }}
-                    </p>
-                </div>
-
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="settings-base-currency">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY",
-                                "Base currency",
-                                [],
-                                "settingsGeneralBaseCurrency"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-base-currency"
-                        class="nxp-ec-form-input nxp-ec-form-input--uppercase"
-                        type="text"
-                        v-model.trim="settingsDraft.baseCurrency"
-                        minlength="3"
-                        maxlength="3"
-                        pattern="[A-Za-z]{3}"
-                        required
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY_HELP",
-                                "Use ISO 4217 currency codes such as USD or EUR.",
-                                [],
-                                "settingsGeneralBaseCurrencyHelp"
-                            )
-                        }}
-                    </p>
-                </div>
-
-                <div class="nxp-ec-form-field">
-                    <label
-                        class="nxp-ec-form-label"
-                        for="settings-category-page-size"
-                    >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE",
-                                "Products per page",
-                                [],
-                                "settingsGeneralCategoryPageSize"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-category-page-size"
-                        class="nxp-ec-form-input"
-                        type="number"
-                        min="1"
-                        step="1"
-                        v-model.number="settingsDraft.categoryPageSize"
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE_HELP",
-                                "How many products to show per page on the storefront category grid.",
-                                [],
-                                "settingsGeneralCategoryPageSizeHelp"
-                            )
-                        }}
-                    </p>
-                </div>
-
-                <div class="nxp-ec-form-field">
-                    <label
-                        class="nxp-ec-form-label"
-                        for="settings-category-pagination-mode"
-                    >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE",
-                                "Category pagination mode",
-                                [],
-                                "settingsGeneralCategoryPaginationMode"
-                            )
-                        }}
-                    </label>
-                    <select
-                        id="settings-category-pagination-mode"
-                        class="nxp-ec-form-select"
-                        v-model="settingsDraft.categoryPaginationMode"
-                    >
-                        <option value="paged">
+                    </legend>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-store-name">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_PAGED",
-                                    "Previous/Next links",
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_NAME",
+                                    "Store name",
                                     [],
-                                    "settingsGeneralCategoryPaginationPaged"
+                                    "settingsGeneralStoreName"
                                 )
                             }}
-                        </option>
-                        <option value="infinite">
+                        </label>
+                        <input
+                            id="settings-store-name"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="settingsDraft.storeName"
+                            maxlength="190"
+                        />
+                    </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-store-email">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_INFINITE",
-                                    "Load more on scroll",
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_EMAIL",
+                                    "Support email",
                                     [],
-                                    "settingsGeneralCategoryPaginationInfinite"
+                                    "settingsGeneralStoreEmail"
                                 )
                             }}
-                        </option>
-                    </select>
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE_HELP",
-                                "Choose between classic paging links or an infinite load-more experience on the category grid.",
-                                [],
-                                "settingsGeneralCategoryPaginationModeHelp"
-                            )
-                        }}
-                    </p>
-                </div>
+                        </label>
+                        <input
+                            id="settings-store-email"
+                            class="nxp-ec-form-input"
+                            type="email"
+                            v-model.trim="settingsDraft.storeEmail"
+                        />
+                    </div>
 
-                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                    <label
-                        class="nxp-ec-form-label"
-                        for="settings-payments-configured"
-                    >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_CONFIGURED",
-                                "Payments configured",
-                                [],
-                                "settingsGeneralPaymentsConfigured"
-                            )
-                        }}
-                    </label>
-                    <input
-                        id="settings-payments-configured"
-                        class="nxp-ec-form-checkbox"
-                        type="checkbox"
-                        v-model="settingsDraft.paymentsConfigured"
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_HELP",
-                                "Track when core payment settings are complete (used by dashboard checklist).",
-                                [],
-                                "settingsGeneralPaymentsHelp"
-                            )
-                        }}
-                    </p>
-                </div>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-store-phone">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_STORE_PHONE",
+                                    "Support phone",
+                                    [],
+                                    "settingsGeneralStorePhone"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-store-phone"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="settingsDraft.storePhone"
+                            maxlength="64"
+                        />
+                    </div>
+                </fieldset>
 
-                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                    <label
-                        class="nxp-ec-form-label"
-                        for="settings-auto-send-order-emails"
-                    >
+                <fieldset>
+                    <legend>
                         {{
                             __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS",
-                                "Auto-send order emails",
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT",
+                                "Checkout",
                                 [],
-                                "settingsGeneralAutoSendEmails"
+                                "settingsGeneralCheckout"
                             )
                         }}
-                    </label>
-                    <input
-                        id="settings-auto-send-order-emails"
-                        class="nxp-ec-form-checkbox"
-                        type="checkbox"
-                        v-model="settingsDraft.autoSendOrderEmails"
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS_HELP",
-                                "Automatically send email notifications when order status changes (e.g. shipped, refunded).",
-                                [],
-                                "settingsGeneralAutoSendEmailsHelp"
-                            )
-                        }}
-                    </p>
-                </div>
+                    </legend>
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-base-currency">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY",
+                                    "Base currency",
+                                    [],
+                                    "settingsGeneralBaseCurrency"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-base-currency"
+                            class="nxp-ec-form-input nxp-ec-form-input--uppercase"
+                            type="text"
+                            v-model.trim="settingsDraft.baseCurrency"
+                            minlength="3"
+                            maxlength="3"
+                            pattern="[A-Za-z]{3}"
+                            required
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY_HELP",
+                                    "Use ISO 4217 currency codes such as USD or EUR.",
+                                    [],
+                                    "settingsGeneralBaseCurrencyHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
 
-                <fieldset class="nxp-ec-form-fieldset">
-                    <legend class="nxp-ec-form-legend">
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="settings-checkout-phone-required">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_REQUIRED",
+                                    "Require phone at checkout",
+                                    [],
+                                    "settingsGeneralCheckoutPhoneRequired"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-checkout-phone-required"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.checkoutPhoneRequired"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CHECKOUT_PHONE_HELP",
+                                    "Collect a phone number during checkout (recommended for delivery issues).",
+                                    [],
+                                    "settingsGeneralCheckoutPhoneHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_STOREFRONT",
+                                "Storefront",
+                                [],
+                                "settingsGeneralStorefront"
+                            )
+                        }}
+                    </legend>
+                    <div class="nxp-ec-form-field">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-category-page-size"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE",
+                                    "Products per page",
+                                    [],
+                                    "settingsGeneralCategoryPageSize"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-category-page-size"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="1"
+                            step="1"
+                            v-model.number="settingsDraft.categoryPageSize"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGE_SIZE_HELP",
+                                    "How many products to show per page on the storefront category grid.",
+                                    [],
+                                    "settingsGeneralCategoryPageSizeHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-category-pagination-mode"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE",
+                                    "Category pagination mode",
+                                    [],
+                                    "settingsGeneralCategoryPaginationMode"
+                                )
+                            }}
+                        </label>
+                        <select
+                            id="settings-category-pagination-mode"
+                            class="nxp-ec-form-select"
+                            v-model="settingsDraft.categoryPaginationMode"
+                        >
+                            <option value="paged">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_PAGED",
+                                        "Previous/Next links",
+                                        [],
+                                        "settingsGeneralCategoryPaginationPaged"
+                                    )
+                                }}
+                            </option>
+                            <option value="infinite">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_INFINITE",
+                                        "Load more on scroll",
+                                        [],
+                                        "settingsGeneralCategoryPaginationInfinite"
+                                    )
+                                }}
+                            </option>
+                        </select>
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_CATEGORY_PAGINATION_MODE_HELP",
+                                    "Choose between classic paging links or an infinite load-more experience on the category grid.",
+                                    [],
+                                    "settingsGeneralCategoryPaginationModeHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_NOTIFICATIONS",
+                                "Notifications",
+                                [],
+                                "settingsGeneralNotifications"
+                            )
+                        }}
+                    </legend>
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-auto-send-order-emails"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS",
+                                    "Auto-send order emails",
+                                    [],
+                                    "settingsGeneralAutoSendEmails"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-auto-send-order-emails"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.autoSendOrderEmails"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_AUTO_SEND_EMAILS_HELP",
+                                    "Automatically send email notifications when order status changes (e.g. shipped, refunded).",
+                                    [],
+                                    "settingsGeneralAutoSendEmailsHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>
                         {{
                             __(
                                 "COM_NXPEASYCART_SETTINGS_GENERAL_STALE_ORDER_CLEANUP",
@@ -497,6 +514,58 @@
                     </div>
                 </fieldset>
 
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_ADVANCED_MODE",
+                                "Advanced Mode",
+                                [],
+                                "settingsGeneralAdvancedMode"
+                            )
+                        }}
+                    </legend>
+
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-show-advanced-mode"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_SHOW_ADVANCED",
+                                    "Show advanced options",
+                                    [],
+                                    "settingsGeneralShowAdvanced"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-show-advanced-mode"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.showAdvancedMode"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_SHOW_ADVANCED_HELP",
+                                    "Enable to show Security settings and Logs panel. These are typically only needed for debugging or advanced configuration.",
+                                    [],
+                                    "settingsGeneralShowAdvancedHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
+                <div
+                    v-if="settingsState.message"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
+                >
+                    {{ settingsState.message }}
+                </div>
+
                 <div class="nxp-ec-settings-actions">
                     <button
                         class="nxp-ec-btn"
@@ -533,7 +602,7 @@
             </form>
         </div>
 
-        <div v-else-if="activeTab === 'security'" class="nxp-ec-settings-panel">
+        <div v-else-if="activeTab === 'security' && settingsDraft.showAdvancedMode" class="nxp-ec-settings-panel">
             <header class="nxp-ec-settings-panel__header">
                 <h3>
                     {{
@@ -752,6 +821,13 @@
                             v-model.number="securityDraft.offlineEmailLimit"
                         />
                     </div>
+                </div>
+
+                <div
+                    v-if="settingsState.message"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
+                >
+                    {{ settingsState.message }}
                 </div>
 
                 <div class="nxp-ec-settings-actions">
@@ -1288,6 +1364,50 @@
                     </div>
                 </fieldset>
 
+                <fieldset>
+                    <legend>
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_PAYMENTS_STATUS",
+                                "Status",
+                                [],
+                                "settingsPaymentsStatus"
+                            )
+                        }}
+                    </legend>
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label
+                            class="nxp-ec-form-label"
+                            for="settings-payments-configured"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_CONFIGURED",
+                                    "Payments configured",
+                                    [],
+                                    "settingsPaymentsConfigured"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-payments-configured"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.paymentsConfigured"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_PAYMENTS_HELP",
+                                    "Track when core payment settings are complete (used by dashboard checklist).",
+                                    [],
+                                    "settingsPaymentsConfiguredHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
+                </fieldset>
+
                 <div
                     v-if="paymentsState.message"
                     class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
@@ -1621,6 +1741,13 @@
                     </div>
                 </div>
 
+                <div
+                    v-if="settingsState.message"
+                    class="nxp-ec-admin-alert nxp-ec-admin-alert--success"
+                >
+                    {{ settingsState.message }}
+                </div>
+
                 <div class="nxp-ec-settings-actions">
                     <button
                         class="nxp-ec-btn"
@@ -1739,6 +1866,7 @@ const settingsDraft = reactive({
     categoryPaginationMode: "paged",
     staleOrderCleanupEnabled: false,
     staleOrderHours: 48,
+    showAdvancedMode: false,
 });
 
 const securityDraft = reactive({
@@ -1835,6 +1963,7 @@ const applySettings = (values = {}) => {
         staleOrderHours: Number.isFinite(Number(values?.stale_order_hours))
             ? Math.max(1, Math.min(720, Number(values.stale_order_hours)))
             : 48,
+        showAdvancedMode: Boolean(values?.show_advanced_mode ?? false),
     });
 
     Object.assign(visualDraft, {
@@ -1950,6 +2079,7 @@ const saveGeneral = () => {
         stale_order_hours: Number.isFinite(Number(settingsDraft.staleOrderHours))
             ? Math.max(1, Math.min(720, Number(settingsDraft.staleOrderHours)))
             : 48,
+        show_advanced_mode: Boolean(settingsDraft.showAdvancedMode),
     });
 };
 
@@ -2025,6 +2155,13 @@ const refreshPayments = () => emit("refresh-payments");
 const savePayments = () => {
     const payload = JSON.parse(JSON.stringify(paymentsDraft));
     emit("save-payments", payload);
+
+    // Also save the paymentsConfigured flag via general settings
+    emit("save-settings", {
+        payments: {
+            configured: settingsDraft.paymentsConfigured,
+        },
+    });
 };
 const resetPayments = () => {
     applyPayments(paymentsState.config ?? {});
@@ -2217,20 +2354,33 @@ const formatCurrency = (cents, currency) => {
 /* Payment settings form - fieldset and legend styling */
 .nxp-ec-settings-form--payments fieldset {
     margin: 0;
-    padding: 1.25rem;
+    padding: 1rem 1.25rem 1.25rem;
     border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 0.5rem;
-    background: var(--nxp-ec-surface-alt, #f9fafb);
+    background: var(--nxp-ec-surface, #fff);
 }
 
 .nxp-ec-settings-form--payments legend {
-    padding: 0.25rem 0.75rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--nxp-ec-text, #212529);
-    background: var(--nxp-ec-surface, #fff);
-    border: 1px solid var(--nxp-ec-border, #e4e7ec);
-    border-radius: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--nxp-ec-text-muted, #6b7280);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.nxp-ec-settings-form--payments legend::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--nxp-ec-border, #e4e7ec);
 }
 
 .nxp-ec-settings-form--payments fieldset .nxp-ec-form-field {

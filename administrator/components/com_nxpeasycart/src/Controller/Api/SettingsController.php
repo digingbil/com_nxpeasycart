@@ -77,6 +77,7 @@ class SettingsController extends AbstractJsonController
             'auto_send_order_emails' => ConfigHelper::isAutoSendOrderEmails(),
             'stale_order_cleanup_enabled' => ConfigHelper::isStaleOrderCleanupEnabled(),
             'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
+            'show_advanced_mode' => ConfigHelper::isShowAdvancedMode(),
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
                 'text_color'    => (string) $service->get('visual.text_color', ''),
@@ -131,6 +132,9 @@ class SettingsController extends AbstractJsonController
         $staleOrderHours = isset($payload['stale_order_hours'])
             ? (int) $payload['stale_order_hours']
             : null;
+        $showAdvancedMode = isset($payload['show_advanced_mode'])
+            ? (bool) $payload['show_advanced_mode']
+            : null;
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -183,6 +187,10 @@ class SettingsController extends AbstractJsonController
 
         if ($staleOrderHours !== null) {
             ConfigHelper::setStaleOrderHours((int) $staleOrderHours);
+        }
+
+        if ($showAdvancedMode !== null) {
+            ConfigHelper::setShowAdvancedMode((bool) $showAdvancedMode);
         }
 
         $service = $this->getService();
@@ -246,6 +254,7 @@ class SettingsController extends AbstractJsonController
                 'auto_send_order_emails' => ConfigHelper::isAutoSendOrderEmails(),
                 'stale_order_cleanup_enabled' => ConfigHelper::isStaleOrderCleanupEnabled(),
                 'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
+                'show_advanced_mode' => ConfigHelper::isShowAdvancedMode(),
                 'visual' => [
                     'primary_color' => (string) $service->get('visual.primary_color', ''),
                     'text_color'    => (string) $service->get('visual.text_color', ''),
