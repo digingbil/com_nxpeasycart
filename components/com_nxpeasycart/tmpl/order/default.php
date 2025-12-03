@@ -184,6 +184,43 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                         <?php echo number_format(((int) ($order['subtotal_cents'] ?? 0)) / 100, 2); ?>
                     </strong>
                 </div>
+                <?php if (!empty($order['shipping_cents'])) : ?>
+                    <div>
+                        <span><?php echo Text::_('COM_NXPEASYCART_CART_SHIPPING'); ?></span>
+                        <strong>
+                            <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
+                            <?php echo number_format(((int) $order['shipping_cents']) / 100, 2); ?>
+                        </strong>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($order['discount_cents'])) : ?>
+                    <div>
+                        <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'); ?></span>
+                        <strong>
+                            -<?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
+                            <?php echo number_format(((int) $order['discount_cents']) / 100, 2); ?>
+                        </strong>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($order['tax_cents'])) : ?>
+                    <?php
+                    $taxRate = isset($order['tax_rate']) ? (float) $order['tax_rate'] : 0;
+                    $taxInclusive = !empty($order['tax_inclusive']);
+                    $taxLabel = Text::_('COM_NXPEASYCART_CART_TAX');
+                    if ($taxRate > 0) {
+                        $taxLabel = $taxInclusive
+                            ? Text::sprintf('COM_NXPEASYCART_TAX_LABEL_INCLUSIVE', $taxRate)
+                            : Text::sprintf('COM_NXPEASYCART_TAX_LABEL_EXCLUSIVE', $taxRate);
+                    }
+                    ?>
+                    <div>
+                        <span><?php echo $taxLabel; ?></span>
+                        <strong>
+                            <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
+                            <?php echo number_format(((int) $order['tax_cents']) / 100, 2); ?>
+                        </strong>
+                    </div>
+                <?php endif; ?>
                 <div>
                     <span><?php echo Text::_('COM_NXPEASYCART_ORDER_TOTAL'); ?></span>
                     <strong>

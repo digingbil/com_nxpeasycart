@@ -288,3 +288,21 @@ Events are dispatched via `EasycartEventDispatcher` (see `src/Event/EasycartEven
     - **Auto state transition**: Recording a payment automatically transitions the order from `pending` to `paid`.
     - **Audit logging**: All manual payments are logged with `order.payment.manual` action including recorder ID, amount, and reference.
     - See `docs/manual-transactions.md` for complete documentation.
+- **Tax & Shipping admin architecture refactor (v0.1.10)**: Tax Rates and Shipping Methods have been extracted from the Settings panel into dedicated first-class admin workspaces:
+    - **Standalone menu items**: Tax Rates and Shipping Methods now appear as top-level submenu items alongside Orders, Products, Categories, etc.
+    - **Modal-based CRUD**: Both panels follow the established modal dialog pattern (like Coupons) for add/edit forms instead of inline editing.
+    - **Dedicated views**: New `Tax/HtmlView.php` and `Shipping/HtmlView.php` with corresponding templates route through the Vue SPA via `appSection`.
+    - **Settings cleanup**: The Settings panel now focuses purely on configuration (General, Security, Payments, Visual) without CRUD list management.
+    - See `docs/admin-tax-shipping.md` for implementation details.
+- **Checkout floating summary bar (v0.1.10)**: Enhanced checkout UX with a sticky order summary that follows the user:
+    - **Automatic visibility**: A floating bar appears at the bottom of the viewport when the main order totals scroll out of view.
+    - **Real-time totals**: Displays Subtotal, Shipping (if > 0), Tax (if applicable), and Total with the same formatting as the main summary.
+    - **Smooth animations**: Slides up/down with CSS transitions when visibility changes.
+    - **Responsive design**: Adapts layout for mobile screens (< 600px) with stacked total row.
+    - **IntersectionObserver**: Uses modern browser API for efficient scroll detection without performance impact.
+    - See `docs/checkout-floating-summary.md` for implementation details.
+- **Order confirmation page improvements (v0.1.10)**: The public order status page now displays full pricing breakdown:
+    - **Complete totals**: Shows Subtotal, Shipping, Discount (if applied), Tax (with rate and inclusive indicator), and Total.
+    - **Tax label formatting**: Tax displays as "Tax (18% incl.)" for inclusive rates or "Tax (18%)" for exclusive, matching checkout behavior.
+    - **Order tax persistence**: Orders now store `tax_rate` and `tax_inclusive` fields so the original tax configuration is preserved for display.
+    - **Tax matching fix**: Backend now correctly uses `country_code` (2-letter ISO) instead of country display name for tax rate matching during checkout.

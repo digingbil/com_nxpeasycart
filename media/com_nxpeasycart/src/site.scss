@@ -1295,6 +1295,87 @@
             color: var(--nxp-ec-color-muted);
         }
     }
+
+    // Floating summary bar - appears when main totals scroll out of view
+    &__floating-summary {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--nxp-ec-color-surface);
+        border-top: 1px solid var(--nxp-ec-color-border);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        padding: 0.75rem 1rem;
+        transform: translateY(100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+
+        &.is-visible {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+    }
+
+    &__floating-summary-inner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+        max-width: 800px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+    }
+
+    &__floating-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+
+        span {
+            color: var(--nxp-ec-color-muted);
+        }
+
+        strong {
+            color: var(--nxp-ec-color-text);
+            font-weight: 600;
+        }
+
+        &--total {
+            font-size: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--nxp-ec-color-primary);
+
+            strong {
+                color: var(--nxp-ec-color-primary);
+                font-weight: 700;
+            }
+        }
+    }
+}
+
+@media (max-width: 600px) {
+    .nxp-ec-checkout__floating-summary-inner {
+        gap: 0.75rem 1.25rem;
+        justify-content: space-between;
+    }
+
+    .nxp-ec-checkout__floating-row {
+        font-size: 0.8rem;
+
+        &--total {
+            font-size: 0.9rem;
+            flex-basis: 100%;
+            justify-content: space-between;
+            padding-left: 0;
+            border-left: none;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--nxp-ec-color-border);
+        }
+    }
 }
 
 .nxp-ec-order-confirmation {

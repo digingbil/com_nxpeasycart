@@ -135,23 +135,34 @@
             @delete="onCouponsDelete"
         />
 
+        <TaxPanel
+            v-else-if="activeSection === 'tax'"
+            :state="taxState"
+            :translate="__"
+            @refresh="onTaxRefresh"
+            @save="onTaxSave"
+            @delete="onTaxDelete"
+        />
+
+        <ShippingPanel
+            v-else-if="activeSection === 'shipping'"
+            :state="shippingState"
+            :translate="__"
+            :base-currency="baseCurrency"
+            @refresh="onShippingRefresh"
+            @save="onShippingSave"
+            @delete="onShippingDelete"
+        />
+
         <SettingsPanel
             v-else-if="activeSection === 'settings'"
             :settings-state="settingsState"
-            :tax-state="taxState"
-            :shipping-state="shippingState"
             :payments-state="paymentsState"
             :translate="__"
             :base-currency="baseCurrency"
             :initial-tab="settingsInitialTab"
             @refresh-settings="onSettingsRefresh"
             @save-settings="onSettingsSave"
-            @refresh-tax="onTaxRefresh"
-            @save-tax="onTaxSave"
-            @delete-tax="onTaxDelete"
-            @refresh-shipping="onShippingRefresh"
-            @save-shipping="onShippingSave"
-            @delete-shipping="onShippingDelete"
             @refresh-payments="onPaymentsRefresh"
             @save-payments="onPaymentsSave"
         />
@@ -202,6 +213,8 @@ import OrdersPanel from "./components/OrdersPanel.vue";
 import CustomersPanel from "./components/CustomersPanel.vue";
 import CouponsPanel from "./components/CouponsPanel.vue";
 import SettingsPanel from "./components/SettingsPanel.vue";
+import TaxPanel from "./components/TaxPanel.vue";
+import ShippingPanel from "./components/ShippingPanel.vue";
 import LogsPanel from "./components/LogsPanel.vue";
 import OnboardingWizard from "./components/OnboardingWizard.vue";
 import { useTranslations } from "./composables/useTranslations.js";
@@ -311,6 +324,8 @@ const shouldLoadOrders = computed(() => sectionIs("orders"));
 const shouldLoadCustomers = computed(() => sectionIs("customers"));
 const shouldLoadCoupons = computed(() => sectionIs("coupons"));
 const shouldLoadSettings = computed(() => sectionIs("settings"));
+const shouldLoadTax = computed(() => sectionIs("tax"));
+const shouldLoadShipping = computed(() => sectionIs("shipping"));
 const shouldLoadLogs = computed(() => sectionIs("logs"));
 
 const productsEndpoints = props.endpoints?.products ?? {
@@ -729,7 +744,7 @@ const {
     endpoints: taxEndpoints,
     token: props.csrfToken,
     preload: taxPreload,
-    autoload: shouldLoadSettings.value,
+    autoload: shouldLoadTax.value || shouldLoadSettings.value,
 });
 
 const shippingPreload = props.config?.preload?.shipping ?? {
@@ -746,7 +761,7 @@ const {
     endpoints: shippingEndpoints,
     token: props.csrfToken,
     preload: shippingPreload,
-    autoload: shouldLoadSettings.value,
+    autoload: shouldLoadShipping.value || shouldLoadSettings.value,
 });
 
 const logsPreload = props.config?.preload?.logs ?? {
@@ -796,6 +811,12 @@ watch(activeSection, (section) => {
             break;
         case "coupons":
             refreshCoupons();
+            break;
+        case "tax":
+            refreshTaxRates();
+            break;
+        case "shipping":
+            refreshShippingRules();
             break;
         case "settings":
             refreshSettings();

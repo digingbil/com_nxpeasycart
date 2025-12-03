@@ -160,6 +160,16 @@ $navItems                     = [
         'link'  => 'index.php?option=com_nxpeasycart&view=coupons',
     ],
     [
+        'id'    => 'tax',
+        'title' => Text::_('COM_NXPEASYCART_MENU_TAX'),
+        'link'  => 'index.php?option=com_nxpeasycart&view=tax',
+    ],
+    [
+        'id'    => 'shipping',
+        'title' => Text::_('COM_NXPEASYCART_MENU_SHIPPING'),
+        'link'  => 'index.php?option=com_nxpeasycart&view=shipping',
+    ],
+    [
         'id'    => 'settings',
         'title' => Text::_('COM_NXPEASYCART_MENU_SETTINGS'),
         'link'  => 'index.php?option=com_nxpeasycart&view=settings',
@@ -272,6 +282,14 @@ switch ($section) {
     case 'coupons':
         $appTitleKey = 'COM_NXPEASYCART_MENU_COUPONS';
         $appLeadKey  = 'COM_NXPEASYCART_VIEW_COUPONS_PLACEHOLDER';
+        break;
+    case 'tax':
+        $appTitleKey = 'COM_NXPEASYCART_MENU_TAX';
+        $appLeadKey  = 'COM_NXPEASYCART_TAX_LEAD';
+        break;
+    case 'shipping':
+        $appTitleKey = 'COM_NXPEASYCART_MENU_SHIPPING';
+        $appLeadKey  = 'COM_NXPEASYCART_SHIPPING_LEAD';
         break;
     case 'settings':
         $appTitleKey = 'COM_NXPEASYCART_MENU_SETTINGS';

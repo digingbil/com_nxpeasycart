@@ -31,6 +31,32 @@ export default function mountCheckoutIsland(el) {
     const app = createApp({
         template: `
       <div class="nxp-ec-checkout" v-cloak>
+        <!-- Floating summary bar (visible when main totals scroll out of view) -->
+        <div
+          class="nxp-ec-checkout__floating-summary"
+          :class="{ 'is-visible': showFloatingSummary && !success }"
+          aria-hidden="!showFloatingSummary"
+        >
+          <div class="nxp-ec-checkout__floating-summary-inner">
+            <div class="nxp-ec-checkout__floating-row">
+              <span>{{ labels.subtotal }}</span>
+              <strong>{{ formatMoney(subtotal) }}</strong>
+            </div>
+            <div class="nxp-ec-checkout__floating-row" v-if="selectedShippingCost > 0">
+              <span>{{ labels.shipping }}</span>
+              <strong>{{ formatMoney(selectedShippingCost) }}</strong>
+            </div>
+            <div class="nxp-ec-checkout__floating-row" v-if="showTax">
+              <span>{{ taxLabel }}</span>
+              <strong>{{ formatMoney(taxAmount) }}</strong>
+            </div>
+            <div class="nxp-ec-checkout__floating-row nxp-ec-checkout__floating-row--total">
+              <span>{{ labels.total }}</span>
+              <strong>{{ formatMoney(total) }}</strong>
+            </div>
+          </div>
+        </div>
+
         <header class="nxp-ec-checkout__header">
           <h1 class="nxp-ec-checkout__title">{{ labels.title }}</h1>
           <p class="nxp-ec-checkout__lead">
@@ -84,7 +110,7 @@ export default function mountCheckoutIsland(el) {
                 </details>
               </div>
 
-              <div class="nxp-ec-checkout__totals">
+              <div ref="totalsRef" class="nxp-ec-checkout__totals">
                 <div>
                   <span>{{ labels.subtotal }}</span>
                   <strong>{{ formatMoney(subtotal) }}</strong>
@@ -1188,10 +1214,34 @@ export default function mountCheckoutIsland(el) {
                 }
             });
 
-            // Refresh cart on mount
-            onMounted(refreshCart);
+            // Floating summary visibility
+            const totalsRef = ref(null);
+            const showFloatingSummary = ref(false);
+
+            // Refresh cart on mount and setup IntersectionObserver for floating summary
+            onMounted(() => {
+                refreshCart();
+
+                // Setup IntersectionObserver to show/hide floating summary
+                if (totalsRef.value && "IntersectionObserver" in window) {
+                    const observer = new IntersectionObserver(
+                        (entries) => {
+                            // Show floating summary when totals section is NOT visible
+                            showFloatingSummary.value = !entries[0].isIntersecting;
+                        },
+                        {
+                            root: null,
+                            rootMargin: "-80px 0px 0px 0px", // Account for potential fixed headers
+                            threshold: 0,
+                        }
+                    );
+                    observer.observe(totalsRef.value);
+                }
+            });
 
             return {
+                totalsRef,
+                showFloatingSummary,
                 model: state,
                 cartItems,
                 shippingRules: shipping,

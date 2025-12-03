@@ -66,7 +66,8 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 - Translation helpers now normalise `%s` replacements and currency fallbacks, while the dashboard adopts Joomla 5's Font Awesome iconography for checklist states.
 - `media/com_nxpeasycart/src/api.js` exposes an `ApiClient` that unifies request headers, CSRF handling, and HTTP verb helpers, with domain methods starting at `fetchProducts()`.
 - Products can now be created, edited, and deleted directly from the admin grid via a reusable modal editor component that manages images, category chips, and variant tables, syncing payloads with the JSON endpoints. Orders can be searched, filtered by state, inspected, and transitioned from the same SPA.
-- The settings workspace persists store metadata, tax rates, shipping rules, and the component’s base currency via the new JSON controllers (`api.settings.*`, `api.tax.*`, `api.shipping.*`), with Vue panels keeping draft state and validation errors in sync.
+- The settings workspace persists store metadata and the component's base currency via the JSON controllers (`api.settings.*`), focusing on General, Security, Payments, and Visual configuration tabs.
+- **Tax Rates** and **Shipping Methods** are managed through dedicated first-class admin panels (`TaxPanel.vue`, `ShippingPanel.vue`) with their own views (`Tax/HtmlView.php`, `Shipping/HtmlView.php`) and submenu entries, following the modal-based CRUD pattern established by Coupons. See `docs/admin-tax-shipping.md` for details.
 - An audit logs surface streams entries from `#__nxp_easycart_audit`, enabling admins to filter and review lifecycle events without leaving the SPA.
 - A server-rendered orders fallback table ships inside the Joomla view so administrators can see seed data immediately; it removes itself once the Vue bundle mounts. The fallback now also preloads order data into the Vue app via data attributes so the SPA can hydrate without another request.
 - Admin endpoints are emitted as absolute Joomla administrator URLs and the API client merges query parameters onto those URLs, preventing accidental site-app routing. Translation helpers now run placeholder strings through `Joomla.sprintf`, so labels like “0 items” render correctly even when the core translations supply `%s` placeholders.
@@ -79,7 +80,8 @@ All relationships use InnoDB FK constraints and default to cascading deletes to 
 - The storefront JS is split into per-island modules (product/cart-button, category, cart, cart-summary, checkout, landing) loaded on demand via dynamic `import()` and lazy-mounted via `IntersectionObserver`.
 - Shared site utilities provide CSRF-aware API client, locale-aware money formatting, and payload parsing; locale/currency are passed from server-rendered templates via `data-nxp-*` attributes to keep PHP/JS output in sync.
 - Template theme tokens are resolved through `TemplateAdapter` and memoised per request to avoid re-parsing template params when multiple views request defaults.
-- Menu usage: the Store Category menu type uses “Category” to target a single category (leave blank for all products). “Root Categories” only applies when Category is blank—it limits the “all products” listing and filter chips to those selected roots; otherwise it is ignored.
+- Menu usage: the Store Category menu type uses "Category" to target a single category (leave blank for all products). "Root Categories" only applies when Category is blank—it limits the "all products" listing and filter chips to those selected roots; otherwise it is ignored.
+- **Checkout floating summary**: The checkout island includes a floating order summary bar that appears at the bottom of the viewport when the main totals section scrolls out of view. Uses `IntersectionObserver` for efficient scroll detection and CSS transitions for smooth animations. See `docs/checkout-floating-summary.md` for implementation details.
 
 ### Categories & product editing refresh
 

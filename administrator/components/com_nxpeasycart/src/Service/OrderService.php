@@ -134,6 +134,8 @@ class OrderService
                 'shipping'       => $normalised['shipping'] === null ? null : $this->encodeJson($normalised['shipping']),
                 'subtotal_cents' => $totals['subtotal_cents'],
                 'tax_cents'      => $totals['tax_cents'],
+                'tax_rate'       => $normalised['tax_rate'],
+                'tax_inclusive'  => $normalised['tax_inclusive'] ? 1 : 0,
                 'shipping_cents' => $totals['shipping_cents'],
                 'discount_cents' => $totals['discount_cents'],
                 'total_cents'    => $totals['total_cents'],
@@ -928,9 +930,10 @@ class OrderService
             'payment_method' => $paymentMethod,
             'locale'         => $locale,
             'tax_cents'      => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
+            'tax_rate'       => $this->formatTaxRate((string) ($payload['tax_rate'] ?? '0.00')),
+            'tax_inclusive'  => isset($payload['tax_inclusive']) ? (bool) $payload['tax_inclusive'] : false,
             'shipping_cents' => $this->toNonNegativeInt($payload['shipping_cents'] ?? 0),
             'discount_cents' => $this->toNonNegativeInt($payload['discount_cents'] ?? 0),
-            'tax_inclusive'  => isset($payload['tax_inclusive']) ? (bool) $payload['tax_inclusive'] : false,
         ];
     }
 
@@ -1089,6 +1092,8 @@ class OrderService
             'shipping'       => $row->shipping !== null ? $this->decodeJson($row->shipping) : null,
             'subtotal_cents' => (int) $row->subtotal_cents,
             'tax_cents'      => (int) $row->tax_cents,
+            'tax_rate'       => isset($row->tax_rate) ? (string) $row->tax_rate : '0.00',
+            'tax_inclusive'  => (bool) ($row->tax_inclusive ?? 0),
             'shipping_cents' => (int) $row->shipping_cents,
             'discount_cents' => (int) $row->discount_cents,
             'total_cents'    => (int) $row->total_cents,

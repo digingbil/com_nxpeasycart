@@ -164,6 +164,7 @@ class PaymentController extends BaseController
 
         $orderPayload['shipping_cents'] = $shippingCents;
         $orderPayload['tax_cents']      = $tax['amount'];
+        $orderPayload['tax_rate']       = $tax['rate'];
         // discount_cents already calculated in buildOrderPayload() from database prices
         $orderPayload['tax_inclusive']  = $tax['inclusive'];
         $orderPayload['items']          = $this->applyTaxRateToItems(
@@ -541,8 +542,9 @@ class PaymentController extends BaseController
     private function calculateTaxAmount(array $payload, int $subtotal): array
     {
         $billing = $payload['billing'] ?? [];
-        $country = strtoupper(trim((string) ($billing['country'] ?? '')));
-        $region  = strtolower(trim((string) ($billing['region'] ?? '')));
+        // Use country_code (2-letter ISO) for tax matching, not the display name
+        $country = strtoupper(trim((string) ($billing['country_code'] ?? $billing['country'] ?? '')));
+        $region  = strtolower(trim((string) ($billing['region_code'] ?? $billing['region'] ?? '')));
 
         try {
             $service = $this->getTaxService();

@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `shipping` JSON NULL,
   `subtotal_cents` INT NOT NULL DEFAULT 0,
   `tax_cents` INT NOT NULL DEFAULT 0,
+  `tax_rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+  `tax_inclusive` TINYINT(1) NOT NULL DEFAULT 0,
   `shipping_cents` INT NOT NULL DEFAULT 0,
   `discount_cents` INT NOT NULL DEFAULT 0,
   `total_cents` INT NOT NULL DEFAULT 0,
