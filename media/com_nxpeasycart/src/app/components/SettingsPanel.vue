@@ -287,6 +287,38 @@
                             }}
                         </p>
                     </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-display-locale">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_DISPLAY_LOCALE",
+                                    "Price display locale",
+                                    [],
+                                    "settingsGeneralDisplayLocale"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-display-locale"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="settingsDraft.displayLocale"
+                            maxlength="10"
+                            placeholder="Auto (from site language)"
+                            pattern="[a-z]{2}[-_][A-Z]{2}"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_GENERAL_DISPLAY_LOCALE_HELP",
+                                    "Override price formatting locale. Leave empty to use Joomla's site language. Examples: mk-MK, de-DE, en-US",
+                                    [],
+                                    "settingsGeneralDisplayLocaleHelp"
+                                )
+                            }}
+                        </p>
+                    </div>
                 </fieldset>
 
                 <fieldset>
@@ -1862,6 +1894,7 @@ const settingsDraft = reactive({
     paymentsConfigured: false,
     autoSendOrderEmails: false,
     baseCurrency: "",
+    displayLocale: "",
     categoryPageSize: 12,
     categoryPaginationMode: "paged",
     staleOrderCleanupEnabled: false,
@@ -1952,6 +1985,10 @@ const applySettings = (values = {}) => {
             typeof values?.base_currency === "string"
                 ? values.base_currency.trim().toUpperCase()
                 : (props.baseCurrency || "USD").toUpperCase(),
+        displayLocale:
+            typeof values?.display_locale === "string"
+                ? values.display_locale.trim()
+                : "",
         categoryPageSize: Number.isFinite(Number(values?.category_page_size))
             ? Number(values.category_page_size)
             : 12,
@@ -2054,6 +2091,7 @@ const refreshGeneral = () => emit("refresh-settings");
 
 const saveGeneral = () => {
     const currency = (settingsDraft.baseCurrency || "").trim().toUpperCase();
+    const locale = (settingsDraft.displayLocale || "").trim();
 
     emit("save-settings", {
         store: {
@@ -2066,6 +2104,7 @@ const saveGeneral = () => {
             configured: settingsDraft.paymentsConfigured,
         },
         base_currency: currency,
+        display_locale: locale,
         checkout_phone_required: settingsDraft.checkoutPhoneRequired,
         auto_send_order_emails: settingsDraft.autoSendOrderEmails,
         category_page_size: Number.isFinite(Number(settingsDraft.categoryPageSize))

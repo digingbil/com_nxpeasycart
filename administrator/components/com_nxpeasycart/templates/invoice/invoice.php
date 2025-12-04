@@ -1,6 +1,7 @@
 <?php
 
 use Joomla\CMS\Language\Text;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 
 \defined('_JEXEC') or die;
 
@@ -15,23 +16,7 @@ $items    = $order['items']    ?? [];
 $currency = $order['currency'] ?? 'USD';
 
 $formatMoney = static function (int $cents) use ($currency): string {
-    $amount = $cents / 100;
-
-    if (class_exists('NumberFormatter', false)) {
-        try {
-            $locale = locale_get_default() ?: 'en_US';
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $formatted = $formatter->formatCurrency($amount, $currency);
-
-            if ($formatted !== false) {
-                return $formatted;
-            }
-        } catch (\Throwable $exception) {
-            // Fall through to simple format
-        }
-    }
-
-    return sprintf('%s %.2f', $currency, $amount);
+    return MoneyHelper::format($cents, $currency);
 };
 
 $billingLines = [];

@@ -12,6 +12,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
@@ -421,16 +422,15 @@ class LandingModel extends BaseDatabaseModel
 
             if ($minPrice !== null && $minPrice > 0) {
                 if ($maxPrice !== null && $maxPrice > $minPrice) {
+                    // Multiple variants with different prices - show range
                     $priceLabel = Text::sprintf(
                         'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
-                        $this->formatMoney($minPrice, $currency),
-                        $this->formatMoney($maxPrice, $currency)
+                        MoneyHelper::format($minPrice, $currency),
+                        MoneyHelper::format($maxPrice, $currency)
                     );
                 } else {
-                    $priceLabel = Text::sprintf(
-                        'COM_NXPEASYCART_PRODUCT_PRICE_FROM',
-                        $this->formatMoney($minPrice, $currency)
-                    );
+                    // Single price (min equals max, or only one variant) - show plain price
+                    $priceLabel = MoneyHelper::format($minPrice, $currency);
                 }
             }
 
@@ -555,58 +555,4 @@ class LandingModel extends BaseDatabaseModel
         return max($minimum, $value);
     }
 
-    /**
-     * Format a monetary amount.
-     *
-     * @since 0.1.5
-     */
-    private function formatMoney(int $cents, string $currency): string
-    {
-        $amount = $cents / 100;
-
-        if (class_exists(\NumberFormatter::class, false)) {
-            try {
-                $locale = null;
-
-                try {
-                    $language = null;
-                    $app      = Factory::getApplication();
-
-                    if ($app && method_exists($app, 'getLanguage')) {
-                        $language = $app->getLanguage();
-                    }
-
-                    $tag = $language && method_exists($language, 'getTag')
-                        ? (string) $language->getTag()
-                        : '';
-
-                    if ($tag !== '') {
-                        $locale = str_replace('-', '_', $tag);
-                    }
-                } catch (\Throwable $exception) {
-                    // Use default fallback below.
-                }
-
-                if ($locale === null || $locale === '') {
-                    if (function_exists('locale_get_default')) {
-                        $locale = locale_get_default() ?: 'en_US';
-                    } else {
-                        $locale = 'en_US';
-                    }
-                }
-
-                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-
-                $formatted = $formatter->formatCurrency($amount, $currency);
-
-                if ($formatted !== false) {
-                    return (string) $formatted;
-                }
-            } catch (\Throwable $exception) {
-                // Fallback below.
-            }
-        }
-
-        return sprintf('%s %.2f', $currency, $amount);
-    }
 }

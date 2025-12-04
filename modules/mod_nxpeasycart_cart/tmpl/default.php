@@ -2,11 +2,11 @@
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 $items   = isset($cart['items']) && \is_array($cart['items']) ? $cart['items'] : [];
@@ -21,26 +21,11 @@ foreach ($items as $item) {
     $itemCount += (int) ($item['qty'] ?? 0);
 }
 
-$language = Factory::getApplication()->getLanguage();
-$locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
+// Locale is auto-resolved by MoneyHelper (checks store override, then Joomla language)
+$locale = MoneyHelper::resolveLocale();
 
-$formatMoney = static function (int $cents) use ($currency, $locale): string {
-    $amount = $cents / 100;
-
-    if (class_exists('NumberFormatter', false)) {
-        try {
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $formatted = $formatter->formatCurrency($amount, $currency);
-
-            if ($formatted !== false) {
-                return (string) $formatted;
-            }
-        } catch (\Throwable $exception) {
-            // Continue to fallback.
-        }
-    }
-
-    return sprintf('%s %.2f', $currency, $amount);
+$formatMoney = static function (int $cents) use ($currency): string {
+    return MoneyHelper::format($cents, $currency);
 };
 
 $formattedTotal = $formatMoney($totalCents);

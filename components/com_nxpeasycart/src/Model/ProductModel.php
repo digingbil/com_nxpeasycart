@@ -9,6 +9,7 @@ use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
@@ -252,7 +253,7 @@ class ProductModel extends BaseDatabaseModel
                 'id'          => (int) $row->id,
                 'sku'         => (string) $row->sku,
                 'price_cents' => (int) $row->price_cents,
-                'price'       => $this->formatMoney((int) $row->price_cents, $currency),
+                'price'       => MoneyHelper::format((int) $row->price_cents, $currency),
                 'currency'    => $currency,
                 'stock'       => (int) $row->stock,
                 'weight'      => $row->weight !== null ? (float) $row->weight : null,
@@ -369,32 +370,4 @@ class ProductModel extends BaseDatabaseModel
         ];
     }
 
-    /**
-     * Format a monetary amount.
-     *
-     * @since 0.1.5
-     */
-    private function formatMoney(int $cents, string $currency): string
-    {
-        $amount = $cents / 100;
-
-        if (class_exists(\NumberFormatter::class, false)) {
-            try {
-                $language = Factory::getApplication()->getLanguage();
-                $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
-
-                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-
-                $formatted = $formatter->formatCurrency($amount, $currency);
-
-                if ($formatted !== false) {
-                    return (string) $formatted;
-                }
-            } catch (\Throwable $exception) {
-                // Fallback below.
-            }
-        }
-
-        return sprintf('%s %.2f', $currency, $amount);
-    }
 }

@@ -73,6 +73,13 @@ class ConfigHelper
     private static ?bool $showAdvancedMode = null;
 
     /**
+     * Cached display locale override.
+     *
+     * @since 0.1.13
+     */
+    private static ?string $displayLocale = null;
+
+    /**
      * Resolve the store's base currency (ISO 4217, uppercase).
      *
      * @since 0.1.5
@@ -130,6 +137,7 @@ class ConfigHelper
         self::$staleOrderCleanupEnabled = null;
         self::$staleOrderHours = null;
         self::$showAdvancedMode = null;
+        self::$displayLocale = null;
     }
 
     /**
@@ -530,5 +538,76 @@ class ConfigHelper
         }
 
         self::$showAdvancedMode = $enabled;
+    }
+
+    /**
+     * Get the display locale override for price formatting.
+     *
+     * Returns empty string if not set (use auto-detection).
+     *
+     * @since 0.1.13
+     */
+    public static function getDisplayLocale(): string
+    {
+        if (self::$displayLocale !== null) {
+            return self::$displayLocale;
+        }
+
+        $params = ComponentHelper::getParams('com_nxpeasycart');
+        $locale = trim((string) $params->get('display_locale', ''));
+
+        // Validate locale format (e.g., mk-MK, en-US, de-DE or mk_MK, en_US, de_DE)
+        if ($locale !== '' && !preg_match('/^[a-z]{2}[-_][A-Z]{2}$/i', $locale)) {
+            $locale = '';
+        }
+
+        self::$displayLocale = $locale;
+
+        return self::$displayLocale;
+    }
+
+    /**
+     * Persist display locale override.
+     *
+     * Pass empty string to clear the override (use auto-detection).
+     *
+     * @since 0.1.13
+     */
+    public static function setDisplayLocale(string $locale): void
+    {
+        $locale = trim($locale);
+
+        // Validate locale format if not empty (accepts both mk-MK and mk_MK formats)
+        if ($locale !== '' && !preg_match('/^[a-z]{2}[-_][A-Z]{2}$/i', $locale)) {
+            throw new RuntimeException('Invalid display locale format. Use format like mk-MK or en-US.');
+        }
+
+        $component = ComponentHelper::getComponent('com_nxpeasycart');
+
+        if (!$component || !isset($component->id)) {
+            throw new RuntimeException('Component configuration unavailable.');
+        }
+
+        /** @var \Joomla\CMS\Table\Extension $table */
+        $table = Table::getInstance('extension');
+
+        if (!$table->load((int) $component->id)) {
+            throw new RuntimeException('Unable to load component record.');
+        }
+
+        $params = new Registry($table->params);
+        $params->set('display_locale', $locale);
+
+        $component->params = (string) $params;
+        $table->params = (string) $params;
+
+        if (!$table->check() || !$table->store()) {
+            throw new RuntimeException('Failed to save display locale setting.');
+        }
+
+        self::$displayLocale = $locale;
+
+        // Clear the MoneyHelper locale cache so it picks up the new setting
+        MoneyHelper::clearLocaleCache();
     }
 }

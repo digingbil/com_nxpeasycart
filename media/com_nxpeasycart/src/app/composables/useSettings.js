@@ -22,6 +22,12 @@ const normaliseSettings = (data = {}) => {
             ? data.base_currency.trim().toUpperCase()
             : "";
 
+    // Display locale for price formatting (empty = auto-detect from Joomla language)
+    const displayLocale =
+        typeof data.display_locale === "string"
+            ? data.display_locale.trim()
+            : "";
+
     return {
         store: {
             name: store.name ?? "",
@@ -32,6 +38,7 @@ const normaliseSettings = (data = {}) => {
             configured: Boolean(payments.configured),
         },
         base_currency: baseCurrency,
+        display_locale: displayLocale,
         checkout_phone_required: Boolean(data.checkout_phone_required),
         auto_send_order_emails: Boolean(data.auto_send_order_emails),
         category_page_size: Number.isFinite(Number(data.category_page_size))

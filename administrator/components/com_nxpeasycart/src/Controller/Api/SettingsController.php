@@ -71,6 +71,7 @@ class SettingsController extends AbstractJsonController
                 'configured' => (bool) $service->get('payments.configured', false),
             ],
             'base_currency' => ConfigHelper::getBaseCurrency(),
+            'display_locale' => ConfigHelper::getDisplayLocale(),
             'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
             'category_page_size' => ConfigHelper::getCategoryPageSize(),
             'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),
@@ -135,6 +136,7 @@ class SettingsController extends AbstractJsonController
         $showAdvancedMode = isset($payload['show_advanced_mode'])
             ? (bool) $payload['show_advanced_mode']
             : null;
+        $displayLocaleInput = $payload['display_locale'] ?? null;
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -193,6 +195,14 @@ class SettingsController extends AbstractJsonController
             ConfigHelper::setShowAdvancedMode((bool) $showAdvancedMode);
         }
 
+        if ($displayLocaleInput !== null) {
+            try {
+                ConfigHelper::setDisplayLocale((string) $displayLocaleInput);
+            } catch (RuntimeException $exception) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_SETTINGS_DISPLAY_LOCALE_INVALID'), 400, $exception);
+            }
+        }
+
         $service = $this->getService();
         $rateLimits = $this->normaliseRateLimits(
             isset($security['rate_limits']) && \is_array($security['rate_limits'])
@@ -248,6 +258,7 @@ class SettingsController extends AbstractJsonController
                     'configured' => (bool) $service->get('payments.configured', false),
                 ],
                 'base_currency' => $baseCurrency,
+                'display_locale' => ConfigHelper::getDisplayLocale(),
                 'checkout_phone_required' => ConfigHelper::isCheckoutPhoneRequired(),
                 'category_page_size' => ConfigHelper::getCategoryPageSize(),
                 'category_pagination_mode' => ConfigHelper::getCategoryPaginationMode(),

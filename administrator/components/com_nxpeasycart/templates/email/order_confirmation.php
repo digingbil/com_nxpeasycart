@@ -2,6 +2,7 @@
 
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed> $order */
@@ -23,23 +24,7 @@ if ($publicToken !== '') {
 }
 
 $formatMoney = static function (int $cents) use ($currency): string {
-    $amount = $cents / 100;
-
-    if (class_exists('NumberFormatter', false)) {
-        try {
-            $locale = locale_get_default() ?: 'en_US';
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $formatted = $formatter->formatCurrency($amount, $currency);
-
-            if ($formatted !== false) {
-                return $formatted;
-            }
-        } catch (\Throwable $exception) {
-            // Fall through to simple format
-        }
-    }
-
-    return sprintf('%s %.2f', $currency, $amount);
+    return MoneyHelper::format($cents, $currency);
 };
 
 $isBankTransfer = isset($payment['method']) && $payment['method'] === 'bank_transfer';

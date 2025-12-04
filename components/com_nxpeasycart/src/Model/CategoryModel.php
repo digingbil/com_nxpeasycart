@@ -11,6 +11,7 @@ use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
@@ -490,34 +491,6 @@ class CategoryModel extends BaseDatabaseModel
     }
 
     /**
-     * Format a money amount using the current locale.
-     *
-     * @since 0.1.5
-     */
-    private function formatMoney(int $cents, string $currency): string
-    {
-        $amount = $cents / 100;
-
-        if (class_exists(\NumberFormatter::class, false)) {
-            try {
-                $language = Factory::getApplication()->getLanguage();
-                $locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
-
-                $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-                $formatted = $formatter->formatCurrency($amount, $currency);
-
-                if ($formatted !== false) {
-                    return (string) $formatted;
-                }
-            } catch (\Throwable $exception) {
-                // Fall back to default formatting below.
-            }
-        }
-
-        return sprintf('%s %.2f', $currency, $amount);
-    }
-
-    /**
      * Build a human readable price label for product cards.
      *
      * @since 0.1.5
@@ -529,13 +502,13 @@ class CategoryModel extends BaseDatabaseModel
         }
 
         if ($minCents === $maxCents) {
-            return $this->formatMoney($minCents, $currency);
+            return MoneyHelper::format($minCents, $currency);
         }
 
         return Text::sprintf(
             'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
-            $this->formatMoney($minCents, $currency),
-            $this->formatMoney($maxCents, $currency)
+            MoneyHelper::format($minCents, $currency),
+            MoneyHelper::format($maxCents, $currency)
         );
     }
 }

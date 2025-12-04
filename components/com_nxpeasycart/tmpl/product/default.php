@@ -56,18 +56,18 @@ $variants   = $product['variants']   ?? [];
 $categories = $product['categories'] ?? [];
 $isOutOfStock = !empty($product['out_of_stock']);
 
-$language = Factory::getApplication()->getLanguage();
-$locale   = str_replace('-', '_', $language->getTag() ?: 'en_GB');
+// Locale is auto-resolved by MoneyHelper (checks store override, then Joomla language)
+$locale = MoneyHelper::resolveLocale();
 
 $primaryImage = $images[0] ?? '';
 $priceMin     = (int) ($price['min_cents'] ?? 0);
 $priceMax     = (int) ($price['max_cents'] ?? 0);
 $priceLabel   = $priceMin === $priceMax
-    ? MoneyHelper::format($priceMin, $currency, $locale)
+    ? MoneyHelper::format($priceMin, $currency)
     : Text::sprintf(
         'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
-        MoneyHelper::format($priceMin, $currency, $locale),
-        MoneyHelper::format($priceMax, $currency, $locale)
+        MoneyHelper::format($priceMin, $currency),
+        MoneyHelper::format($priceMax, $currency)
     );
 
 $preparedLongDescription = '';
@@ -96,7 +96,7 @@ $galleryJson = htmlspecialchars(
 );
 
 $variantPayload = array_map(
-    static function (array $variant) use ($locale): array {
+    static function (array $variant): array {
         $priceCents = (int) ($variant['price_cents'] ?? 0);
         $currency   = ConfigHelper::getBaseCurrency();
 
@@ -105,7 +105,7 @@ $variantPayload = array_map(
             'sku'          => (string) ($variant['sku'] ?? ''),
             'price_cents'  => $priceCents,
             'currency'     => $currency,
-            'price_label'  => MoneyHelper::format($priceCents, $currency, $locale),
+            'price_label'  => MoneyHelper::format($priceCents, $currency),
             'stock'        => (int) ($variant['stock'] ?? 0),
             'options'      => $variant['options'] ?? [],
             'weight'       => $variant['weight'] ?? null,
