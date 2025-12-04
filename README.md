@@ -75,6 +75,12 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
     - `GdprService::anonymiseByEmail()` replaces PII (email, billing, shipping, tracking) with anonymous hash while preserving order data for accounting.
     - Admin API: `GET ?option=com_nxpeasycart&task=api.gdpr.export&email=...` (requires `core.manage`), `POST ?option=com_nxpeasycart&task=api.gdpr.anonymise` with JSON `{"email":"..."}` (requires `core.admin` + CSRF).
     - See `docs/gdpr.md` for implementation details and compliance checklist.
+- **Localized currency formatting**: Prices now display according to locale conventions (e.g., `1.390,00 ден.` for Macedonian, `€1,234.56` for US English):
+    - **Automatic locale detection**: By default, the formatting locale is derived from Joomla's site language setting.
+    - **Store-level override**: Administrators can set a custom "Price display locale" in Settings → General to force a specific format regardless of site language (e.g., `mk-MK` for Macedonian formatting).
+    - **Centralised MoneyHelper**: All price formatting across PHP (templates, models, emails, invoices) and JavaScript (Vue islands) now flows through a single `MoneyHelper::format()` method that respects the locale resolution order.
+    - **Both locale formats accepted**: Settings accept both Joomla-style (`mk-MK`) and ICU-style (`mk_MK`) locale codes.
+    - See `docs/currency-localization.md` for implementation details.
 
 ### Performance Optimizations (Admin SPA)
 

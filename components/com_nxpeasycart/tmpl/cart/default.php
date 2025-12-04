@@ -6,6 +6,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed> $this->cart */
@@ -68,8 +69,9 @@ $labelsJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
-$locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
+$locale   = MoneyHelper::resolveLocale();
 $currency = strtoupper((string) ($summary['currency'] ?? ConfigHelper::getBaseCurrency()));
+$formatMoney = static fn (int $cents) => MoneyHelper::format($cents, $currency);
 $cssVars = '';
 foreach (($theme['css_vars'] ?? []) as $var => $value) {
     $cssVars .= $var . ':' . $value . ';';
@@ -172,15 +174,13 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                     <?php endif; ?>
                                 </td>
                                 <td data-label="<?php echo Text::_('COM_NXPEASYCART_CART_HEADING_PRICE'); ?>">
-                                    <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) $item['unit_price_cents']) / 100, 2); ?>
+                                    <?php echo htmlspecialchars($formatMoney((int) $item['unit_price_cents']), ENT_QUOTES, 'UTF-8'); ?>
                                 </td>
                                 <td class="nxp-ec-cart__qty" data-label="<?php echo Text::_('COM_NXPEASYCART_CART_HEADING_QTY'); ?>">
                                     <?php echo (int) $item['qty']; ?>
                                 </td>
                                 <td data-label="<?php echo Text::_('COM_NXPEASYCART_CART_HEADING_TOTAL'); ?>">
-                                    <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
+                                    <?php echo htmlspecialchars($formatMoney((int) $item['total_cents']), ENT_QUOTES, 'UTF-8'); ?>
                                 </td>
                                 <td class="nxp-ec-cart__actions">
                                     <button
@@ -220,8 +220,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                         <div>
                             <dt><?php echo Text::_('COM_NXPEASYCART_CART_SUBTOTAL'); ?></dt>
                             <dd>
-                                <?php echo htmlspecialchars($summary['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo number_format(((int) ($summary['subtotal_cents'] ?? 0)) / 100, 2); ?>
+                                <?php echo htmlspecialchars($formatMoney((int) ($summary['subtotal_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                             </dd>
                         </div>
                         <div>
@@ -234,16 +233,14 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                             <div>
                                 <dt><?php echo Text::_('COM_NXPEASYCART_CART_TAX'); ?></dt>
                                 <dd>
-                                    <?php echo htmlspecialchars($summary['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) ($summary['tax_cents'] ?? 0)) / 100, 2); ?>
+                                    <?php echo htmlspecialchars($formatMoney((int) ($summary['tax_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                                 </dd>
                             </div>
                         <?php endif; ?>
                         <div>
                             <dt><?php echo Text::_('COM_NXPEASYCART_CART_TOTAL'); ?></dt>
                             <dd class="nxp-ec-cart__summary-total">
-                                <?php echo htmlspecialchars($summary['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo number_format(((int) ($summary['total_cents'] ?? 0)) / 100, 2); ?>
+                                <?php echo htmlspecialchars($formatMoney((int) ($summary['total_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                             </dd>
                         </div>
                     </dl>

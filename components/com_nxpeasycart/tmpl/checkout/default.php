@@ -6,6 +6,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 
 /** @var array<string, mixed> $this->checkout */
 $checkout = $this->checkout ?? [];
@@ -102,8 +103,9 @@ $labelsJson = htmlspecialchars(
     ENT_QUOTES,
     'UTF-8'
 );
-$locale   = \Joomla\CMS\Factory::getApplication()->getLanguage()->getTag();
+$locale   = MoneyHelper::resolveLocale();
 $currency = strtoupper((string) ($cart['summary']['currency'] ?? ConfigHelper::getBaseCurrency()));
+$formatMoney = static fn (int $cents) => MoneyHelper::format($cents, $currency);
 $cssVars = '';
 foreach (($theme['css_vars'] ?? []) as $var => $value) {
     $cssVars .= $var . ':' . $value . ';';
@@ -210,8 +212,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                 />
                                 <span>
                                     <?php echo htmlspecialchars($rule['name'], ENT_QUOTES, 'UTF-8'); ?>
-                                    — <?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) ($rule['price_cents'] ?? 0)) / 100, 2); ?>
+                                    — <?php echo htmlspecialchars($formatMoney((int) ($rule['price_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
                             </label>
                         <?php endforeach; ?>
@@ -248,8 +249,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                                         <span class="nxp-ec-checkout__qty">× <?php echo (int) $item['qty']; ?></span>
                                     </div>
                                     <div class="nxp-ec-checkout__price">
-                                        <?php echo htmlspecialchars($item['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                        <?php echo number_format(((int) $item['total_cents']) / 100, 2); ?>
+                                        <?php echo htmlspecialchars($formatMoney((int) $item['total_cents']), ENT_QUOTES, 'UTF-8'); ?>
                                     </div>
                                 </div>
                             </li>
@@ -292,16 +292,14 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                         <div>
                             <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_SUBTOTAL'); ?></span>
                             <strong>
-                                <?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo number_format(((int) ($cart['summary']['subtotal_cents'] ?? 0)) / 100, 2); ?>
+                                <?php echo htmlspecialchars($formatMoney((int) ($cart['summary']['subtotal_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                             </strong>
                         </div>
                         <?php if (!empty($cart['summary']['discount_cents'])) : ?>
                             <div data-nxp-discount-row>
                                 <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'); ?></span>
                                 <strong>
-                                    -<?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) ($cart['summary']['discount_cents'] ?? 0)) / 100, 2); ?>
+                                    -<?php echo htmlspecialchars($formatMoney((int) ($cart['summary']['discount_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                                 </strong>
                             </div>
                         <?php endif; ?>
@@ -309,16 +307,14 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                             <div>
                                 <span><?php echo Text::_('COM_NXPEASYCART_CART_TAX'); ?></span>
                                 <strong>
-                                    <?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                    <?php echo number_format(((int) ($cart['summary']['tax_cents'] ?? 0)) / 100, 2); ?>
+                                    <?php echo htmlspecialchars($formatMoney((int) ($cart['summary']['tax_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                                 </strong>
                             </div>
                         <?php endif; ?>
                         <div>
                             <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_TOTAL'); ?></span>
                             <strong data-nxp-checkout-total>
-                                <?php echo htmlspecialchars($cart['summary']['currency'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo number_format(((int) ($cart['summary']['total_cents'] ?? 0)) / 100, 2); ?>
+                                <?php echo htmlspecialchars($formatMoney((int) ($cart['summary']['total_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                             </strong>
                         </div>
                     </div>

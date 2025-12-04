@@ -4,6 +4,7 @@
 
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<int, array<string, mixed>> $this->orders */
@@ -95,7 +96,7 @@ if (!$user || $user->guest) : ?>
                     <div class="nxp-ec-orders__item-stats">
                         <div>
                             <span class="nxp-ec-orders__stat-label"><?php echo Text::_('COM_NXPEASYCART_ORDER_TOTAL'); ?></span>
-                            <strong><?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format($total / 100, 2); ?></strong>
+                            <strong><?php echo htmlspecialchars(MoneyHelper::format($total, $currency), ENT_QUOTES, 'UTF-8'); ?></strong>
                         </div>
                         <div>
                             <span class="nxp-ec-orders__stat-label"><?php echo Text::_('COM_NXPEASYCART_ORDER_ITEMS_COUNT'); ?></span>

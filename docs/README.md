@@ -22,6 +22,18 @@ Component architecture, MVC structure, service layer design, and development pat
 
 Order status/tracking flow, tokenised storefront links, admin tracking fields, and JSON endpoints.
 
+### [currency-localization.md](currency-localization.md) ⭐ **NEW v0.1.13**
+
+Locale-aware currency formatting for international stores.
+
+**Topics covered:**
+
+- Automatic locale detection from Joomla site language
+- Store-level locale override setting
+- MoneyHelper centralized formatting
+- Supported locale formats (Joomla-style and ICU-style)
+- PHP intl extension requirements
+
 ---
 
 ## 🔒 Security Documentation
@@ -244,5 +256,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-12-03
-**Component Version**: 0.1.9
+**Last Updated**: 2025-12-04
+**Component Version**: 0.1.13

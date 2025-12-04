@@ -5,6 +5,8 @@
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 
 /** @var array<string, mixed>|null $this->order */
@@ -75,6 +77,8 @@ $trackingNumber = $order ? trim((string) ($order['tracking_number'] ?? '')) : ''
 $carrier        = $order ? trim((string) ($order['carrier'] ?? '')) : '';
 $trackingUrl    = $order ? trim((string) ($order['tracking_url'] ?? '')) : '';
 $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $order['fulfillment_events'] : [];
+$currency       = $order ? strtoupper((string) ($order['currency'] ?? ConfigHelper::getBaseCurrency())) : ConfigHelper::getBaseCurrency();
+$formatMoney    = static fn (int $cents) => MoneyHelper::format($cents, $currency);
 ?>
 
 <section class="nxp-ec-order-confirmation">
@@ -169,8 +173,7 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                         <div class="nxp-ec-order-confirmation__item-price">
                             <span class="nxp-ec-order-confirmation__qty">× <?php echo $qty; ?></span>
                             <span class="nxp-ec-order-confirmation__amount">
-                                <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo number_format(((int) ($item['total_cents'] ?? 0)) / 100, 2); ?>
+                                <?php echo htmlspecialchars($formatMoney((int) ($item['total_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </div>
                     </li>
@@ -180,16 +183,14 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                 <div>
                     <span><?php echo Text::_('COM_NXPEASYCART_ORDER_SUBTOTAL'); ?></span>
                     <strong>
-                        <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                        <?php echo number_format(((int) ($order['subtotal_cents'] ?? 0)) / 100, 2); ?>
+                        <?php echo htmlspecialchars($formatMoney((int) ($order['subtotal_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                     </strong>
                 </div>
                 <?php if (!empty($order['shipping_cents'])) : ?>
                     <div>
                         <span><?php echo Text::_('COM_NXPEASYCART_CART_SHIPPING'); ?></span>
                         <strong>
-                            <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                            <?php echo number_format(((int) $order['shipping_cents']) / 100, 2); ?>
+                            <?php echo htmlspecialchars($formatMoney((int) $order['shipping_cents']), ENT_QUOTES, 'UTF-8'); ?>
                         </strong>
                     </div>
                 <?php endif; ?>
@@ -197,8 +198,7 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                     <div>
                         <span><?php echo Text::_('COM_NXPEASYCART_CHECKOUT_DISCOUNT'); ?></span>
                         <strong>
-                            -<?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                            <?php echo number_format(((int) $order['discount_cents']) / 100, 2); ?>
+                            -<?php echo htmlspecialchars($formatMoney((int) $order['discount_cents']), ENT_QUOTES, 'UTF-8'); ?>
                         </strong>
                     </div>
                 <?php endif; ?>
@@ -216,16 +216,14 @@ $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $o
                     <div>
                         <span><?php echo $taxLabel; ?></span>
                         <strong>
-                            <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                            <?php echo number_format(((int) $order['tax_cents']) / 100, 2); ?>
+                            <?php echo htmlspecialchars($formatMoney((int) $order['tax_cents']), ENT_QUOTES, 'UTF-8'); ?>
                         </strong>
                     </div>
                 <?php endif; ?>
                 <div>
                     <span><?php echo Text::_('COM_NXPEASYCART_ORDER_TOTAL'); ?></span>
                     <strong>
-                        <?php echo htmlspecialchars($order['currency'], ENT_QUOTES, 'UTF-8'); ?>
-                        <?php echo number_format(((int) ($order['total_cents'] ?? 0)) / 100, 2); ?>
+                        <?php echo htmlspecialchars($formatMoney((int) ($order['total_cents'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?>
                     </strong>
                 </div>
             </div>
