@@ -7,6 +7,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Language;
 use Joomla\CMS\Uri\Uri;
 
 /**
@@ -16,6 +17,8 @@ use Joomla\CMS\Uri\Uri;
  */
 class InvoiceService
 {
+    private const DEFAULT_LOCALE = 'en-GB';
+
     private SettingsService $settings;
 
     private PaymentGatewayService $payments;
@@ -24,6 +27,37 @@ class InvoiceService
     {
         $this->settings = $settings;
         $this->payments = $payments;
+    }
+
+    /**
+     * Load component language files for the order's locale.
+     *
+     * Uses the locale stored on the order (captured at checkout) to ensure
+     * invoices are rendered in the customer's language. Falls back to en-GB
+     * if the order locale is missing or the language files don't exist.
+     *
+     * This method creates a new Language instance for the target locale to ensure
+     * we get fresh translations rather than the admin's current language.
+     *
+     * @param array<string, mixed> $order The order data containing 'locale' key
+     *
+     * @since 0.1.11
+     */
+    private function loadOrderLanguage(array $order): void
+    {
+        $orderLocale = isset($order['locale']) && trim((string) $order['locale']) !== ''
+            ? trim((string) $order['locale'])
+            : self::DEFAULT_LOCALE;
+
+        // Get a fresh language instance for the target locale
+        $language = Language::getInstance($orderLocale);
+
+        // Load component language files into this language instance
+        $language->load('com_nxpeasycart', JPATH_SITE, $orderLocale, true, true);
+        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR, $orderLocale, true, true);
+
+        // Replace the application's language instance so Text::_() uses our locale
+        Factory::$language = $language;
     }
 
     /**
@@ -36,9 +70,8 @@ class InvoiceService
      */
     public function renderInvoiceHtml(array $order, array $context = []): string
     {
-        $language = Factory::getApplication()->getLanguage();
-        $language->load('com_nxpeasycart', JPATH_SITE);
-        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+        // Load language strings for the order's locale (customer's language at checkout)
+        $this->loadOrderLanguage($order);
 
         $store = $this->resolveStore($context['store'] ?? []);
         $payment = $this->resolvePaymentDetails($context['payment'] ?? []);

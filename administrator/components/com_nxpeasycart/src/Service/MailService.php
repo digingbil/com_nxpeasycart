@@ -5,6 +5,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Language;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Mail\MailerInterface;
 use Joomla\CMS\Uri\Uri;
@@ -17,11 +18,44 @@ use RuntimeException;
  */
 class MailService
 {
+    private const DEFAULT_LOCALE = 'en-GB';
+
     private MailerInterface $mailer;
 
     public function __construct(MailerInterface $mailer)
     {
         $this->mailer = $mailer;
+    }
+
+    /**
+     * Load component language files for the order's locale.
+     *
+     * Uses the locale stored on the order (captured at checkout) to ensure
+     * emails are rendered in the customer's language. Falls back to en-GB
+     * if the order locale is missing or the language files don't exist.
+     *
+     * This method creates a new Language instance for the target locale to ensure
+     * we get fresh translations rather than the admin's current language.
+     *
+     * @param array<string, mixed> $order The order data containing 'locale' key
+     *
+     * @since 0.1.11
+     */
+    private function loadOrderLanguage(array $order): void
+    {
+        $orderLocale = isset($order['locale']) && trim((string) $order['locale']) !== ''
+            ? trim((string) $order['locale'])
+            : self::DEFAULT_LOCALE;
+
+        // Get a fresh language instance for the target locale
+        $language = Language::getInstance($orderLocale);
+
+        // Load component language files into this language instance
+        $language->load('com_nxpeasycart', JPATH_SITE, $orderLocale, true, true);
+        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR, $orderLocale, true, true);
+
+        // Replace the application's language instance so Text::_() uses our locale
+        Factory::$language = $language;
     }
 
     /**
@@ -39,10 +73,8 @@ class MailService
             return;
         }
 
-        // Ensure component language strings are available when rendering emails.
-        $language = Factory::getApplication()->getLanguage();
-        $language->load('com_nxpeasycart', JPATH_SITE);
-        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+        // Load language strings for the order's locale (customer's language at checkout)
+        $this->loadOrderLanguage($order);
 
         $payment     = isset($options['payment']) && \is_array($options['payment']) ? $options['payment'] : [];
         $attachments = isset($options['attachments']) && \is_array($options['attachments'])
@@ -78,9 +110,8 @@ class MailService
             return;
         }
 
-        $language = Factory::getApplication()->getLanguage();
-        $language->load('com_nxpeasycart', JPATH_SITE);
-        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+        // Load language strings for the order's locale (customer's language at checkout)
+        $this->loadOrderLanguage($order);
 
         $tracking = [
             'carrier'         => $options['carrier'] ?? ($order['carrier'] ?? ''),
@@ -117,9 +148,8 @@ class MailService
             return;
         }
 
-        $language = Factory::getApplication()->getLanguage();
-        $language->load('com_nxpeasycart', JPATH_SITE);
-        $language->load('com_nxpeasycart', JPATH_ADMINISTRATOR);
+        // Load language strings for the order's locale (customer's language at checkout)
+        $this->loadOrderLanguage($order);
 
         $refund = [
             'amount_cents' => $options['amount_cents'] ?? ($order['total_cents'] ?? 0),

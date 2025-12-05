@@ -439,6 +439,15 @@ class PaymentController extends BaseController
             );
         }
 
+        // Capture frontend language for localised emails/invoices
+        $locale = 'en-GB';
+
+        try {
+            $locale = Factory::getApplication()->getLanguage()->getTag();
+        } catch (\Throwable $e) {
+            // Fallback to en-GB if language detection fails
+        }
+
         return [
             'email'          => $payload['email']    ?? '',
             'billing'        => $payload['billing']  ?? [],
@@ -452,6 +461,7 @@ class PaymentController extends BaseController
             'discount_cents' => $discountCents,  // RECALCULATED FROM DATABASE
             'total_cents'    => 0,  // Will be recalculated after shipping and tax
             'coupon'         => $couponData,
+            'locale'         => $locale,
         ];
     }
 

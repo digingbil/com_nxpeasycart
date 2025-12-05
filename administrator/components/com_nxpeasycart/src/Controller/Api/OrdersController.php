@@ -366,7 +366,16 @@ class OrdersController extends AbstractJsonController
 
         $actorId = $this->app?->getIdentity()?->id ?? null;
         $service = $this->getOrderService();
-        $order   = $service->updateTracking($id, $tracking, $actorId);
+
+        try {
+            $order = $service->updateTracking($id, $tracking, $actorId);
+        } catch (RuntimeException $e) {
+            // Return validation errors (invalid state transition, order not found, etc.) as 400
+            return $this->respond([
+                'error'   => true,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
 
         return $this->respond(['order' => $order]);
     }

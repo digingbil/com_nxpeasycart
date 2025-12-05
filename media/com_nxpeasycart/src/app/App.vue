@@ -1045,7 +1045,12 @@ const onOrdersSaveTracking = async (payload) => {
     }
 
     const { id, ...tracking } = payload;
-    await updateOrderTracking(id, tracking);
+
+    try {
+        await updateOrderTracking(id, tracking);
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
 };
 
 const onOrdersSendEmail = async (payload) => {
