@@ -148,8 +148,8 @@ $payload = [
         'variant_none'     => Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_NONE'),
     ],
     'links' => [
-        'cart'     => RouteHelper::getCartRoute(),
-        'checkout' => RouteHelper::getCheckoutRoute(),
+        'cart'     => RouteHelper::getCartRoute(false),
+        'checkout' => RouteHelper::getCheckoutRoute(false),
     ],
     'endpoints' => [
         'add'      => Route::_('index.php?option=com_nxpeasycart&task=cart.add&format=json', false),

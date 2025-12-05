@@ -183,7 +183,7 @@ class HtmlView extends BaseHtmlView
                     'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
                 ],
                 'links' => [
-                    'cart' => RouteHelper::getCartRoute(),
+                    'cart' => RouteHelper::getCartRoute(false),
                 ],
             ],
             'theme' => $this->theme,

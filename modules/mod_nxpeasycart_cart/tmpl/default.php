@@ -29,8 +29,9 @@ $formatMoney = static function (int $cents) use ($currency): string {
 };
 
 $formattedTotal = $formatMoney($totalCents);
-$cartLink       = RouteHelper::getCartRoute();
-$checkoutLink   = RouteHelper::getCheckoutRoute();
+// Use xhtml=false for JSON payload; htmlspecialchars handles HTML href escaping
+$cartLink       = RouteHelper::getCartRoute(false);
+$checkoutLink   = RouteHelper::getCheckoutRoute(false);
 $summaryLink    = Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false);
 
 if (!str_starts_with($summaryLink, 'http://') && !str_starts_with($summaryLink, 'https://')) {

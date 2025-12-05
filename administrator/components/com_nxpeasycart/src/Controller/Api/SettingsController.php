@@ -12,6 +12,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\CurrencyHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Site\Service\TemplateAdapter;
 use RuntimeException;
@@ -102,6 +103,7 @@ class SettingsController extends AbstractJsonController
                         : 0,
                 ],
             ],
+            'currencies' => CurrencyHelper::getForDropdown(),
         ];
 
         return $this->respond(['settings' => $settings]);
@@ -289,6 +291,7 @@ class SettingsController extends AbstractJsonController
                             : 0,
                     ],
                 ],
+                'currencies' => CurrencyHelper::getForDropdown(),
             ],
         ]);
     }

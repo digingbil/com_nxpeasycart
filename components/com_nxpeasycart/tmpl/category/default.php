@@ -27,7 +27,6 @@ $paginationMode  = $this->paginationMode ?? 'paged';
 $activeSlug      = $category['slug']   ?? '';
 $categoryTitle   = $category['title']  ?? Text::_('COM_NXPEASYCART_CATEGORY_ALL');
 $baseRoute       = RouteHelper::getCategoryRoute($category['slug'] ?? null, $category['id'] ?? null, false);
-$categoryRoute   = RouteHelper::getCategoryRoute($category['slug'] ?? null, $category['id'] ?? null);
 $searchTerm      = $this->searchTerm ?? '';
 $limitDefault    = isset($pagination['limit']) ? (int) $pagination['limit'] : (int) \count($products);
 $limit           = $limitDefault > 0 ? $limitDefault : 12;
@@ -130,8 +129,8 @@ $labelsJson = htmlspecialchars(
     'UTF-8'
 );
 $links = [
-    'all'    => RouteHelper::getCategoryRoute(),
-    'search' => $categoryRoute,
+    'all'    => RouteHelper::getCategoryRoute(null, null, false),
+    'search' => $baseRoute,
 ];
 $linksJson = htmlspecialchars(
     json_encode($links, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -146,8 +145,8 @@ $cart = [
         'summary' => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
     ],
     'links' => [
-        'cart'     => RouteHelper::getCartRoute(),
-        'checkout' => RouteHelper::getCheckoutRoute(),
+        'cart'     => RouteHelper::getCartRoute(false),
+        'checkout' => RouteHelper::getCheckoutRoute(false),
     ],
 ];
 $cartJson = htmlspecialchars(

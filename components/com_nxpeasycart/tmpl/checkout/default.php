@@ -34,11 +34,11 @@ $payload = htmlspecialchars(
             'token'          => Session::getFormToken(),
             'prefill'        => $userPrefill,
             'endpoints'      => [
-                'checkout'      => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json'),
-                'payment'       => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json'),
-                'summary'       => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json'),
-                'applyCoupon'   => Route::_('index.php?option=com_nxpeasycart&task=cart.applyCoupon&format=json'),
-                'removeCoupon'  => Route::_('index.php?option=com_nxpeasycart&task=cart.removeCoupon&format=json'),
+                'checkout'      => Route::_('index.php?option=com_nxpeasycart&task=api.orders.store&format=json', false),
+                'payment'       => Route::_('index.php?option=com_nxpeasycart&task=payment.checkout&format=json', false),
+                'summary'       => Route::_('index.php?option=com_nxpeasycart&task=cart.summary&format=json', false),
+                'applyCoupon'   => Route::_('index.php?option=com_nxpeasycart&task=cart.applyCoupon&format=json', false),
+                'removeCoupon'  => Route::_('index.php?option=com_nxpeasycart&task=cart.removeCoupon&format=json', false),
             ],
         ],
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES

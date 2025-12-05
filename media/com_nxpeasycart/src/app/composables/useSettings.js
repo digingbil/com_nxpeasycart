@@ -13,6 +13,7 @@ const normaliseSettings = (data = {}) => {
     const visual = data.visual ?? {};
     const visualDefaults = data.visual_defaults ?? {};
     const security = data.security?.rate_limits ?? {};
+    const currencies = Array.isArray(data.currencies) ? data.currencies : [];
 
     // Don't default to USD here - let the caller handle the fallback
     // so that datasetBaseCurrency from the page can be used
@@ -114,6 +115,7 @@ const normaliseSettings = (data = {}) => {
                       : 30,
             },
         },
+        currencies,
     };
 };
 
@@ -216,7 +218,9 @@ export function useSettings({
     };
 
     onMounted(() => {
-        if (autoload && (!preload || !preload.store)) {
+        if (autoload) {
+            // Always refresh from the API because preload may omit derived fields
+            // such as the currency list or template defaults.
             refresh();
         }
     });

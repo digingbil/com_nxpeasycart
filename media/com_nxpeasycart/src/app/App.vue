@@ -1188,7 +1188,7 @@ const onCouponsDelete = async (ids) => {
 };
 
 const onSettingsRefresh = () => {
-    refreshSettings();
+    refreshSettings(true);
 };
 
 const onSettingsSave = async (payload) => {

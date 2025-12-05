@@ -237,21 +237,25 @@
                                 )
                             }}
                         </label>
-                        <input
+                        <select
                             id="settings-base-currency"
-                            class="nxp-ec-form-input nxp-ec-form-input--uppercase"
-                            type="text"
-                            v-model.trim="settingsDraft.baseCurrency"
-                            minlength="3"
-                            maxlength="3"
-                            pattern="[A-Za-z]{3}"
+                            class="nxp-ec-form-select"
+                            v-model="settingsDraft.baseCurrency"
                             required
-                        />
+                        >
+                            <option
+                                v-for="currency in currencies"
+                                :key="currency.code"
+                                :value="currency.code"
+                            >
+                                {{ currency.label }}
+                            </option>
+                        </select>
                         <p class="nxp-ec-form-help">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_GENERAL_BASE_CURRENCY_HELP",
-                                    "Use ISO 4217 currency codes such as USD or EUR.",
+                                    "Select the store's base currency (ISO 4217).",
                                     [],
                                     "settingsGeneralBaseCurrencyHelp"
                                 )
@@ -1958,6 +1962,10 @@ const templateDefaults = computed(() => {
     };
 });
 
+const currencies = computed(() => {
+    return settingsState.values?.currencies ?? [];
+});
+
 const previewStyles = computed(() => ({
     "--nxp-ec-color-primary": visualDraft.primaryColor || templateDefaults.value.primary,
     "--nxp-ec-color-text": visualDraft.textColor || templateDefaults.value.text,
@@ -2156,19 +2164,6 @@ watch(
     (saving, wasSaving) => {
         if (wasSaving && !saving && !settingsState.error) {
             applySettings(settingsState.values ?? {});
-        }
-    }
-);
-
-watch(
-    () => settingsDraft.baseCurrency,
-    (value) => {
-        if (typeof value === "string") {
-            const normalised = value.replace(/[^A-Za-z]/g, "").toUpperCase();
-
-            if (normalised !== value) {
-                settingsDraft.baseCurrency = normalised;
-            }
         }
     }
 );

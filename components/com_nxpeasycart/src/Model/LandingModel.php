@@ -121,7 +121,7 @@ class LandingModel extends BaseDatabaseModel
 
         return [
             'placeholder' => $placeholder,
-            'action'      => RouteHelper::getCategoryRoute(),
+            'action'      => RouteHelper::getCategoryRoute(null, null, false),
         ];
     }
 
@@ -195,7 +195,7 @@ class LandingModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
-                'link'  => RouteHelper::getCategoryRoute((string) $row->slug),
+                'link'  => RouteHelper::getCategoryRoute((string) $row->slug, null, false),
             ];
         }
 
@@ -461,7 +461,7 @@ class LandingModel extends BaseDatabaseModel
                 'price_label' => $priceLabel,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'        => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: null),
+                'link'        => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: null, false),
             ];
         }
 

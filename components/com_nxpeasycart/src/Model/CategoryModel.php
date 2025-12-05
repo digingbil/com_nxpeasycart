@@ -387,7 +387,7 @@ class CategoryModel extends BaseDatabaseModel
                 'primary_category_id' => $primaryCategoryId ?: null,
                 'primary_variant_id' => $primaryVariantId,
                 'variant_count' => $variantCount,
-                'link'       => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: $linkCategorySlug ?: null),
+                'link'       => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: $linkCategorySlug ?: null, false),
             ];
         }
 
@@ -475,7 +475,7 @@ class CategoryModel extends BaseDatabaseModel
             'id'    => null,
             'title' => Text::_('COM_NXPEASYCART_CATEGORY_FILTER_ALL'),
             'slug'  => '',
-            'link'  => RouteHelper::getCategoryRoute(),
+            'link'  => RouteHelper::getCategoryRoute(null, null, false),
         ]];
 
         foreach ($rows as $row) {
@@ -483,7 +483,7 @@ class CategoryModel extends BaseDatabaseModel
                 'id'    => (int) $row->id,
                 'title' => (string) $row->title,
                 'slug'  => (string) $row->slug,
-                'link'  => RouteHelper::getCategoryRoute((string) $row->slug),
+                'link'  => RouteHelper::getCategoryRoute((string) $row->slug, null, false),
             ];
         }
 

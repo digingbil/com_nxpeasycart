@@ -153,6 +153,10 @@ class ConfigHelper
             throw new RuntimeException('Invalid base currency.');
         }
 
+        if (!CurrencyHelper::isValid($currency)) {
+            throw new RuntimeException('Unsupported currency code. Please select a valid ISO 4217 currency.');
+        }
+
         $component = ComponentHelper::getComponent('com_nxpeasycart');
 
         if (!$component || !isset($component->id)) {
