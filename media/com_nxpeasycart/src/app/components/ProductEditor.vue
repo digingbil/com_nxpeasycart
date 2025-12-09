@@ -1846,9 +1846,10 @@ watch(
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    background: var(--nxp-ec-bg-primary, #ffffff);
+    background: var(--nxp-ec-surface);
+    color: var(--nxp-ec-text);
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--nxp-ec-border-color, #e5e7eb);
+    border-bottom: 1px solid var(--nxp-ec-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 

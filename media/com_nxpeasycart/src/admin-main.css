@@ -456,6 +456,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 0 0.75rem;
+    background: var(--nxp-ec-surface);
+    color: var(--nxp-ec-text);
 }
 
 .nxp-ec-modal__title {
