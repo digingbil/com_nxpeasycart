@@ -84,6 +84,7 @@ export default function mountCartIsland(el) {
         </div>
 
         <div v-else class="nxp-ec-cart__content">
+          <!-- Desktop table view -->
           <table class="nxp-ec-cart__table">
             <thead>
               <tr>
@@ -155,6 +156,49 @@ export default function mountCartIsland(el) {
               </tr>
             </tbody>
           </table>
+
+          <!-- Mobile card view -->
+          <div class="nxp-ec-cart__mobile-items">
+            <article v-for="item in items" :key="'mobile-' + item.id" class="nxp-ec-cart-item">
+              <div v-if="item.image" class="nxp-ec-cart-item__image">
+                <a v-if="item.url" :href="item.url">
+                  <img :src="item.image" :alt="item.product_title || item.title" loading="lazy" />
+                </a>
+                <img v-else :src="item.image" :alt="item.product_title || item.title" loading="lazy" />
+              </div>
+              <div class="nxp-ec-cart-item__body">
+                <div class="nxp-ec-cart-item__header">
+                  <h3 class="nxp-ec-cart-item__title">
+                    <a v-if="item.url" :href="item.url">{{ item.product_title || item.title }}</a>
+                    <span v-else>{{ item.product_title || item.title }}</span>
+                  </h3>
+                  <button type="button" class="nxp-ec-cart-item__remove" @click="remove(item)" :aria-label="labels.remove">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <ul v-if="item.options && item.options.length" class="nxp-ec-cart-item__options">
+                  <li v-for="(option, index) in item.options" :key="index">{{ option.name }}: {{ option.value }}</li>
+                </ul>
+                <div class="nxp-ec-cart-item__meta">
+                  <span class="nxp-ec-cart-item__price">{{ format(item.unit_price_cents) }} {{ labels.each || 'each' }}</span>
+                  <div class="nxp-ec-cart-item__qty-group">
+                    <label :for="'qty-mobile-' + item.id" class="nxp-ec-cart-item__qty-label">{{ labels.qty }}:</label>
+                    <input
+                      :id="'qty-mobile-' + item.id"
+                      class="nxp-ec-cart-item__qty-input"
+                      type="number"
+                      min="1"
+                      :value="item.qty"
+                      @input="updateQty(item, $event.target.value)"
+                    />
+                  </div>
+                </div>
+                <div class="nxp-ec-cart-item__total">{{ format(item.total_cents) }}</div>
+              </div>
+            </article>
+          </div>
 
           <aside class="nxp-ec-cart__summary">
             <h2>{{ labels.summary }}</h2>
@@ -236,6 +280,32 @@ export default function mountCartIsland(el) {
                     subtotal + (taxInclusive ? 0 : summary.tax_cents);
             };
 
+            const buildBroadcastPayload = (cartPayload = null) => {
+                if (cartPayload && cartPayload.summary) {
+                    return cartPayload;
+                }
+
+                return {
+                    items: items.map((item) => ({ ...item })),
+                    summary: {
+                        subtotal_cents: summary.subtotal_cents,
+                        tax_cents: summary.tax_cents,
+                        total_cents: summary.total_cents,
+                        currency,
+                        tax_rate: taxRate,
+                        tax_inclusive: taxInclusive,
+                    },
+                };
+            };
+
+            const broadcastCart = (cartPayload = null) => {
+                window.dispatchEvent(
+                    new CustomEvent("nxp-cart:updated", {
+                        detail: buildBroadcastPayload(cartPayload),
+                    })
+                );
+            };
+
             const remove = async (item) => {
                 const index = items.indexOf(item);
 
@@ -278,6 +348,7 @@ export default function mountCartIsland(el) {
 
                         if (cart) {
                             applyCart(cart);
+                            broadcastCart(cart);
                             return;
                         }
                     } catch (error) {
@@ -287,6 +358,7 @@ export default function mountCartIsland(el) {
 
                 items.splice(index, 1);
                 recalcSummary();
+                broadcastCart();
             };
 
             const updateQty = async (item, value) => {
@@ -348,11 +420,7 @@ export default function mountCartIsland(el) {
 
                         if (cart) {
                             applyCart(cart);
-                            window.dispatchEvent(
-                                new CustomEvent("nxp-cart:updated", {
-                                    detail: cart,
-                                })
-                            );
+                            broadcastCart(cart);
                         }
                     } catch (error) {
                         // Non-fatal; UI already updated optimistically

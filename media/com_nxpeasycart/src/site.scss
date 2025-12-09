@@ -423,7 +423,13 @@
     color: var(--nxp-ec-color-text);
     background: var(--nxp-ec-color-surface);
 
-    &__inner,
+    // Hide floating bar on checkout page (checkout has its own floating summary)
+    &--hidden-checkout &__floating {
+        display: none !important;
+    }
+
+    // Inline view (card in module position)
+    &__inline,
     &__content {
         display: flex;
         flex-direction: column;
@@ -486,6 +492,169 @@
             margin: 0;
             font-weight: 600;
         }
+    }
+
+    // Floating bar styles
+    &__floating {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: var(--nxp-ec-color-surface);
+        border-top: 1px solid var(--nxp-ec-color-border);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+        padding: 0.75rem 1rem;
+        display: none; // Hidden by default, shown via modifiers
+        // Slide-in animation when appearing
+        animation: nxp-ec-slide-up 0.3s ease-out;
+    }
+
+    @keyframes nxp-ec-slide-up {
+        from {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    &__floating-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    &__floating-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: inherit;
+        flex: 1;
+        min-width: 0;
+    }
+
+    &__floating-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2rem;
+        height: 2rem;
+        padding: 0 0.5rem;
+        background: var(--nxp-ec-color-primary);
+        color: var(--nxp-ec-color-primary-contrast);
+        border-radius: var(--nxp-ec-radius-pill);
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+
+    &__floating-total {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--nxp-ec-color-text);
+        white-space: nowrap;
+    }
+
+    &__floating-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    &__floating-cta {
+        padding: 0.55rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    // Responsive mode: inline on desktop (>=992px), floating on mobile (<992px)
+    &--responsive {
+        // Desktop: show inline, hide floating
+        .nxp-ec-cart-summary__inline {
+            display: flex;
+        }
+        .nxp-ec-cart-summary__floating {
+            display: none;
+        }
+
+        // Mobile (<992px): hide inline, show floating
+        @media (max-width: 991px) {
+            // Hide the card shell styles on mobile
+            border: none;
+            padding: 0;
+            max-width: none;
+            background: transparent;
+            box-shadow: none;
+
+            &:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .nxp-ec-cart-summary__inline {
+                display: none;
+            }
+            .nxp-ec-cart-summary__floating {
+                display: block;
+            }
+        }
+    }
+
+    // Floating-only mode: always floating, never inline
+    &--floating-only {
+        border: none;
+        padding: 0;
+        max-width: none;
+        background: transparent;
+        box-shadow: none;
+
+        &:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .nxp-ec-cart-summary__inline {
+            display: none;
+        }
+        .nxp-ec-cart-summary__floating {
+            display: block;
+        }
+    }
+
+    // Floating bar with explicit visible modifier (used by portal)
+    &__floating--visible {
+        display: block !important;
+    }
+
+    // Avoid double slide-in when the server-rendered fallback is visible before JS mounts
+    &__floating-fallback {
+        animation: none;
+    }
+}
+
+// Portal container for floating cart (appended to body)
+#nxp-ec-floating-cart-portal {
+    // Only show on mobile (< 992px)
+    display: none;
+
+    @media (max-width: 991px) {
+        display: block;
+    }
+}
+
+// Ensure floating bar doesn't overlap with other fixed elements
+@media (max-width: 991px) {
+    // Add bottom padding to body when floating cart is visible to prevent content overlap
+    body.nxp-ec-floating-cart-visible,
+    body:has(.nxp-ec-cart-summary--responsive .nxp-ec-cart-summary__floating),
+    body:has(.nxp-ec-cart-summary--floating-only .nxp-ec-cart-summary__floating),
+    body:has(#nxp-ec-floating-cart-portal .nxp-ec-cart-summary__floating) {
+        padding-bottom: 4.5rem;
     }
 }
 
@@ -1661,6 +1830,11 @@
     }
 }
 
+// Mobile cart item cards - shown on mobile only
+.nxp-ec-cart__mobile-items {
+    display: none;
+}
+
 @media (max-width: 720px) {
     .nxp-ec-product {
         gap: 1.5rem;
@@ -1682,31 +1856,166 @@
         padding: 1.5rem;
     }
 
-    .nxp-ec-cart__table,
-    .nxp-ec-cart__table thead {
+    // Hide desktop table on mobile
+    .nxp-ec-cart__table {
         display: none;
     }
 
-    .nxp-ec-cart__table tbody,
-    .nxp-ec-cart__table tr,
-    .nxp-ec-cart__table td {
-        display: block;
-        width: 100%;
+    // Show mobile card list
+    .nxp-ec-cart__mobile-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+// Mobile cart item card styles
+.nxp-ec-cart-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--nxp-ec-color-surface);
+    border-radius: var(--nxp-ec-radius-md);
+    border: 1px solid var(--nxp-ec-color-border);
+    box-shadow: var(--nxp-ec-shadow-card);
+
+    &__image {
+        flex-shrink: 0;
+        width: 80px;
+        height: 80px;
+        border-radius: var(--nxp-ec-radius-md);
+        overflow: hidden;
+        background: var(--nxp-ec-color-surface-alt);
+        border: 1px solid var(--nxp-ec-color-border);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        a {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
     }
 
-    .nxp-ec-cart__table td {
-        border-bottom: none;
-        padding: 0.75rem 1rem;
+    &__body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
-    .nxp-ec-cart__table td:before {
-        content: attr(data-label);
-        display: block;
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 1rem;
         font-weight: 600;
+        line-height: 1.3;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+
+            &:hover {
+                color: var(--nxp-ec-color-primary);
+            }
+        }
+    }
+
+    &__remove {
+        flex-shrink: 0;
+        background: none;
+        border: none;
+        padding: 0.25rem;
         color: var(--nxp-ec-color-muted);
-        margin-bottom: 0.25rem;
-        text-transform: uppercase;
-        font-size: 0.75rem;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: color 0.15s ease, background 0.15s ease;
+
+        &:hover {
+            color: var(--nxp-ec-color-error);
+            background: rgba(180, 35, 24, 0.1);
+        }
+
+        svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: block;
+        }
+    }
+
+    &__options {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.85rem;
+        color: var(--nxp-ec-color-muted);
+
+        li {
+            display: inline;
+
+            &:not(:last-child)::after {
+                content: " · ";
+            }
+        }
+    }
+
+    &__meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    &__price {
+        font-size: 0.9rem;
+        color: var(--nxp-ec-color-muted);
+    }
+
+    &__qty-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__qty-label {
+        font-size: 0.85rem;
+        color: var(--nxp-ec-color-muted);
+        font-weight: 500;
+    }
+
+    &__qty-input {
+        width: 4rem;
+        padding: 0.4rem 0.5rem;
+        text-align: center;
+        border: 1px solid var(--nxp-ec-color-border);
+        border-radius: var(--nxp-ec-radius-md);
+        font-size: 0.95rem;
+        background: var(--nxp-ec-color-surface);
+
+        &:focus {
+            outline: none;
+            border-color: var(--nxp-ec-color-primary);
+            box-shadow: 0 0 0 2px var(--nxp-ec-color-primary-focus);
+        }
+    }
+
+    &__total {
+        font-weight: 700;
+        color: var(--nxp-ec-color-primary);
+        font-size: 1.1rem;
     }
 }
 

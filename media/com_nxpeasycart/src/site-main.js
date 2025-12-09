@@ -77,6 +77,12 @@ const bootIslands = () => {
             return;
         }
 
+        // Cart summary needs to mount immediately so floating cart updates as soon as items are added.
+        if (key === "cart-summary") {
+            runMount(el, key);
+            return;
+        }
+
         if (observer) {
             observer.observe(el);
             return;

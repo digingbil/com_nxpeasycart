@@ -13,6 +13,18 @@
     </languages>
     <config>
         <fields name="params">
+            <fieldset name="basic">
+                <field
+                    name="display_mode"
+                    type="list"
+                    label="MOD_NXPEASYCART_CART_DISPLAY_MODE_LABEL"
+                    description="MOD_NXPEASYCART_CART_DISPLAY_MODE_DESC"
+                    default="default"
+                >
+                    <option value="default">MOD_NXPEASYCART_CART_DISPLAY_MODE_DEFAULT</option>
+                    <option value="floating">MOD_NXPEASYCART_CART_DISPLAY_MODE_FLOATING</option>
+                </field>
+            </fieldset>
             <fieldset name="advanced">
                 <field
                     name="cache"

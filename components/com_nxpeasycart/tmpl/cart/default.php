@@ -63,6 +63,7 @@ $labels = [
     'checkout'         => Text::_('COM_NXPEASYCART_CART_TO_CHECKOUT'),
     'canceled_title'   => Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_TITLE'),
     'canceled_message' => Text::_('COM_NXPEASYCART_CART_PAYMENT_CANCELED_MESSAGE'),
+    'each'             => Text::_('COM_NXPEASYCART_CART_EACH'),
 ];
 $labelsJson = htmlspecialchars(
     json_encode($labels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -112,6 +113,7 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
             </div>
         <?php else : ?>
             <div class="nxp-ec-cart__content">
+                <!-- Desktop table view -->
                 <table class="nxp-ec-cart__table">
                     <thead>
                         <tr>
@@ -213,6 +215,78 @@ foreach (($theme['css_vars'] ?? []) as $var => $value) {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <!-- Mobile card view -->
+                <div class="nxp-ec-cart__mobile-items">
+                    <?php foreach ($items as $item) : ?>
+                        <article class="nxp-ec-cart-item">
+                            <?php if (!empty($item['image'])) : ?>
+                                <div class="nxp-ec-cart-item__image">
+                                    <?php if (!empty($item['url'])) : ?>
+                                        <a href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>">
+                                            <img
+                                                src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                alt="<?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                loading="lazy"
+                                            />
+                                        </a>
+                                    <?php else : ?>
+                                        <img
+                                            src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            alt="<?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                            loading="lazy"
+                                        />
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <div class="nxp-ec-cart-item__body">
+                                <div class="nxp-ec-cart-item__header">
+                                    <h3 class="nxp-ec-cart-item__title">
+                                        <?php if (!empty($item['url'])) : ?>
+                                            <a href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                <?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <?php echo htmlspecialchars($item['product_title'] ?? $item['title'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php endif; ?>
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        class="nxp-ec-cart-item__remove"
+                                        data-nxp-remove="<?php echo (int) ($item['variant_id'] ?? $item['product_id']); ?>"
+                                        aria-label="<?php echo Text::_('COM_NXPEASYCART_CART_REMOVE'); ?>"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <path d="M18 6L6 18M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <?php if (!empty($item['options'])) : ?>
+                                    <ul class="nxp-ec-cart-item__options">
+                                        <?php foreach ($item['options'] as $option) : ?>
+                                            <?php if (!isset($option['name'], $option['value'])) : ?>
+                                                <?php continue; ?>
+                                            <?php endif; ?>
+                                            <li><?php echo htmlspecialchars((string) $option['name'], ENT_QUOTES, 'UTF-8'); ?>: <?php echo htmlspecialchars((string) $option['value'], ENT_QUOTES, 'UTF-8'); ?></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                <?php endif; ?>
+                                <div class="nxp-ec-cart-item__meta">
+                                    <span class="nxp-ec-cart-item__price">
+                                        <?php echo htmlspecialchars($formatMoney((int) $item['unit_price_cents']), ENT_QUOTES, 'UTF-8'); ?> <?php echo Text::_('COM_NXPEASYCART_CART_EACH'); ?>
+                                    </span>
+                                    <div class="nxp-ec-cart-item__qty-group">
+                                        <span class="nxp-ec-cart-item__qty-label"><?php echo Text::_('COM_NXPEASYCART_CART_HEADING_QTY'); ?>:</span>
+                                        <span class="nxp-ec-cart-item__qty-value"><?php echo (int) $item['qty']; ?></span>
+                                    </div>
+                                </div>
+                                <div class="nxp-ec-cart-item__total">
+                                    <?php echo htmlspecialchars($formatMoney((int) $item['total_cents']), ENT_QUOTES, 'UTF-8'); ?>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
 
                 <aside class="nxp-ec-cart__summary">
                     <h2><?php echo Text::_('COM_NXPEASYCART_CART_SUMMARY'); ?></h2>

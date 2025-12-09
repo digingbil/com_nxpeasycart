@@ -91,4 +91,13 @@ try {
 }
 $theme = TemplateAdapter::resolve();
 
+// Get display mode from params (default = inline on desktop, floating on mobile; floating = always floating)
+$displayMode = $params->get('display_mode', 'default');
+
+// Detect if we're on the checkout page - hide floating cart there (checkout has its own floating summary)
+$input = $app->getInput();
+$option = $input->getCmd('option', '');
+$view = $input->getCmd('view', '');
+$isCheckoutPage = ($option === 'com_nxpeasycart' && $view === 'checkout');
+
 require ModuleHelper::getLayoutPath('mod_nxpeasycart_cart', $params->get('layout', 'default'));
