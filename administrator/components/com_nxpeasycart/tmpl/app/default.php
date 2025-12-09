@@ -22,6 +22,11 @@ $wa->registerAndUseStyle(
 
 // Register Visual settings translations for JavaScript access.
 Text::script('COM_NXPEASYCART_SETTINGS_TAB_VISUAL');
+
+// Register onboarding translations for JavaScript access.
+Text::script('COM_NXPEASYCART_CHECKLIST_PUBLISH_CART_MODULE');
+Text::script('COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_TITLE');
+Text::script('COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_DESC');
 Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_TITLE');
 Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_HINT');
 Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_ADAPTER_NOTE');

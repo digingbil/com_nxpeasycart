@@ -61,6 +61,7 @@ class DashboardService
         $summary            = $this->getSummary();
         $productsActive     = (int) ($summary['products']['active'] ?? 0);
         $paymentsConfigured = (bool) $this->settings->get('payments.configured', false);
+        $cartModulePublished = $this->hasPublishedCartModule();
 
         return [
             [
@@ -70,10 +71,10 @@ class DashboardService
                 'link'      => 'index.php?option=com_nxpeasycart&view=settings&settingsTab=general',
             ],
             [
-                'id'        => 'configure_payments',
-                'label'     => 'COM_NXPEASYCART_CHECKLIST_CONFIGURE_PAYMENTS',
-                'completed' => $paymentsConfigured,
-                'link'      => 'index.php?option=com_nxpeasycart&view=settings&settingsTab=payments',
+                'id'        => 'publish_cart_module',
+                'label'     => 'COM_NXPEASYCART_CHECKLIST_PUBLISH_CART_MODULE',
+                'completed' => $cartModulePublished,
+                'link'      => 'index.php?option=com_modules&filter[module]=mod_nxpeasycart_cart',
             ],
             [
                 'id'        => 'add_product',
@@ -81,7 +82,34 @@ class DashboardService
                 'completed' => $productsActive > 0,
                 'link'      => 'index.php?option=com_nxpeasycart&view=products',
             ],
+            [
+                'id'        => 'configure_payments',
+                'label'     => 'COM_NXPEASYCART_CHECKLIST_CONFIGURE_PAYMENTS',
+                'completed' => $paymentsConfigured,
+                'link'      => 'index.php?option=com_nxpeasycart&view=settings&settingsTab=payments',
+            ],
         ];
+    }
+
+    /**
+     * Check if at least one cart module is published and assigned to a position.
+     *
+     * @since 0.1.11
+     */
+    private function hasPublishedCartModule(): bool
+    {
+        $query = $this->db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($this->db->quoteName('#__modules'))
+            ->where([
+                $this->db->quoteName('module') . ' = ' . $this->db->quote('mod_nxpeasycart_cart'),
+                $this->db->quoteName('published') . ' = 1',
+                $this->db->quoteName('position') . ' != ' . $this->db->quote(''),
+            ]);
+
+        $this->db->setQuery($query);
+
+        return (int) $this->db->loadResult() > 0;
     }
 
     private function summariseProducts(): array

@@ -604,6 +604,18 @@ const onboardingCopy = (label) => {
                     navLinkFor("settings") ||
                     "index.php?option=com_nxpeasycart&view=settings",
             };
+        case "COM_NXPEASYCART_CHECKLIST_PUBLISH_CART_MODULE":
+            return {
+                id: "publish-cart-module",
+                titleKey:
+                    "COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_TITLE",
+                descriptionKey:
+                    "COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_DESC",
+                titleFallback: "Publish the cart module",
+                descriptionFallback:
+                    "Add the cart module to a template position so customers can see their shopping cart.",
+                link: "index.php?option=com_modules&filter[module]=mod_nxpeasycart_cart",
+            };
         case "COM_NXPEASYCART_CHECKLIST_ADD_PRODUCT":
             return {
                 id: "add-product",
