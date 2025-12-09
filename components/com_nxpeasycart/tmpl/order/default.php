@@ -65,7 +65,14 @@ $formatDate = static function (?string $value): string {
     }
 
     try {
-        return Factory::getDate($value)->format(Text::_('DATE_FORMAT_LC2'));
+        // Parse as UTC (database storage), convert to site timezone for display
+        $date = Factory::getDate($value, 'UTC');
+        $tz   = Factory::getApplication()->get('offset', 'UTC');
+        $date->setTimezone(new \DateTimeZone($tz));
+
+        // Note: Joomla's Date::format() has a $local param (2nd arg) - must be true
+        // to use the timezone we set, otherwise it resets to UTC before formatting
+        return $date->format(Text::_('DATE_FORMAT_LC2'), true);
     } catch (\Throwable $exception) {
         return (string) $value;
     }
