@@ -4,7 +4,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
-use DateTimeImmutable;
+use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 
@@ -29,7 +29,7 @@ class AuditService
             'entity_id'   => $entityId,
             'action'      => $action,
             'context'     => empty($context) ? null : json_encode($context, JSON_UNESCAPED_SLASHES),
-            'created'     => (new DateTimeImmutable('now'))->format('Y-m-d H:i:s'),
+            'created'     => Factory::getDate()->toSql(),
             'created_by'  => $userId,
         ];
 

@@ -4,6 +4,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -116,11 +117,14 @@ class CartService
             $this->releaseSession($sessionId, $id);
         }
 
+        $utcNow = Factory::getDate()->toSql();
+
         $object = (object) [
             'id'         => $id,
             'user_id'    => $userId,
             'session_id' => $sessionId,
             'data'       => $json,
+            'updated'    => $utcNow,
         ];
 
         if ($this->exists($id)) {

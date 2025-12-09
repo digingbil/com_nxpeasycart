@@ -4,6 +4,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 
 \defined('_JEXEC') or die;
 
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -52,6 +53,7 @@ class GdprService
 
         // Use empty JSON object for NOT NULL columns, NULL for nullable ones
         $emptyJson = '{}';
+        $timestamp = Factory::getDate()->toSql();
 
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
@@ -62,9 +64,11 @@ class GdprService
             ->set($this->db->quoteName('tracking_number') . ' = NULL')
             ->set($this->db->quoteName('tracking_url') . ' = NULL')
             ->set($this->db->quoteName('fulfillment_events') . ' = NULL')
+            ->set($this->db->quoteName('modified') . ' = :modified')
             ->where($this->db->quoteName('email') . ' = :email')
             ->bind(':anonEmail', $anonymisedEmail, ParameterType::STRING)
             ->bind(':emptyBilling', $emptyJson, ParameterType::STRING)
+            ->bind(':modified', $timestamp, ParameterType::STRING)
             ->bind(':email', $email, ParameterType::STRING);
 
         $this->db->setQuery($query);

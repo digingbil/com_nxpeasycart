@@ -145,6 +145,7 @@ class OrderService
                 'locale'         => $normalised['locale'],
                 'public_token'   => $publicToken,
                 'status_updated_at' => $statusTimestamp,
+                'created'        => $statusTimestamp,
                 'carrier'        => null,
                 'tracking_number'=> null,
                 'tracking_url'   => null,
@@ -328,11 +329,13 @@ class OrderService
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('state') . ' = :state')
             ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
+            ->set($this->db->quoteName('modified') . ' = :modified')
             ->set($this->db->quoteName('fulfillment_events') . ' = :fulfillmentEvents')
             ->where($this->db->quoteName('id') . ' = :id')
             ->bind(':state', $state, ParameterType::STRING)
             ->bind(':id', $orderId, ParameterType::INTEGER)
             ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
+            ->bind(':modified', $timestamp, ParameterType::STRING)
             ->bind(':fulfillmentEvents', $this->encodeJson($events), ParameterType::STRING);
 
         $this->db->setQuery($query);
@@ -536,9 +539,11 @@ class OrderService
             ->set($this->db->quoteName('tracking_url') . ' = ' . ($trackingUrl !== '' ? ':trackingUrl' : 'NULL'))
             ->set($this->db->quoteName('fulfillment_events') . ' = :events')
             ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
+            ->set($this->db->quoteName('modified') . ' = :modified')
             ->where($this->db->quoteName('id') . ' = :id')
             ->bind(':events', $this->encodeJson($events), ParameterType::STRING)
             ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
+            ->bind(':modified', $timestamp, ParameterType::STRING)
             ->bind(':id', $orderId, ParameterType::INTEGER);
 
         if ($carrier !== '') {
@@ -1522,6 +1527,7 @@ class OrderService
                 ? json_encode($transaction['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
                 : null,
             'event_idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
+            'created'      => $this->currentTimestamp(),
         ];
 
         $statusNormalised = strtolower((string) $object->status);
@@ -2082,14 +2088,17 @@ class OrderService
 
         $reason = substr(trim($reason), 0, 255);
         $needsReview = 1;
+        $timestamp = $this->currentTimestamp();
 
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('needs_review') . ' = :needsReview')
             ->set($this->db->quoteName('review_reason') . ' = :reason')
+            ->set($this->db->quoteName('modified') . ' = :modified')
             ->where($this->db->quoteName('id') . ' = :id')
             ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
             ->bind(':reason', $reason, ParameterType::STRING)
+            ->bind(':modified', $timestamp, ParameterType::STRING)
             ->bind(':id', $orderId, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
@@ -2126,13 +2135,16 @@ class OrderService
         }
 
         $needsReview = 0;
+        $timestamp = $this->currentTimestamp();
 
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('needs_review') . ' = :needsReview')
             ->set($this->db->quoteName('review_reason') . ' = NULL')
+            ->set($this->db->quoteName('modified') . ' = :modified')
             ->where($this->db->quoteName('id') . ' = :id')
             ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
+            ->bind(':modified', $timestamp, ParameterType::STRING)
             ->bind(':id', $orderId, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
