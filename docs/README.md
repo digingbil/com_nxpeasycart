@@ -36,6 +36,36 @@ Locale-aware currency formatting for international stores.
 
 ---
 
+## 💳 Payment Gateway Setup
+
+### [stripe-credentials-setup.md](stripe-credentials-setup.md) ⭐ **NEW**
+
+Step-by-step guide for obtaining Stripe API credentials.
+
+**Topics covered:**
+
+- Creating a Stripe account
+- Getting Publishable Key and Secret Key
+- Creating webhook endpoint
+- Obtaining Webhook Secret
+- Test mode vs Live mode setup
+- Testing with Stripe test cards
+
+### [paypal-credentials-setup.md](paypal-credentials-setup.md) ⭐ **NEW**
+
+Step-by-step guide for obtaining PayPal REST API credentials.
+
+**Topics covered:**
+
+- Creating a PayPal Business account
+- Creating a REST API application
+- Getting Client ID and Client Secret
+- Creating webhook and obtaining Webhook ID
+- Sandbox vs Live environment setup
+- Testing with PayPal Sandbox accounts
+
+---
+
 ## 🔒 Security Documentation
 
 ### [security-audit-fixes.md](security-audit-fixes.md) ⭐ **CRITICAL**
@@ -217,6 +247,8 @@ For first-time developers, read in this order:
 Before going live, ensure:
 
 - [ ] Read `security-audit-fixes.md` completely
+- [ ] Follow `stripe-credentials-setup.md` to obtain Stripe credentials
+- [ ] Follow `paypal-credentials-setup.md` to obtain PayPal credentials
 - [ ] Configure Stripe webhook secret in admin panel
 - [ ] Configure PayPal webhook ID in admin panel
 - [ ] Test webhook endpoints with real gateway data
@@ -256,5 +288,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-12-04
+**Last Updated**: 2025-12-09
 **Component Version**: 0.1.13
