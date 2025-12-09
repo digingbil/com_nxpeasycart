@@ -40,6 +40,10 @@
 
     <languages folder="language">
         <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
+        <language tag="de-DE">de-DE/com_nxpeasycart.ini</language>
+        <language tag="el-GR">el-GR/com_nxpeasycart.ini</language>
+        <language tag="fr-FR">fr-FR/com_nxpeasycart.ini</language>
+        <language tag="mk-MK">mk-MK/com_nxpeasycart.ini</language>
     </languages>
 
     <media destination="com_nxpeasycart" folder="media">
@@ -72,6 +76,7 @@
             <folder>templates</folder>
             <folder>tmpl</folder>
             <folder>vendor</folder>
+            <filename>access.xml</filename>
             <filename>config.xml</filename>
             <filename>LICENSE.txt</filename>
         </files>
@@ -79,6 +84,14 @@
         <languages folder="admin/language">
             <language tag="en-GB">en-GB/com_nxpeasycart.ini</language>
             <language tag="en-GB">en-GB/com_nxpeasycart.sys.ini</language>
+            <language tag="de-DE">de-DE/com_nxpeasycart.ini</language>
+            <language tag="de-DE">de-DE/com_nxpeasycart.sys.ini</language>
+            <language tag="el-GR">el-GR/com_nxpeasycart.ini</language>
+            <language tag="el-GR">el-GR/com_nxpeasycart.sys.ini</language>
+            <language tag="fr-FR">fr-FR/com_nxpeasycart.ini</language>
+            <language tag="fr-FR">fr-FR/com_nxpeasycart.sys.ini</language>
+            <language tag="mk-MK">mk-MK/com_nxpeasycart.ini</language>
+            <language tag="mk-MK">mk-MK/com_nxpeasycart.sys.ini</language>
         </languages>
     </administration>
 

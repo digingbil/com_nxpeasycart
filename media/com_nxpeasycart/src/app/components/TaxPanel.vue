@@ -236,6 +236,8 @@
                 class="nxp-ec-modal"
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby="tax-modal-title"
+                @keydown.esc="cancelEdit"
             >
                 <div
                     class="nxp-ec-modal__backdrop"
@@ -251,7 +253,7 @@
                         aria-live="polite"
                     >
                         <header class="nxp-ec-admin-panel__sidebar-header">
-                            <h3>
+                            <h3 id="tax-modal-title">
                                 {{
                                     draft.id
                                         ? __("JEDIT", "Edit")

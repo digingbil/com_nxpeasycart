@@ -439,19 +439,21 @@
                     </tbody>
                 </table>
 
-                <div
+                <nav
                     class="nxp-ec-admin-pagination"
                     v-if="state.pagination.pages > 1"
+                    :aria-label="__('COM_NXPEASYCART_PAGINATION', 'Pagination')"
                 >
                     <button
                         class="nxp-ec-btn"
                         type="button"
                         :disabled="state.pagination.current <= 1"
                         @click="emitPage(state.pagination.current - 1)"
+                        :aria-label="__('COM_NXPEASYCART_PAGINATION_PREV', 'Previous page')"
                     >
                         ‹
                     </button>
-                    <span class="nxp-ec-admin-pagination__status">
+                    <span class="nxp-ec-admin-pagination__status" aria-current="page">
                         {{ state.pagination.current }} /
                         {{ state.pagination.pages }}
                     </span>
@@ -462,10 +464,11 @@
                             state.pagination.current >= state.pagination.pages
                         "
                         @click="emitPage(state.pagination.current + 1)"
+                        :aria-label="__('COM_NXPEASYCART_PAGINATION_NEXT', 'Next page')"
                     >
                         ›
                     </button>
-                </div>
+                </nav>
             </div>
 
             <div
@@ -482,6 +485,8 @@
                 class="nxp-ec-modal"
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby="order-modal-title"
+                @keydown.esc="emitClose"
             >
                 <div
                     class="nxp-ec-modal__backdrop"
@@ -497,7 +502,7 @@
                         aria-live="polite"
                     >
                         <header class="nxp-ec-admin-panel__sidebar-header">
-                            <h3>
+                            <h3 id="order-modal-title">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_ORDERS_DETAILS_TITLE",

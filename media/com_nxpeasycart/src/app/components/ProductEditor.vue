@@ -1,9 +1,9 @@
 <template>
-    <div v-if="open" class="nxp-ec-modal" role="dialog" aria-modal="true">
+    <div v-if="open" class="nxp-ec-modal" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" @keydown.esc="cancel">
         <div class="nxp-ec-modal__backdrop"></div>
         <div class="nxp-ec-modal__dialog">
             <header class="nxp-ec-modal__header">
-                <h2 class="nxp-ec-modal__title">
+                <h2 id="product-modal-title" class="nxp-ec-modal__title">
                     {{
                         mode === "edit"
                             ? __(

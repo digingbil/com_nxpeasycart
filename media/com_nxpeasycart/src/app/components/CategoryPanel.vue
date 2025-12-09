@@ -274,11 +274,13 @@
                 class="nxp-ec-modal"
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby="category-modal-title"
+                @keydown.esc="cancelEdit"
             >
                 <div class="nxp-ec-modal__backdrop" @click="cancelEdit"></div>
                 <div class="nxp-ec-modal__dialog">
                     <header class="nxp-ec-modal__header">
-                        <h3 class="nxp-ec-modal__title">
+                        <h3 id="category-modal-title" class="nxp-ec-modal__title">
                             {{
                                 draft.id
                                     ? __("JEDIT", "Edit")

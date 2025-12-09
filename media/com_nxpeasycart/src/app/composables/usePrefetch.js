@@ -50,13 +50,7 @@ function registerPrefetch(resourceName, loader) {
                 prefetchInProgress.value = true;
 
                 try {
-                    console.log(
-                        `[NXP EC Prefetch] Loading ${resourceName} in background`
-                    );
                     await loader();
-                    console.log(
-                        `[NXP EC Prefetch] Completed ${resourceName}`
-                    );
                 } catch (error) {
                     console.warn(
                         `[NXP EC Prefetch] Failed to prefetch ${resourceName}:`,

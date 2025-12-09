@@ -37,10 +37,6 @@ export function measurePerformance(name, startMark, endMark) {
         const measure = performance.getEntriesByName(name, "measure")[0];
 
         if (measure) {
-            console.log(
-                `[NXP EC Performance] ${name}: ${measure.duration.toFixed(2)}ms`
-            );
-
             return measure.duration;
         }
     } catch (error) {
@@ -179,9 +175,6 @@ export function usePerformance(resourceName) {
 
     const recordCacheHit = () => {
         metrics.value.cacheHits += 1;
-        console.log(
-            `[NXP EC Cache] Hit for ${resourceName} (${metrics.value.cacheHits} hits, ${metrics.value.cacheMisses} misses)`
-        );
     };
 
     const recordCacheMiss = () => {

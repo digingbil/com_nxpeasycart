@@ -101,7 +101,7 @@ class ShippingRuleService
 
         $query = $this->db->getQuery(true)
             ->delete($this->db->quoteName('#__nxp_easycart_shipping_rules'))
-            ->where($this->db->quoteName('id') . ' IN (' . implode(',', $ids) . ')');
+            ->whereIn($this->db->quoteName('id'), $ids);
 
         $this->db->setQuery($query);
         $this->db->execute();

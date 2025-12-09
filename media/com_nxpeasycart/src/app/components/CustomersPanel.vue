@@ -234,6 +234,8 @@
                 class="nxp-ec-modal"
                 role="dialog"
                 aria-modal="true"
+                aria-labelledby="customer-modal-title"
+                @keydown.esc="emitClose"
             >
                 <div
                     class="nxp-ec-modal__backdrop"
@@ -249,7 +251,7 @@
                         aria-live="polite"
                     >
                         <header class="nxp-ec-admin-panel__sidebar-header">
-                            <h3>
+                            <h3 id="customer-modal-title">
                                 {{ state.activeCustomer.email }}
                             </h3>
                             <button
