@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `images` JSON NULL,
   `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
+  `product_type` ENUM('physical','digital') NOT NULL DEFAULT 'physical',
   `primary_category_id` INT UNSIGNED NULL,
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` INT UNSIGNED NULL,
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `stock` INT NOT NULL DEFAULT 0,
   `options` JSON NULL,
   `weight` DECIMAL(10,3) NULL,
+  `is_digital` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_variants_sku` (`sku`),
@@ -83,6 +85,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `currency` CHAR(3) NOT NULL,
   `state` ENUM('cart','pending','paid','fulfilled','refunded','canceled') NOT NULL DEFAULT 'cart',
   `payment_method` VARCHAR(32) NULL,
+  `has_digital` TINYINT(1) NOT NULL DEFAULT 0,
+  `has_physical` TINYINT(1) NOT NULL DEFAULT 0,
   `needs_review` TINYINT(1) NOT NULL DEFAULT 0,
   `review_reason` VARCHAR(255) NULL,
   `status_updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -113,6 +117,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_order_items` (
   `unit_price_cents` INT NOT NULL,
   `tax_rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   `total_cents` INT NOT NULL,
+  `is_digital` TINYINT(1) NOT NULL DEFAULT 0,
+  `delivered_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_nxp_order_items_order` (`order_id`),
   CONSTRAINT `fk_nxp_order_items_order`
@@ -137,6 +143,40 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_transactions` (
   CONSTRAINT `fk_nxp_transactions_order`
     FOREIGN KEY (`order_id`) REFERENCES `#__nxp_easycart_orders` (`id`)
     ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_digital_files` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `product_id` INT UNSIGNED NOT NULL,
+  `variant_id` INT UNSIGNED NULL,
+  `filename` VARCHAR(255) NOT NULL,
+  `storage_path` VARCHAR(500) NOT NULL,
+  `file_size` BIGINT UNSIGNED DEFAULT 0,
+  `mime_type` VARCHAR(100) DEFAULT NULL,
+  `version` VARCHAR(50) DEFAULT '1.0',
+  `created` DATETIME NOT NULL,
+  `modified` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_nxp_digital_files_product` (`product_id`),
+  KEY `idx_nxp_digital_files_variant` (`variant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_downloads` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `order_id` INT UNSIGNED NOT NULL,
+  `order_item_id` INT UNSIGNED NOT NULL,
+  `file_id` INT UNSIGNED NOT NULL,
+  `token` CHAR(64) NOT NULL,
+  `download_count` INT UNSIGNED DEFAULT 0,
+  `max_downloads` INT UNSIGNED DEFAULT NULL,
+  `expires_at` DATETIME DEFAULT NULL,
+  `last_download_at` DATETIME DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `created` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_nxp_downloads_token` (`token`),
+  KEY `idx_nxp_downloads_order` (`order_id`),
+  KEY `idx_nxp_downloads_order_item` (`order_item_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_coupons` (

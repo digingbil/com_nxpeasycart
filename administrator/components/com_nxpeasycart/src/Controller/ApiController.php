@@ -37,8 +37,18 @@ class ApiController extends BaseController
      */
     public function execute($task): mixed {
 
-        // Use RAW filter to preserve dots in task parameter (e.g., api.products.store)
-        $rawTaskParam = $this->input->get('task', '', 'RAW');
+        // Use RAW filter to preserve dots in task parameter (e.g., api.products.store).
+        // Read from GET/POST inputs directly to avoid the dispatcher truncating multi-dot tasks
+        // (e.g., api.products.store -> products) when it splits controller/task.
+        $rawTaskParam = $this->input->get->get('task', '', 'RAW');
+
+        if ($rawTaskParam === '') {
+            $rawTaskParam = $this->input->post->get('task', '', 'RAW');
+        }
+
+        if ($rawTaskParam === '') {
+            $rawTaskParam = $this->input->get('task', '', 'RAW');
+        }
 
         if (!\is_string($rawTaskParam)) {
             $rawTaskParam = '';
