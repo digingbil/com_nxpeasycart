@@ -414,7 +414,7 @@
                         {{
                             __(
                                 "COM_NXPEASYCART_PRODUCT_CATEGORIES_HELP",
-                                "Select categories or add a new one.",
+                                "Select a category or create a new one",
                                 [],
                                 "productCategoriesHelp"
                             )

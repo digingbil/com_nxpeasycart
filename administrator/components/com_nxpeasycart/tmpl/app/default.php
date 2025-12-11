@@ -8,6 +8,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\TranslationHelper;
 
 $document = $this->getDocument();
 $wa        = $document->getWebAssetManager();
@@ -20,27 +21,9 @@ $wa->registerAndUseStyle(
     ['version' => 'auto', 'relative' => true]
 );
 
-// Register Visual settings translations for JavaScript access.
-Text::script('COM_NXPEASYCART_SETTINGS_TAB_VISUAL');
-
-// Register onboarding translations for JavaScript access.
-Text::script('COM_NXPEASYCART_CHECKLIST_PUBLISH_CART_MODULE');
-Text::script('COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_TITLE');
-Text::script('COM_NXPEASYCART_ONBOARDING_STEP_PUBLISH_CART_MODULE_DESC');
-Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_TITLE');
-Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_HINT');
-Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_ADAPTER_NOTE');
-Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_REFRESH');
-Text::script('COM_NXPEASYCART_SETTINGS_VISUAL_LOADING');
-Text::script('COM_NXPEASYCART_VISUAL_PRIMARY');
-Text::script('COM_NXPEASYCART_VISUAL_SURFACE');
-Text::script('COM_NXPEASYCART_VISUAL_BORDER');
-Text::script('COM_NXPEASYCART_VISUAL_TEXT');
-Text::script('COM_NXPEASYCART_VISUAL_MUTED');
-Text::script('COM_NXPEASYCART_VISUAL_PREVIEW');
-Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_BUTTON');
-Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_TEXT');
-Text::script('COM_NXPEASYCART_VISUAL_PREVIEW_MUTED');
+// Register all component translations for JavaScript access (Joomla.Text._()).
+// This makes every COM_NXPEASYCART_* key available to the Vue admin SPA.
+TranslationHelper::loadForScript();
 
 // Explicitly queue the bundle in case the registry file is not picked up (symlinked dev installs).
 $document->addScript(Uri::root(true) . '/media/com_nxpeasycart/js/admin.iife.js', [], ['defer' => true]);
@@ -313,6 +296,7 @@ switch ($section) {
 $appTitle = Text::_($appTitleKey);
 $appLead  = Text::_($appLeadKey);
 
+//TODO: These are redundant now when we have the TranslationHelper. Recheck this in future
 $dataAttributes = [
     'csrf-token'                         => $token,
     'site-root'                          => Uri::root(),
