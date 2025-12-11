@@ -58,6 +58,8 @@ If for any reason the tables remain after uninstalling the package, you can manu
 2. Or running the SQL manually:
 
 ```sql
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS `#__nxp_easycart_audit`;
 DROP TABLE IF EXISTS `#__nxp_easycart_coupons`;
 DROP TABLE IF EXISTS `#__nxp_easycart_shipping_rules`;
@@ -71,6 +73,8 @@ DROP TABLE IF EXISTS `#__nxp_easycart_variants`;
 DROP TABLE IF EXISTS `#__nxp_easycart_product_categories`;
 DROP TABLE IF EXISTS `#__nxp_easycart_categories`;
 DROP TABLE IF EXISTS `#__nxp_easycart_products`;
+
+SET FOREIGN_KEY_CHECKS = 1;
 ```
 
 (Replace `#__` with your actual Joomla table prefix, e.g., `j5_`)

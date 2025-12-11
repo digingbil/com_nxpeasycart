@@ -1,3 +1,5 @@
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS `#__nxp_easycart_audit`;
 DROP TABLE IF EXISTS `#__nxp_easycart_coupons`;
 DROP TABLE IF EXISTS `#__nxp_easycart_shipping_rules`;
@@ -11,3 +13,5 @@ DROP TABLE IF EXISTS `#__nxp_easycart_variants`;
 DROP TABLE IF EXISTS `#__nxp_easycart_product_categories`;
 DROP TABLE IF EXISTS `#__nxp_easycart_categories`;
 DROP TABLE IF EXISTS `#__nxp_easycart_products`;
+
+SET FOREIGN_KEY_CHECKS = 1;
