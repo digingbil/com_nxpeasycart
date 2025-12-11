@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12] - 2025-12-11
+
+### Fixed
+
+- Uninstall SQL now executes correctly - changed manifest `charset="utf8mb4"` to `charset="utf8"` (Joomla's installer only recognizes `utf8`)
+- Added `SET FOREIGN_KEY_CHECKS = 0/1` around DROP statements in uninstall SQL to prevent FK constraint errors
+
 ## [0.1.11] - 2025-12-09
 
 ### Added
@@ -53,5 +60,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting on sensitive operations
 - Session regeneration after checkout
 
-[Unreleased]: https://github.com/nexusplugins/com_nxpeasycart/compare/v0.1.11...HEAD
+[Unreleased]: https://github.com/nexusplugins/com_nxpeasycart/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/nexusplugins/com_nxpeasycart/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/nexusplugins/com_nxpeasycart/releases/tag/v0.1.11

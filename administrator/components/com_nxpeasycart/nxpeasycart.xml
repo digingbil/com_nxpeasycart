@@ -57,15 +57,15 @@
         <menu img="class:cart">COM_NXPEASYCART</menu>
 
         <submenu>
-            <menu link="option=com_nxpeasycart&amp;view=app" view="app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
-            <menu link="option=com_nxpeasycart&amp;view=products" view="products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
-            <menu link="option=com_nxpeasycart&amp;view=categories" view="categories">COM_NXPEASYCART_MENU_CATEGORIES</menu>
-            <menu link="option=com_nxpeasycart&amp;view=orders" view="orders">COM_NXPEASYCART_MENU_ORDERS</menu>
-            <menu link="option=com_nxpeasycart&amp;view=customers" view="customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
-            <menu link="option=com_nxpeasycart&amp;view=coupons" view="coupons">COM_NXPEASYCART_MENU_COUPONS</menu>
-            <menu link="option=com_nxpeasycart&amp;view=tax" view="tax">COM_NXPEASYCART_MENU_TAX</menu>
-            <menu link="option=com_nxpeasycart&amp;view=shipping" view="shipping">COM_NXPEASYCART_MENU_SHIPPING</menu>
-            <menu link="option=com_nxpeasycart&amp;view=settings" view="settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=app">COM_NXPEASYCART_MENU_DASHBOARD</menu>
+            <menu link="option=com_nxpeasycart&amp;view=products">COM_NXPEASYCART_MENU_PRODUCTS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=categories">COM_NXPEASYCART_MENU_CATEGORIES</menu>
+            <menu link="option=com_nxpeasycart&amp;view=orders">COM_NXPEASYCART_MENU_ORDERS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=customers">COM_NXPEASYCART_MENU_CUSTOMERS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=coupons">COM_NXPEASYCART_MENU_COUPONS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=tax">COM_NXPEASYCART_MENU_TAX</menu>
+            <menu link="option=com_nxpeasycart&amp;view=shipping">COM_NXPEASYCART_MENU_SHIPPING</menu>
+            <menu link="option=com_nxpeasycart&amp;view=settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
         </submenu>
 
         <files folder="admin">

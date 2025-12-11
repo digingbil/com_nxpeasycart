@@ -1,4 +1,11 @@
 <?php
+/**
+ * @package     NXP Easy Cart
+ * @subpackage  com_nxpeasycart
+ *
+ * @copyright   Copyright (C) 2024-2025 nexusplugins.com. All rights reserved.
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ */
 
 namespace Joomla\Component\Nxpeasycart\Administrator\Controller;
 
@@ -30,8 +37,8 @@ class ApiController extends BaseController
      */
     public function execute($task): mixed {
 
-        //We need to use RAW input here because the task parameter can contain dots.
-        $rawTaskParam = $_GET['task'] ?? $_POST['task'] ?? $this->input->get('task', '', 'RAW');
+        // Use RAW filter to preserve dots in task parameter (e.g., api.products.store)
+        $rawTaskParam = $this->input->get('task', '', 'RAW');
 
         if (!\is_string($rawTaskParam)) {
             $rawTaskParam = '';
