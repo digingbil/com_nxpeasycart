@@ -815,7 +815,7 @@
                     class="nxp-ec-editor-panel nxp-ec-editor-panel--digital"
                 >
                     <div class="nxp-ec-admin-alert nxp-ec-admin-alert--info">
-                        <p>
+                        <p style="margin-bottom: 0;">
                             {{
                                 __(
                                     "COM_NXPEASYCART_CHECKOUT_DIGITAL_NOTE",
@@ -834,14 +834,27 @@
 
                     <div
                         v-if="!product?.id"
-                        class="nxp-ec-admin-alert nxp-ec-admin-alert--warning"
+                        class="nxp-ec-admin-callout nxp-ec-admin-callout--info"
                     >
-                        {{
-                            __(
-                                "COM_NXPEASYCART_DIGITAL_FILES_SAVE_FIRST",
-                                "Save the product before attaching digital files."
-                            )
-                        }}
+                        <span class="nxp-ec-admin-callout__icon">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                        <div class="nxp-ec-admin-callout__content">
+                            <div class="nxp-ec-admin-callout__title">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_DIGITAL_FILES_SAVE_FIRST_TITLE",
+                                        "Save Required"
+                                    )
+                                }}
+                            </div>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_DIGITAL_FILES_SAVE_FIRST",
+                                    "Digital files are linked to the product record. Save this product first, then reopen the editor to upload your files."
+                                )
+                            }}
+                        </div>
                     </div>
 
                     <div class="nxp-ec-digital-grid">

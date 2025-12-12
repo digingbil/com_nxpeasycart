@@ -30,6 +30,12 @@
     --nxp-ec-danger: var(--bs-danger, #dc3545);
     --nxp-ec-danger-bg: rgba(var(--bs-danger-rgb, 220, 53, 69), 0.12);
     --nxp-ec-danger-text: #842029;
+    --nxp-ec-warning: var(--bs-warning, #ffc107);
+    --nxp-ec-warning-bg: rgba(255, 193, 7, 0.15);
+    --nxp-ec-warning-text: #664d03;
+    --nxp-ec-info: var(--bs-info, #0dcaf0);
+    --nxp-ec-info-bg: rgba(13, 202, 240, 0.12);
+    --nxp-ec-info-text: #055160;
 
     /* Shadows */
     --nxp-ec-shadow: rgba(15, 23, 42, 0.06);
@@ -75,6 +81,12 @@
     --nxp-ec-danger: var(--bs-danger, #ea868f);
     --nxp-ec-danger-bg: rgba(var(--bs-danger-rgb, 234, 134, 143), 0.15);
     --nxp-ec-danger-text: #f1aeb5;
+    --nxp-ec-warning: var(--bs-warning, #ffda6a);
+    --nxp-ec-warning-bg: rgba(255, 218, 106, 0.18);
+    --nxp-ec-warning-text: #ffda6a;
+    --nxp-ec-info: var(--bs-info, #6edff6);
+    --nxp-ec-info-bg: rgba(110, 223, 246, 0.15);
+    --nxp-ec-info-text: #6edff6;
 
     /* Shadows */
     --nxp-ec-shadow: rgba(0, 0, 0, 0.2);
@@ -336,6 +348,58 @@
     background: var(--nxp-ec-danger-bg);
     border: 1px solid var(--nxp-ec-danger);
     color: var(--nxp-ec-danger-text);
+}
+
+.nxp-ec-admin-alert--warning {
+    background: var(--nxp-ec-warning-bg);
+    border: 1px solid var(--nxp-ec-warning);
+    color: var(--nxp-ec-warning-text);
+}
+
+.nxp-ec-admin-alert--info {
+    background: var(--nxp-ec-info-bg);
+    border: 1px solid var(--nxp-ec-info);
+    color: var(--nxp-ec-info-text);
+}
+
+/* Prominent info callout with icon */
+.nxp-ec-admin-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    margin: 1rem 0;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.nxp-ec-admin-callout__icon {
+    flex-shrink: 0;
+    font-size: 1.125rem;
+    margin-top: 0.125rem;
+}
+
+.nxp-ec-admin-callout__content {
+    flex: 1;
+}
+
+.nxp-ec-admin-callout__title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.nxp-ec-admin-callout--info {
+    background: var(--nxp-ec-info-bg);
+    border-left-color: var(--nxp-ec-info);
+    color: var(--nxp-ec-info-text);
+}
+
+.nxp-ec-admin-callout--warning {
+    background: var(--nxp-ec-warning-bg);
+    border-left-color: var(--nxp-ec-warning);
+    color: var(--nxp-ec-warning-text);
 }
 
 .nxp-ec-admin-table {
