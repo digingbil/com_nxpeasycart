@@ -98,6 +98,16 @@
                             <th scope="col">
                                 {{
                                     __(
+                                        "COM_NXPEASYCART_TAX_NAME",
+                                        "Name",
+                                        [],
+                                        "taxName"
+                                    )
+                                }}
+                            </th>
+                            <th scope="col">
+                                {{
+                                    __(
                                         "COM_NXPEASYCART_TAX_COUNTRY",
                                         "Country",
                                         [],
@@ -153,7 +163,7 @@
                     </thead>
                     <tbody>
                         <tr v-if="!state.items.length">
-                            <td colspan="6">
+                            <td colspan="7">
                                 {{
                                     __(
                                         "COM_NXPEASYCART_TAX_EMPTY",
@@ -171,7 +181,8 @@
                                 'is-active': draft.id === rate.id,
                             }"
                         >
-                            <th scope="row" class="nxp-ec-admin-table__primary">{{ rate.country }}</th>
+                            <th scope="row" class="nxp-ec-admin-table__primary">{{ rate.name || __('COM_NXPEASYCART_TAX_DEFAULT_NAME', 'Tax', [], 'taxDefaultName') }}</th>
+                            <td :data-label="__('COM_NXPEASYCART_TAX_COUNTRY', 'Country')">{{ rate.country }}</td>
                             <td :data-label="__('COM_NXPEASYCART_TAX_REGION', 'Region')">{{ rate.region || "—" }}</td>
                             <td :data-label="__('COM_NXPEASYCART_TAX_RATE', 'Rate')">{{ (rate.rate ?? 0).toFixed(2) }}%</td>
                             <td :data-label="__('COM_NXPEASYCART_TAX_INCLUSIVE', 'Inclusive')">
@@ -301,6 +312,37 @@
                             @submit.prevent="emitSave"
                             autocomplete="off"
                         >
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="tax-name">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_TAX_NAME",
+                                            "Name",
+                                            [],
+                                            "taxName"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="tax-name"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model.trim="draft.name"
+                                    maxlength="100"
+                                    :placeholder="__('COM_NXPEASYCART_TAX_NAME_PLACEHOLDER', 'e.g. VAT, GST, Sales Tax', [], 'taxNamePlaceholder')"
+                                />
+                                <p class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_TAX_NAME_HELP",
+                                            "Optional display name shown to customers. Falls back to \"Tax\" if empty.",
+                                            [],
+                                            "taxNameHelp"
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
                             <div class="nxp-ec-form-field">
                                 <label class="nxp-ec-form-label" for="tax-country">
                                     {{
@@ -521,6 +563,7 @@ const formOpen = ref(false);
 
 const draft = reactive({
     id: null,
+    name: "",
     country: "",
     region: "",
     rate: 0,
@@ -538,6 +581,7 @@ const startCreate = () => {
 const startEdit = (rate) => {
     Object.assign(draft, {
         id: rate.id,
+        name: rate.name || "",
         country: rate.country,
         region: rate.region,
         rate: rate.rate,
@@ -555,6 +599,7 @@ const cancelEdit = () => {
 const reset = () => {
     Object.assign(draft, {
         id: null,
+        name: "",
         country: "",
         region: "",
         rate: 0,
@@ -566,6 +611,7 @@ const reset = () => {
 const emitSave = () => {
     emit("save", {
         id: draft.id || undefined,
+        name: draft.name || null,
         country: draft.country,
         region: draft.region,
         rate: draft.rate,

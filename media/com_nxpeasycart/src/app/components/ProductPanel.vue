@@ -124,6 +124,8 @@
             :errors="state.validationErrors"
             :category-options="categoryOptions"
             :media-modal-url="mediaModalUrl"
+            :digital-endpoints="digitalEndpoints"
+            :csrf-token="csrfToken"
             @submit="handleSubmit"
             @cancel="closeEditor"
         />
@@ -157,6 +159,14 @@ const props = defineProps({
         type: String,
         default: "",
     },
+    digitalEndpoints: {
+        type: Object,
+        default: () => ({}),
+    },
+    csrfToken: {
+        type: String,
+        default: "",
+    },
 });
 
 const emit = defineEmits(["create", "update", "delete", "refresh", "search"]);
@@ -177,6 +187,8 @@ const baseCurrency = computed(() =>
 const editorProduct = computed(() => editorState.product);
 
 const mediaModalUrl = computed(() => (props.mediaModalUrl || "").trim());
+const digitalEndpoints = computed(() => props.digitalEndpoints || {});
+const csrfToken = computed(() => props.csrfToken || "");
 
 const STATUS_ACTIVE = 1;
 const STATUS_OUT_OF_STOCK = -1;
@@ -245,6 +257,7 @@ const openCreate = () => {
         images: [],
         categories: [],
         variants: [],
+        product_type: "physical",
     };
     isEditorOpen.value = true;
 };
@@ -253,7 +266,11 @@ const openEdit = (product) => {
     props.state.validationErrors = [];
     props.state.error = "";
     editorState.mode = "edit";
-    editorState.product = JSON.parse(JSON.stringify(product));
+    const payload = JSON.parse(JSON.stringify(product));
+    if (!payload.product_type) {
+        payload.product_type = "physical";
+    }
+    editorState.product = payload;
     isEditorOpen.value = true;
 };
 
@@ -273,6 +290,10 @@ const handleSubmit = async (payload) => {
         status,
         active: status,
         featured: payload.featured ? 1 : 0,
+        product_type:
+            (typeof payload.product_type === "string" &&
+                payload.product_type.trim()) ||
+            "physical",
     };
 
     if (editorState.mode === "edit" && editorState.product?.id) {
@@ -385,6 +406,10 @@ const toggleActive = (product) => {
                           variant.active === undefined
                               ? true
                               : Boolean(variant.active),
+                      is_digital:
+                          variant.is_digital === undefined
+                              ? false
+                              : Boolean(variant.is_digital),
                   };
               })
               .filter(Boolean)
@@ -531,6 +556,10 @@ const toggleActive = (product) => {
             images: normalisedImages,
             variants: normalisedVariants,
             categories: normalisedCategories,
+            product_type:
+                (typeof product.product_type === "string" &&
+                    product.product_type.trim()) ||
+                "physical",
         },
     });
 };

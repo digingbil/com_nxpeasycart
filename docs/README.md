@@ -34,6 +34,10 @@ Locale-aware currency formatting for international stores.
 - Supported locale formats (Joomla-style and ICU-style)
 - PHP intl extension requirements
 
+### [digital-products.md](digital-products.md) ⭐ **NEW v0.1.13**
+
+Digital product support with secure downloads, admin upload workflow, settings, and checkout/email surfaces.
+
 ---
 
 ## 💳 Payment Gateway Setup

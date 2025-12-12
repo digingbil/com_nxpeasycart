@@ -21,7 +21,10 @@ use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 use Throwable;
@@ -59,6 +62,26 @@ class OrderService
 
     private ?AuditService $audit = null;
 
+    private ?DigitalFileService $digitalFiles = null;
+
+    private ?SettingsService $settings = null;
+
+    private ?TaxService $taxService = null;
+
+    /**
+     * OrderService constructor.
+     *
+     * @param DatabaseInterface $db Database connector
+     *
+     * @since 0.1.5
+     */
+    public function __construct(DatabaseInterface $db, ?AuditService $audit = null, ?DigitalFileService $digitalFiles = null)
+    {
+        $this->db           = $db;
+        $this->audit        = $audit;
+        $this->digitalFiles = $digitalFiles;
+    }
+
     private function getAuditService(): AuditService
     {
         if ($this->audit === null) {
@@ -77,17 +100,134 @@ class OrderService
         return $this->audit;
     }
 
-    /**
-     * OrderService constructor.
-     *
-     * @param DatabaseInterface $db Database connector
-     *
-     * @since 0.1.5
-     */
-    public function __construct(DatabaseInterface $db, ?AuditService $audit = null)
+    private function getDigitalFileService(): ?DigitalFileService
     {
-        $this->db    = $db;
-        $this->audit = $audit;
+        if ($this->digitalFiles !== null) {
+            return $this->digitalFiles;
+        }
+
+        $container = Factory::getContainer();
+
+        if ($container->has(DigitalFileService::class)) {
+            $this->digitalFiles = $container->get(DigitalFileService::class);
+        } else {
+            $settings = $this->getSettingsService() ?? new SettingsService($this->db);
+            $this->digitalFiles = new DigitalFileService($this->db, $settings);
+        }
+
+        return $this->digitalFiles;
+    }
+
+    private function getSettingsService(): ?SettingsService
+    {
+        if ($this->settings !== null) {
+            return $this->settings;
+        }
+
+        $container = Factory::getContainer();
+
+        if ($container->has(SettingsService::class)) {
+            $this->settings = $container->get(SettingsService::class);
+
+            return $this->settings;
+        }
+
+        return null;
+    }
+
+    private function getTaxService(): TaxService
+    {
+        if ($this->taxService !== null) {
+            return $this->taxService;
+        }
+
+        $container = Factory::getContainer();
+
+        if ($container->has(TaxService::class)) {
+            $this->taxService = $container->get(TaxService::class);
+        } else {
+            $this->taxService = new TaxService($this->db);
+        }
+
+        return $this->taxService;
+    }
+
+    /**
+     * Look up tax rate name based on billing country/region.
+     *
+     * @param string $countryCode Two-letter country code
+     * @param string $regionCode  Optional region code
+     *
+     * @return string|null Tax rate name or null if not found
+     *
+     * @since 0.1.13
+     */
+    private function lookupTaxName(string $countryCode, string $regionCode = ''): ?string
+    {
+        if ($countryCode === '') {
+            return null;
+        }
+
+        $taxService = $this->getTaxService();
+        $rates = $taxService->paginate(['search' => ''], 100, 0)['items'] ?? [];
+
+        $countryCode = strtoupper($countryCode);
+        $regionCode = strtolower(trim($regionCode));
+
+        // First try to find exact country+region match
+        foreach ($rates as $rate) {
+            $rateCountry = strtoupper($rate['country'] ?? '');
+            $rateRegion = strtolower(trim($rate['region'] ?? ''));
+
+            if ($rateCountry === $countryCode && $rateRegion !== '' && $rateRegion === $regionCode) {
+                return $rate['name'] ?? null;
+            }
+        }
+
+        // Then try country-only match
+        foreach ($rates as $rate) {
+            $rateCountry = strtoupper($rate['country'] ?? '');
+            $rateRegion = trim($rate['region'] ?? '');
+
+            if ($rateCountry === $countryCode && $rateRegion === '') {
+                return $rate['name'] ?? null;
+            }
+        }
+
+        // Finally try global rate (no country specified)
+        foreach ($rates as $rate) {
+            $rateCountry = trim($rate['country'] ?? '');
+
+            if ($rateCountry === '') {
+                return $rate['name'] ?? null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve tax name from payload or look it up from billing address.
+     *
+     * @param array<string, mixed> $payload Order payload
+     * @param array<string, mixed> $billing Normalised billing address
+     *
+     * @return string|null Tax rate name
+     *
+     * @since 0.1.13
+     */
+    private function resolveTaxName(array $payload, array $billing): ?string
+    {
+        // If explicitly provided in payload, use that
+        if (isset($payload['tax_name']) && trim((string) $payload['tax_name']) !== '') {
+            return trim((string) $payload['tax_name']);
+        }
+
+        // Otherwise look up based on billing address
+        $countryCode = $billing['country_code'] ?? '';
+        $regionCode = $billing['region_code'] ?? '';
+
+        return $this->lookupTaxName($countryCode, $regionCode);
     }
 
     /**
@@ -117,9 +257,18 @@ class OrderService
     {
         $normalised = $this->normaliseOrderPayload($payload);
         $items      = $this->normaliseOrderItems($payload['items'] ?? []);
+        $items      = $this->applyDigitalFlags($items);
+        $composition = $this->determineOrderComposition($items);
+        $hasDigital  = $composition['has_digital'];
+        $hasPhysical = $composition['has_physical'];
 
         if (empty($items)) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_ITEMS_REQUIRED'));
+        }
+
+        if (!$hasPhysical) {
+            $normalised['shipping_cents'] = 0;
+            $normalised['shipping']       = null;
         }
 
         $totals = $this->computeTotals($items, $normalised);
@@ -143,6 +292,7 @@ class OrderService
                 'tax_cents'      => $totals['tax_cents'],
                 'tax_rate'       => $normalised['tax_rate'],
                 'tax_inclusive'  => $normalised['tax_inclusive'] ? 1 : 0,
+                'tax_name'       => $normalised['tax_name'],
                 'shipping_cents' => $totals['shipping_cents'],
                 'discount_cents' => $totals['discount_cents'],
                 'total_cents'    => $totals['total_cents'],
@@ -151,6 +301,8 @@ class OrderService
                 'payment_method' => $normalised['payment_method'],
                 'locale'         => $normalised['locale'],
                 'public_token'   => $publicToken,
+                'has_digital'    => $hasDigital ? 1 : 0,
+                'has_physical'   => $hasPhysical ? 1 : 0,
                 'status_updated_at' => $statusTimestamp,
                 'created'        => $statusTimestamp,
                 'carrier'        => null,
@@ -162,6 +314,7 @@ class OrderService
             $this->db->insertObject('#__nxp_easycart_orders', $order);
 
             $orderId = (int) $this->db->insertid();
+            $storedItems = [];
 
             foreach ($items as $item) {
                 $itemObject = (object) [
@@ -174,9 +327,37 @@ class OrderService
                     'unit_price_cents' => $item['unit_price_cents'],
                     'tax_rate'         => $item['tax_rate'],
                     'total_cents'      => $item['total_cents'],
+                    'is_digital'       => !empty($item['is_digital']) ? 1 : 0,
+                    'delivered_at'     => null,
                 ];
 
                 $this->db->insertObject('#__nxp_easycart_order_items', $itemObject);
+                $itemId = (int) $this->db->insertid();
+
+                $storedItems[] = [
+                    'id'         => $itemId,
+                    'product_id' => $item['product_id'],
+                    'variant_id' => $item['variant_id'],
+                    'is_digital' => !empty($item['is_digital']),
+                ];
+            }
+
+            if ($hasDigital) {
+                $digitalService = $this->getDigitalFileService();
+
+                if ($digitalService !== null) {
+                    try {
+                        $digitalService->createDownloadsForOrder($orderId, $storedItems);
+                    } catch (\Throwable $exception) {
+                        $this->getAuditService()->record(
+                            'order',
+                            $orderId,
+                            'order.digital.downloads_failed',
+                            ['message' => $exception->getMessage()],
+                            $actorId
+                        );
+                    }
+                }
             }
 
             $this->db->transactionCommit();
@@ -376,6 +557,10 @@ class OrderService
         // Send transactional emails based on state transition
         $this->sendStateTransitionEmail($updated, $current['state'], $state);
 
+        if ($state === 'fulfilled') {
+            $this->markDigitalItemsDelivered($orderId);
+        }
+
         return $updated;
     }
 
@@ -503,6 +688,54 @@ class OrderService
             return $container->get(MailService::class);
         } catch (\Throwable $e) {
             return null;
+        }
+    }
+
+    /**
+     * Send the "downloads ready" email for orders with digital items.
+     *
+     * Called when a manual payment is recorded and the order has digital items.
+     * Ensures download links are populated before sending.
+     *
+     * @param array<string, mixed> $order
+     *
+     * @since 0.1.13
+     */
+    private function sendDownloadsReadyEmail(array $order): void
+    {
+        if (empty($order['has_digital'])) {
+            return;
+        }
+
+        $mailService = $this->getMailService();
+
+        if ($mailService === null) {
+            return;
+        }
+
+        try {
+            // Ensure downloads are populated with URLs
+            if (empty($order['downloads']) && $this->digitalFileService !== null) {
+                $orderId = (int) ($order['id'] ?? 0);
+
+                if ($orderId > 0) {
+                    $downloads = $this->digitalFileService->getDownloadsForOrder($orderId);
+
+                    if (!empty($downloads)) {
+                        $order['downloads'] = $downloads;
+                    }
+                }
+            }
+
+            $mailService->sendDownloadsReady($order);
+        } catch (\Throwable $e) {
+            // Log but don't fail the payment recording
+            $this->getAuditService()->record(
+                'order',
+                (int) ($order['id'] ?? 0),
+                'order.email.downloads_ready_failed',
+                ['message' => $e->getMessage()]
+            );
         }
     }
 
@@ -944,6 +1177,7 @@ class OrderService
             'tax_cents'      => $this->toNonNegativeInt($payload['tax_cents'] ?? 0),
             'tax_rate'       => $this->formatTaxRate((string) ($payload['tax_rate'] ?? '0.00')),
             'tax_inclusive'  => isset($payload['tax_inclusive']) ? (bool) $payload['tax_inclusive'] : false,
+            'tax_name'       => $this->resolveTaxName($payload, $billing),
             'shipping_cents' => $this->toNonNegativeInt($payload['shipping_cents'] ?? 0),
             'discount_cents' => $this->toNonNegativeInt($payload['discount_cents'] ?? 0),
         ];
@@ -1040,10 +1274,93 @@ class OrderService
                 'unit_price_cents' => $unitPrice,
                 'tax_rate'         => $this->formatTaxRate($taxRate),
                 'total_cents'      => $total,
+                'is_digital'       => !empty($item['is_digital']),
             ];
         }
 
         return $normalised;
+    }
+
+    /**
+     * Determine digital flags for each order item from authoritative product data.
+     *
+     * @param array<int, array<string, mixed>> $items
+     *
+     * @return array<int, array<string, mixed>>
+     *
+     * @since 0.1.13
+     */
+    private function applyDigitalFlags(array $items): array
+    {
+        if (empty($items)) {
+            return [];
+        }
+
+        $variantIds = [];
+        $productIds = [];
+
+        foreach ($items as $item) {
+            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
+            $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
+
+            if ($variantId > 0) {
+                $variantIds[] = $variantId;
+            }
+
+            if ($productId > 0) {
+                $productIds[] = $productId;
+            }
+        }
+
+        $variantFlags = $this->loadVariantDigitalFlags($variantIds);
+        $productTypes = $this->loadProductTypes($productIds);
+
+        foreach ($items as $index => $item) {
+            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
+            $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
+
+            $isDigital = false;
+
+            if ($variantId > 0 && !empty($variantFlags[$variantId])) {
+                $isDigital = true;
+            }
+
+            if (!$isDigital && $productId > 0 && ($productTypes[$productId] ?? 'physical') === 'digital') {
+                $isDigital = true;
+            }
+
+            $items[$index]['is_digital'] = $isDigital;
+        }
+
+        return $items;
+    }
+
+    /**
+     * Summarise order composition between digital and physical items.
+     *
+     * @param array<int, array<string, mixed>> $items
+     *
+     * @return array{has_digital: bool, has_physical: bool}
+     *
+     * @since 0.1.13
+     */
+    private function determineOrderComposition(array $items): array
+    {
+        $hasDigital  = false;
+        $hasPhysical = false;
+
+        foreach ($items as $item) {
+            if (!empty($item['is_digital'])) {
+                $hasDigital = true;
+            } else {
+                $hasPhysical = true;
+            }
+        }
+
+        return [
+            'has_digital'  => $hasDigital,
+            'has_physical' => $hasPhysical,
+        ];
     }
 
     /**
@@ -1079,6 +1396,82 @@ class OrderService
     }
 
     /**
+     * Load product types for a set of product IDs.
+     *
+     * @param array<int, int> $productIds
+     *
+     * @return array<int, string> Keyed by product ID
+     *
+     * @since 0.1.13
+     */
+    private function loadProductTypes(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter($productIds)));
+
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select([
+                $this->db->quoteName('id'),
+                $this->db->quoteName('product_type'),
+            ])
+            ->from($this->db->quoteName('#__nxp_easycart_products'))
+            ->whereIn($this->db->quoteName('id'), $productIds);
+
+        $this->db->setQuery($query);
+        $rows = $this->db->loadObjectList() ?: [];
+
+        $types = [];
+
+        foreach ($rows as $row) {
+            $types[(int) $row->id] = isset($row->product_type)
+                ? strtolower((string) $row->product_type)
+                : 'physical';
+        }
+
+        return $types;
+    }
+
+    /**
+     * Load variant digital flags.
+     *
+     * @param array<int, int> $variantIds
+     *
+     * @return array<int, bool> Keyed by variant ID
+     *
+     * @since 0.1.13
+     */
+    private function loadVariantDigitalFlags(array $variantIds): array
+    {
+        $variantIds = array_values(array_unique(array_filter($variantIds)));
+
+        if (empty($variantIds)) {
+            return [];
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select([
+                $this->db->quoteName('id'),
+                $this->db->quoteName('is_digital'),
+            ])
+            ->from($this->db->quoteName('#__nxp_easycart_variants'))
+            ->whereIn($this->db->quoteName('id'), $variantIds);
+
+        $this->db->setQuery($query);
+        $rows = $this->db->loadObjectList() ?: [];
+
+        $flags = [];
+
+        foreach ($rows as $row) {
+            $flags[(int) $row->id] = !empty($row->is_digital);
+        }
+
+        return $flags;
+    }
+
+    /**
      * Convert DB row to array representation with decoded JSON.
      *
      * @since 0.1.5
@@ -1090,6 +1483,19 @@ class OrderService
 
         $transactions = $includeHistory ? $this->getTransactions($orderId) : [];
         $timeline     = $includeHistory ? $this->getAuditTrail($orderId) : [];
+        $downloads    = [];
+
+        if ($includeHistory) {
+            $digitalService = $this->getDigitalFileService();
+
+            if ($digitalService !== null) {
+                try {
+                    $downloads = $digitalService->getDownloadsForOrder($orderId);
+                } catch (\Throwable $exception) {
+                    $downloads = [];
+                }
+            }
+        }
         $itemsCount   = $row->items_count ?? null;
         $itemsCount   = $itemsCount !== null ? (int) $itemsCount : (\is_array($items) ? \count($items) : 0);
         $statusUpdatedAt = $row->status_updated_at !== null ? (string) $row->status_updated_at : (string) $row->created;
@@ -1106,12 +1512,16 @@ class OrderService
             'tax_cents'      => (int) $row->tax_cents,
             'tax_rate'       => isset($row->tax_rate) ? (string) $row->tax_rate : '0.00',
             'tax_inclusive'  => (bool) ($row->tax_inclusive ?? 0),
+            'tax_name'       => isset($row->tax_name) ? (string) $row->tax_name : null,
             'shipping_cents' => (int) $row->shipping_cents,
             'discount_cents' => (int) $row->discount_cents,
             'total_cents'    => (int) $row->total_cents,
             'currency'       => (string) $row->currency,
             'state'          => (string) $row->state,
             'payment_method' => isset($row->payment_method) ? (string) $row->payment_method : null,
+            'has_digital'    => (bool) ($row->has_digital ?? 0),
+            'has_physical'   => (bool) ($row->has_physical ?? 0),
+            'requires_shipping' => (bool) ($row->has_physical ?? 0),
             'needs_review'   => (bool) ($row->needs_review ?? 0),
             'review_reason'  => isset($row->review_reason) ? (string) $row->review_reason : null,
             'status_updated_at' => $statusUpdatedAt,
@@ -1126,6 +1536,7 @@ class OrderService
             'items'          => $items,
             'transactions'   => $transactions,
             'timeline'       => $timeline,
+            'downloads'      => $downloads,
         ];
     }
 
@@ -1261,6 +1672,8 @@ class OrderService
                 'tax_rate'         => (string) $row->tax_rate,
                 'total_cents'      => (int) $row->total_cents,
                 'image'            => $image,
+                'is_digital'       => !empty($row->is_digital),
+                'delivered_at'     => $row->delivered_at !== null ? (string) $row->delivered_at : null,
             ];
         }
 
@@ -1574,9 +1987,24 @@ class OrderService
 
         $this->db->insertObject('#__nxp_easycart_transactions', $object);
 
-        if ($shouldMarkPaid && $order['state'] !== 'paid' && $order['state'] !== 'fulfilled') {
+        $previousState = $order['state'] ?? '';
+        $stateTransitioned = false;
+
+        if ($shouldMarkPaid && $previousState !== 'paid' && $previousState !== 'fulfilled') {
             $this->transitionState($orderId, 'paid');
+            $order = $this->get($orderId) ?? $order;
+            $stateTransitioned = true;
             // Inventory already reserved on creation; avoid double decrement.
+        }
+
+        if (($order['state'] ?? '') === 'paid') {
+            $this->maybeAutoFulfillDigital($order);
+            $order = $this->get($orderId) ?? $order;
+        }
+
+        // Send downloads ready email if order has digital items and was just marked as paid
+        if ($stateTransitioned && !empty($order['has_digital'])) {
+            $this->sendDownloadsReadyEmail($order);
         }
 
         if (
@@ -1598,6 +2026,64 @@ class OrderService
         );
 
         return $this->get($orderId) ?? $order;
+    }
+
+    /**
+     * Auto-fulfil digital-only orders when payment completes.
+     *
+     * @since 0.1.13
+     */
+    private function maybeAutoFulfillDigital(array $order): void
+    {
+        $orderId = (int) ($order['id'] ?? 0);
+
+        if (
+            $orderId <= 0
+            || empty($order['has_digital'])
+            || !empty($order['has_physical'])
+            || ($order['state'] ?? '') !== 'paid'
+        ) {
+            return;
+        }
+
+        $settings    = $this->getSettingsService();
+        $autoFulfill = $settings ? (bool) $settings->get('digital_auto_fulfill', 1) : true;
+
+        if (!$autoFulfill) {
+            return;
+        }
+
+        try {
+            $this->transitionState($orderId, 'fulfilled');
+            $this->markDigitalItemsDelivered($orderId);
+        } catch (\Throwable $exception) {
+            $this->getAuditService()->record(
+                'order',
+                $orderId,
+                'order.digital.auto_fulfill_failed',
+                ['message' => $exception->getMessage()]
+            );
+        }
+    }
+
+    /**
+     * Mark all digital order items as delivered.
+     *
+     * @since 0.1.13
+     */
+    private function markDigitalItemsDelivered(int $orderId): void
+    {
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_order_items'))
+            ->set($this->db->quoteName('delivered_at') . ' = :deliveredAt')
+            ->where($this->db->quoteName('order_id') . ' = :orderId')
+            ->where($this->db->quoteName('is_digital') . ' = 1')
+            ->where($this->db->quoteName('delivered_at') . ' IS NULL')
+            ->bind(':deliveredAt', $this->currentTimestamp(), ParameterType::STRING)
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
     }
 
     private function transactionExistsByExternalId(string $gateway, string $externalId): bool
@@ -1645,6 +2131,7 @@ class OrderService
             ->from($this->db->quoteName('#__nxp_easycart_order_items'))
             ->where($this->db->quoteName('order_id') . ' = :orderId')
             ->where($this->db->quoteName('variant_id') . ' IS NOT NULL')
+            ->where($this->db->quoteName('is_digital') . ' = 0')
             ->bind(':orderId', $orderId, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
@@ -1738,6 +2225,10 @@ class OrderService
         $productIds    = [];
 
         foreach ($items as $item) {
+            if (!empty($item['is_digital'])) {
+                continue;
+            }
+
             $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
             $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
             $qty       = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;

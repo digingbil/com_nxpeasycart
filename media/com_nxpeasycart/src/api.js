@@ -616,6 +616,27 @@ class ApiClient {
     }
 
     /**
+     * Resend downloads email for a digital order.
+     */
+    async resendDownloads({ endpoint, id }) {
+        const payload = await this.post(endpoint, { id });
+
+        return payload.data?.order ?? null;
+    }
+
+    /**
+     * Reset download count for a specific download record.
+     */
+    async resetDownload({ endpoint, downloadId, orderId }) {
+        const payload = await this.post(endpoint, {
+            download_id: downloadId,
+            order_id: orderId || undefined,
+        });
+
+        return payload.data ?? null;
+    }
+
+    /**
      * Create a product.
      */
     async createProduct({ endpoint, data }) {
@@ -649,6 +670,45 @@ class ApiClient {
         );
 
         return payload.data?.deleted ?? [];
+    }
+
+    async fetchDigitalFiles({ endpoint, productId, variantId = null, signal }) {
+        const url = this.mergeParams(endpoint, {
+            product_id: productId,
+            variant_id: variantId || undefined,
+        });
+
+        const payload = await this.get(url, { signal });
+
+        return payload.data?.files ?? [];
+    }
+
+    async uploadDigitalFile({ endpoint, productId, file, variantId = null, version = "1.0" }) {
+        const formData = new FormData();
+        formData.append("product_id", productId);
+
+        if (variantId) {
+            formData.append("variant_id", variantId);
+        }
+
+        if (version) {
+            formData.append("version", version);
+        }
+
+        formData.append("file", file);
+
+        const payload = await this.request(endpoint, {
+            method: "POST",
+            body: formData,
+        });
+
+        return payload.data?.file ?? null;
+    }
+
+    async deleteDigitalFile({ endpoint, fileId }) {
+        const payload = await this.post(endpoint, { id: fileId });
+
+        return payload.data?.deleted ?? null;
     }
 
     async createCategory({ endpoint, data }) {

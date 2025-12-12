@@ -59,6 +59,13 @@
         <option value="0">JNO</option>
     </field>
 
+    <field
+        name="product_type"
+        type="hidden"
+        filter="cmd"
+        default="physical"
+    />
+
     <!-- Hidden carrier fields used by the SPA JSON API; validated and normalised in ProductModel::validate() -->
     <field
         name="images"

@@ -77,6 +77,12 @@ if (!mount) {
         delete: dataset.shippingEndpointDelete ?? "",
     };
 
+    const digitalFileEndpoints = config?.endpoints?.digitalfiles ?? {
+        list: dataset.digitalfilesEndpointList ?? "",
+        upload: dataset.digitalfilesEndpointUpload ?? "",
+        delete: dataset.digitalfilesEndpointDelete ?? "",
+    };
+
     const settingsEndpoints = config?.endpoints?.settings ?? {
         show: dataset.settingsEndpointShow ?? "",
         update: dataset.settingsEndpointUpdate ?? "",
@@ -99,6 +105,7 @@ if (!mount) {
             coupons: couponsEndpoints,
             tax: taxEndpoints,
             shipping: shippingEndpoints,
+            digitalfiles: digitalFileEndpoints,
             settings: settingsEndpoints,
             logs: logsEndpoints,
             dashboard:

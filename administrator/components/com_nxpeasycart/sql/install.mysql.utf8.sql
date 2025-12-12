@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `tax_cents` INT NOT NULL DEFAULT 0,
   `tax_rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   `tax_inclusive` TINYINT(1) NOT NULL DEFAULT 0,
+  `tax_name` VARCHAR(100) NULL DEFAULT NULL,
   `shipping_cents` INT NOT NULL DEFAULT 0,
   `discount_cents` INT NOT NULL DEFAULT 0,
   `total_cents` INT NOT NULL DEFAULT 0,
@@ -208,6 +209,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_audit` (
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_tax_rates` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(100) NULL DEFAULT NULL,
   `country` CHAR(2) NOT NULL,
   `region` VARCHAR(32) NULL,
   `rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
@@ -245,3 +247,9 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_carts` (
   UNIQUE KEY `idx_nxp_carts_session` (`session_id`),
   KEY `idx_nxp_carts_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `#__nxp_easycart_settings` (`key`, `value`) VALUES
+  ('digital_download_max', '5'),
+  ('digital_download_expiry', '30'),
+  ('digital_storage_path', '/media/com_nxpeasycart/downloads'),
+  ('digital_auto_fulfill', '1');

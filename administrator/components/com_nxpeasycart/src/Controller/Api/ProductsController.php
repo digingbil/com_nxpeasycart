@@ -13,12 +13,14 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
+use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use RuntimeException;
 
 /**
@@ -294,6 +296,7 @@ class ProductsController extends AbstractJsonController
     private function transformProduct(object $item): array
     {
         $images = [];
+        $productType = isset($item->product_type) ? (string) $item->product_type : 'physical';
 
         foreach ($item->images ?? [] as $image) {
             $images[] = (string) $image;
@@ -317,6 +320,7 @@ class ProductsController extends AbstractJsonController
                 'options'     => $variant['options'] ?? null,
                 'weight'      => $variant['weight']  ?? null,
                 'active'      => isset($variant['active']) ? (bool) $variant['active'] : false,
+                'is_digital'  => !empty($variant['is_digital']),
             ];
         }
 
@@ -337,6 +341,17 @@ class ProductsController extends AbstractJsonController
             : ProductStatus::normalise($item->active ?? ProductStatus::ACTIVE);
         $isActive   = ProductStatus::isPurchasable($status);
         $outOfStock = ProductStatus::isOutOfStock($status);
+        $digitalFiles = [];
+
+        $digitalService = $this->getDigitalFileService();
+
+        if ($digitalService !== null) {
+            try {
+                $digitalFiles = $digitalService->getFilesForProduct((int) $item->id);
+            } catch (\Throwable $exception) {
+                $digitalFiles = [];
+            }
+        }
 
         return [
             'id'         => (int) $item->id,
@@ -344,12 +359,14 @@ class ProductsController extends AbstractJsonController
             'slug'       => (string) $item->slug,
             'short_desc' => $item->short_desc,
             'long_desc'  => $item->long_desc,
+            'product_type' => $productType,
             'status'     => $status,
             'active'     => $isActive,
             'out_of_stock' => $outOfStock,
             'featured'   => (bool) $item->featured,
             'images'     => $images,
             'variants'   => $variants,
+            'digital_files' => $digitalFiles,
             'categories' => $categories,
             'primary_category_id' => isset($item->primary_category_id) && (int) $item->primary_category_id > 0
                 ? (int) $item->primary_category_id
@@ -429,6 +446,17 @@ class ProductsController extends AbstractJsonController
     private function formatPrice(int $cents): string
     {
         return number_format($cents / 100, 2, '.', '');
+    }
+
+    private function getDigitalFileService(): ?DigitalFileService
+    {
+        $container = Factory::getContainer();
+
+        if ($container->has(DigitalFileService::class)) {
+            return $container->get(DigitalFileService::class);
+        }
+
+        return null;
     }
 
     /*

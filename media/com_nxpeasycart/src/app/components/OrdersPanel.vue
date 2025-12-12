@@ -681,6 +681,104 @@
                             </ul>
                         </section>
 
+                        <section
+                            class="nxp-ec-admin-panel__section"
+                            v-if="state.activeOrder.downloads && state.activeOrder.downloads.length"
+                        >
+                            <div class="nxp-ec-admin-panel__section-header">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_FILES",
+                                            "Digital downloads"
+                                        )
+                                    }}
+                                </h4>
+                                <button
+                                    v-if="canResendDownloads"
+                                    type="button"
+                                    class="nxp-ec-btn nxp-ec-btn--small"
+                                    :disabled="state.saving"
+                                    @click="emitResendDownloads"
+                                >
+                                    <i class="fa-solid fa-envelope"></i>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_ORDERS_RESEND_DOWNLOADS",
+                                            "Resend email"
+                                        )
+                                    }}
+                                </button>
+                            </div>
+                            <p
+                                v-if="downloadCopyMessage"
+                                class="nxp-ec-admin-panel__muted"
+                            >
+                                {{ downloadCopyMessage }}
+                            </p>
+                            <div class="nxp-ec-download-list">
+                                <article
+                                    v-for="download in state.activeOrder.downloads"
+                                    :key="download.id"
+                                    class="nxp-ec-download-card"
+                                >
+                                    <div class="nxp-ec-download-card__meta">
+                                        <div class="nxp-ec-admin-list__title">
+                                            {{ download.filename }}
+                                        </div>
+                                        <div class="nxp-ec-admin-panel__muted">
+                                            {{ downloadCountLabel(download) }}
+                                            ·
+                                            {{ downloadExpiryLabel(download) }}
+                                        </div>
+                                    </div>
+                                    <div class="nxp-ec-download-card__actions">
+                                        <button
+                                            type="button"
+                                            class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--small"
+                                            :disabled="state.saving"
+                                            @click="emitResetDownload(download)"
+                                            :title="__(
+                                                'COM_NXPEASYCART_ORDERS_RESET_DOWNLOAD_TITLE',
+                                                'Reset download count to 0'
+                                            )"
+                                        >
+                                            <i class="fa-solid fa-rotate-left"></i>
+                                            {{
+                                                __(
+                                                    "COM_NXPEASYCART_ORDERS_RESET_DOWNLOAD",
+                                                    "Reset"
+                                                )
+                                            }}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--small"
+                                            @click="copyDownloadLink(download)"
+                                        >
+                                            {{
+                                                __(
+                                                    "COM_NXPEASYCART_ORDERS_COPY_LINK",
+                                                    "Copy link"
+                                                )
+                                            }}
+                                        </button>
+                                        <a
+                                            v-if="download.url"
+                                            class="nxp-ec-btn nxp-ec-btn--small"
+                                            :href="download.url"
+                                            target="_blank"
+                                            rel="noopener"
+                                        >
+                                            {{
+                                                __("COM_NXPEASYCART_DOWNLOAD", "Download")
+                                            }}
+                                        </a>
+                                    </div>
+                                </article>
+                            </div>
+                        </section>
+
                         <section class="nxp-ec-admin-panel__section">
                             <h4>
                                 {{
@@ -1241,6 +1339,8 @@ const emit = defineEmits([
     "export",
     "send-email",
     "record-payment",
+    "resend-downloads",
+    "reset-download",
 ]);
 
 const __ = props.translate;
@@ -1250,6 +1350,7 @@ const bulkState = ref("");
 const noteDraft = ref("");
 const noteReady = computed(() => noteDraft.value.trim().length > 0);
 const copyMessage = ref("");
+const downloadCopyMessage = ref("");
 const trackingDraft = reactive({
     carrier: "",
     tracking_number: "",
@@ -1283,6 +1384,13 @@ const canRecordPayment = computed(() => {
     return order.state === "pending" && allowedMethods.includes(paymentMethod);
 });
 
+const canResendDownloads = computed(() => {
+    const order = props.state?.activeOrder;
+    if (!order) return false;
+    const allowedStates = ["paid", "fulfilled"];
+    return allowedStates.includes(order.state) && order.downloads?.length > 0;
+});
+
 const paymentReady = computed(() => {
     // Always ready - amount defaults to order total if not specified
     return canRecordPayment.value;
@@ -1306,6 +1414,7 @@ watch(
         paymentDraft.amount = null;
         paymentDraft.reference = "";
         paymentDraft.note = "";
+        downloadCopyMessage.value = "";
     },
     { immediate: true }
 );
@@ -1517,6 +1626,84 @@ const copyStatusLink = async () => {
     }
 };
 
+const downloadCountLabel = (download) => {
+    const used = Number(download?.download_count ?? 0);
+    const max = Number(download?.max_downloads ?? 0);
+
+    if (max > 0) {
+        const remaining = Math.max(0, max - used);
+        return __(
+            "COM_NXPEASYCART_ORDER_DOWNLOADS_REMAINING",
+            "%d downloads remaining",
+            [remaining]
+        );
+    }
+
+    return __(
+        "COM_NXPEASYCART_ORDER_DOWNLOADS_UNLIMITED",
+        "Unlimited downloads"
+    );
+};
+
+const downloadExpiryLabel = (download) => {
+    if (!download?.expires_at) {
+        return __("JNONE", "No expiry");
+    }
+
+    return __(
+        "COM_NXPEASYCART_ORDER_DOWNLOADS_EXPIRES",
+        "Expires %s",
+        [download.expires_at]
+    );
+};
+
+const copyDownloadLink = async (download) => {
+    const url = download?.url;
+
+    if (!url) {
+        return;
+    }
+
+    try {
+        if (!navigator?.clipboard?.writeText) {
+            throw new Error("Clipboard unavailable");
+        }
+
+        await navigator.clipboard.writeText(url);
+        downloadCopyMessage.value = __(
+            "COM_NXPEASYCART_ORDERS_LINK_COPIED",
+            "Link copied"
+        );
+    } catch (error) {
+        try {
+            const el = document.createElement("textarea");
+            el.value = url;
+            el.setAttribute("readonly", "");
+            el.style.position = "absolute";
+            el.style.left = "-9999px";
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            document.body.removeChild(el);
+            downloadCopyMessage.value = __(
+                "COM_NXPEASYCART_ORDERS_LINK_COPIED",
+                "Link copied"
+            );
+        } catch (fallbackError) {
+            downloadCopyMessage.value = __(
+                "COM_NXPEASYCART_ORDERS_LINK_COPY_FALLBACK",
+                "Copy the link below."
+            );
+        }
+    }
+
+    if (downloadCopyMessage.value) {
+        setTimeout(() => {
+            downloadCopyMessage.value = "";
+        }, 2000);
+    }
+};
+
 const trackingChanged = computed(() => {
     const order = props.state?.activeOrder ?? {};
 
@@ -1677,6 +1864,27 @@ const emitRecordPayment = () => {
     paymentDraft.amount = null;
     paymentDraft.reference = "";
     paymentDraft.note = "";
+};
+
+const emitResendDownloads = () => {
+    if (!props.state.activeOrder || !canResendDownloads.value) {
+        return;
+    }
+
+    emit("resend-downloads", {
+        id: props.state.activeOrder.id,
+    });
+};
+
+const emitResetDownload = (download) => {
+    if (!props.state.activeOrder || !download?.id) {
+        return;
+    }
+
+    emit("reset-download", {
+        download_id: download.id,
+        order_id: props.state.activeOrder.id,
+    });
 };
 
 /**
@@ -1972,6 +2180,32 @@ const formatTimestamp = (timestamp) => {
 }
 
 .nxp-ec-admin-copy {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nxp-ec-download-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.nxp-ec-download-card {
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    background: var(--nxp-ec-surface, #fff);
+}
+
+.nxp-ec-download-card__meta {
+    flex: 1;
+}
+
+.nxp-ec-download-card__actions {
     display: flex;
     gap: 0.5rem;
     align-items: center;

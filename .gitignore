@@ -79,6 +79,11 @@ media/com_nxpeasyforms/css/admin-*.css
 media/com_nxpeasycart/js/site.*.js
 media/com_nxpeasycart/js/site.*.js.map
 
+# Digital download storage (keep placeholders)
+media/com_nxpeasycart/downloads/*
+!media/com_nxpeasycart/downloads/.htaccess
+!media/com_nxpeasycart/downloads/index.html
+
 # Temporary files
 *~
 *.lock

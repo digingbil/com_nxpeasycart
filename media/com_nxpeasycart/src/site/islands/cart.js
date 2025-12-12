@@ -207,7 +207,7 @@ export default function mountCartIsland(el) {
                 <dt>{{ labels.subtotal }}</dt>
                 <dd>{{ format(summary.subtotal_cents) }}</dd>
               </div>
-              <div>
+              <div v-if="requiresShipping">
                 <dt>{{ labels.shipping }}</dt>
                 <dd>{{ labels.shipping_note }}</dd>
               </div>
@@ -267,6 +267,11 @@ export default function mountCartIsland(el) {
                 () =>
                     Number(summary.tax_cents) > 0 ||
                     Number(taxRate) > 0
+            );
+
+            // Check if cart has physical items (requires shipping)
+            const requiresShipping = computed(() =>
+                items.some((item) => !item.is_digital)
             );
 
             const recalcSummary = () => {
@@ -494,6 +499,7 @@ export default function mountCartIsland(el) {
                 items,
                 summary,
                 showTax,
+                requiresShipping,
                 canceled,
                 dismissCanceled,
                 remove,

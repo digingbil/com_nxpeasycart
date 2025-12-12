@@ -6,6 +6,8 @@ DROP TABLE IF EXISTS `#__nxp_easycart_shipping_rules`;
 DROP TABLE IF EXISTS `#__nxp_easycart_tax_rates`;
 DROP TABLE IF EXISTS `#__nxp_easycart_settings`;
 DROP TABLE IF EXISTS `#__nxp_easycart_carts`;
+DROP TABLE IF EXISTS `#__nxp_easycart_downloads`;
+DROP TABLE IF EXISTS `#__nxp_easycart_digital_files`;
 DROP TABLE IF EXISTS `#__nxp_easycart_transactions`;
 DROP TABLE IF EXISTS `#__nxp_easycart_order_items`;
 DROP TABLE IF EXISTS `#__nxp_easycart_orders`;

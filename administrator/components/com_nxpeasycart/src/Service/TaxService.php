@@ -44,7 +44,8 @@ class TaxService
         if ($search !== '') {
             $param = '%' . $search . '%';
             $query->where(
-                '(' . $this->db->quoteName('country') . ' LIKE :search
+                '(' . $this->db->quoteName('name') . ' LIKE :search
+                  OR ' . $this->db->quoteName('country') . ' LIKE :search
                   OR ' . $this->db->quoteName('region') . ' LIKE :search)'
             )
                 ->bind(':search', $param, ParameterType::STRING);
@@ -95,7 +96,7 @@ class TaxService
 
         $payload = $this->normalise($data);
         $rate    = (object) array_merge(['id' => $id], $payload);
-        $this->db->updateObject('#__nxp_easycart_tax_rates', $rate, 'id');
+        $this->db->updateObject('#__nxp_easycart_tax_rates', $rate, 'id', true);
 
         return $this->get($id) ?? [];
     }
@@ -134,6 +135,16 @@ class TaxService
 
     private function normalise(array $data): array
     {
+        $name = isset($data['name']) ? trim((string) $data['name']) : null;
+        // Convert empty string to null for nullable column
+        if ($name === '') {
+            $name = null;
+        }
+
+        if ($name !== null && strlen($name) > 100) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_TAX_RATE_NAME_LENGTH'), 400);
+        }
+
         $country = strtoupper(trim((string) ($data['country'] ?? '')));
 
         if (strlen($country) !== 2) {
@@ -151,6 +162,7 @@ class TaxService
         $priority  = isset($data['priority']) ? (int) $data['priority'] : 0;
 
         return [
+            'name'      => $name,
             'country'   => $country,
             'region'    => $region,
             'rate'      => $rate,
@@ -163,6 +175,7 @@ class TaxService
     {
         return [
             'id'        => (int) $row->id,
+            'name'      => isset($row->name) ? (string) $row->name : null,
             'country'   => (string) $row->country,
             'region'    => $row->region !== null ? (string) $row->region : '',
             'rate'      => (float) $row->rate,

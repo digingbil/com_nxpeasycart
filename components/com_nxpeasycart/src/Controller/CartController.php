@@ -104,6 +104,7 @@ class CartController extends BaseController
             $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
 
             $existingQty = 0;
+            $isDigital   = !empty($variant->is_digital) || (isset($product->product_type) && strtolower((string) $product->product_type) === 'digital');
 
             foreach ($items as $existing) {
                 if ((int) ($existing['variant_id'] ?? 0) === $variantId) {
@@ -113,7 +114,7 @@ class CartController extends BaseController
 
             $desiredQty = $existingQty + $qty;
 
-            if ((int) ($variant->stock ?? 0) < $desiredQty) {
+            if (!$isDigital && (int) ($variant->stock ?? 0) < $desiredQty) {
                 echo new JsonResponse(
                     null,
                     Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
@@ -302,9 +303,13 @@ class CartController extends BaseController
                     ($productId > 0 && $itemProductId === $productId)) {
 
                     // Check stock availability
+                    $isDigitalItem = !empty($item['is_digital']);
                     if ($variantId > 0) {
                         $variant = $this->loadVariant($db, $variantId);
-                        if ($variant && (int) ($variant->stock ?? 0) < $qty) {
+                        $variantIsDigital = $variant ? !empty($variant->is_digital) : false;
+                        $isDigitalItem = $isDigitalItem || $variantIsDigital;
+
+                        if ($variant && !$isDigitalItem && (int) ($variant->stock ?? 0) < $qty) {
                             echo new JsonResponse(
                                 null,
                                 Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
@@ -316,6 +321,7 @@ class CartController extends BaseController
 
                     $items[$index]['qty'] = $qty;
                     $items[$index]['unit_price_cents'] = (int) ($item['unit_price_cents'] ?? 0);
+                    $items[$index]['is_digital'] = $isDigitalItem;
                     $updated = true;
                     break;
                 }
@@ -548,6 +554,8 @@ class CartController extends BaseController
         $baseCurrency = ConfigHelper::getBaseCurrency();
         $unitPrice    = (int) ($variant->price_cents ?? 0);
         $options      = [];
+        $isDigital    = !empty($variant->is_digital)
+            || (isset($product->product_type) && strtolower((string) $product->product_type) === 'digital');
 
         if (!empty($variant->options)) {
             $decoded = json_decode((string) $variant->options, true);
@@ -570,6 +578,7 @@ class CartController extends BaseController
                 $items[$index]['currency']         = $baseCurrency;
                 $items[$index]['title']            = $variant->sku ?? $product->title;
                 $items[$index]['options']          = $options;
+                $items[$index]['is_digital']       = $isDigital;
 
                 return $items;
             }
@@ -583,6 +592,7 @@ class CartController extends BaseController
             'unit_price_cents' => $unitPrice,
             'currency'         => $baseCurrency,
             'options'          => $options,
+            'is_digital'       => $isDigital,
         ];
 
         return $items;

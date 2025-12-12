@@ -138,6 +138,42 @@ class MailService
     }
 
     /**
+     * Send a downloads ready notification email.
+     *
+     * Triggered when: payment is confirmed for orders with digital items
+     * (typically after manual payment recording for COD/bank transfer).
+     *
+     * @param array<string, mixed> $order Order data including 'downloads' array
+     *
+     * @since 0.1.13
+     */
+    public function sendDownloadsReady(array $order): void
+    {
+        $recipient = $order['email'] ?? '';
+
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        // Only send if order has digital items with downloads
+        if (empty($order['downloads']) || !\is_array($order['downloads'])) {
+            return;
+        }
+
+        // Load language strings for the order's locale (customer's language at checkout)
+        $this->loadOrderLanguage($order);
+
+        $store   = $this->getStoreContext();
+        $subject = Text::sprintf('COM_NXPEASYCART_EMAIL_DOWNLOADS_READY_SUBJECT', $order['order_no'] ?? '');
+        $body    = $this->renderTemplate('downloads_ready', [
+            'order' => $order,
+            'store' => $store,
+        ]);
+
+        $this->sendMail($recipient, $subject, $body);
+    }
+
+    /**
      * Send an order refunded notification email.
      *
      * Triggered when: order transitions to 'refunded' state OR a refund transaction is recorded.

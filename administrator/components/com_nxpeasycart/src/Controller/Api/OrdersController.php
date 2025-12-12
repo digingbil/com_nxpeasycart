@@ -19,9 +19,11 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\OrderService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use RuntimeException;
 
 /**
@@ -66,6 +68,8 @@ class OrdersController extends AbstractJsonController
             'invoice' => $this->invoice(),
             'export' => $this->export(),
             'recordtransaction', 'recordpayment' => $this->recordTransaction(),
+            'resenddownloads' => $this->resendDownloads(),
+            'resetdownload' => $this->resetDownload(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -559,6 +563,155 @@ class OrdersController extends AbstractJsonController
     }
 
     /**
+     * Resend download links email for an order.
+     *
+     * @return JsonResponse Updated order details
+     * @throws RuntimeException
+     *
+     * @since 0.1.13
+     */
+    protected function resendDownloads(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+        $id = isset($payload['id']) ? (int) $payload['id'] : 0;
+
+        if ($id <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_ID'), 400);
+        }
+
+        $service = $this->getOrderService();
+        $order = $service->get($id);
+
+        if (!$order) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        // Check if order has digital downloads
+        if (empty($order['downloads'])) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NO_DOWNLOADS'), 400);
+        }
+
+        // Check if order is in a state where downloads should be available
+        $allowedStates = ['paid', 'fulfilled'];
+        if (!\in_array($order['state'] ?? '', $allowedStates, true)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_DOWNLOADS_NOT_READY'), 400);
+        }
+
+        $mailService = $this->getMailService();
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+
+        try {
+            $mailService->sendDownloadsReady($order);
+
+            // Log the email sent event
+            $container = Factory::getContainer();
+            $auditService = $container->has(AuditService::class)
+                ? $container->get(AuditService::class)
+                : null;
+
+            if ($auditService) {
+                $auditService->record(
+                    'order',
+                    $id,
+                    'order.email.sent',
+                    ['type' => 'downloads_ready', 'manual' => true],
+                    $actorId
+                );
+            }
+
+            // Refresh order to get updated timeline
+            $order = $service->get($id);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_SEND_EMAIL_FAILED', $e->getMessage()),
+                500,
+                $e
+            );
+        }
+
+        return $this->respond(['order' => $order]);
+    }
+
+    /**
+     * Reset download count for a specific download record.
+     *
+     * @return JsonResponse Updated download details
+     * @throws RuntimeException
+     *
+     * @since 0.1.13
+     */
+    protected function resetDownload(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $payload = $this->decodePayload();
+        $downloadId = isset($payload['download_id']) ? (int) $payload['download_id'] : 0;
+        $orderId = isset($payload['order_id']) ? (int) $payload['order_id'] : 0;
+
+        if ($downloadId <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_DIGITAL_FILE_ID_REQUIRED'), 400);
+        }
+
+        $digitalService = $this->getDigitalFileService();
+        $actorId = $this->app?->getIdentity()?->id ?? null;
+
+        // Get the download record to verify it exists and belongs to the order
+        $download = $digitalService->getDownload($downloadId);
+
+        if (!$download) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_DOWNLOAD_INVALID'), 404);
+        }
+
+        // Verify order ownership if order_id provided
+        if ($orderId > 0 && (int) $download['order_id'] !== $orderId) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_DOWNLOAD_INVALID'), 400);
+        }
+
+        try {
+            $digitalService->resetDownloadCount($downloadId);
+
+            // Log the reset event
+            $container = Factory::getContainer();
+            $auditService = $container->has(AuditService::class)
+                ? $container->get(AuditService::class)
+                : null;
+
+            if ($auditService) {
+                $auditService->record(
+                    'order',
+                    $download['order_id'],
+                    'order.download.reset',
+                    [
+                        'download_id' => $downloadId,
+                        'filename'    => $download['filename'] ?? '',
+                    ],
+                    $actorId
+                );
+            }
+
+            // Return refreshed order if we have the order_id
+            if ($orderId > 0) {
+                $orderService = $this->getOrderService();
+                $order = $orderService->get($orderId);
+                return $this->respond(['order' => $order]);
+            }
+
+            // Otherwise just confirm success
+            return $this->respond(['success' => true, 'download_id' => $downloadId]);
+        } catch (\Throwable $e) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_RESET_DOWNLOAD_FAILED', $e->getMessage()),
+                500,
+                $e
+            );
+        }
+    }
+
+    /**
      * Decode the JSON request body.
      *
      * @return array Decoded JSON payload
@@ -685,5 +838,38 @@ class OrdersController extends AbstractJsonController
         }
 
         return $container->get(MailService::class);
+    }
+
+    /**
+     * Resolve the digital file service from the Container.
+     *
+     * @return DigitalFileService
+     *
+     * @since 0.1.13
+     */
+    private function getDigitalFileService(): DigitalFileService
+    {
+        $container = Factory::getContainer();
+
+        $providerPath = JPATH_ADMINISTRATOR . '/components/com_nxpeasycart/services/provider.php';
+
+        if (!$container->has(DigitalFileService::class) && is_file($providerPath)) {
+            $container->registerServiceProvider(require $providerPath);
+        }
+
+        if (!$container->has(DigitalFileService::class)) {
+            // Fallback: create DigitalFileService manually
+            $container->set(
+                DigitalFileService::class,
+                static function ($container): DigitalFileService {
+                    return new DigitalFileService(
+                        $container->get(DatabaseInterface::class),
+                        $container->get(SettingsService::class)
+                    );
+                }
+            );
+        }
+
+        return $container->get(DigitalFileService::class);
     }
 }

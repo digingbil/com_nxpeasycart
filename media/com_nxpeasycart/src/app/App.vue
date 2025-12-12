@@ -71,6 +71,8 @@
             :base-currency="baseCurrency"
             :category-options="categoryOptions"
             :media-modal-url="mediaModalUrl"
+            :digital-endpoints="digitalFileEndpoints"
+            :csrf-token="props.csrfToken"
             @create="onProductCreate"
             @update="onProductUpdate"
             @delete="onProductDelete"
@@ -109,6 +111,8 @@
             @save-tracking="onOrdersSaveTracking"
             @send-email="onOrdersSendEmail"
             @record-payment="onOrdersRecordPayment"
+            @resend-downloads="onOrdersResendDownloads"
+            @reset-download="onOrdersResetDownload"
             @invoice="onOrdersInvoice"
             @export="onOrdersExport"
         />
@@ -393,6 +397,12 @@ const shippingEndpoints = props.endpoints?.shipping ?? {
     delete: props.dataset?.shippingEndpointDelete ?? "",
 };
 
+const digitalFileEndpoints = props.endpoints?.digitalfiles ?? {
+    list: props.dataset?.digitalfilesEndpointList ?? "",
+    upload: props.dataset?.digitalfilesEndpointUpload ?? "",
+    delete: props.dataset?.digitalfilesEndpointDelete ?? "",
+};
+
 const settingsEndpoints = props.endpoints?.settings ?? {
     show: props.dataset?.settingsEndpointShow ?? "",
     update: props.dataset?.settingsEndpointUpdate ?? "",
@@ -489,6 +499,8 @@ const {
     exportOrders,
     sendEmail: sendOrderEmail,
     recordTransaction: recordOrderTransaction,
+    resendDownloads,
+    resetDownload,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -1084,6 +1096,30 @@ const onOrdersRecordPayment = async (payload) => {
             reference: payload.reference,
             note: payload.note,
         });
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
+};
+
+const onOrdersResendDownloads = async (payload) => {
+    if (!payload?.id) {
+        return;
+    }
+
+    try {
+        await resendDownloads(payload.id);
+    } catch {
+        // Error already captured in ordersState.transitionError
+    }
+};
+
+const onOrdersResetDownload = async (payload) => {
+    if (!payload?.download_id) {
+        return;
+    }
+
+    try {
+        await resetDownload(payload.download_id, payload.order_id);
     } catch {
         // Error already captured in ordersState.transitionError
     }

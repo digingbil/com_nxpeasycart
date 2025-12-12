@@ -53,6 +53,10 @@ export function useOrders({
         endpoints?.sendEmail ?? deriveEndpoint(listEndpoint, "sendEmail");
     const recordTransactionEndpoint =
         endpoints?.recordTransaction ?? deriveEndpoint(listEndpoint, "recordTransaction");
+    const resendDownloadsEndpoint =
+        endpoints?.resendDownloads ?? deriveEndpoint(listEndpoint, "resendDownloads");
+    const resetDownloadEndpoint =
+        endpoints?.resetDownload ?? deriveEndpoint(listEndpoint, "resetDownload");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -517,6 +521,74 @@ export function useOrders({
         }
     };
 
+    const resendDownloads = async (id) => {
+        if (!resendDownloadsEndpoint) {
+            throw new Error("Resend downloads endpoint unavailable.");
+        }
+
+        state.saving = true;
+        state.transitionError = "";
+
+        try {
+            const order = await api.resendDownloads({
+                endpoint: resendDownloadsEndpoint,
+                id,
+            });
+
+            if (order) {
+                updateOrderList(order);
+
+                if (state.activeOrder && state.activeOrder.id === order.id) {
+                    state.activeOrder = order;
+                }
+
+                clearCachedData(buildCacheKey());
+            }
+
+            return order;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Failed to resend downloads email";
+            throw error;
+        } finally {
+            state.saving = false;
+        }
+    };
+
+    const resetDownload = async (downloadId, orderId) => {
+        if (!resetDownloadEndpoint) {
+            throw new Error("Reset download endpoint unavailable.");
+        }
+
+        state.saving = true;
+        state.transitionError = "";
+
+        try {
+            const result = await api.resetDownload({
+                endpoint: resetDownloadEndpoint,
+                downloadId,
+                orderId,
+            });
+
+            // If the API returned an updated order, refresh the active order
+            if (result?.order) {
+                updateOrderList(result.order);
+
+                if (state.activeOrder && state.activeOrder.id === result.order.id) {
+                    state.activeOrder = result.order;
+                }
+
+                clearCachedData(buildCacheKey());
+            }
+
+            return result;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Failed to reset download count";
+            throw error;
+        } finally {
+            state.saving = false;
+        }
+    };
+
     const bulkTransition = async (ids, nextState) => {
         if (!bulkTransitionEndpoint) {
             throw new Error("Bulk transition endpoint unavailable.");
@@ -582,6 +654,8 @@ export function useOrders({
         exportOrders,
         sendEmail,
         recordTransaction,
+        resendDownloads,
+        resetDownload,
         toggleSelection,
         clearSelection,
         metrics: perf.metrics,

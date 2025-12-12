@@ -34,6 +34,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Factory\EasyCartMVCFactory;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CacheService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\GdprService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\InvoiceService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
@@ -173,13 +174,25 @@ return new class () implements ServiceProviderInterface {
         );
 
         $container->set(
-            OrderService::class,
-            static fn (Container $container): OrderService => new OrderService($container->get(DatabaseInterface::class))
+            SettingsService::class,
+            static fn (Container $container): SettingsService => new SettingsService($container->get(DatabaseInterface::class))
         );
 
         $container->set(
-            SettingsService::class,
-            static fn (Container $container): SettingsService => new SettingsService($container->get(DatabaseInterface::class))
+            DigitalFileService::class,
+            static fn (Container $container): DigitalFileService => new DigitalFileService(
+                $container->get(DatabaseInterface::class),
+                $container->get(SettingsService::class)
+            )
+        );
+
+        $container->set(
+            OrderService::class,
+            static fn (Container $container): OrderService => new OrderService(
+                $container->get(DatabaseInterface::class),
+                null,
+                $container->has(DigitalFileService::class) ? $container->get(DigitalFileService::class) : null
+            )
         );
 
         $container->set(

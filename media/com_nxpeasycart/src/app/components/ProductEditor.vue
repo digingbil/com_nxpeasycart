@@ -84,12 +84,56 @@
                     </p>
                 </div>
 
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="product-title">
-                        {{ __("COM_NXPEASYCART_FIELD_PRODUCT_TITLE", "Title") }}
-                    </label>
-                    <input
-                        id="product-title"
+                <nav class="nxp-ec-editor-tabs" role="tablist">
+                    <button
+                        type="button"
+                        class="nxp-ec-editor-tab"
+                        :class="{ 'is-active': activeTab === 'general' }"
+                        @click="activeTab = 'general'"
+                    >
+                        {{ __("COM_NXPEASYCART_SETTINGS_TAB_GENERAL", "General") }}
+                    </button>
+                    <button
+                        type="button"
+                        class="nxp-ec-editor-tab"
+                        :class="{ 'is-active': activeTab === 'variants' }"
+                        @click="activeTab = 'variants'"
+                    >
+                        {{ __("COM_NXPEASYCART_FIELD_PRODUCT_VARIANTS", "Variants") }}
+                    </button>
+                    <button
+                        type="button"
+                        class="nxp-ec-editor-tab"
+                        :class="{ 'is-active': activeTab === 'images' }"
+                        @click="activeTab = 'images'"
+                    >
+                        {{ __("COM_NXPEASYCART_FIELD_PRODUCT_IMAGES", "Images") }}
+                    </button>
+                    <button
+                        type="button"
+                        class="nxp-ec-editor-tab"
+                        :class="{ 'is-active': activeTab === 'categories' }"
+                        @click="activeTab = 'categories'"
+                    >
+                        {{ __("COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL", "Categories") }}
+                    </button>
+                    <button
+                        type="button"
+                        class="nxp-ec-editor-tab"
+                        :class="{ 'is-active': activeTab === 'digital' }"
+                        @click="activeTab = 'digital'"
+                    >
+                        {{ __("COM_NXPEASYCART_DIGITAL_FILES", "Digital") }}
+                    </button>
+                </nav>
+
+                <section v-show="activeTab === 'general'" class="nxp-ec-editor-panel">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="product-title">
+                            {{ __("COM_NXPEASYCART_FIELD_PRODUCT_TITLE", "Title") }}
+                        </label>
+                        <input
+                            id="product-title"
                         class="nxp-ec-form-input"
                         type="text"
                         v-model.trim="form.title"
@@ -145,59 +189,95 @@
                     <textarea
                         id="product-long-desc"
                         class="nxp-ec-form-textarea"
-                        rows="5"
-                        v-model="form.long_desc"
-                    ></textarea>
-                </div>
+                            rows="5"
+                            v-model="form.long_desc"
+                        ></textarea>
+                    </div>
 
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="product-status">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_FIELD_PRODUCT_STATUS",
-                                "Status"
-                            )
-                        }}
-                    </label>
-                    <select
-                        id="product-status"
-                        class="nxp-ec-form-select"
-                        v-model.number="form.status"
-                    >
-                        <option :value="1">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="product-status">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_ACTIVE",
-                                    "Active (visible & purchasable)"
+                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS",
+                                    "Status"
                                 )
                             }}
-                        </option>
-                        <option :value="-1">
+                        </label>
+                        <select
+                            id="product-status"
+                            class="nxp-ec-form-select"
+                            v-model.number="form.status"
+                        >
+                            <option :value="1">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_ACTIVE",
+                                        "Active (visible & purchasable)"
+                                    )
+                                }}
+                            </option>
+                            <option :value="-1">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_OUT_OF_STOCK",
+                                        "Out of stock (visible, purchase disabled)"
+                                    )
+                                }}
+                            </option>
+                            <option :value="0">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_INACTIVE",
+                                        "Inactive (hidden)"
+                                    )
+                                }}
+                            </option>
+                        </select>
+                        <p class="nxp-ec-form-help">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_OUT_OF_STOCK",
-                                    "Out of stock (visible, purchase disabled)"
+                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_DESC",
+                                    "Control storefront visibility and purchase availability."
                                 )
                             }}
-                        </option>
-                        <option :value="0">
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="product-type">
+                            {{ __("COM_NXPEASYCART_FIELD_PRODUCT_TYPE", "Product type") }}
+                        </label>
+                        <select
+                            id="product-type"
+                            class="nxp-ec-form-select"
+                            v-model="form.product_type"
+                        >
+                            <option value="physical">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_PRODUCT_TYPE_PHYSICAL",
+                                        "Physical product"
+                                    )
+                                }}
+                            </option>
+                            <option value="digital">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_PRODUCT_TYPE_DIGITAL",
+                                        "Digital product"
+                                    )
+                                }}
+                            </option>
+                        </select>
+                        <p class="nxp-ec-form-help">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_INACTIVE",
-                                    "Inactive (hidden)"
+                                    "COM_NXPEASYCART_CHECKOUT_DIGITAL_NOTE",
+                                    "Digital items skip shipping and deliver download links."
                                 )
                             }}
-                        </option>
-                    </select>
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_FIELD_PRODUCT_STATUS_DESC",
-                                "Control storefront visibility and purchase availability."
-                            )
-                        }}
-                    </p>
-                </div>
+                        </p>
+                    </div>
 
                 <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                     <label class="nxp-ec-form-label" for="product-featured">
@@ -223,8 +303,10 @@
                         }}
                     </p>
                 </div>
+                </section>
 
-                <div class="nxp-ec-form-field">
+                <section v-show="activeTab === 'images'" class="nxp-ec-editor-panel">
+                    <div class="nxp-ec-form-field">
                     <label class="nxp-ec-form-label" for="product-images">
                         {{
                             __("COM_NXPEASYCART_FIELD_PRODUCT_IMAGES", "Images")
@@ -334,95 +416,102 @@
                     </p>
                 </div>
 
-                <div class="nxp-ec-form-field">
-                    <label class="nxp-ec-form-label" for="product-category-select">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL",
-                                "Categories"
-                            )
-                        }}
-                    </label>
-                    <select
-                        id="product-category-select"
-                        class="nxp-ec-form-select"
-                        multiple
-                        v-model="selectedCategoryIds"
-                    >
-                        <option
-                            v-for="option in categoryOptionsList"
-                            :key="option.id"
-                            :value="option.id"
-                        >
-                            {{ getCategoryDisplayName(option) }}
-                        </option>
-                    </select>
-                    <div class="nxp-ec-chip-input nxp-ec-chip-input--selected">
-                        <span
-                            v-for="(category, index) in form.categories"
-                            :key="`selected-category-${index}`"
-                            class="nxp-ec-chip"
-                        >
-                            {{ category.title }}
-                            <button
-                                type="button"
-                                class="nxp-ec-chip__remove"
-                                @click="removeCategory(index)"
-                                :aria-label="
-                                    __(
-                                        'COM_NXPEASYCART_REMOVE_CATEGORY',
-                                        'Remove category'
-                                    )
-                                "
-                            >
-                                &times;
-                            </button>
-                        </span>
-                    </div>
-                    <div class="nxp-ec-chip-input nxp-ec-chip-input--new">
-                        <input
-                            id="product-category-input"
-                            type="text"
-                            class="nxp-ec-chip-input__field"
-                            v-model="newCategoryDraft"
-                            @keydown.enter.prevent="addCategory"
-                            :placeholder="
-                                __(
-                                    'COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD_PLACEHOLDER',
-                                    'New category name',
-                                    [],
-                                    'productCategoriesAddPlaceholder'
-                                )
-                            "
-                        />
-                        <button
-                            type="button"
-                            class="nxp-ec-btn"
-                            @click="addCategory"
-                        >
+                </section>
+
+                <section
+                    v-show="activeTab === 'categories'"
+                    class="nxp-ec-editor-panel"
+                >
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="product-category-select">
                             {{
                                 __(
-                                    "COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD",
-                                    "Add category",
-                                    [],
-                                    "productCategoriesAdd"
+                                    "COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL",
+                                    "Categories"
                                 )
                             }}
-                        </button>
+                        </label>
+                        <select
+                            id="product-category-select"
+                            class="nxp-ec-form-select"
+                            multiple
+                            v-model="selectedCategoryIds"
+                        >
+                            <option
+                                v-for="option in categoryOptionsList"
+                                :key="option.id"
+                                :value="option.id"
+                            >
+                                {{ getCategoryDisplayName(option) }}
+                            </option>
+                        </select>
+                        <div class="nxp-ec-chip-input nxp-ec-chip-input--selected">
+                            <span
+                                v-for="(category, index) in form.categories"
+                                :key="`selected-category-${index}`"
+                                class="nxp-ec-chip"
+                            >
+                                {{ category.title }}
+                                <button
+                                    type="button"
+                                    class="nxp-ec-chip__remove"
+                                    @click="removeCategory(index)"
+                                    :aria-label="
+                                        __(
+                                            'COM_NXPEASYCART_REMOVE_CATEGORY',
+                                            'Remove category'
+                                        )
+                                    "
+                                >
+                                    &times;
+                                </button>
+                            </span>
+                        </div>
+                        <div class="nxp-ec-chip-input nxp-ec-chip-input--new">
+                            <input
+                                id="product-category-input"
+                                type="text"
+                                class="nxp-ec-chip-input__field"
+                                v-model="newCategoryDraft"
+                                @keydown.enter.prevent="addCategory"
+                                :placeholder="
+                                    __(
+                                        'COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD_PLACEHOLDER',
+                                        'New category name',
+                                        [],
+                                        'productCategoriesAddPlaceholder'
+                                    )
+                                "
+                            />
+                            <button
+                                type="button"
+                                class="nxp-ec-btn"
+                                @click="addCategory"
+                            >
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_PRODUCT_CATEGORIES_ADD",
+                                        "Add category",
+                                        [],
+                                        "productCategoriesAdd"
+                                    )
+                                }}
+                            </button>
+                        </div>
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_PRODUCT_CATEGORIES_HELP",
+                                    "Select a category or create a new one",
+                                    [],
+                                    "productCategoriesHelp"
+                                )
+                            }}
+                        </p>
                     </div>
-                    <p class="nxp-ec-form-help">
-                        {{
-                            __(
-                                "COM_NXPEASYCART_PRODUCT_CATEGORIES_HELP",
-                                "Select a category or create a new one",
-                                [],
-                                "productCategoriesHelp"
-                            )
-                        }}
-                    </p>
-                </div>
+                </section>
 
-                <section class="nxp-ec-variant-section">
+                <section v-show="activeTab === 'variants'" class="nxp-ec-variant-section">
                     <header class="nxp-ec-variant-section__header">
                         <h3 class="nxp-ec-variant-section__title">
                             {{
@@ -593,6 +682,34 @@
                             <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                                 <label
                                     class="nxp-ec-form-label"
+                                    :for="`variant-digital-${index}`"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_DIGITAL",
+                                            "Digital item"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    :id="`variant-digital-${index}`"
+                                    class="nxp-ec-form-checkbox"
+                                    type="checkbox"
+                                    v-model="variant.is_digital"
+                                />
+                                <p class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_DIGITAL_HELP",
+                                            "Digital variants skip shipping."
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                                <label
+                                    class="nxp-ec-form-label"
                                     :for="`variant-active-${index}`"
                                 >
                                     {{
@@ -693,6 +810,216 @@
                     </article>
                 </section>
 
+                <section
+                    v-show="activeTab === 'digital'"
+                    class="nxp-ec-editor-panel nxp-ec-editor-panel--digital"
+                >
+                    <div class="nxp-ec-admin-alert nxp-ec-admin-alert--info">
+                        <p>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_CHECKOUT_DIGITAL_NOTE",
+                                    "Digital items skip shipping and deliver download links."
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div
+                        v-if="digitalState.error"
+                        class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
+                    >
+                        {{ digitalState.error }}
+                    </div>
+
+                    <div
+                        v-if="!product?.id"
+                        class="nxp-ec-admin-alert nxp-ec-admin-alert--warning"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_DIGITAL_FILES_SAVE_FIRST",
+                                "Save the product before attaching digital files."
+                            )
+                        }}
+                    </div>
+
+                    <div class="nxp-ec-digital-grid">
+                        <div class="nxp-ec-digital-card">
+                            <h4>
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_DIGITAL_FILES_UPLOAD",
+                                        "Upload file"
+                                    )
+                                }}
+                            </h4>
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="digital-file-input">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_FILES_SELECT",
+                                            "Choose file"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="digital-file-input"
+                                    ref="fileInputRef"
+                                    type="file"
+                                    class="nxp-ec-form-input"
+                                    @change="handleFileChange"
+                                    :disabled="digitalState.uploading || !product?.id"
+                                />
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="digital-version">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_VERSION",
+                                            "Version"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="digital-version"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model.trim="digitalState.version"
+                                    :disabled="digitalState.uploading"
+                                />
+                            </div>
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="digital-variant">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_VARIANT_SCOPE",
+                                            "Applies to"
+                                        )
+                                    }}
+                                </label>
+                                <select
+                                    id="digital-variant"
+                                    class="nxp-ec-form-select"
+                                    v-model="digitalState.variantId"
+                                    :disabled="digitalState.uploading"
+                                >
+                                    <option value="">
+                                        {{
+                                            __(
+                                                "COM_NXPEASYCART_DIGITAL_VARIANT_ALL",
+                                                "All variants"
+                                            )
+                                        }}
+                                    </option>
+                                    <option
+                                        v-for="variant in variantOptions"
+                                        :key="variant.id"
+                                        :value="variant.id"
+                                    >
+                                        {{ variant.label }}
+                                    </option>
+                                </select>
+                                <p class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_VARIANT_HELP",
+                                            "Scope downloads to a specific variant when needed."
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                            <div class="nxp-ec-admin-form__actions">
+                                <button
+                                    type="button"
+                                    class="nxp-ec-btn nxp-ec-btn--primary"
+                                    @click="uploadDigitalFile"
+                                    :disabled="digitalState.uploading || !product?.id"
+                                >
+                                    <i
+                                        class="fa-solid fa-cloud-arrow-up"
+                                        :class="{ 'fa-spin': digitalState.uploading }"
+                                        aria-hidden="true"
+                                    ></i>
+                                    {{
+                                        digitalState.uploading
+                                            ? __("JPROCESSING_REQUEST", "Uploading…")
+                                            : __("COM_NXPEASYCART_DIGITAL_FILES_UPLOAD", "Upload file")
+                                    }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="nxp-ec-digital-card">
+                            <div class="nxp-ec-digital-card__header">
+                                <h4>
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_DIGITAL_FILES",
+                                            "Digital files"
+                                        )
+                                    }}
+                                </h4>
+                                <span v-if="digitalState.loading">
+                                    {{
+                                        __(
+                                            "JGLOBAL_LOADING",
+                                            "Loading…"
+                                        )
+                                    }}
+                                </span>
+                            </div>
+                            <div v-if="digitalState.files.length === 0" class="nxp-ec-form-help">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_DIGITAL_FILES_EMPTY",
+                                        "No files attached to this product."
+                                    )
+                                }}
+                            </div>
+                            <div v-else class="nxp-ec-digital-table">
+                                <div
+                                    v-for="file in digitalState.files"
+                                    :key="file.id"
+                                    class="nxp-ec-digital-row"
+                                >
+                                    <div class="nxp-ec-digital-meta">
+                                        <strong>{{ file.filename }}</strong>
+                                        <div class="nxp-ec-admin-panel__muted">
+                                            {{ variantLabel(file.variant_id) }}
+                                            ·
+                                            {{ formatFileSize(file.file_size) }}
+                                            <template v-if="file.version">
+                                                · v{{ file.version }}
+                                            </template>
+                                        </div>
+                                        <div
+                                            v-if="file.created"
+                                            class="nxp-ec-admin-panel__muted"
+                                        >
+                                            {{ file.created }}
+                                        </div>
+                                    </div>
+                                    <div class="nxp-ec-digital-actions">
+                                        <button
+                                            type="button"
+                                            class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger"
+                                            :disabled="digitalState.deletingId === file.id"
+                                            @click="deleteDigitalFile(file)"
+                                        >
+                                            {{
+                                                digitalState.deletingId === file.id
+                                                    ? __("JPROCESSING_REQUEST", "Removing…")
+                                                    : __("COM_NXPEASYCART_REMOVE", "Remove")
+                                            }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <footer class="nxp-ec-modal__actions">
                     <button
                         type="button"
@@ -721,6 +1048,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { createApiClient } from "../../api.js";
 
 const props = defineProps({
     open: {
@@ -755,6 +1083,14 @@ const props = defineProps({
         type: String,
         default: "",
     },
+    digitalEndpoints: {
+        type: Object,
+        default: () => ({}),
+    },
+    csrfToken: {
+        type: String,
+        default: "",
+    },
 });
 
 const emit = defineEmits(["submit", "cancel"]);
@@ -765,6 +1101,10 @@ const formId = "product-editor-form";
 const baseCurrency = computed(() =>
     (props.baseCurrency || "USD").toUpperCase()
 );
+const activeTab = ref("general");
+const apiClient = createApiClient({ token: props.csrfToken || "" });
+const digitalEndpoints = computed(() => props.digitalEndpoints || {});
+const csrfToken = computed(() => props.csrfToken || "");
 
 const normaliseCategoryInput = (input) => {
     if (input == null) {
@@ -855,9 +1195,34 @@ const form = reactive({
     images: [],
     categories: [],
     variants: [],
+    product_type: "physical",
+    digital_files: [],
 });
 const newCategoryDraft = ref("");
 const slugEdited = ref(false);
+const productType = computed(() =>
+    (form.product_type || "physical").toString().toLowerCase()
+);
+const isDigitalProduct = computed(() => productType.value === "digital");
+const digitalState = reactive({
+    files: [],
+    loading: false,
+    uploading: false,
+    deletingId: 0,
+    error: "",
+    version: "1.0",
+    variantId: "",
+});
+const selectedFile = ref(null);
+const fileInputRef = ref(null);
+
+const resetFileInput = () => {
+    selectedFile.value = null;
+
+    if (fileInputRef.value) {
+        fileInputRef.value.value = "";
+    }
+};
 
 /**
  * Calculate the depth of a category in the hierarchy.
@@ -1033,6 +1398,7 @@ const blankVariant = () => ({
     weight: "",
     active: true,
     options: [],
+    is_digital: isDigitalProduct.value,
 });
 
 const blankOption = () => ({
@@ -1089,6 +1455,7 @@ const resetCategories = (categories) => {
 
 const resetVariants = (variants) => {
     form.variants.splice(0, form.variants.length, ...variants);
+    applyVariantDigitalDefaults();
 };
 
 const resetImages = (images) => {
@@ -1113,6 +1480,32 @@ const normaliseOptions = (options) => {
     return [];
 };
 
+const normaliseDigitalFiles = (files) => {
+    if (!Array.isArray(files)) {
+        return [];
+    }
+
+    return files
+        .map((file) => ({
+            id: Number.parseInt(file?.id ?? 0, 10) || 0,
+            product_id: Number.parseInt(file?.product_id ?? 0, 10) || 0,
+            variant_id:
+                file?.variant_id !== null && file?.variant_id !== undefined
+                    ? Number.parseInt(file.variant_id, 10) || 0
+                    : null,
+            filename: String(file?.filename ?? "").trim(),
+            storage_path: String(file?.storage_path ?? "").trim(),
+            file_size: Number.parseInt(file?.file_size ?? 0, 10) || 0,
+            mime_type:
+                file?.mime_type !== null && file?.mime_type !== undefined
+                    ? String(file.mime_type).trim()
+                    : "",
+            version: String(file?.version ?? "1.0").trim() || "1.0",
+            created: String(file?.created ?? "").trim(),
+        }))
+        .filter((file) => file.id > 0 && file.filename !== "");
+};
+
 const normaliseVariants = (variants) => {
     if (!Array.isArray(variants) || variants.length === 0) {
         return [blankVariant()];
@@ -1132,7 +1525,23 @@ const normaliseVariants = (variants) => {
         weight: variant?.weight != null ? String(variant.weight) : "",
         active: variant?.active !== undefined ? Boolean(variant.active) : true,
         options: normaliseOptions(variant?.options),
+        is_digital:
+            variant?.is_digital !== undefined
+                ? Boolean(variant.is_digital)
+                : isDigitalProduct.value,
     }));
+};
+
+const applyVariantDigitalDefaults = () => {
+    form.variants.forEach((variant) => {
+        if (variant.is_digital === undefined || variant.is_digital === null) {
+            variant.is_digital = isDigitalProduct.value;
+        }
+
+        if (isDigitalProduct.value) {
+            variant.weight = "";
+        }
+    });
 };
 
 const applyProduct = (product) => {
@@ -1146,6 +1555,10 @@ const applyProduct = (product) => {
         source.status !== undefined ? source.status : source.active
     );
     form.featured = source.featured !== undefined ? Boolean(source.featured) : false;
+    form.product_type =
+        typeof source.product_type === "string" && source.product_type !== ""
+            ? source.product_type.toLowerCase()
+            : "physical";
 
     const images = Array.isArray(source.images)
         ? source.images
@@ -1159,16 +1572,204 @@ const applyProduct = (product) => {
         : [];
     resetCategories(categories);
 
+    const digitalFiles = normaliseDigitalFiles(source.digital_files ?? []);
+    form.digital_files.splice(0, form.digital_files.length, ...digitalFiles);
+    digitalState.files = digitalFiles.slice();
+    digitalState.error = "";
+    digitalState.variantId = "";
+    digitalState.version = "1.0";
+    digitalState.deletingId = 0;
+    resetFileInput();
+
     newCategoryDraft.value = "";
 
     resetVariants(normaliseVariants(source.variants));
     slugEdited.value = Boolean(form.slug);
 };
 
+const variantOptions = computed(() =>
+    form.variants.map((variant, index) => {
+        const sku = String(variant?.sku ?? "").trim();
+        const optionLabel = Array.isArray(variant?.options)
+            ? variant.options
+                  .filter((option) => option?.name && option?.value)
+                  .map(
+                      (option) =>
+                          `${String(option.name).trim()}: ${String(option.value).trim()}`
+                  )
+                  .join(", ")
+            : "";
+        const fallback = __(
+            "COM_NXPEASYCART_FIELD_PRODUCT_VARIANT_HEADING",
+            "Variant %s",
+            [String(index + 1)]
+        );
+
+        return {
+            id: Number.parseInt(variant?.id ?? 0, 10) || 0,
+            label: sku || optionLabel || fallback,
+        };
+    })
+);
+
+const variantLabel = (variantId) => {
+    if (!variantId) {
+        return __("COM_NXPEASYCART_DIGITAL_VARIANT_ALL", "All variants");
+    }
+
+    const match = variantOptions.value.find((variant) => variant.id === variantId);
+
+    return match?.label || __("COM_NXPEASYCART_DIGITAL_VARIANT_SPECIFIC", "Variant");
+};
+
+const formatFileSize = (bytes) => {
+    const size = Number(bytes) || 0;
+
+    if (size <= 0) {
+        return __("COM_NXPEASYCART_DIGITAL_FILE_SIZE_UNKNOWN", "Unknown size");
+    }
+
+    const units = ["B", "KB", "MB", "GB"];
+    let index = 0;
+    let value = size;
+
+    while (value >= 1024 && index < units.length - 1) {
+        value /= 1024;
+        index += 1;
+    }
+
+    return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[index]}`;
+};
+
+const loadDigitalFiles = async () => {
+    if (!props.product?.id) {
+        digitalState.files = normaliseDigitalFiles(form.digital_files);
+        return;
+    }
+
+    if (!digitalEndpoints.value?.list) {
+        digitalState.files = normaliseDigitalFiles(form.digital_files);
+        return;
+    }
+
+    digitalState.loading = true;
+    digitalState.error = "";
+
+    try {
+        const files = await apiClient.fetchDigitalFiles({
+            endpoint: digitalEndpoints.value.list,
+            productId: props.product.id,
+        });
+        const normalised = normaliseDigitalFiles(files);
+        digitalState.files = normalised;
+        form.digital_files.splice(0, form.digital_files.length, ...normalised);
+    } catch (error) {
+        digitalState.error =
+            error?.message ||
+            __("COM_NXPEASYCART_ERROR_DIGITAL_FILES_UNAVAILABLE", "Unable to load digital files.");
+    } finally {
+        digitalState.loading = false;
+    }
+};
+
+const handleFileChange = (event) => {
+    const files = event?.target?.files;
+    selectedFile.value = files && files.length ? files[0] : null;
+};
+
+const uploadDigitalFile = async () => {
+    if (!props.product?.id) {
+        digitalState.error = __(
+            "COM_NXPEASYCART_ERROR_PRODUCT_ID_REQUIRED",
+            "Save the product before uploading files."
+        );
+        return;
+    }
+
+    if (!digitalEndpoints.value?.upload) {
+        digitalState.error = __(
+            "COM_NXPEASYCART_ERROR_DIGITAL_FILES_UNAVAILABLE",
+            "Digital upload endpoint unavailable."
+        );
+        return;
+    }
+
+    if (!selectedFile.value) {
+        digitalState.error = __(
+            "COM_NXPEASYCART_DIGITAL_FILES_UPLOAD",
+            "Select a file to upload."
+        );
+        return;
+    }
+
+    digitalState.uploading = true;
+    digitalState.error = "";
+
+    try {
+        const uploaded = await apiClient.uploadDigitalFile({
+            endpoint: digitalEndpoints.value.upload,
+            productId: props.product.id,
+            variantId: digitalState.variantId
+                ? Number.parseInt(digitalState.variantId, 10) || null
+                : null,
+            version: digitalState.version || "1.0",
+            file: selectedFile.value,
+        });
+
+        const normalised = uploaded
+            ? normaliseDigitalFiles([uploaded])
+            : [];
+
+        if (normalised.length) {
+            digitalState.files.unshift(normalised[0]);
+            form.digital_files.unshift(normalised[0]);
+        }
+    } catch (error) {
+        digitalState.error =
+            error?.message ||
+            __("COM_NXPEASYCART_ERROR_UPLOAD_FAILED", "Upload failed.");
+    } finally {
+        digitalState.uploading = false;
+        resetFileInput();
+    }
+};
+
+const deleteDigitalFile = async (file) => {
+    const id = Number.parseInt(file?.id ?? 0, 10) || 0;
+
+    if (!id || !digitalEndpoints.value?.delete) {
+        return;
+    }
+
+    digitalState.deletingId = id;
+    digitalState.error = "";
+
+    try {
+        await apiClient.deleteDigitalFile({
+            endpoint: digitalEndpoints.value.delete,
+            fileId: id,
+        });
+
+        const remaining = digitalState.files.filter((item) => item.id !== id);
+        digitalState.files = remaining;
+        form.digital_files.splice(0, form.digital_files.length, ...remaining);
+    } catch (error) {
+        digitalState.error =
+            error?.message ||
+            __("COM_NXPEASYCART_ERROR_DIGITAL_FILES_UNAVAILABLE", "Unable to delete file.");
+    } finally {
+        digitalState.deletingId = 0;
+    }
+};
+
 watch(
     () => props.product,
     (product) => {
         applyProduct(product);
+        activeTab.value = "general";
+        if (activeTab.value === "digital") {
+            loadDigitalFiles();
+        }
     },
     { immediate: true }
 );
@@ -1186,6 +1787,16 @@ watch(baseCurrency, (currency) => {
     form.variants.forEach((variant) => {
         variant.currency = currency;
     });
+});
+
+watch(productType, () => {
+    applyVariantDigitalDefaults();
+});
+
+watch(activeTab, (tab) => {
+    if (tab === "digital") {
+        loadDigitalFiles();
+    }
 });
 
 const addCategory = () => {
@@ -1790,6 +2401,7 @@ const submit = () => {
             stock,
             weight,
             active: Boolean(variant.active),
+            is_digital: Boolean(variant.is_digital),
             options,
         };
     });
@@ -1807,6 +2419,8 @@ const submit = () => {
         images: payloadImages,
         categories: payloadCategories,
         variants: payloadVariants,
+        product_type:
+            productType.value === "digital" ? "digital" : "physical",
     };
 
     emit("submit", payload);
@@ -1836,6 +2450,102 @@ watch(
     font-family: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', 'Ubuntu Mono', 'Menlo', 'Consolas', 'Monaco', 'Liberation Mono', monospace;
     white-space: pre;
     min-height: 200px;
+}
+
+.nxp-ec-editor-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.nxp-ec-editor-tab {
+    border: 1px solid var(--nxp-ec-border, #d0d5dd);
+    background: var(--nxp-ec-surface, #fff);
+    color: var(--nxp-ec-text, #111827);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.nxp-ec-editor-tab.is-active {
+    background: var(--nxp-ec-primary-bg-solid, #4f46e5);
+    color: #fff;
+    border-color: var(--nxp-ec-primary-bg-solid, #4f46e5);
+}
+
+.nxp-ec-editor-panel {
+    display: grid;
+    gap: 1rem;
+}
+
+.nxp-ec-editor-panel > .nxp-ec-admin-alert {
+    margin: 0;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+}
+
+.nxp-ec-digital-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.nxp-ec-digital-card {
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: var(--nxp-ec-surface, #fff);
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.nxp-ec-digital-card .nxp-ec-form-field {
+    min-width: 0;
+}
+
+.nxp-ec-digital-card .nxp-ec-form-input,
+.nxp-ec-digital-card .nxp-ec-form-select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nxp-ec-digital-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nxp-ec-digital-card__header h4 {
+    margin: 0;
+    flex: 1;
+}
+
+.nxp-ec-digital-table {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.nxp-ec-digital-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 0.5rem;
+    background: var(--nxp-ec-surface-alt, #f9fafb);
+}
+
+.nxp-ec-digital-meta {
+    flex: 1;
+}
+
+.nxp-ec-digital-actions {
+    display: flex;
+    align-items: center;
 }
 
 .nxp-ec-modal__header {

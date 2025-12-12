@@ -117,6 +117,18 @@ class SettingsService
         $settings['category_pagination_mode'] = ConfigHelper::getCategoryPaginationMode();
         $settings['stale_order_cleanup_enabled'] = ConfigHelper::isStaleOrderCleanupEnabled();
         $settings['stale_order_hours'] = ConfigHelper::getStaleOrderHours();
+        $settings['digital_download_max'] = isset($settings['digital_download_max'])
+            ? (int) $settings['digital_download_max']
+            : 5;
+        $settings['digital_download_expiry'] = isset($settings['digital_download_expiry'])
+            ? (int) $settings['digital_download_expiry']
+            : 30;
+        $settings['digital_storage_path'] = isset($settings['digital_storage_path']) && trim((string) $settings['digital_storage_path']) !== ''
+            ? (string) $settings['digital_storage_path']
+            : '/media/com_nxpeasycart/downloads';
+        $settings['digital_auto_fulfill'] = isset($settings['digital_auto_fulfill'])
+            ? (bool) ((int) $settings['digital_auto_fulfill'])
+            : true;
 
         return $settings;
     }

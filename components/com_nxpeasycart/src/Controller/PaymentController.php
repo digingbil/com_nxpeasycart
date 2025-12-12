@@ -165,10 +165,17 @@ class PaymentController extends BaseController
 
         $subtotal = (int) ($orderPayload['subtotal_cents'] ?? 0);
         $discount = max(0, (int) ($orderPayload['discount_cents'] ?? 0));
-        $shippingCents = $this->resolveShippingAmount(
-            isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
-            $subtotal
-        );
+        $requiresShipping = !empty($orderPayload['has_physical']);
+
+        if ($requiresShipping) {
+            $shippingCents = $this->resolveShippingAmount(
+                isset($payload['shipping_rule_id']) ? (int) $payload['shipping_rule_id'] : null,
+                $subtotal
+            );
+        } else {
+            $shippingCents            = 0;
+            $orderPayload['shipping'] = null;
+        }
         // Tax must be calculated on subtotal AFTER discounts to avoid overcharging gateways
         $taxableSubtotal = max(0, $subtotal - $discount);
         $tax = $this->calculateTaxAmount($payload, $taxableSubtotal);
@@ -370,6 +377,8 @@ class PaymentController extends BaseController
         $container = Factory::getContainer();
         $db        = $container->get(DatabaseInterface::class);
         $items     = [];
+        $hasDigital  = false;
+        $hasPhysical = false;
 
         // SECURITY: Recalculate ALL prices from database - never trust cart prices
         // Collect all variant IDs first for batch query (performance optimization)
@@ -398,11 +407,14 @@ class PaymentController extends BaseController
                 );
             }
 
-            if (!(bool) $variant->active) {
+            if (!(bool) $variant->active || (isset($variant->product_active) && !(bool) $variant->product_active)) {
                 throw new RuntimeException(
                     Text::sprintf('COM_NXPEASYCART_ERROR_VARIANT_INACTIVE', $variant->sku ?? $variantId)
                 );
             }
+
+            $productType = isset($variant->product_type) ? strtolower((string) $variant->product_type) : 'physical';
+            $isDigital   = ((int) ($variant->is_digital ?? 0) === 1) || $productType === 'digital';
 
             // Use database price, NOT cart price
             $unitPriceCents = (int) ($variant->price_cents ?? 0);
@@ -416,10 +428,17 @@ class PaymentController extends BaseController
                 'unit_price_cents' => $unitPriceCents,  // FROM DATABASE
                 'total_cents'      => $totalCents,       // RECALCULATED
                 'currency'         => $currency,
-                'product_id'       => $item['product_id'] ?? null,
+                'product_id'       => isset($item['product_id']) ? (int) $item['product_id'] : null,
                 'variant_id'       => $variantId,
                 'tax_rate'         => '0.00',
+                'is_digital'       => $isDigital,
             ];
+
+            if ($isDigital) {
+                $hasDigital = true;
+            } else {
+                $hasPhysical = true;
+            }
         }
 
         // Recalculate subtotal from database prices
@@ -469,6 +488,8 @@ class PaymentController extends BaseController
             'total_cents'    => 0,  // Will be recalculated after shipping and tax
             'coupon'         => $couponData,
             'locale'         => $locale,
+            'has_digital'    => $hasDigital,
+            'has_physical'   => $hasPhysical,
         ];
     }
 
@@ -843,6 +864,10 @@ class PaymentController extends BaseController
         $variantIds = [];
 
         foreach ($items as $item) {
+            if (!empty($item['is_digital'])) {
+                continue;
+            }
+
             $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
 
             if ($variantId > 0) {
@@ -1268,16 +1293,24 @@ class PaymentController extends BaseController
 
         $query = $db->getQuery(true)
             ->select([
-                $db->quoteName('id'),
-                $db->quoteName('product_id'),
-                $db->quoteName('sku'),
-                $db->quoteName('price_cents'),
-                $db->quoteName('currency'),
-                $db->quoteName('stock'),
-                $db->quoteName('active'),
+                $db->quoteName('v.id'),
+                $db->quoteName('v.product_id'),
+                $db->quoteName('v.sku'),
+                $db->quoteName('v.price_cents'),
+                $db->quoteName('v.currency'),
+                $db->quoteName('v.stock'),
+                $db->quoteName('v.active'),
+                $db->quoteName('v.is_digital'),
+                $db->quoteName('p.product_type', 'product_type'),
+                $db->quoteName('p.active', 'product_active'),
             ])
-            ->from($db->quoteName('#__nxp_easycart_variants'))
-            ->whereIn($db->quoteName('id'), $variantIds);
+            ->from($db->quoteName('#__nxp_easycart_variants', 'v'))
+            ->join(
+                'INNER',
+                $db->quoteName('#__nxp_easycart_products', 'p')
+                . ' ON ' . $db->quoteName('p.id') . ' = ' . $db->quoteName('v.product_id')
+            )
+            ->whereIn($db->quoteName('v.id'), $variantIds);
 
         $db->setQuery($query);
 

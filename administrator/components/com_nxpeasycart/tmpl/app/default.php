@@ -106,6 +106,9 @@ $shippingEndpointList         = $adminBase . '/index.php?option=com_nxpeasycart&
 $shippingEndpointStore        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.store&format=json&' . $tokenQuery;
 $shippingEndpointUpdate       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.update&format=json&' . $tokenQuery;
 $shippingEndpointDelete       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.shipping.delete&format=json&' . $tokenQuery;
+$digitalFilesEndpointList     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.digitalfiles.list&format=json';
+$digitalFilesEndpointUpload   = $adminBase . '/index.php?option=com_nxpeasycart&task=api.digitalfiles.upload&format=json&' . $tokenQuery;
+$digitalFilesEndpointDelete   = $adminBase . '/index.php?option=com_nxpeasycart&task=api.digitalfiles.delete&format=json&' . $tokenQuery;
 $settingsEndpointGet          = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.show&format=json';
 $settingsEndpointSave         = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json&' . $tokenQuery;
 $logsEndpointList             = $adminBase . '/index.php?option=com_nxpeasycart&task=api.logs.list&format=json';
@@ -246,6 +249,11 @@ $appConfig = [
             'create' => $shippingEndpointStore,
             'update' => $shippingEndpointUpdate,
             'delete' => $shippingEndpointDelete,
+        ],
+        'digitalfiles' => [
+            'list'   => $digitalFilesEndpointList,
+            'upload' => $digitalFilesEndpointUpload,
+            'delete' => $digitalFilesEndpointDelete,
         ],
         'settings' => [
             'show'   => $settingsEndpointGet,
@@ -484,6 +492,9 @@ $dataAttributes = [
     'shipping-endpoint-create'           => $shippingEndpointStore,
     'shipping-endpoint-update'           => $shippingEndpointUpdate,
     'shipping-endpoint-delete'           => $shippingEndpointDelete,
+    'digitalfiles-endpoint-list'         => $digitalFilesEndpointList,
+    'digitalfiles-endpoint-upload'       => $digitalFilesEndpointUpload,
+    'digitalfiles-endpoint-delete'       => $digitalFilesEndpointDelete,
     'settings-endpoint-show'             => $settingsEndpointGet,
     'settings-endpoint-update'           => $settingsEndpointSave,
     'payments-endpoint-show'             => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.show&format=json',

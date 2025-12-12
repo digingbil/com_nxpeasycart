@@ -59,6 +59,9 @@ class ProductTable extends Table
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SLUG_EXISTS'));
         }
 
+        $productType       = isset($this->product_type) ? strtolower((string) $this->product_type) : 'physical';
+        $this->product_type = \in_array($productType, ['physical', 'digital'], true) ? $productType : 'physical';
+
         $db   = $this->getDatabase();
         $slug = $this->slug;
 

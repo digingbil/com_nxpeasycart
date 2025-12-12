@@ -87,6 +87,12 @@ class SettingsController extends AbstractJsonController
             'stale_order_cleanup_enabled' => ConfigHelper::isStaleOrderCleanupEnabled(),
             'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
             'show_advanced_mode' => ConfigHelper::isShowAdvancedMode(),
+            'digital' => [
+                'max_downloads' => (int) $service->get('digital_download_max', 5),
+                'expiry_days'   => (int) $service->get('digital_download_expiry', 30),
+                'storage_path'  => (string) $service->get('digital_storage_path', '/media/com_nxpeasycart/downloads'),
+                'auto_fulfill'  => (bool) $service->get('digital_auto_fulfill', 1),
+            ],
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
                 'text_color'    => (string) $service->get('visual.text_color', ''),
@@ -146,6 +152,11 @@ class SettingsController extends AbstractJsonController
             ? (bool) $payload['show_advanced_mode']
             : null;
         $displayLocaleInput = $payload['display_locale'] ?? null;
+        $digital = isset($payload['digital']) && \is_array($payload['digital']) ? $payload['digital'] : [];
+        $digitalMaxDownloads = isset($digital['max_downloads']) ? (int) $digital['max_downloads'] : null;
+        $digitalExpiryDays   = isset($digital['expiry_days']) ? (int) $digital['expiry_days'] : null;
+        $digitalStoragePath  = array_key_exists('storage_path', $digital) ? trim((string) $digital['storage_path']) : null;
+        $digitalAutoFulfill  = isset($digital['auto_fulfill']) ? (bool) $digital['auto_fulfill'] : null;
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -227,6 +238,28 @@ class SettingsController extends AbstractJsonController
 
         if (isset($security['rate_limits']['offline_window_minutes'])) {
             $rateLimits['offline_window'] = max(0, (int) $security['rate_limits']['offline_window_minutes']) * 60;
+        }
+
+        if ($digitalMaxDownloads !== null) {
+            $service->set('digital_download_max', max(0, $digitalMaxDownloads));
+        }
+
+        if ($digitalExpiryDays !== null) {
+            $service->set('digital_download_expiry', max(0, $digitalExpiryDays));
+        }
+
+        if ($digitalAutoFulfill !== null) {
+            $service->set('digital_auto_fulfill', $digitalAutoFulfill ? 1 : 0);
+        }
+
+        if ($digitalStoragePath !== null) {
+            $sanitisedPath = $digitalStoragePath !== '' ? $digitalStoragePath : '/media/com_nxpeasycart/downloads';
+
+            if (strlen($sanitisedPath) > 500) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_SETTINGS_DIGITAL_PATH_TOO_LONG'), 400);
+            }
+
+            $service->set('digital_storage_path', $sanitisedPath);
         }
 
         // Only update store settings if provided in payload

@@ -104,7 +104,7 @@ class PaymentGatewayManager
             }
         }
 
-        if ($order && ($order['state'] ?? '') === 'paid') {
+        if ($order && \in_array($order['state'] ?? '', ['paid', 'fulfilled'], true)) {
             $this->mailer->sendOrderConfirmation($order);
 
             // Dispatch plugin event: onNxpEasycartAfterPaymentComplete

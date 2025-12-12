@@ -42,6 +42,19 @@
                 }}
             </button>
             <button
+                type="button"
+                class="nxp-ec-settings-tab"
+                :class="{ 'is-active': activeTab === 'digital' }"
+                @click="activeTab = 'digital'"
+            >
+                {{
+                    __(
+                        "COM_NXPEASYCART_SETTINGS_DIGITAL_TITLE",
+                        "Digital"
+                    )
+                }}
+            </button>
+            <button
                 v-if="settingsDraft.showAdvancedMode"
                 type="button"
                 class="nxp-ec-settings-tab"
@@ -632,6 +645,190 @@
                                       [],
                                       "settingsGeneralSave"
                                   )
+                        }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div v-else-if="activeTab === 'digital'" class="nxp-ec-settings-panel">
+            <header class="nxp-ec-settings-panel__header">
+                <h3>
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_DIGITAL_TITLE",
+                            "Digital products"
+                        )
+                    }}
+                </h3>
+                <button
+                    class="nxp-ec-btn"
+                    type="button"
+                    @click="refreshGeneral"
+                    :disabled="settingsState.loading"
+                >
+                    {{
+                        __(
+                            "COM_NXPEASYCART_SETTINGS_GENERAL_REFRESH",
+                            "Refresh"
+                        )
+                    }}
+                </button>
+            </header>
+
+            <div
+                v-if="settingsState.error"
+                class="nxp-ec-admin-alert nxp-ec-admin-alert--error"
+            >
+                {{ settingsState.error }}
+            </div>
+
+            <div
+                v-else-if="settingsState.loading"
+                class="nxp-ec-admin-panel__loading"
+            >
+                {{
+                    __(
+                        "COM_NXPEASYCART_SETTINGS_GENERAL_LOADING",
+                        "Loading settings…"
+                    )
+                }}
+            </div>
+
+            <form
+                v-else
+                class="nxp-ec-settings-form"
+                @submit.prevent="saveDigital"
+            >
+                <div class="nxp-ec-form-grid">
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-digital-max">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_MAX_DOWNLOADS",
+                                    "Default max downloads"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-max"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="settingsDraft.digitalMaxDownloads"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_MAX_DOWNLOADS_DESC",
+                                    "Maximum downloads allowed per purchase (0 for unlimited)."
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-digital-expiry">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_EXPIRY",
+                                    "Download link expiry (days)"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-expiry"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="0"
+                            step="1"
+                            v-model.number="settingsDraft.digitalExpiryDays"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_EXPIRY_DESC",
+                                    "Number of days before links expire (0 for no expiry)."
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                        <label class="nxp-ec-form-label" for="settings-digital-fulfill">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_AUTO_FULFILL",
+                                    "Auto-fulfill digital orders"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-fulfill"
+                            class="nxp-ec-form-checkbox"
+                            type="checkbox"
+                            v-model="settingsDraft.digitalAutoFulfill"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_AUTO_FULFILL_DESC",
+                                    "Mark digital-only orders fulfilled after payment."
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-digital-storage">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_STORAGE_PATH",
+                                    "Storage path"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-storage"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="settingsDraft.digitalStoragePath"
+                            maxlength="250"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_STORAGE_PATH_DESC",
+                                    "Protected directory for digital files. Adjust only if you know the server path."
+                                )
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="nxp-ec-settings-actions">
+                    <button
+                        class="nxp-ec-btn nxp-ec-btn--link"
+                        type="button"
+                        @click="resetDigital"
+                    >
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_GENERAL_RESET",
+                                "Reset"
+                            )
+                        }}
+                    </button>
+                    <button
+                        class="nxp-ec-btn nxp-ec-btn--primary"
+                        type="submit"
+                        :disabled="settingsState.saving"
+                    >
+                        {{
+                            settingsState.saving
+                                ? __("JPROCESSING_REQUEST", "Saving…")
+                                : __("JSAVE", "Save")
                         }}
                     </button>
                 </div>
@@ -1868,7 +2065,7 @@ const __ = props.translate;
 const settingsState = props.settingsState;
 const paymentsState = props.paymentsState;
 
-const validTabs = ["general", "security", "payments", "visual"];
+const validTabs = ["general", "digital", "security", "payments", "visual"];
 const activeTab = ref(
     validTabs.includes(props.initialTab) ? props.initialTab : "general"
 );
@@ -1904,6 +2101,10 @@ const settingsDraft = reactive({
     staleOrderCleanupEnabled: false,
     staleOrderHours: 48,
     showAdvancedMode: false,
+    digitalMaxDownloads: 5,
+    digitalExpiryDays: 30,
+    digitalStoragePath: "",
+    digitalAutoFulfill: true,
 });
 
 const securityDraft = reactive({
@@ -2009,6 +2210,17 @@ const applySettings = (values = {}) => {
             ? Math.max(1, Math.min(720, Number(values.stale_order_hours)))
             : 48,
         showAdvancedMode: Boolean(values?.show_advanced_mode ?? false),
+        digitalMaxDownloads: Number.isFinite(Number(values?.digital_download_max))
+            ? Math.max(0, Number(values.digital_download_max))
+            : 5,
+        digitalExpiryDays: Number.isFinite(Number(values?.digital_download_expiry))
+            ? Math.max(0, Number(values.digital_download_expiry))
+            : 30,
+        digitalStoragePath:
+            typeof values?.digital_storage_path === "string"
+                ? values.digital_storage_path
+                : "",
+        digitalAutoFulfill: Boolean(values?.digital_auto_fulfill ?? true),
     });
 
     Object.assign(visualDraft, {
@@ -2131,6 +2343,27 @@ const saveGeneral = () => {
 };
 
 const resetGeneral = () => {
+    applySettings(settingsState.values ?? {});
+};
+
+const saveDigital = () => {
+    const maxDownloads = Number.isFinite(Number(settingsDraft.digitalMaxDownloads))
+        ? Math.max(0, Number(settingsDraft.digitalMaxDownloads))
+        : 0;
+    const expiryDays = Number.isFinite(Number(settingsDraft.digitalExpiryDays))
+        ? Math.max(0, Number(settingsDraft.digitalExpiryDays))
+        : 0;
+    const storagePath = (settingsDraft.digitalStoragePath || "").trim();
+
+    emit("save-settings", {
+        digital_download_max: maxDownloads,
+        digital_download_expiry: expiryDays,
+        digital_storage_path: storagePath,
+        digital_auto_fulfill: Boolean(settingsDraft.digitalAutoFulfill),
+    });
+};
+
+const resetDigital = () => {
     applySettings(settingsState.values ?? {});
 };
 

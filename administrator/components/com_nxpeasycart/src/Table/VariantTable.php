@@ -67,6 +67,7 @@ class VariantTable extends Table
         }
 
         $this->active = (int) (bool) $this->active;
+        $this->is_digital = (int) (bool) ($this->is_digital ?? 0);
         $this->stock  = max(0, (int) $this->stock);
 
         if ($this->price_cents < 0) {

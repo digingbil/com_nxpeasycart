@@ -112,8 +112,14 @@ class ProductModel extends AdminModel
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_PRODUCT_TITLE_REQUIRED'));
         }
 
-        $validated['images']     = $this->filterImages($data['images'] ?? []);
-        $validated['variants']   = $this->filterVariants($data['variants'] ?? []);
+        $productType = isset($data['product_type'])
+            ? strtolower(trim((string) $data['product_type']))
+            : 'physical';
+        $productType = \in_array($productType, ['physical', 'digital'], true) ? $productType : 'physical';
+
+        $validated['product_type'] = $productType;
+        $validated['images']       = $this->filterImages($data['images'] ?? []);
+        $validated['variants']     = $this->filterVariants($data['variants'] ?? [], $productType);
         $validated['categories'] = $this->filterCategories($data['categories'] ?? []);
         $primaryId               = isset($data['primary_category_id']) ? (int) $data['primary_category_id'] : null;
         $validated['primary_category_id'] = ($primaryId !== null && $primaryId > 0) ? $primaryId : null;
@@ -196,6 +202,8 @@ class ProductModel extends AdminModel
         }
 
         $table->active   = ProductStatus::normalise($table->active ?? $table->status ?? ProductStatus::ACTIVE);
+        $productType     = isset($table->product_type) ? strtolower((string) $table->product_type) : 'physical';
+        $table->product_type = \in_array($productType, ['physical', 'digital'], true) ? $productType : 'physical';
         $table->featured = (int) (bool) $table->featured;
         $primaryCategoryId = isset($table->primary_category_id) ? (int) $table->primary_category_id : 0;
         $table->primary_category_id = $primaryCategoryId > 0 ? $primaryCategoryId : null;
@@ -305,6 +313,9 @@ class ProductModel extends AdminModel
             $item->variants    = $variants[$id]   ?? [];
             $item->categories  = $categories[$id] ?? [];
             $item->primary_category_id = $primaryCategoryMap[$id] ?? null;
+            $item->product_type = isset($item->product_type)
+                ? strtolower((string) $item->product_type)
+                : 'physical';
             $items[$index]     = $item;
         }
 
@@ -423,13 +434,14 @@ class ProductModel extends AdminModel
     /**
      * Normalise variants payload.
      *
-     * @param mixed $input Raw variants payload
+     * @param mixed  $input       Raw variants payload
+     * @param string $productType Product type for default digital flag
      *
      * @return array<int, array<string, mixed>>
      *
      * @since 0.1.5
      */
-    private function filterVariants($input): array
+    private function filterVariants($input, string $productType = 'physical'): array
     {
         if ($input === null) {
             return [];
@@ -522,6 +534,9 @@ class ProductModel extends AdminModel
                 'options'     => $options,
                 'weight'      => $weight,
                 'active'      => isset($variant['active']) ? (bool) $variant['active'] : true,
+                'is_digital'  => array_key_exists('is_digital', $variant)
+                    ? (bool) $variant['is_digital']
+                    : ($productType === 'digital'),
             ];
         }
 
@@ -718,6 +733,7 @@ class ProductModel extends AdminModel
                 'options'     => $this->encodeOptions($variant['options'] ?? null),
                 'weight'      => $variant['weight'],
                 'active'      => (int) (bool) $variant['active'],
+                'is_digital'  => !empty($variant['is_digital']) ? 1 : 0,
             ];
 
             if (!$table->bind($payload)) {
@@ -1060,6 +1076,7 @@ class ProductModel extends AdminModel
                 $db->quoteName('options'),
                 $db->quoteName('weight'),
                 $db->quoteName('active'),
+                $db->quoteName('is_digital'),
             ])
             ->from($db->quoteName('#__nxp_easycart_variants'))
             ->where($db->quoteName('product_id') . ' = :productId')
@@ -1081,6 +1098,7 @@ class ProductModel extends AdminModel
                 'options'     => $this->decodeOptions($row->options ?? null),
                 'weight'      => $row->weight !== null ? (string) $row->weight : null,
                 'active'      => (bool) $row->active,
+                'is_digital'  => !empty($row->is_digital),
             ];
         }
 

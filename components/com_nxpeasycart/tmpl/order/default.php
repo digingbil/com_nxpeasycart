@@ -93,6 +93,31 @@ $trackingUrl    = $order ? trim((string) ($order['tracking_url'] ?? '')) : '';
 $events         = $order && \is_array($order['fulfillment_events'] ?? null) ? $order['fulfillment_events'] : [];
 $currency       = $order ? strtoupper((string) ($order['currency'] ?? ConfigHelper::getBaseCurrency())) : ConfigHelper::getBaseCurrency();
 $formatMoney    = static fn (int $cents) => MoneyHelper::format($cents, $currency);
+$downloads      = $order && \is_array($order['downloads'] ?? null) ? $order['downloads'] : [];
+$showDownloads  = $order && $downloads && \in_array($state, ['paid', 'fulfilled'], true);
+
+$downloadRemaining = static function (array $download): string {
+    $used = (int) ($download['download_count'] ?? 0);
+    $max  = isset($download['max_downloads']) ? (int) $download['max_downloads'] : null;
+
+    if ($max === null || $max <= 0) {
+        return Text::_('COM_NXPEASYCART_ORDER_DOWNLOADS_UNLIMITED');
+    }
+
+    $remaining = max(0, $max - $used);
+
+    return Text::sprintf('COM_NXPEASYCART_ORDER_DOWNLOADS_REMAINING', $remaining);
+};
+
+$downloadExpiry = static function (array $download) use ($formatDate): string {
+    $expiresAt = $download['expires_at'] ?? null;
+
+    if ($expiresAt === null || $expiresAt === '') {
+        return '';
+    }
+
+    return Text::sprintf('COM_NXPEASYCART_ORDER_DOWNLOADS_EXPIRES', $formatDate((string) $expiresAt));
+};
 ?>
 
 <section class="nxp-ec-order-confirmation">
@@ -193,6 +218,40 @@ $formatMoney    = static fn (int $cents) => MoneyHelper::format($cents, $currenc
                     </li>
                 <?php endforeach; ?>
             </ul>
+            <?php if ($showDownloads) : ?>
+                <div class="nxp-ec-order-confirmation__downloads">
+                    <h3><?php echo Text::_('COM_NXPEASYCART_ORDER_DOWNLOADS_TITLE'); ?></h3>
+                    <ul class="nxp-ec-order-confirmation__download-list">
+                        <?php foreach ($downloads as $download) : ?>
+                            <li class="nxp-ec-order-confirmation__download">
+                                <div class="nxp-ec-order-confirmation__download-meta">
+                                    <strong><?php echo htmlspecialchars((string) ($download['filename'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    <?php if (!empty($download['version'])) : ?>
+                                        <span class="nxp-ec-order-confirmation__download-version">
+                                            v<?php echo htmlspecialchars((string) $download['version'], ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                    <div class="nxp-ec-order-confirmation__download-hint">
+                                        <?php echo htmlspecialchars($downloadRemaining($download), ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php $expiresLabel = $downloadExpiry($download); ?>
+                                        <?php if ($expiresLabel !== '') : ?>
+                                            · <?php echo htmlspecialchars($expiresLabel, ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php if (!empty($download['url'])) : ?>
+                                    <a
+                                        class="nxp-ec-btn"
+                                        href="<?php echo htmlspecialchars((string) $download['url'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    >
+                                        <?php echo Text::_('COM_NXPEASYCART_DOWNLOAD'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
             <div class="nxp-ec-order-confirmation__totals">
                 <div>
                     <span><?php echo Text::_('COM_NXPEASYCART_ORDER_SUBTOTAL'); ?></span>
@@ -220,11 +279,12 @@ $formatMoney    = static fn (int $cents) => MoneyHelper::format($cents, $currenc
                     <?php
                     $taxRate = isset($order['tax_rate']) ? (float) $order['tax_rate'] : 0;
                     $taxInclusive = !empty($order['tax_inclusive']);
-                    $taxLabel = Text::_('COM_NXPEASYCART_CART_TAX');
+                    $taxName = !empty($order['tax_name']) ? (string) $order['tax_name'] : Text::_('COM_NXPEASYCART_CART_TAX');
+                    $taxLabel = $taxName;
                     if ($taxRate > 0) {
                         $taxLabel = $taxInclusive
-                            ? Text::sprintf('COM_NXPEASYCART_TAX_LABEL_INCLUSIVE', $taxRate)
-                            : Text::sprintf('COM_NXPEASYCART_TAX_LABEL_EXCLUSIVE', $taxRate);
+                            ? sprintf('%s (%s%% incl.)', $taxName, $taxRate)
+                            : sprintf('%s (%s%%)', $taxName, $taxRate);
                     }
                     ?>
                     <div>

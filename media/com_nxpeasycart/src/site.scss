@@ -1522,6 +1522,28 @@
         color: var(--nxp-ec-color-muted);
     }
 
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-left: 0.35rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: var(--nxp-ec-radius-pill);
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--nxp-ec-color-primary);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    &__notice {
+        background: var(--nxp-ec-color-surface-alt);
+        border: 1px dashed var(--nxp-ec-color-border);
+        padding: 0.85rem 1rem;
+        border-radius: var(--nxp-ec-radius-md);
+        color: var(--nxp-ec-color-muted);
+        margin: 0 0 1rem;
+    }
+
     &__totals {
         display: flex;
         flex-direction: column;
@@ -1779,6 +1801,52 @@
             font-size: 1rem;
             line-height: 1.4;
         }
+    }
+
+    &__downloads {
+        margin-top: 1.5rem;
+        border-top: 1px solid var(--nxp-ec-color-border);
+        padding-top: 1.25rem;
+    }
+
+    &__download-list {
+        list-style: none;
+        margin: 0.5rem 0 0;
+        padding: 0;
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    &__download {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--nxp-ec-color-border);
+        border-radius: var(--nxp-ec-radius-md);
+        background: var(--nxp-ec-color-surface-alt);
+    }
+
+    &__download-meta {
+        display: grid;
+        gap: 0.25rem;
+    }
+
+    &__download-hint {
+        color: var(--nxp-ec-color-muted);
+        font-size: 0.9rem;
+    }
+
+    &__download-version {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.1rem 0.5rem;
+        border-radius: var(--nxp-ec-radius-pill);
+        background: rgba(15, 23, 42, 0.05);
+        color: var(--nxp-ec-color-muted);
+        font-size: 0.8rem;
+        margin-left: 0.35rem;
     }
 
     &__variant,

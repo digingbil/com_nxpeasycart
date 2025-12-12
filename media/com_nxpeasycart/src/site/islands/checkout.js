@@ -42,7 +42,7 @@ export default function mountCheckoutIsland(el) {
               <span>{{ labels.subtotal }}</span>
               <strong>{{ formatMoney(subtotal) }}</strong>
             </div>
-            <div class="nxp-ec-checkout__floating-row" v-if="selectedShippingCost > 0">
+            <div class="nxp-ec-checkout__floating-row" v-if="requiresShipping">
               <span>{{ labels.shipping }}</span>
               <strong>{{ formatMoney(selectedShippingCost) }}</strong>
             </div>
@@ -76,6 +76,10 @@ export default function mountCheckoutIsland(el) {
                   <div class="nxp-ec-checkout__item-details">
                     <div>
                       <strong>{{ item.product_title || item.title }}</strong>
+                      <span
+                        v-if="item.is_digital"
+                        class="nxp-ec-checkout__badge"
+                      >{{ labels.digital_badge }}</span>
                       <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
                     </div>
                     <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
@@ -124,7 +128,7 @@ export default function mountCheckoutIsland(el) {
                   <span>{{ labels.discount }}</span>
                   <strong>-{{ formatMoney(discountCents) }}</strong>
                 </div>
-                <div>
+                <div v-if="requiresShipping">
                   <span>{{ labels.shipping }}</span>
                   <strong>{{ formatMoney(selectedShippingCost) }}</strong>
                 </div>
@@ -222,7 +226,7 @@ export default function mountCheckoutIsland(el) {
               </div>
             </fieldset>
 
-            <fieldset>
+            <fieldset v-if="requiresShipping">
               <legend>{{ labels.shipping_address }}</legend>
               <div class="nxp-ec-checkout__field">
                 <label class="nxp-ec-checkout__checkbox">
@@ -332,7 +336,7 @@ export default function mountCheckoutIsland(el) {
               </div>
             </fieldset>
 
-            <fieldset>
+            <fieldset v-if="requiresShipping">
               <legend>{{ labels.shipping }}</legend>
               <p class="nxp-ec-checkout__radio-group">
                 <template v-if="!destinationCountry">
@@ -406,6 +410,20 @@ export default function mountCheckoutIsland(el) {
             const cartItems = reactive(
                 (cart.items || []).map((item) => ({ ...item }))
             );
+            const initialHasPhysical =
+                cart.has_physical !== undefined
+                    ? Boolean(cart.has_physical)
+                    : cart.requires_shipping !== undefined
+                        ? Boolean(cart.requires_shipping)
+                        : (cart.items || []).some((item) => !item.is_digital);
+            const initialHasDigital =
+                cart.has_digital !== undefined
+                    ? Boolean(cart.has_digital)
+                    : (cart.items || []).some((item) => item.is_digital);
+            const cartFlags = reactive({
+                hasPhysical: initialHasPhysical,
+                hasDigital: initialHasDigital,
+            });
             const currency =
                 cart.summary?.currency ||
                 settings.base_currency ||
@@ -439,6 +457,7 @@ export default function mountCheckoutIsland(el) {
                         rate.country ??
                         rate.region ??
                         Math.random().toString(36),
+                    name: rate.name || null,
                     country: (rate.country || "").toUpperCase(),
                     region: (rate.region || "").toLowerCase(),
                     rate: Number(rate.rate || 0),
@@ -482,6 +501,30 @@ export default function mountCheckoutIsland(el) {
                 phoneRequired
                     ? labels.phone_placeholder_required
                     : labels.phone_placeholder
+            );
+            const hasPhysicalItems = computed(
+                () => {
+                    const itemHasPhysical = cartItems.some(
+                        (item) => !item.is_digital
+                    );
+                    return cartItems.length
+                        ? itemHasPhysical || cartFlags.hasPhysical
+                        : cartFlags.hasPhysical;
+                }
+            );
+            const hasDigitalItems = computed(
+                () => {
+                    const itemHasDigital = cartItems.some(
+                        (item) => item.is_digital
+                    );
+                    return cartItems.length
+                        ? itemHasDigital || cartFlags.hasDigital
+                        : cartFlags.hasDigital;
+                }
+            );
+            const requiresShipping = computed(() => hasPhysicalItems.value);
+            const isDigitalOnly = computed(
+                () => hasDigitalItems.value && !hasPhysicalItems.value
             );
 
             // Country/Region data
@@ -570,6 +613,47 @@ export default function mountCheckoutIsland(el) {
                 coupon_applied: labelsPayload.coupon_applied || "Coupon applied!",
                 coupon_removed: labelsPayload.coupon_removed || "Coupon removed.",
                 coupon_code_required: labelsPayload.coupon_code_required || "Please enter a coupon code.",
+                digital_badge: labelsPayload.digital_badge || "Instant download",
+                digital_note:
+                    labelsPayload.digital_note ||
+                    "No shipping needed for digital items.",
+            };
+
+            const updateCartFlags = (dataCart) => {
+                if (!dataCart) {
+                    return;
+                }
+
+                if (dataCart.has_physical !== undefined) {
+                    cartFlags.hasPhysical = Boolean(dataCart.has_physical);
+                }
+
+                if (dataCart.requires_shipping !== undefined) {
+                    cartFlags.hasPhysical = Boolean(dataCart.requires_shipping);
+                }
+
+                if (dataCart.has_digital !== undefined) {
+                    cartFlags.hasDigital = Boolean(dataCart.has_digital);
+                }
+
+                if (
+                    dataCart.has_physical === undefined &&
+                    dataCart.requires_shipping === undefined &&
+                    Array.isArray(dataCart.items)
+                ) {
+                    cartFlags.hasPhysical = dataCart.items.some(
+                        (item) => !item.is_digital
+                    );
+                }
+
+                if (
+                    dataCart.has_digital === undefined &&
+                    Array.isArray(dataCart.items)
+                ) {
+                    cartFlags.hasDigital = dataCart.items.some(
+                        (item) => item.is_digital
+                    );
+                }
             };
 
             const resolveRegionLabel = (countryCode) => {
@@ -678,6 +762,10 @@ export default function mountCheckoutIsland(el) {
 
             // Filter shipping rules based on selected country/region
             const applicableShippingRules = computed(() => {
+                if (!requiresShipping.value) {
+                    return [];
+                }
+
                 const selectedCountry = destinationCountry.value;
                 const selectedRegion = destinationRegion.value;
 
@@ -726,6 +814,13 @@ export default function mountCheckoutIsland(el) {
                 },
                 { immediate: true }
             );
+
+            watch(requiresShipping, (required) => {
+                if (!required) {
+                    state.shipping_rule_id = null;
+                    state.shipToDifferent = false;
+                }
+            });
 
             // Clear region and reset shipping when country changes
             watch(
@@ -788,6 +883,10 @@ export default function mountCheckoutIsland(el) {
             };
 
             const selectedShippingRule = computed(() => {
+                if (!requiresShipping.value) {
+                    return null;
+                }
+
                 const match = applicableShippingRules.value.find(
                     (rule) => String(rule.id) === String(state.shipping_rule_id)
                 );
@@ -795,7 +894,9 @@ export default function mountCheckoutIsland(el) {
             });
 
             const selectedShippingCost = computed(() =>
-                shippingCostForRule(selectedShippingRule.value)
+                requiresShipping.value
+                    ? shippingCostForRule(selectedShippingRule.value)
+                    : 0
             );
 
             // Use country code for tax matching
@@ -864,9 +965,10 @@ export default function mountCheckoutIsland(el) {
                     return "Tax";
                 }
 
+                const label = rate.name || "Tax";
                 return rate.inclusive
-                    ? `Tax (${rate.rate}% incl.)`
-                    : `Tax (${rate.rate}%)`;
+                    ? `${label} (${rate.rate}% incl.)`
+                    : `${label} (${rate.rate}%)`;
             });
 
             const total = computed(
@@ -905,6 +1007,8 @@ export default function mountCheckoutIsland(el) {
                         if (data.cart.items) {
                             cartItems.splice(0, cartItems.length, ...data.cart.items.map(item => ({ ...item })));
                         }
+
+                        updateCartFlags(data.cart);
                     }
                 } catch (error) {
                     const serverMessage =
@@ -934,6 +1038,7 @@ export default function mountCheckoutIsland(el) {
                     if (data.cart && data.cart.items) {
                         cartItems.splice(0, cartItems.length, ...data.cart.items.map(item => ({ ...item })));
                     }
+                    updateCartFlags(data.cart);
                 } catch (error) {
                     const serverMessage =
                         error?.details?.message ||
@@ -993,7 +1098,7 @@ export default function mountCheckoutIsland(el) {
                     return;
                 }
 
-                if (state.shipToDifferent) {
+                if (requiresShipping.value && state.shipToDifferent) {
                     const requiredShippingFields = [
                         "first_name",
                         "last_name",
@@ -1019,6 +1124,8 @@ export default function mountCheckoutIsland(el) {
                         ui.error = labels.shipping_required;
                         return;
                     }
+                } else if (!requiresShipping.value) {
+                    state.shipToDifferent = false;
                 }
 
                 ui.loading = true;
@@ -1031,22 +1138,30 @@ export default function mountCheckoutIsland(el) {
                 const taxRateString = taxRateValue
                     ? taxRateValue.toFixed(2)
                     : "0.00";
-                const shippingCost = selectedShippingCost.value;
+                const shippingCost = requiresShipping.value
+                    ? selectedShippingCost.value
+                    : 0;
                 const taxCents = taxAmount.value;
 
                 // Build billing object with resolved names for storage
                 const billingPayload = buildAddressPayload(state.billing, phone);
-                const shippingPayload = buildAddressPayload(
-                    state.shipToDifferent ? state.shipping : state.billing,
-                    state.shipToDifferent ? null : phone
-                );
+                const shippingPayload = requiresShipping.value
+                    ? buildAddressPayload(
+                          state.shipToDifferent ? state.shipping : state.billing,
+                          state.shipToDifferent ? null : phone
+                      )
+                    : null;
 
                 const payloadBody = {
                     email: normaliseString(state.email),
                     billing: billingPayload,
                     shipping: shippingPayload,
-                    ship_to_different: state.shipToDifferent,
-                    shipping_rule_id: state.shipping_rule_id,
+                    ship_to_different: requiresShipping.value
+                        ? state.shipToDifferent
+                        : false,
+                    shipping_rule_id: requiresShipping.value
+                        ? state.shipping_rule_id
+                        : null,
                     shipping_cents: shippingCost,
                     tax_cents: taxCents,
                     tax_rate: taxRateString,
@@ -1205,6 +1320,7 @@ export default function mountCheckoutIsland(el) {
                     if (freshCart && Array.isArray(freshCart.items)) {
                         // Clear and update cart items - must copy objects to ensure reactivity
                         cartItems.splice(0, cartItems.length, ...freshCart.items.map(item => ({ ...item })));
+                        updateCartFlags(freshCart);
                     }
                 } catch (error) {
                     // Non-fatal; keep existing state
@@ -1217,6 +1333,7 @@ export default function mountCheckoutIsland(el) {
                 if (freshCart.items) {
                     cartItems.splice(0, cartItems.length, ...freshCart.items);
                 }
+                updateCartFlags(freshCart);
             });
 
             // Floating summary visibility
@@ -1263,6 +1380,8 @@ export default function mountCheckoutIsland(el) {
                 billingRegionRequired,
                 shippingRegionRequired,
                 destinationCountry,
+                requiresShipping,
+                isDigitalOnly,
                 subtotal,
                 discountCents,
                 selectedShippingCost,

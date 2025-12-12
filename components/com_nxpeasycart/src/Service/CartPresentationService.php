@@ -65,9 +65,23 @@ class CartPresentationService
         $coupon   = $cart['data']['coupon'] ?? null;
         $hydrated = $this->hydrateItems(\is_array($items) ? $items : []);
 
+        $hasDigital  = false;
+        $hasPhysical = false;
+
+        foreach ($hydrated as $item) {
+            if (!empty($item['is_digital'])) {
+                $hasDigital = true;
+            } else {
+                $hasPhysical = true;
+            }
+        }
+
         $cart['items']   = $hydrated;
         $cart['coupon']  = $coupon;
         $cart['summary'] = $this->buildSummary($hydrated, $coupon);
+        $cart['has_digital'] = $hasDigital;
+        $cart['has_physical'] = $hasPhysical;
+        $cart['requires_shipping'] = $hasPhysical;
 
         return $cart;
     }
@@ -113,6 +127,9 @@ class CartPresentationService
 
                     $product = $productId !== null && isset($products[$productId]) ? $products[$productId] : null;
                     $variant = $variantId !== null && isset($variants[$variantId]) ? $variants[$variantId] : null;
+                    $productType = $product['product_type'] ?? 'physical';
+                    $variantDigital = !empty($variant['is_digital']);
+                    $isDigital = $variantDigital || $productType === 'digital';
 
                     // SECURITY: Always use database price, never trust cart-stored prices
                     $priceCents = ($variant['price_cents'] ?? 0);
@@ -149,6 +166,7 @@ class CartPresentationService
                         'image'            => $variant['image']   ?? ($product['image'] ?? null),
                         'url'              => $productUrl,
                         'options'          => $variant['options'] ?? [],
+                        'is_digital'       => $isDigital,
                     ];
                 },
                 $items
@@ -173,6 +191,7 @@ class CartPresentationService
                 $this->db->quoteName('title'),
                 $this->db->quoteName('slug'),
                 $this->db->quoteName('images'),
+                $this->db->quoteName('product_type'),
             ])
             ->from($this->db->quoteName('#__nxp_easycart_products'))
             ->where($this->db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
@@ -209,10 +228,11 @@ class CartPresentationService
             }
 
             $products[(int) $row->id] = [
-                'id'    => (int) $row->id,
-                'title' => (string) $row->title,
-                'slug'  => (string) $row->slug,
-                'image' => $image,
+                'id'           => (int) $row->id,
+                'title'        => (string) $row->title,
+                'slug'         => (string) $row->slug,
+                'image'        => $image,
+                'product_type' => isset($row->product_type) ? strtolower((string) $row->product_type) : 'physical',
             ];
         }
 
@@ -268,7 +288,16 @@ class CartPresentationService
     private function fetchVariants(array $ids): array
     {
         $query = $this->db->getQuery(true)
-            ->select('*')
+            ->select([
+                $this->db->quoteName('id'),
+                $this->db->quoteName('product_id'),
+                $this->db->quoteName('sku'),
+                $this->db->quoteName('price_cents'),
+                $this->db->quoteName('currency'),
+                $this->db->quoteName('stock'),
+                $this->db->quoteName('options'),
+                $this->db->quoteName('is_digital'),
+            ])
             ->from($this->db->quoteName('#__nxp_easycart_variants'))
             ->where($this->db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
 
@@ -297,6 +326,7 @@ class CartPresentationService
                 'currency'    => strtoupper((string) $row->currency),
                 'options'     => $options,
                 'image'       => null,
+                'is_digital'  => !empty($row->is_digital),
             ];
         }
 

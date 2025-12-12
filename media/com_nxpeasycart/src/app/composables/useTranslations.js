@@ -17,7 +17,8 @@ const applyReplacements = (message, replacements = []) => {
 
     replacements.forEach((replacement) => {
         const value = replacement ?? "";
-        output = output.replace("%s", String(value));
+        // Handle both %s (string) and %d (digit) placeholders
+        output = output.replace(/%[sd]/, String(value));
     });
 
     return output;
