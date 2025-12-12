@@ -29,6 +29,91 @@ class DigitalFileService
 {
     private const DEFAULT_STORAGE = 'media/com_nxpeasycart/downloads';
 
+    /** @var int Default max file size in bytes (200 MB) */
+    private const DEFAULT_MAX_FILE_SIZE = 209715200;
+
+    /**
+     * Allowed file types: extension => array of valid MIME types.
+     * Extensions are lowercase without leading dot.
+     *
+     * @var array<string, array<int, string>>
+     */
+    private const ALLOWED_FILE_TYPES = [
+        // Archives
+        '7z'     => ['application/x-7z-compressed'],
+        'tar'    => ['application/x-tar'],
+        'gz'     => ['application/gzip', 'application/x-gzip'],
+        'tgz'    => ['application/gzip', 'application/x-gzip', 'application/x-tar'],
+        'zip'    => ['application/zip', 'application/x-zip-compressed'],
+        'rar'    => ['application/vnd.rar', 'application/x-rar-compressed'],
+
+        // Audio
+        'flac'   => ['audio/flac', 'audio/x-flac'],
+        'mp3'    => ['audio/mpeg', 'audio/mp3'],
+        'wav'    => ['audio/wav', 'audio/x-wav', 'audio/wave'],
+
+        // Images
+        'jpg'    => ['image/jpeg'],
+        'jpeg'   => ['image/jpeg'],
+        'png'    => ['image/png'],
+        'gif'    => ['image/gif'],
+        'svg'    => ['image/svg+xml'],
+        'webp'   => ['image/webp'],
+        'avif'   => ['image/avif'],
+
+        // Documents
+        'pdf'    => ['application/pdf'],
+        'txt'    => ['text/plain'],
+        'rtf'    => ['application/rtf', 'text/rtf'],
+        'doc'    => ['application/msword'],
+        'docx'   => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        'xls'    => ['application/vnd.ms-excel'],
+        'xlsx'   => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        'ppt'    => ['application/vnd.ms-powerpoint'],
+        'pptx'   => ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+        'odt'    => ['application/vnd.oasis.opendocument.text'],
+        'ods'    => ['application/vnd.oasis.opendocument.spreadsheet'],
+        'odp'    => ['application/vnd.oasis.opendocument.presentation'],
+        'csv'    => ['text/csv', 'text/plain', 'application/csv'],
+
+        // Packages / Installers
+        'deb'    => ['application/vnd.debian.binary-package', 'application/x-debian-package'],
+        'rpm'    => ['application/x-rpm', 'application/x-redhat-package-manager'],
+        'msi'    => ['application/x-ms-installer', 'application/x-msi'],
+        'exe'    => ['application/vnd.microsoft.portable-executable', 'application/x-msdownload', 'application/x-dosexec'],
+        'app'    => ['application/octet-stream'],
+        'pkg'    => ['application/octet-stream', 'application/x-newton-compatible-pkg'],
+        'dmg'    => ['application/octet-stream', 'application/x-apple-diskimage'],
+        'apk'    => ['application/vnd.android.package-archive'],
+        'ipa'    => ['application/octet-stream'],
+
+        // Video
+        'mp4'    => ['video/mp4'],
+        'webm'   => ['video/webm'],
+        'mov'    => ['video/quicktime'],
+        'avi'    => ['video/x-msvideo', 'video/avi'],
+        'mkv'    => ['video/x-matroska'],
+
+        // E-books
+        'epub'   => ['application/epub+zip'],
+        'mobi'   => ['application/x-mobipocket-ebook'],
+    ];
+
+    /**
+     * File type categories for UI grouping.
+     *
+     * @var array<string, array<int, string>>
+     */
+    public const FILE_TYPE_CATEGORIES = [
+        'archives'   => ['zip', 'rar', '7z', 'tar', 'gz', 'tgz'],
+        'audio'      => ['mp3', 'wav', 'flac'],
+        'video'      => ['mp4', 'webm', 'mov', 'avi', 'mkv'],
+        'images'     => ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'avif'],
+        'documents'  => ['pdf', 'txt', 'rtf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp', 'csv'],
+        'ebooks'     => ['epub', 'mobi'],
+        'installers' => ['exe', 'msi', 'deb', 'rpm', 'dmg', 'app', 'pkg', 'apk', 'ipa'],
+    ];
+
     private DatabaseInterface $db;
 
     private SettingsService $settings;
@@ -66,11 +151,51 @@ class DigitalFileService
             throw new RuntimeException(Text::sprintf('COM_NXPEASYCART_ERROR_UPLOAD_FAILED', $error));
         }
 
+        // Validate file size
+        $fileSize = isset($file['size']) ? (int) $file['size'] : (int) filesize($file['tmp_name']);
+        $maxSizeMb = (int) $this->settings->get('digital_max_file_size', 200);
+        $maxSizeBytes = $maxSizeMb > 0 ? $maxSizeMb * 1024 * 1024 : self::DEFAULT_MAX_FILE_SIZE;
+
+        if ($fileSize > $maxSizeBytes) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_UPLOAD_FILE_TOO_LARGE', $maxSizeMb)
+            );
+        }
+
         $originalName = isset($file['name']) ? trim((string) $file['name']) : '';
         $safeName     = File::makeSafe($originalName !== '' ? $originalName : 'download.bin');
 
         if ($safeName === '') {
             $safeName = 'download.bin';
+        }
+
+        // Validate file extension
+        $extension = $this->extractExtension($safeName);
+
+        if (!$this->isAllowedExtension($extension)) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_UPLOAD_EXTENSION_NOT_ALLOWED', $extension)
+            );
+        }
+
+        // Validate MIME type from file content (not trusting client-provided type)
+        $detectedMime = '';
+
+        if (function_exists('mime_content_type')) {
+            $detectedMime = (string) mime_content_type($file['tmp_name']);
+        } elseif (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+            if ($finfo) {
+                $detectedMime = (string) finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+            }
+        }
+
+        if ($detectedMime !== '' && !$this->isAllowedMime($extension, $detectedMime)) {
+            throw new RuntimeException(
+                Text::sprintf('COM_NXPEASYCART_ERROR_UPLOAD_MIME_MISMATCH', $extension, $detectedMime)
+            );
         }
 
         $hashPrefix = bin2hex(random_bytes(12));
@@ -90,12 +215,8 @@ class DigitalFileService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_UPLOAD_FAILED'));
         }
 
-        $size     = isset($file['size']) ? (int) $file['size'] : (int) filesize($targetPath);
-        $mimeType = isset($file['type']) ? trim((string) $file['type']) : '';
-
-        if ($mimeType === '' && function_exists('mime_content_type')) {
-            $mimeType = (string) mime_content_type($targetPath);
-        }
+        // Use detected MIME or fall back to client-provided
+        $mimeType = $detectedMime !== '' ? $detectedMime : (isset($file['type']) ? trim((string) $file['type']) : '');
 
         $now = Factory::getDate()->toSql();
 
@@ -104,7 +225,7 @@ class DigitalFileService
             'variant_id'  => $variantId,
             'filename'    => $originalName !== '' ? $originalName : $safeName,
             'storage_path'=> $relativePath,
-            'file_size'   => $size,
+            'file_size'   => $fileSize,
             'mime_type'   => $mimeType !== '' ? $mimeType : null,
             'version'     => $version !== '' ? $version : '1.0',
             'created'     => $now,
@@ -115,6 +236,191 @@ class DigitalFileService
         $id = (int) $this->db->insertid();
 
         return $this->getFile($id) ?? [];
+    }
+
+    /**
+     * Extract file extension from filename (lowercase, no dot).
+     */
+    private function extractExtension(string $filename): string
+    {
+        $pos = strrpos($filename, '.');
+
+        if ($pos === false) {
+            return '';
+        }
+
+        return strtolower(substr($filename, $pos + 1));
+    }
+
+    /**
+     * Check if the extension is allowed (predefined + enabled, or custom).
+     */
+    private function isAllowedExtension(string $extension): bool
+    {
+        if ($extension === '') {
+            return false;
+        }
+
+        $extension = strtolower($extension);
+
+        // Check if it's an enabled predefined type
+        if ($this->isEnabledPredefinedExtension($extension)) {
+            return true;
+        }
+
+        // Check if it's a custom extension
+        if ($this->isCustomExtension($extension)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if extension is a predefined type that's currently enabled.
+     */
+    private function isEnabledPredefinedExtension(string $extension): bool
+    {
+        // Must be in the predefined list
+        if (!isset(self::ALLOWED_FILE_TYPES[$extension])) {
+            return false;
+        }
+
+        // Get enabled extensions from settings (null = all enabled)
+        $enabledExtensions = $this->settings->get('digital_allowed_extensions');
+
+        if ($enabledExtensions === null) {
+            // No restrictions - all predefined types allowed
+            return true;
+        }
+
+        if (!\is_array($enabledExtensions)) {
+            return true;
+        }
+
+        return \in_array($extension, $enabledExtensions, true);
+    }
+
+    /**
+     * Check if extension is in the custom extensions list.
+     */
+    private function isCustomExtension(string $extension): bool
+    {
+        $customExtensions = $this->getCustomExtensions();
+
+        return \in_array($extension, $customExtensions, true);
+    }
+
+    /**
+     * Get parsed custom extensions from settings.
+     *
+     * @return array<int, string>
+     */
+    private function getCustomExtensions(): array
+    {
+        $custom = $this->settings->get('digital_custom_extensions', '');
+
+        if (!\is_string($custom) || trim($custom) === '') {
+            return [];
+        }
+
+        $parts = preg_split('/[\s,;]+/', $custom, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (!$parts) {
+            return [];
+        }
+
+        $extensions = [];
+
+        foreach ($parts as $part) {
+            $ext = strtolower(ltrim(trim($part), '.'));
+
+            if ($ext !== '' && preg_match('/^[a-z0-9]+$/', $ext)) {
+                $extensions[] = $ext;
+            }
+        }
+
+        return array_unique($extensions);
+    }
+
+    /**
+     * Check if the detected MIME type matches allowed types for the extension.
+     */
+    private function isAllowedMime(string $extension, string $mimeType): bool
+    {
+        if ($extension === '' || $mimeType === '') {
+            return false;
+        }
+
+        $extension = strtolower($extension);
+        $mimeType  = strtolower($mimeType);
+
+        // Custom extensions: bypass MIME check (accept any MIME including octet-stream)
+        if ($this->isCustomExtension($extension)) {
+            return true;
+        }
+
+        // Must be a predefined type from here
+        if (!isset(self::ALLOWED_FILE_TYPES[$extension])) {
+            return false;
+        }
+
+        $allowedMimes = self::ALLOWED_FILE_TYPES[$extension];
+
+        // Direct match
+        if (\in_array($mimeType, $allowedMimes, true)) {
+            return true;
+        }
+
+        // Some files (especially .exe, .app, .pkg, .dmg) may report generic octet-stream
+        if ($mimeType === 'application/octet-stream' && \in_array('application/octet-stream', $allowedMimes, true)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get list of all predefined file extensions.
+     *
+     * @return array<int, string>
+     */
+    public function getAllPredefinedExtensions(): array
+    {
+        return array_keys(self::ALLOWED_FILE_TYPES);
+    }
+
+    /**
+     * Get the file type categories for UI display.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public function getFileTypeCategories(): array
+    {
+        return self::FILE_TYPE_CATEGORIES;
+    }
+
+    /**
+     * Get currently allowed extensions (enabled predefined + custom).
+     *
+     * @return array<int, string>
+     */
+    public function getAllowedExtensions(): array
+    {
+        $enabledExtensions = $this->settings->get('digital_allowed_extensions');
+        $customExtensions  = $this->getCustomExtensions();
+
+        if ($enabledExtensions === null) {
+            // All predefined + custom
+            $predefined = array_keys(self::ALLOWED_FILE_TYPES);
+        } elseif (\is_array($enabledExtensions)) {
+            // Only enabled predefined
+            $predefined = array_filter($enabledExtensions, fn($ext) => isset(self::ALLOWED_FILE_TYPES[$ext]));
+        } else {
+            $predefined = array_keys(self::ALLOWED_FILE_TYPES);
+        }
+
+        return array_unique(array_merge($predefined, $customExtensions));
     }
 
     /**
@@ -663,13 +969,44 @@ class DigitalFileService
     {
         $htaccess = rtrim($path, '/\\') . '/.htaccess';
         $index    = rtrim($path, '/\\') . '/index.html';
+        $nginxConf = rtrim($path, '/\\') . '/nginx.conf';
 
+        // Apache protection
         if (!is_file($htaccess)) {
-            File::write($htaccess, "Order deny,allow\nDeny from all\n");
+            $htaccessContent = <<<'HTACCESS'
+# Deny all direct access to digital download files
+# Files are served through the secure download controller
+Order deny,allow
+Deny from all
+
+# Apache 2.4+ syntax
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+HTACCESS;
+            File::write($htaccess, $htaccessContent);
         }
 
+        // Nginx protection (must be included in server block manually)
+        if (!is_file($nginxConf)) {
+            $nginxContent = <<<'NGINX'
+# Nginx protection for NXP Easy Cart digital downloads
+# Include this file in your nginx server block:
+#   include /path/to/media/com_nxpeasycart/downloads/nginx.conf;
+#
+# Or add this location block directly to your server configuration:
+
+location ~* /media/com_nxpeasycart/downloads/ {
+    internal;
+    # Alternatively use: deny all;
+}
+NGINX;
+            File::write($nginxConf, $nginxContent);
+        }
+
+        // Directory listing protection
         if (!is_file($index)) {
-            File::write($index, '<!-- Protected directory -->');
+            File::write($index, '<!DOCTYPE html><html><head><title>403 Forbidden</title></head><body><h1>Forbidden</h1></body></html>');
         }
     }
 

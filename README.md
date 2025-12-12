@@ -27,6 +27,17 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 ### Recent Enhancements
 
 - **Digital products & downloads (v0.1.13)**: Products can be marked digital; variants include an `is_digital` flag; digital files upload/list/delete via the admin product editor; settings tab for download limits/expiry/storage path/auto-fulfill; digital-only orders skip shipping and can auto-fulfill on payment; storefront checkout hides shipping for digital-only carts; order status page + confirmation email show tokenised download links with remaining count and expiry. Files are stored under `/media/com_nxpeasycart/downloads` with `.htaccess` deny and streamed via `DownloadController`.
+- **Digital file upload security (v0.1.14)**: Comprehensive file validation and server protection for digital product uploads:
+    - **47 allowed file types**: Predefined whitelist covering archives (zip, rar, 7z, tar, gz, tgz), audio (mp3, wav, flac), video (mp4, webm, mov, avi, mkv), images (jpg, png, gif, svg, webp, avif), documents (pdf, txt, rtf, doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, csv), ebooks (epub, mobi), and installers (exe, msi, deb, rpm, dmg, app, pkg, apk, ipa).
+    - **Configurable file types**: Settings → Digital Products tab includes category-grouped checkboxes (Select All/None) plus a custom extensions field for exotic types. Installers are disabled by default for security.
+    - **Size validation**: Configurable max file size (default 200MB) with user-friendly error messages.
+    - **Dual validation**: Both file extension and MIME type are validated against the whitelist.
+    - **Server protection**: Both Apache (.htaccess) and Nginx (nginx.conf) protection files are written to the storage directory.
+    - **Product type integration**: Digital Files tab in product editor is only visible when Product Type is set to "Digital".
+    - See `docs/digital-products.md` for complete documentation.
+- **Admin UI fixes (v0.1.14)**:
+    - Fixed missing `decodePayload()` method in `DigitalfilesController` that caused errors when deleting digital files.
+    - Fixed CSS overflow issue where `.nxp-ec-digital-row` elements bled beyond parent container in the product editor modal.
 - **Canonical product routing** now records a primary category on each product and generates all product URLs against that primary category path (e.g., `/shop/category/hifi/amplifiers/product-slug`), eliminating duplicate SEO paths when items belong to multiple categories.
 - **Cart quantity persistence** now persists quantity changes to the database via a new `cart.update` endpoint (`CartController::update()`). When users modify item quantities on the cart page, the changes are saved immediately with optimistic UI updates and server-side stock validation. The checkout page refreshes cart data on mount via `onMounted(refreshCart)` and listens for `nxp-cart:updated` events, ensuring the Order Summary always reflects the latest cart state. Stock validation prevents over-ordering and displays user-friendly alerts when requested quantities exceed available inventory.
 - **Categories workspace (admin)** surfaces a dedicated CRUD panel with slug validation, usage counts, and an indented tree so parent/child relationships are obvious at a glance. The parent selector now prevents loops by removing the current node and its descendants.

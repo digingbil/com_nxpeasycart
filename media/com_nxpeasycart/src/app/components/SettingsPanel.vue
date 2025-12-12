@@ -781,6 +781,34 @@
                     </div>
 
                     <div class="nxp-ec-form-field">
+                        <label class="nxp-ec-form-label" for="settings-digital-max-size">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_MAX_FILE_SIZE",
+                                    "Max file size (MB)"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-max-size"
+                            class="nxp-ec-form-input"
+                            type="number"
+                            min="1"
+                            max="2048"
+                            step="1"
+                            v-model.number="settingsDraft.digitalMaxFileSize"
+                        />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_MAX_FILE_SIZE_DESC",
+                                    "Maximum upload size per file in megabytes (1-2048 MB)."
+                                )
+                            }}
+                        </p>
+                    </div>
+
+                    <div class="nxp-ec-form-field">
                         <label class="nxp-ec-form-label" for="settings-digital-storage">
                             {{
                                 __(
@@ -801,6 +829,106 @@
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_DIGITAL_STORAGE_PATH_DESC",
                                     "Protected directory for digital files. Adjust only if you know the server path."
+                                )
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Allowed File Types Section -->
+                <div class="nxp-ec-form-section">
+                    <h4 class="nxp-ec-form-section__title">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_DIGITAL_ALLOWED_TYPES",
+                                "Allowed File Types"
+                            )
+                        }}
+                    </h4>
+                    <p class="nxp-ec-form-help" style="margin-bottom: 1rem;">
+                        {{
+                            __(
+                                "COM_NXPEASYCART_SETTINGS_DIGITAL_ALLOWED_TYPES_DESC",
+                                "Select which file types can be uploaded as digital products."
+                            )
+                        }}
+                    </p>
+
+                    <div class="nxp-ec-filetypes-actions">
+                        <button
+                            type="button"
+                            class="nxp-ec-btn nxp-ec-btn--sm"
+                            @click="selectAllFileTypes"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SELECT_ALL",
+                                    "Select All"
+                                )
+                            }}
+                        </button>
+                        <button
+                            type="button"
+                            class="nxp-ec-btn nxp-ec-btn--sm nxp-ec-btn--link"
+                            @click="selectNoFileTypes"
+                        >
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SELECT_NONE",
+                                    "Select None"
+                                )
+                            }}
+                        </button>
+                    </div>
+
+                    <div class="nxp-ec-filetypes-grid">
+                        <div
+                            v-for="(extensions, category) in fileTypeCategories"
+                            :key="category"
+                            class="nxp-ec-filetypes-category"
+                        >
+                            <h5 class="nxp-ec-filetypes-category__title">
+                                {{ formatCategoryName(category) }}
+                            </h5>
+                            <div class="nxp-ec-filetypes-category__list">
+                                <label
+                                    v-for="ext in extensions"
+                                    :key="ext"
+                                    class="nxp-ec-filetypes-item"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        :value="ext"
+                                        v-model="settingsDraft.digitalAllowedExtensions"
+                                        class="nxp-ec-filetypes-item__checkbox"
+                                    />
+                                    <span class="nxp-ec-filetypes-item__label">.{{ ext }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nxp-ec-form-field" style="margin-top: 1.5rem;">
+                        <label class="nxp-ec-form-label" for="settings-digital-custom-ext">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_CUSTOM_EXTENSIONS",
+                                    "Custom Extensions"
+                                )
+                            }}
+                        </label>
+                        <input
+                            id="settings-digital-custom-ext"
+                            class="nxp-ec-form-input"
+                            type="text"
+                            v-model.trim="settingsDraft.digitalCustomExtensions"
+                            placeholder="blend, psd, ai, sketch"
+                        />
+                        <p class="nxp-ec-form-help nxp-ec-form-help--warning">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_DIGITAL_CUSTOM_EXTENSIONS_DESC",
+                                    "Comma-separated list of additional extensions. These bypass MIME validation - use only for trusted uploads."
                                 )
                             }}
                         </p>
@@ -2105,7 +2233,71 @@ const settingsDraft = reactive({
     digitalExpiryDays: 30,
     digitalStoragePath: "",
     digitalAutoFulfill: true,
+    digitalMaxFileSize: 200,
+    digitalAllowedExtensions: [],
+    digitalCustomExtensions: "",
 });
+
+// Default file type categories (will be updated from API)
+const fileTypeCategories = ref({
+    archives: ["zip", "rar", "7z", "tar", "gz", "tgz"],
+    audio: ["mp3", "wav", "flac"],
+    video: ["mp4", "webm", "mov", "avi", "mkv"],
+    images: ["jpg", "jpeg", "png", "gif", "svg", "webp", "avif"],
+    documents: ["pdf", "txt", "rtf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "csv"],
+    ebooks: ["epub", "mobi"],
+    installers: ["exe", "msi", "deb", "rpm", "dmg", "app", "pkg", "apk", "ipa"],
+});
+
+// Get all predefined extensions as a flat array
+const getAllPredefinedExtensions = () => {
+    return Object.values(fileTypeCategories.value).flat();
+};
+
+// Helper to initialize allowed extensions from API response
+const getInitialAllowedExtensions = (values) => {
+    const digital = values?.digital ?? {};
+    const categories = digital.file_type_categories ?? fileTypeCategories.value;
+
+    // If allowed_extensions is an array, use it directly (explicit setting)
+    if (Array.isArray(digital.allowed_extensions)) {
+        return [...digital.allowed_extensions];
+    }
+
+    // If allowed_extensions is null/undefined, this is default state
+    // Default: all types EXCEPT installers (security consideration)
+    const allExtensions = [];
+    for (const [category, extensions] of Object.entries(categories)) {
+        if (category !== "installers") {
+            allExtensions.push(...extensions);
+        }
+    }
+    return allExtensions;
+};
+
+// Format category name for display
+const formatCategoryName = (category) => {
+    const names = {
+        archives: "Archives",
+        audio: "Audio",
+        video: "Video",
+        images: "Images",
+        documents: "Documents",
+        ebooks: "E-books",
+        installers: "Installers",
+    };
+    return names[category] ?? category.charAt(0).toUpperCase() + category.slice(1);
+};
+
+// Select all file types
+const selectAllFileTypes = () => {
+    settingsDraft.digitalAllowedExtensions = getAllPredefinedExtensions();
+};
+
+// Deselect all file types
+const selectNoFileTypes = () => {
+    settingsDraft.digitalAllowedExtensions = [];
+};
 
 const securityDraft = reactive({
     checkoutWindowMinutes: 15,
@@ -2221,7 +2413,20 @@ const applySettings = (values = {}) => {
                 ? values.digital_storage_path
                 : "",
         digitalAutoFulfill: Boolean(values?.digital_auto_fulfill ?? true),
+        digitalMaxFileSize: Number.isFinite(Number(values?.digital_max_file_size))
+            ? Math.max(1, Math.min(2048, Number(values.digital_max_file_size)))
+            : 200,
+        digitalAllowedExtensions: getInitialAllowedExtensions(values),
+        digitalCustomExtensions:
+            typeof values?.digital?.custom_extensions === "string"
+                ? values.digital.custom_extensions
+                : "",
     });
+
+    // Store file type categories from API
+    if (values?.digital?.file_type_categories) {
+        fileTypeCategories.value = values.digital.file_type_categories;
+    }
 
     Object.assign(visualDraft, {
         primaryColor: visual.primary_color ?? "",
@@ -2354,12 +2559,32 @@ const saveDigital = () => {
         ? Math.max(0, Number(settingsDraft.digitalExpiryDays))
         : 0;
     const storagePath = (settingsDraft.digitalStoragePath || "").trim();
+    const maxFileSize = Number.isFinite(Number(settingsDraft.digitalMaxFileSize))
+        ? Math.max(1, Math.min(2048, Number(settingsDraft.digitalMaxFileSize)))
+        : 200;
+
+    // Determine allowed extensions value:
+    // - If all predefined types are selected, send null (means "all enabled")
+    // - Otherwise send the array of selected extensions
+    const allPredefined = getAllPredefinedExtensions();
+    const selectedExtensions = settingsDraft.digitalAllowedExtensions || [];
+    const allSelected =
+        allPredefined.length === selectedExtensions.length &&
+        allPredefined.every((ext) => selectedExtensions.includes(ext));
+
+    const allowedExtensions = allSelected ? null : [...selectedExtensions];
+    const customExtensions = (settingsDraft.digitalCustomExtensions || "").trim();
 
     emit("save-settings", {
-        digital_download_max: maxDownloads,
-        digital_download_expiry: expiryDays,
-        digital_storage_path: storagePath,
-        digital_auto_fulfill: Boolean(settingsDraft.digitalAutoFulfill),
+        digital: {
+            max_downloads: maxDownloads,
+            expiry_days: expiryDays,
+            storage_path: storagePath,
+            auto_fulfill: Boolean(settingsDraft.digitalAutoFulfill),
+            max_file_size: maxFileSize,
+            allowed_extensions: allowedExtensions,
+            custom_extensions: customExtensions,
+        },
     });
 };
 

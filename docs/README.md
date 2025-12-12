@@ -34,9 +34,20 @@ Locale-aware currency formatting for international stores.
 - Supported locale formats (Joomla-style and ICU-style)
 - PHP intl extension requirements
 
-### [digital-products.md](digital-products.md) ⭐ **NEW v0.1.13**
+### [digital-products.md](digital-products.md) ⭐ **UPDATED v0.1.14**
 
 Digital product support with secure downloads, admin upload workflow, settings, and checkout/email surfaces.
+
+**Topics covered:**
+
+- Product type integration (Digital Files tab visibility)
+- 47 predefined allowed file types by category
+- Configurable file types in Settings → Digital Products
+- Custom extensions for exotic file types
+- File size validation (default 200MB)
+- Dual validation (extension + MIME type)
+- Server protection (Apache .htaccess + Nginx nginx.conf)
+- Download token security
 
 ---
 
@@ -268,6 +279,8 @@ Before going live, ensure:
 - [ ] Install and enable the cleanup task plugin
 - [ ] Test order state transitions for proper validation
 - [ ] Test manual payment recording for COD/Bank Transfer orders (see `manual-transactions.md`)
+- [ ] Review allowed digital file types (see `digital-products.md`)
+- [ ] Verify Nginx protection is configured if using Nginx server
 
 ---
 
@@ -292,5 +305,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-12-09
-**Component Version**: 0.1.13
+**Last Updated**: 2025-12-12
+**Component Version**: 0.1.14

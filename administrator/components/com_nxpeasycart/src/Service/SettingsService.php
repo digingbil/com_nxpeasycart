@@ -129,6 +129,20 @@ class SettingsService
         $settings['digital_auto_fulfill'] = isset($settings['digital_auto_fulfill'])
             ? (bool) ((int) $settings['digital_auto_fulfill'])
             : true;
+        $settings['digital_max_file_size'] = isset($settings['digital_max_file_size'])
+            ? (int) $settings['digital_max_file_size']
+            : 200; // Default 200 MB
+
+        // Allowed extensions: JSON array of enabled predefined extensions
+        // Default: all predefined types enabled (null means "all")
+        $settings['digital_allowed_extensions'] = isset($settings['digital_allowed_extensions'])
+            ? $this->parseJsonArray($settings['digital_allowed_extensions'])
+            : null;
+
+        // Custom extensions: comma-separated string for exotic file types
+        $settings['digital_custom_extensions'] = isset($settings['digital_custom_extensions'])
+            ? trim((string) $settings['digital_custom_extensions'])
+            : '';
 
         return $settings;
     }
@@ -184,5 +198,39 @@ class SettingsService
         $last  = $value[strlen($value) - 1];
 
         return ($first === '{' && $last === '}') || ($first === '[' && $last === ']');
+    }
+
+    /**
+     * Parse a value as JSON array, returning null on failure.
+     *
+     * @param mixed $value
+     *
+     * @return array<int, string>|null
+     */
+    private function parseJsonArray($value): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (\is_array($value)) {
+            return array_values(array_filter(array_map('strval', $value)));
+        }
+
+        $trimmed = trim((string) $value);
+
+        if ($trimmed === '' || $trimmed === 'null') {
+            return null;
+        }
+
+        if ($trimmed[0] === '[') {
+            $decoded = json_decode($trimmed, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded)) {
+                return array_values(array_filter(array_map('strval', $decoded)));
+            }
+        }
+
+        return null;
     }
 }

@@ -118,6 +118,7 @@
                         {{ __("COM_NXPEASYCART_PRODUCT_CATEGORIES_LABEL", "Categories") }}
                     </button>
                     <button
+                        v-if="isDigitalProduct"
                         type="button"
                         class="nxp-ec-editor-tab"
                         :class="{ 'is-active': activeTab === 'digital' }"
@@ -811,6 +812,7 @@
                 </section>
 
                 <section
+                    v-if="isDigitalProduct"
                     v-show="activeTab === 'digital'"
                     class="nxp-ec-editor-panel nxp-ec-editor-panel--digital"
                 >
@@ -1802,8 +1804,12 @@ watch(baseCurrency, (currency) => {
     });
 });
 
-watch(productType, () => {
+watch(productType, (newType) => {
     applyVariantDigitalDefaults();
+    // Auto-switch away from Digital tab when changing to Physical
+    if (newType !== "digital" && activeTab.value === "digital") {
+        activeTab.value = "general";
+    }
 });
 
 watch(activeTab, (tab) => {
@@ -2540,20 +2546,35 @@ watch(
 .nxp-ec-digital-table {
     display: grid;
     gap: 0.75rem;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .nxp-ec-digital-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 0.75rem;
     padding: 0.75rem;
     border: 1px solid var(--nxp-ec-border, #e4e7ec);
     border-radius: 0.5rem;
     background: var(--nxp-ec-surface-alt, #f9fafb);
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .nxp-ec-digital-meta {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.nxp-ec-digital-meta strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .nxp-ec-digital-actions {

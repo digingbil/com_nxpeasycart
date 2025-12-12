@@ -88,10 +88,14 @@ class SettingsController extends AbstractJsonController
             'stale_order_hours' => ConfigHelper::getStaleOrderHours(),
             'show_advanced_mode' => ConfigHelper::isShowAdvancedMode(),
             'digital' => [
-                'max_downloads' => (int) $service->get('digital_download_max', 5),
-                'expiry_days'   => (int) $service->get('digital_download_expiry', 30),
-                'storage_path'  => (string) $service->get('digital_storage_path', '/media/com_nxpeasycart/downloads'),
-                'auto_fulfill'  => (bool) $service->get('digital_auto_fulfill', 1),
+                'max_downloads'       => (int) $service->get('digital_download_max', 5),
+                'expiry_days'         => (int) $service->get('digital_download_expiry', 30),
+                'storage_path'        => (string) $service->get('digital_storage_path', '/media/com_nxpeasycart/downloads'),
+                'auto_fulfill'        => (bool) $service->get('digital_auto_fulfill', 1),
+                'max_file_size'       => (int) $service->get('digital_max_file_size', 200),
+                'allowed_extensions'  => $service->get('digital_allowed_extensions'), // null = all enabled
+                'custom_extensions'   => (string) $service->get('digital_custom_extensions', ''),
+                'file_type_categories' => $this->getFileTypeCategories(),
             ],
             'visual' => [
                 'primary_color' => (string) $service->get('visual.primary_color', ''),
@@ -157,6 +161,9 @@ class SettingsController extends AbstractJsonController
         $digitalExpiryDays   = isset($digital['expiry_days']) ? (int) $digital['expiry_days'] : null;
         $digitalStoragePath  = array_key_exists('storage_path', $digital) ? trim((string) $digital['storage_path']) : null;
         $digitalAutoFulfill  = isset($digital['auto_fulfill']) ? (bool) $digital['auto_fulfill'] : null;
+        $digitalMaxFileSize  = isset($digital['max_file_size']) ? (int) $digital['max_file_size'] : null;
+        $digitalAllowedExtensions = array_key_exists('allowed_extensions', $digital) ? $digital['allowed_extensions'] : '__UNSET__';
+        $digitalCustomExtensions  = array_key_exists('custom_extensions', $digital) ? $digital['custom_extensions'] : '__UNSET__';
         unset($store['base_currency']);
 
         $name = trim((string) ($store['name'] ?? ''));
@@ -260,6 +267,33 @@ class SettingsController extends AbstractJsonController
             }
 
             $service->set('digital_storage_path', $sanitisedPath);
+        }
+
+        if ($digitalMaxFileSize !== null) {
+            $service->set('digital_max_file_size', max(1, min(2048, $digitalMaxFileSize)));
+        }
+
+        // Handle allowed extensions (null = all enabled, array = specific ones enabled)
+        if ($digitalAllowedExtensions !== '__UNSET__') {
+            if ($digitalAllowedExtensions === null) {
+                // null means "enable all predefined types"
+                $service->set('digital_allowed_extensions', null);
+            } elseif (\is_array($digitalAllowedExtensions)) {
+                // Filter to only valid lowercase alphanumeric extensions
+                $filtered = array_values(array_filter(
+                    array_map(fn($ext) => strtolower(preg_replace('/[^a-z0-9]/i', '', trim((string) $ext))), $digitalAllowedExtensions),
+                    fn($ext) => $ext !== ''
+                ));
+                $service->set('digital_allowed_extensions', json_encode($filtered));
+            }
+        }
+
+        // Handle custom extensions (comma-separated string)
+        if ($digitalCustomExtensions !== '__UNSET__') {
+            $customStr = \is_string($digitalCustomExtensions) ? trim($digitalCustomExtensions) : '';
+            // Sanitise: only alphanumeric chars, commas, spaces allowed
+            $customStr = preg_replace('/[^a-z0-9,\s]/i', '', $customStr);
+            $service->set('digital_custom_extensions', $customStr);
         }
 
         // Only update store settings if provided in payload
@@ -537,5 +571,23 @@ class SettingsController extends AbstractJsonController
         } catch (\Throwable $exception) {
             // Swallow logging errors
         }
+    }
+
+    /**
+     * Get file type categories for the settings UI.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function getFileTypeCategories(): array
+    {
+        return [
+            'archives'   => ['zip', 'rar', '7z', 'tar', 'gz', 'tgz'],
+            'audio'      => ['mp3', 'wav', 'flac'],
+            'video'      => ['mp4', 'webm', 'mov', 'avi', 'mkv'],
+            'images'     => ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'avif'],
+            'documents'  => ['pdf', 'txt', 'rtf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp', 'csv'],
+            'ebooks'     => ['epub', 'mobi'],
+            'installers' => ['exe', 'msi', 'deb', 'rpm', 'dmg', 'app', 'pkg', 'apk', 'ipa'],
+        ];
     }
 }

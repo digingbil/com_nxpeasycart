@@ -139,4 +139,21 @@ class DigitalfilesController extends AbstractJsonController
 
         return $container->get(DigitalFileService::class);
     }
+
+    private function decodePayload(): array
+    {
+        $raw = $this->input->json->getRaw();
+
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        $data = json_decode($raw, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_INVALID_JSON'), 400);
+        }
+
+        return (array) $data;
+    }
 }
