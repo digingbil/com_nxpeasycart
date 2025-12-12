@@ -23,6 +23,127 @@ A comprehensive CSV import/export system that enables:
 
 ---
 
+## Image Handling Strategy
+
+**Decision: No automatic image transfer - store URLs for reference only.**
+
+### Rationale
+
+| Consideration | Why We Don't Download |
+|---------------|----------------------|
+| **Import speed** | Downloading hundreds of images adds minutes/hours to import |
+| **Reliability** | Network timeouts, 404s, and rate limiting cause import failures |
+| **Storage** | Unexpected disk usage; 1000 products × 3 images × 500KB = 1.5GB |
+| **Hotlinking** | Many platforms block image hotlinking or use signed URLs |
+| **Quality control** | Merchants often want to re-shoot or resize images anyway |
+
+### Implementation
+
+#### 1. Store Source URLs (Reference Only)
+
+During import, image URLs from the source CSV are stored in a `source_images` JSON field on the product record:
+
+```sql
+-- Add to #__nxp_easycart_products table
+ALTER TABLE `#__nxp_easycart_products`
+    ADD COLUMN `source_images` JSON DEFAULT NULL AFTER `images`;
+```
+
+**Example stored data:**
+```json
+{
+    "source_platform": "woocommerce",
+    "urls": [
+        "https://old-store.com/wp-content/uploads/tshirt-1.jpg",
+        "https://old-store.com/wp-content/uploads/tshirt-2.jpg"
+    ],
+    "imported_at": "2025-01-15T10:30:00Z"
+}
+```
+
+#### 2. Products Created Without Images
+
+- Import creates products with empty `images` JSON array
+- Product is fully functional but displays placeholder/no-image state
+- Admin product list shows "No images" indicator for easy identification
+
+#### 3. Admin UI: Image Migration Tools
+
+**Per-product action:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Product: Classic Cotton T-Shirt                            │
+│  Images: None                                               │
+│                                                             │
+│  ⚠️ Source images available from import:                    │
+│  • https://old-store.com/.../tshirt-1.jpg                  │
+│  • https://old-store.com/.../tshirt-2.jpg                  │
+│                                                             │
+│  [Fetch from source]  [Upload new images]  [Dismiss]        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Bulk action (Products list):**
+```
+Selected: 47 products with source images
+
+[Fetch all source images]  (Downloads and stores locally)
+[Clear source URLs]        (Removes reference data)
+```
+
+#### 4. "Fetch from Source" Functionality
+
+When user clicks "Fetch from source":
+
+1. **Validate URL** - Check if image is still accessible (HEAD request)
+2. **Download** - Fetch image with timeout (10s max)
+3. **Validate file** - Check MIME type, dimensions, file size
+4. **Store locally** - Save to `/media/com_nxpeasycart/images/products/{product_id}/`
+5. **Update product** - Add to `images` JSON array
+6. **Clear source** - Optionally remove from `source_images` after success
+
+**Error handling:**
+- 404/403: Mark URL as unavailable, skip
+- Timeout: Retry once, then skip
+- Invalid image: Log warning, skip
+- Show summary: "Fetched 45/47 images, 2 failed (see log)"
+
+#### 5. Export Behavior
+
+When exporting products:
+- `images` column contains **local** image URLs (our domain)
+- `source_images` column (optional) contains original import URLs
+- User can choose to include/exclude source URLs in export
+
+### UI Indicators
+
+| State | Admin Display |
+|-------|---------------|
+| No images, no source | Standard "No images" placeholder |
+| No images, has source | "📥 Source images available" badge |
+| Has images, has source | Normal display (source URLs in product meta) |
+| Has images, no source | Normal display |
+
+### Settings
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `import_store_source_urls` | `true` | Store original image URLs during import |
+| `import_show_source_badge` | `true` | Show badge for products with pending source images |
+| `image_fetch_timeout` | `10` | Seconds to wait when fetching images |
+| `image_fetch_max_size` | `5242880` | Max image size to fetch (5MB) |
+
+### Why This Approach Works
+
+1. **Fast imports** - No network delay, import 1000+ products in seconds
+2. **No surprises** - User controls when/if images are downloaded
+3. **Graceful degradation** - Products work fine without images
+4. **Flexibility** - User can fetch from source OR upload new images
+5. **Audit trail** - Source URLs preserved for reference
+6. **No hotlinking issues** - We never display remote images directly
+
+---
+
 ## Supported Platforms
 
 ### Joomla E-commerce

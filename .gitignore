@@ -84,8 +84,16 @@ media/com_nxpeasycart/downloads/*
 !media/com_nxpeasycart/downloads/.htaccess
 !media/com_nxpeasycart/downloads/index.html
 
+# Sample CSV files for import testing (dev only)
+/samples/
+
 # Temporary files
 *~
 *.lock
 *.temp
 ~$*
+
+
+# Database backups and backup script
+/db-backups/
+/db-backup.sh
