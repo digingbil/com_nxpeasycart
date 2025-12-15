@@ -179,6 +179,7 @@ class HtmlView extends BaseHtmlView
                 'select_variant'  => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
                 'out_of_stock'    => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
                 'categories_aria' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
+                'sale_badge'      => Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'),
             ],
             'trust' => [
                 'text' => $this->trustBadge,

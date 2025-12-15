@@ -13,6 +13,7 @@ namespace Joomla\Component\Nxpeasycart\Site\Service;
 
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
 use Joomla\CMS\Uri\Uri;
@@ -132,7 +133,12 @@ class CartPresentationService
                     $isDigital = $variantDigital || $productType === 'digital';
 
                     // SECURITY: Always use database price, never trust cart-stored prices
-                    $priceCents = ($variant['price_cents'] ?? 0);
+                    // price_cents from variant is already the effective price (sale or regular) via PriceHelper
+                    $effectivePriceCents = (int) ($variant['price_cents'] ?? 0);
+                    $regularPriceCents   = (int) ($variant['regular_price_cents'] ?? $effectivePriceCents);
+                    $salePriceCents      = $variant['sale_price_cents'] ?? null;
+                    $isOnSale            = !empty($variant['is_on_sale']);
+                    $discountPercent     = (int) ($variant['discount_percent'] ?? 0);
 
                     // SECURITY: Always use store base currency from config
                     $currency = $baseCurrency;
@@ -152,21 +158,26 @@ class CartPresentationService
                     $productUrl  = $productSlug ? RouteHelper::getProductRoute($productSlug, null, false) : null;
 
                     return [
-                        'id'               => $variantId ?? $productId ?? spl_object_id((object) $item),
-                        'product_id'       => $productId,
-                        'variant_id'       => $variantId,
-                        'title'            => $displayTitle,
-                        'product_title'    => $product['title'] ?? $displayTitle,
-                        'variant_label'    => $variantLabel !== '' ? $variantLabel : null,
-                        'qty'              => $qty,
-                        'unit_price_cents' => $priceCents,
-                        'currency'         => $currency,
-                        'total_cents'      => $priceCents * $qty,
-                        'sku'              => $variant['sku']     ?? ($item['sku'] ?? null),
-                        'image'            => $variant['image']   ?? ($product['image'] ?? null),
-                        'url'              => $productUrl,
-                        'options'          => $variant['options'] ?? [],
-                        'is_digital'       => $isDigital,
+                        'id'                   => $variantId ?? $productId ?? spl_object_id((object) $item),
+                        'product_id'           => $productId,
+                        'variant_id'           => $variantId,
+                        'title'                => $displayTitle,
+                        'product_title'        => $product['title'] ?? $displayTitle,
+                        'variant_label'        => $variantLabel !== '' ? $variantLabel : null,
+                        'qty'                  => $qty,
+                        'unit_price_cents'     => $effectivePriceCents,
+                        'regular_price_cents'  => $regularPriceCents,
+                        'sale_price_cents'     => $salePriceCents,
+                        'is_on_sale'           => $isOnSale,
+                        'discount_percent'     => $discountPercent,
+                        'currency'             => $currency,
+                        'total_cents'          => $effectivePriceCents * $qty,
+                        'regular_total_cents'  => $regularPriceCents * $qty,
+                        'sku'                  => $variant['sku']     ?? ($item['sku'] ?? null),
+                        'image'                => $variant['image']   ?? ($product['image'] ?? null),
+                        'url'                  => $productUrl,
+                        'options'              => $variant['options'] ?? [],
+                        'is_digital'           => $isDigital,
                     ];
                 },
                 $items
@@ -293,6 +304,9 @@ class CartPresentationService
                 $this->db->quoteName('product_id'),
                 $this->db->quoteName('sku'),
                 $this->db->quoteName('price_cents'),
+                $this->db->quoteName('sale_price_cents'),
+                $this->db->quoteName('sale_start'),
+                $this->db->quoteName('sale_end'),
                 $this->db->quoteName('currency'),
                 $this->db->quoteName('stock'),
                 $this->db->quoteName('options'),
@@ -317,16 +331,23 @@ class CartPresentationService
                 }
             }
 
+            // Use PriceHelper to resolve effective price with sale logic
+            $priceData = PriceHelper::resolve($row);
+
             $variants[(int) $row->id] = [
-                'id'          => (int) $row->id,
-                'product_id'  => (int) $row->product_id,
-                'title'       => (string) $row->sku,
-                'sku'         => (string) $row->sku,
-                'price_cents' => (int) $row->price_cents,
-                'currency'    => strtoupper((string) $row->currency),
-                'options'     => $options,
-                'image'       => null,
-                'is_digital'  => !empty($row->is_digital),
+                'id'                   => (int) $row->id,
+                'product_id'           => (int) $row->product_id,
+                'title'                => (string) $row->sku,
+                'sku'                  => (string) $row->sku,
+                'price_cents'          => $priceData['effective_price_cents'],
+                'regular_price_cents'  => $priceData['regular_price_cents'],
+                'sale_price_cents'     => $priceData['sale_price_cents'],
+                'is_on_sale'           => $priceData['is_on_sale'],
+                'discount_percent'     => $priceData['discount_percent'],
+                'currency'             => strtoupper((string) $row->currency),
+                'options'              => $options,
+                'image'                => null,
+                'is_digital'           => !empty($row->is_digital),
             ];
         }
 
@@ -345,14 +366,24 @@ class CartPresentationService
     {
         $currency = ConfigHelper::getBaseCurrency();
         $subtotal = 0;
+        $regularSubtotal = 0;
+        $hasAnySale = false;
 
         foreach ($items as $item) {
             $subtotal += (int) ($item['total_cents'] ?? 0);
+            $regularSubtotal += (int) ($item['regular_total_cents'] ?? $item['total_cents'] ?? 0);
+
+            if (!empty($item['is_on_sale'])) {
+                $hasAnySale = true;
+            }
 
             if (!empty($item['currency'])) {
                 $currency = strtoupper((string) $item['currency']);
             }
         }
+
+        // Calculate sale savings (before coupon)
+        $saleSavingsCents = max(0, $regularSubtotal - $subtotal);
 
         // Apply coupon discount
         $discountCents = 0;
@@ -368,14 +399,17 @@ class CartPresentationService
         $total    = $taxableAmount + ($inclusive ? 0 : $taxValue);
 
         return [
-            'subtotal_cents' => $subtotal,
-            'tax_cents'      => $taxValue,
-            'tax_rate'       => $tax['rate'],
-            'tax_inclusive'  => $inclusive,
-            'shipping_cents' => 0,
-            'discount_cents' => $discountCents,
-            'total_cents'    => $total,
-            'currency'       => $currency,
+            'subtotal_cents'       => $subtotal,
+            'regular_subtotal_cents' => $regularSubtotal,
+            'sale_savings_cents'   => $saleSavingsCents,
+            'has_any_sale'         => $hasAnySale,
+            'tax_cents'            => $taxValue,
+            'tax_rate'             => $tax['rate'],
+            'tax_inclusive'        => $inclusive,
+            'shipping_cents'       => 0,
+            'discount_cents'       => $discountCents,
+            'total_cents'          => $total,
+            'currency'             => $currency,
         ];
     }
 

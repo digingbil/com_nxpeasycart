@@ -533,6 +533,66 @@
                                 />
                             </div>
 
+                            <div class="nxp-ec-form-field">
+                                <label class="nxp-ec-form-label" for="coupon-max-uses-per-user">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_MAX_USES_PER_USER",
+                                            "Max uses per user",
+                                            [],
+                                            "couponsFormMaxUsesPerUser"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-max-uses-per-user"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    v-model.number="draft.max_uses_per_user"
+                                />
+                                <small class="nxp-ec-form-hint">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_MAX_USES_PER_USER_HINT",
+                                            "Limit how many times a single user or email can use this coupon. Leave empty for unlimited.",
+                                            [],
+                                            "couponsFormMaxUsesPerUserHint"
+                                        )
+                                    }}
+                                </small>
+                            </div>
+
+                            <div class="nxp-ec-form-field nxp-ec-form-field--inline">
+                                <label class="nxp-ec-form-label" for="coupon-allow-sale-items">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_ALLOW_SALE_ITEMS",
+                                            "Allow on sale items",
+                                            [],
+                                            "couponsFormAllowSaleItems"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    id="coupon-allow-sale-items"
+                                    class="nxp-ec-form-checkbox"
+                                    type="checkbox"
+                                    v-model="draft.allow_sale_items"
+                                />
+                                <small class="nxp-ec-form-hint">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_COUPONS_FORM_ALLOW_SALE_ITEMS_HINT",
+                                            "When disabled, this coupon cannot be applied if the cart contains items currently on sale.",
+                                            [],
+                                            "couponsFormAllowSaleItemsHint"
+                                        )
+                                    }}
+                                </small>
+                            </div>
+
                             <div class="nxp-ec-form-field nxp-ec-form-field--inline">
                                 <label class="nxp-ec-form-label" for="coupon-active">
                                     {{
@@ -640,6 +700,8 @@ const draft = reactive({
     start: "",
     end: "",
     max_uses: null,
+    max_uses_per_user: null,
+    allow_sale_items: true,
     active: true,
 });
 
@@ -660,6 +722,8 @@ const startCreate = () => {
         start: "",
         end: "",
         max_uses: null,
+        max_uses_per_user: null,
+        allow_sale_items: true,
         active: true,
     });
 };
@@ -675,6 +739,8 @@ const startEdit = (coupon) => {
         start: coupon.start ? coupon.start.substring(0, 10) : "",
         end: coupon.end ? coupon.end.substring(0, 10) : "",
         max_uses: coupon.max_uses,
+        max_uses_per_user: coupon.max_uses_per_user,
+        allow_sale_items: coupon.allow_sale_items ?? true,
         active: coupon.active,
     });
 };
@@ -696,6 +762,11 @@ const emitSave = () => {
             draft.max_uses !== null && draft.max_uses !== ""
                 ? draft.max_uses
                 : null,
+        max_uses_per_user:
+            draft.max_uses_per_user !== null && draft.max_uses_per_user !== ""
+                ? draft.max_uses_per_user
+                : null,
+        allow_sale_items: draft.allow_sale_items,
         active: draft.active,
     };
 

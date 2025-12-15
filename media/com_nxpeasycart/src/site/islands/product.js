@@ -218,6 +218,8 @@ export default function mountProductIsland(el) {
             payload.labels?.error_generic ||
             "We couldn't add this item to your cart. Please try again.",
         variant_none: payload.labels?.variant_none || "—",
+        sale_badge: payload.labels?.sale_badge || "Sale",
+        discount_off: payload.labels?.discount_off || "off",
     };
 
     const endpoints = payload.endpoints || {};

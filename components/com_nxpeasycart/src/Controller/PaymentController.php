@@ -210,6 +210,39 @@ class PaymentController extends BaseController
             $this->respond(['message' => Text::_('COM_NXPEASYCART_ERROR_PAYMENT_GATEWAY_INVALID')], 400);
         }
 
+        // Re-validate coupon at checkout with actual email (for per-user limits)
+        // This is necessary because when the coupon was applied to cart, we didn't have the guest's email yet
+        if (!empty($orderPayload['coupon']['code'])) {
+            $couponService = new \Joomla\Component\Nxpeasycart\Administrator\Service\CouponService(
+                $container->get(DatabaseInterface::class)
+            );
+
+            $checkoutUserId = $identity && !$identity->guest ? (int) $identity->id : null;
+            $checkoutEmail  = !empty($orderPayload['email']) ? (string) $orderPayload['email'] : null;
+
+            // Determine if cart has sale items for coupon validation
+            $cartHasSaleItems = false;
+            foreach ($cart['items'] ?? [] as $cartItem) {
+                if (!empty($cartItem['sale_active'])) {
+                    $cartHasSaleItems = true;
+                    break;
+                }
+            }
+
+            $couponValidation = $couponService->validate(
+                (string) $orderPayload['coupon']['code'],
+                $subtotal,
+                $cartHasSaleItems,
+                $checkoutUserId,
+                $checkoutEmail
+            );
+
+            if (!$couponValidation['valid']) {
+                $this->respond(['message' => $couponValidation['error']], 400);
+                return;
+            }
+        }
+
         try {
             $order = $orders->create($orderPayload);
 
@@ -219,7 +252,22 @@ class PaymentController extends BaseController
                     $couponService = new \Joomla\Component\Nxpeasycart\Administrator\Service\CouponService(
                         $container->get(DatabaseInterface::class)
                     );
+
+                    // Increment global usage counter
                     $couponService->incrementUsage((int) $orderPayload['coupon']['id']);
+
+                    // Record per-user usage for limit tracking
+                    $orderUserId = isset($order['user_id']) && $order['user_id'] > 0
+                        ? (int) $order['user_id']
+                        : null;
+                    $orderEmail = !empty($order['email']) ? (string) $order['email'] : null;
+
+                    $couponService->recordUsage(
+                        (int) $orderPayload['coupon']['id'],
+                        (int) $order['id'],
+                        $orderUserId,
+                        $orderEmail
+                    );
                 } catch (\Throwable $couponException) {
                     // Non-fatal: log but don't block order creation
                 }

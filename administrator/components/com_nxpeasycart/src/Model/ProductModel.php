@@ -531,17 +531,41 @@ class ProductModel extends AdminModel
             $ean = isset($variant['ean']) ? trim((string) $variant['ean']) : null;
             $ean = ($ean !== '' && $ean !== null) ? $ean : null;
 
+            // Sale price fields - optional
+            $salePriceCents = null;
+            $saleStart      = null;
+            $saleEnd        = null;
+
+            if (isset($variant['sale_price']) && $variant['sale_price'] !== null && $variant['sale_price'] !== '') {
+                try {
+                    $salePriceCents = $this->resolvePriceCents(['price' => $variant['sale_price']]);
+                } catch (RuntimeException $exception) {
+                    throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SALE_PRICE_INVALID'));
+                }
+            }
+
+            if (isset($variant['sale_start']) && $variant['sale_start'] !== null && $variant['sale_start'] !== '') {
+                $saleStart = trim((string) $variant['sale_start']);
+            }
+
+            if (isset($variant['sale_end']) && $variant['sale_end'] !== null && $variant['sale_end'] !== '') {
+                $saleEnd = trim((string) $variant['sale_end']);
+            }
+
             $variants[] = [
-                'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
-                'sku'         => $sku,
-                'ean'         => $ean,
-                'price_cents' => $priceCents,
-                'currency'    => $currency,
-                'stock'       => max(0, (int) ($variant['stock'] ?? 0)),
-                'options'     => $options,
-                'weight'      => $weight,
-                'active'      => isset($variant['active']) ? (bool) $variant['active'] : true,
-                'is_digital'  => array_key_exists('is_digital', $variant)
+                'id'               => isset($variant['id']) ? (int) $variant['id'] : 0,
+                'sku'              => $sku,
+                'ean'              => $ean,
+                'price_cents'      => $priceCents,
+                'sale_price_cents' => $salePriceCents,
+                'sale_start'       => $saleStart,
+                'sale_end'         => $saleEnd,
+                'currency'         => $currency,
+                'stock'            => max(0, (int) ($variant['stock'] ?? 0)),
+                'options'          => $options,
+                'weight'           => $weight,
+                'active'           => isset($variant['active']) ? (bool) $variant['active'] : true,
+                'is_digital'       => array_key_exists('is_digital', $variant)
                     ? (bool) $variant['is_digital']
                     : ($productType === 'digital'),
             ];
@@ -731,17 +755,20 @@ class ProductModel extends AdminModel
             }
 
             $payload = [
-                'id'          => $variant['id'] ?? 0,
-                'product_id'  => $productId,
-                'sku'         => $variant['sku'],
-                'ean'         => $variant['ean'] ?? null,
-                'price_cents' => (int) $variant['price_cents'],
-                'currency'    => $variant['currency'],
-                'stock'       => (int) $variant['stock'],
-                'options'     => $this->encodeOptions($variant['options'] ?? null),
-                'weight'      => $variant['weight'],
-                'active'      => (int) (bool) $variant['active'],
-                'is_digital'  => !empty($variant['is_digital']) ? 1 : 0,
+                'id'               => $variant['id'] ?? 0,
+                'product_id'       => $productId,
+                'sku'              => $variant['sku'],
+                'ean'              => $variant['ean'] ?? null,
+                'price_cents'      => (int) $variant['price_cents'],
+                'sale_price_cents' => $variant['sale_price_cents'] ?? null,
+                'sale_start'       => $variant['sale_start'] ?? null,
+                'sale_end'         => $variant['sale_end'] ?? null,
+                'currency'         => $variant['currency'],
+                'stock'            => (int) $variant['stock'],
+                'options'          => $this->encodeOptions($variant['options'] ?? null),
+                'weight'           => $variant['weight'],
+                'active'           => (int) (bool) $variant['active'],
+                'is_digital'       => !empty($variant['is_digital']) ? 1 : 0,
             ];
 
             if (!$table->bind($payload)) {
@@ -1080,6 +1107,9 @@ class ProductModel extends AdminModel
                 $db->quoteName('sku'),
                 $db->quoteName('ean'),
                 $db->quoteName('price_cents'),
+                $db->quoteName('sale_price_cents'),
+                $db->quoteName('sale_start'),
+                $db->quoteName('sale_end'),
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
                 $db->quoteName('options'),
@@ -1098,17 +1128,20 @@ class ProductModel extends AdminModel
 
         foreach ($rows as $row) {
             $variants[] = [
-                'id'          => (int) $row->id,
-                'sku'         => (string) $row->sku,
-                'ean'         => $row->ean !== null ? (string) $row->ean : null,
-                'price_cents' => (int) $row->price_cents,
-                'price'       => $this->formatPriceCents((int) $row->price_cents),
-                'currency'    => (string) $row->currency,
-                'stock'       => (int) $row->stock,
-                'options'     => $this->decodeOptions($row->options ?? null),
-                'weight'      => $row->weight !== null ? (string) $row->weight : null,
-                'active'      => (bool) $row->active,
-                'is_digital'  => !empty($row->is_digital),
+                'id'               => (int) $row->id,
+                'sku'              => (string) $row->sku,
+                'ean'              => $row->ean !== null ? (string) $row->ean : null,
+                'price_cents'      => (int) $row->price_cents,
+                'price'            => $this->formatPriceCents((int) $row->price_cents),
+                'sale_price_cents' => $row->sale_price_cents !== null ? (int) $row->sale_price_cents : null,
+                'sale_start'       => $row->sale_start ?? null,
+                'sale_end'         => $row->sale_end ?? null,
+                'currency'         => (string) $row->currency,
+                'stock'            => (int) $row->stock,
+                'options'          => $this->decodeOptions($row->options ?? null),
+                'weight'           => $row->weight !== null ? (string) $row->weight : null,
+                'active'           => (bool) $row->active,
+                'is_digital'       => !empty($row->is_digital),
             ];
         }
 
@@ -1140,6 +1173,9 @@ class ProductModel extends AdminModel
                 $db->quoteName('sku'),
                 $db->quoteName('ean'),
                 $db->quoteName('price_cents'),
+                $db->quoteName('sale_price_cents'),
+                $db->quoteName('sale_start'),
+                $db->quoteName('sale_end'),
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
                 $db->quoteName('options'),
@@ -1163,16 +1199,19 @@ class ProductModel extends AdminModel
 
             $variantsById[$productId] ??= [];
             $variantsById[$productId][] = [
-                'id'          => (int) $row->id,
-                'sku'         => (string) $row->sku,
-                'ean'         => $row->ean !== null ? (string) $row->ean : null,
-                'price_cents' => (int) $row->price_cents,
-                'price'       => $this->formatPriceCents((int) $row->price_cents),
-                'currency'    => (string) $row->currency,
-                'stock'       => (int) $row->stock,
-                'options'     => $this->decodeOptions($row->options ?? null),
-                'weight'      => $row->weight !== null ? (string) $row->weight : null,
-                'active'      => (bool) $row->active,
+                'id'               => (int) $row->id,
+                'sku'              => (string) $row->sku,
+                'ean'              => $row->ean !== null ? (string) $row->ean : null,
+                'price_cents'      => (int) $row->price_cents,
+                'price'            => $this->formatPriceCents((int) $row->price_cents),
+                'sale_price_cents' => $row->sale_price_cents !== null ? (int) $row->sale_price_cents : null,
+                'sale_start'       => $row->sale_start ?? null,
+                'sale_end'         => $row->sale_end ?? null,
+                'currency'         => (string) $row->currency,
+                'stock'            => (int) $row->stock,
+                'options'          => $this->decodeOptions($row->options ?? null),
+                'weight'           => $row->weight !== null ? (string) $row->weight : null,
+                'active'           => (bool) $row->active,
             ];
         }
 

@@ -667,6 +667,88 @@
                             <div class="nxp-ec-form-field">
                                 <label
                                     class="nxp-ec-form-label"
+                                    :for="`variant-sale-price-${index}`"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_SALE_PRICE",
+                                            "Sale Price"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    :id="`variant-sale-price-${index}`"
+                                    class="nxp-ec-form-input"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    v-model.trim="variant.sale_price"
+                                    @blur="formatVariantSalePrice(index)"
+                                    :placeholder="__('COM_NXPEASYCART_FIELD_VARIANT_SALE_PRICE_PLACEHOLDER', 'Leave empty if not on sale')"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    :for="`variant-sale-start-${index}`"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_SALE_START",
+                                            "Sale Start"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    :id="`variant-sale-start-${index}`"
+                                    class="nxp-ec-form-input"
+                                    type="datetime-local"
+                                    v-model="variant.sale_start_local"
+                                    :disabled="!variant.sale_price || variant.sale_price === ''"
+                                />
+                                <p class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_SALE_START_HELP",
+                                            "Leave empty to start immediately"
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
+                                    :for="`variant-sale-end-${index}`"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_SALE_END",
+                                            "Sale End"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    :id="`variant-sale-end-${index}`"
+                                    class="nxp-ec-form-input"
+                                    type="datetime-local"
+                                    v-model="variant.sale_end_local"
+                                    :disabled="!variant.sale_price || variant.sale_price === ''"
+                                />
+                                <p class="nxp-ec-form-help">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_SALE_END_HELP",
+                                            "Leave empty for no expiration"
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
                                     :for="`variant-stock-${index}`"
                                 >
                                     {{
@@ -1437,6 +1519,11 @@ const blankVariant = () => ({
     sku: "",
     ean: "",
     price: "",
+    sale_price: "",
+    sale_start: null,
+    sale_end: null,
+    sale_start_local: "",
+    sale_end_local: "",
     currency: baseCurrency.value,
     stock: 0,
     weight: "",
@@ -1550,31 +1637,96 @@ const normaliseDigitalFiles = (files) => {
         .filter((file) => file.id > 0 && file.filename !== "");
 };
 
+/**
+ * Convert UTC datetime string to local datetime-local input value.
+ */
+const utcToLocal = (utcStr) => {
+    if (!utcStr || utcStr === "") {
+        return "";
+    }
+
+    try {
+        // Parse the UTC datetime and convert to local
+        const date = new Date(utcStr.replace(" ", "T") + "Z");
+
+        if (isNaN(date.getTime())) {
+            return "";
+        }
+
+        // Format as YYYY-MM-DDTHH:MM for datetime-local input
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch (e) {
+        return "";
+    }
+};
+
+/**
+ * Convert local datetime-local value to UTC datetime string.
+ */
+const localToUtc = (localStr) => {
+    if (!localStr || localStr === "") {
+        return null;
+    }
+
+    try {
+        // datetime-local input value is in local timezone
+        const date = new Date(localStr);
+
+        if (isNaN(date.getTime())) {
+            return null;
+        }
+
+        // Convert to UTC ISO string and format as MySQL datetime
+        return date.toISOString().slice(0, 19).replace("T", " ");
+    } catch (e) {
+        return null;
+    }
+};
+
 const normaliseVariants = (variants) => {
     if (!Array.isArray(variants) || variants.length === 0) {
         return [blankVariant()];
     }
 
-    return variants.map((variant) => ({
-        id: Number.parseInt(variant?.id ?? 0, 10) || 0,
-        sku: String(variant?.sku ?? "").trim(),
-        ean: variant?.ean != null ? String(variant.ean).trim() : "",
-        price:
-            variant?.price != null
-                ? String(variant.price)
-                : Number.isFinite(variant?.price_cents)
-                  ? (variant.price_cents / 100).toFixed(2)
-                  : "",
-        currency: String(variant?.currency ?? baseCurrency.value).toUpperCase(),
-        stock: Number.parseInt(variant?.stock ?? 0, 10) || 0,
-        weight: variant?.weight != null ? String(variant.weight) : "",
-        active: variant?.active !== undefined ? Boolean(variant.active) : true,
-        options: normaliseOptions(variant?.options),
-        is_digital:
-            variant?.is_digital !== undefined
-                ? Boolean(variant.is_digital)
-                : isDigitalProduct.value,
-    }));
+    return variants.map((variant) => {
+        const salePrice = variant?.sale_price != null
+            ? String(variant.sale_price)
+            : Number.isFinite(variant?.sale_price_cents)
+              ? (variant.sale_price_cents / 100).toFixed(2)
+              : "";
+
+        return {
+            id: Number.parseInt(variant?.id ?? 0, 10) || 0,
+            sku: String(variant?.sku ?? "").trim(),
+            ean: variant?.ean != null ? String(variant.ean).trim() : "",
+            price:
+                variant?.price != null
+                    ? String(variant.price)
+                    : Number.isFinite(variant?.price_cents)
+                      ? (variant.price_cents / 100).toFixed(2)
+                      : "",
+            sale_price: salePrice,
+            sale_start: variant?.sale_start ?? null,
+            sale_end: variant?.sale_end ?? null,
+            sale_start_local: utcToLocal(variant?.sale_start),
+            sale_end_local: utcToLocal(variant?.sale_end),
+            currency: String(variant?.currency ?? baseCurrency.value).toUpperCase(),
+            stock: Number.parseInt(variant?.stock ?? 0, 10) || 0,
+            weight: variant?.weight != null ? String(variant.weight) : "",
+            active: variant?.active !== undefined ? Boolean(variant.active) : true,
+            options: normaliseOptions(variant?.options),
+            is_digital:
+                variant?.is_digital !== undefined
+                    ? Boolean(variant.is_digital)
+                    : isDigitalProduct.value,
+        };
+    });
 };
 
 const applyVariantDigitalDefaults = () => {
@@ -1952,6 +2104,28 @@ const formatVariantPrice = (index) => {
     }
 
     variant.price = numeric.toFixed(2);
+};
+
+const formatVariantSalePrice = (index) => {
+    const variant = form.variants[index];
+
+    if (!variant) {
+        return;
+    }
+
+    if (variant.sale_price === "" || variant.sale_price === null || variant.sale_price === undefined) {
+        variant.sale_price = "";
+        return;
+    }
+
+    const numeric = Number.parseFloat(variant.sale_price);
+
+    if (Number.isNaN(numeric)) {
+        variant.sale_price = "";
+        return;
+    }
+
+    variant.sale_price = numeric.toFixed(2);
 };
 
 let mediaPickerField = null;
@@ -2442,6 +2616,15 @@ const submit = () => {
             ? String(variant.ean).trim()
             : null;
 
+        // Sale price: normalise to null if empty
+        const salePrice = variant.sale_price !== null && variant.sale_price !== undefined && variant.sale_price !== ""
+            ? String(variant.sale_price).trim()
+            : null;
+
+        // Sale dates: convert from local to UTC
+        const saleStart = localToUtc(variant.sale_start_local);
+        const saleEnd = localToUtc(variant.sale_end_local);
+
         return {
             id: variant.id || 0,
             sku: variant.sku.trim(),
@@ -2450,6 +2633,9 @@ const submit = () => {
                 variant.price !== null && variant.price !== undefined
                     ? String(variant.price).trim()
                     : "",
+            sale_price: salePrice,
+            sale_start: saleStart,
+            sale_end: saleEnd,
             currency: variant.currency
                 ? String(variant.currency).trim().toUpperCase()
                 : baseCurrency.value,

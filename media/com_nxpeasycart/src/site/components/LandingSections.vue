@@ -90,8 +90,16 @@
                     <p
                         v-if="item.price_label"
                         class="nxp-ec-landing__card-price"
+                        :class="{ 'nxp-ec-landing__card-price--sale': item.has_active_sale }"
                     >
-                        {{ item.price_label }}
+                        <template v-if="item.has_active_sale">
+                            <span class="nxp-ec-landing__card-sale-badge">{{ labels.sale_badge || 'Sale' }}</span>
+                            <span v-if="item.regular_price_label" class="nxp-ec-landing__card-regular-price">{{ item.regular_price_label }}</span>
+                            <span class="nxp-ec-landing__card-sale-price">{{ item.price_label }}</span>
+                        </template>
+                        <template v-else>
+                            {{ item.price_label }}
+                        </template>
                     </p>
                     <div class="nxp-ec-landing__card-actions">
                         <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="item.link">

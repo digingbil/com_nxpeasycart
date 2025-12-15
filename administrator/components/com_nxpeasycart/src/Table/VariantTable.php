@@ -74,6 +74,36 @@ class VariantTable extends Table
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_PRICE_INVALID'));
         }
 
+        // Sale price validation
+        if ($this->sale_price_cents !== null && $this->sale_price_cents !== '') {
+            $salePriceCents = (int) $this->sale_price_cents;
+
+            if ($salePriceCents < 0) {
+                throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_SALE_PRICE_INVALID'));
+            }
+
+            $this->sale_price_cents = $salePriceCents;
+
+            // Warning (not error): Sale price should typically be lower than regular price
+            if ($salePriceCents > 0 && $salePriceCents >= $this->price_cents) {
+                try {
+                    $app = \Joomla\CMS\Factory::getApplication();
+                    $app->enqueueMessage(
+                        Text::_('COM_NXPEASYCART_WARNING_VARIANT_SALE_PRICE_NOT_LOWER'),
+                        'warning'
+                    );
+                } catch (\Throwable $e) {
+                    // Suppress if no application context
+                }
+            }
+        } else {
+            $this->sale_price_cents = null;
+        }
+
+        // Normalize sale date fields
+        $this->sale_start = ($this->sale_start !== null && $this->sale_start !== '') ? $this->sale_start : null;
+        $this->sale_end   = ($this->sale_end !== null && $this->sale_end !== '') ? $this->sale_end : null;
+
         if ($this->weight !== null && $this->weight !== '') {
             $this->weight = (float) $this->weight;
         } else {

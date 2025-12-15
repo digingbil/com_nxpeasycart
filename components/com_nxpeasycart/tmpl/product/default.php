@@ -66,16 +66,38 @@ $isOutOfStock = !empty($product['out_of_stock']);
 // Locale is auto-resolved by MoneyHelper (checks store override, then Joomla language)
 $locale = MoneyHelper::resolveLocale();
 
-$primaryImage = $images[0] ?? '';
-$priceMin     = (int) ($price['min_cents'] ?? 0);
-$priceMax     = (int) ($price['max_cents'] ?? 0);
-$priceLabel   = $priceMin === $priceMax
-    ? MoneyHelper::format($priceMin, $currency)
+$primaryImage    = $images[0] ?? '';
+// Regular prices (for strikethrough when on sale)
+$regularMin      = (int) ($price['min_cents'] ?? 0);
+$regularMax      = (int) ($price['max_cents'] ?? 0);
+// Effective prices (sale price when active, otherwise regular)
+$effectiveMin    = (int) ($price['effective_min_cents'] ?? $regularMin);
+$effectiveMax    = (int) ($price['effective_max_cents'] ?? $regularMax);
+$hasSale         = !empty($price['any_sale_active']);
+$regularPriceLabel = null;
+
+// Format regular price label (for strikethrough)
+$regularPriceFormatted = $regularMin === $regularMax
+    ? MoneyHelper::format($regularMin, $currency)
     : Text::sprintf(
         'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
-        MoneyHelper::format($priceMin, $currency),
-        MoneyHelper::format($priceMax, $currency)
+        MoneyHelper::format($regularMin, $currency),
+        MoneyHelper::format($regularMax, $currency)
     );
+
+// Format effective/sale price label
+$priceLabel = $effectiveMin === $effectiveMax
+    ? MoneyHelper::format($effectiveMin, $currency)
+    : Text::sprintf(
+        'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
+        MoneyHelper::format($effectiveMin, $currency),
+        MoneyHelper::format($effectiveMax, $currency)
+    );
+
+// If any variant has an active sale, set the regular price label for strikethrough
+if ($hasSale) {
+    $regularPriceLabel = $regularPriceFormatted;
+}
 
 $preparedLongDescription = '';
 
@@ -104,19 +126,28 @@ $galleryJson = htmlspecialchars(
 
 $variantPayload = array_map(
     static function (array $variant): array {
-        $priceCents = (int) ($variant['price_cents'] ?? 0);
-        $currency   = ConfigHelper::getBaseCurrency();
+        $priceCents         = (int) ($variant['price_cents'] ?? 0);
+        $salePriceCents     = $variant['sale_price_cents'] ?? null;
+        $effectivePriceCents = (int) ($variant['effective_price_cents'] ?? $priceCents);
+        $saleActive         = !empty($variant['sale_active']);
+        $discountPercent    = $variant['discount_percent'] ?? null;
+        $currency           = ConfigHelper::getBaseCurrency();
 
         return [
-            'id'           => (int) ($variant['id'] ?? 0),
-            'sku'          => (string) ($variant['sku'] ?? ''),
-            'ean'          => isset($variant['ean']) ? (string) $variant['ean'] : null,
-            'price_cents'  => $priceCents,
-            'currency'     => $currency,
-            'price_label'  => MoneyHelper::format($priceCents, $currency),
-            'stock'        => (int) ($variant['stock'] ?? 0),
-            'options'      => $variant['options'] ?? [],
-            'weight'       => $variant['weight'] ?? null,
+            'id'                    => (int) ($variant['id'] ?? 0),
+            'sku'                   => (string) ($variant['sku'] ?? ''),
+            'ean'                   => isset($variant['ean']) ? (string) $variant['ean'] : null,
+            'price_cents'           => $priceCents,
+            'sale_price_cents'      => $salePriceCents,
+            'effective_price_cents' => $effectivePriceCents,
+            'sale_active'           => $saleActive,
+            'discount_percent'      => $discountPercent,
+            'currency'              => $currency,
+            'price_label'           => MoneyHelper::format($effectivePriceCents, $currency),
+            'regular_price_label'   => $saleActive ? MoneyHelper::format($priceCents, $currency) : null,
+            'stock'                 => (int) ($variant['stock'] ?? 0),
+            'options'               => $variant['options'] ?? [],
+            'weight'                => $variant['weight'] ?? null,
         ];
     },
     $variants
@@ -133,10 +164,12 @@ $payload = [
         'images'         => $images,
         'categories'     => $categories,
         'price'          => [
-            'currency'  => $currency,
-            'min_cents' => $priceMin,
-            'max_cents' => $priceMax,
-            'label'     => $priceLabel,
+            'currency'       => $currency,
+            'min_cents'      => $priceMin,
+            'max_cents'      => $priceMax,
+            'label'          => $priceLabel,
+            'regular_label'  => $regularPriceLabel,
+            'has_sale'       => $hasSale,
         ],
     ],
     'variants' => $variantPayload,
@@ -154,6 +187,8 @@ $payload = [
         'variant_stock'    => Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_STOCK_LABEL'),
         'variant_options'  => Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_OPTIONS_LABEL'),
         'variant_none'     => Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_NONE'),
+        'sale_badge'       => Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'),
+        'discount_off'     => Text::_('COM_NXPEASYCART_PRODUCT_DISCOUNT_OFF'),
     ],
     'links' => [
         'cart'     => RouteHelper::getCartRoute(false),
@@ -227,8 +262,14 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
             </ul>
         <?php endif; ?>
 
-        <div class="nxp-ec-product__price">
-            <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
+        <div class="nxp-ec-product__price<?php echo $hasSale ? ' nxp-ec-product__price--sale' : ''; ?>">
+            <?php if ($hasSale && $regularPriceLabel !== null) : ?>
+                <span class="nxp-ec-product__sale-badge"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'); ?></span>
+                <span class="nxp-ec-product__regular-price"><?php echo htmlspecialchars($regularPriceLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                <span class="nxp-ec-product__sale-price"><?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+            <?php else : ?>
+                <?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?>
+            <?php endif; ?>
         </div>
 
         <?php if ($isOutOfStock) : ?>
@@ -279,10 +320,24 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($variants as $variant) : ?>
-                        <tr>
+                    <?php foreach ($variants as $variant) :
+                        $variantSaleActive = !empty($variant['sale_active']);
+                        $variantEffectivePrice = (int) ($variant['effective_price_cents'] ?? $variant['price_cents']);
+                        $variantRegularPrice = (int) $variant['price_cents'];
+                    ?>
+                        <tr<?php echo $variantSaleActive ? ' class="nxp-ec-product__variant-row--sale"' : ''; ?>>
                             <td><?php echo htmlspecialchars($variant['sku'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo htmlspecialchars(MoneyHelper::format((int) $variant['price_cents'], ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="nxp-ec-product__variant-price<?php echo $variantSaleActive ? ' nxp-ec-product__variant-price--sale' : ''; ?>">
+                                <?php if ($variantSaleActive) : ?>
+                                    <span class="nxp-ec-product__variant-regular-price"><?php echo htmlspecialchars(MoneyHelper::format($variantRegularPrice, ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <span class="nxp-ec-product__variant-sale-price"><?php echo htmlspecialchars(MoneyHelper::format($variantEffectivePrice, ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <?php if (!empty($variant['discount_percent'])) : ?>
+                                        <span class="nxp-ec-product__variant-discount">-<?php echo (int) $variant['discount_percent']; ?>%</span>
+                                    <?php endif; ?>
+                                <?php else : ?>
+                                    <?php echo htmlspecialchars(MoneyHelper::format($variantRegularPrice, ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php endif; ?>
+                            </td>
                             <td><?php echo (int) $variant['stock']; ?></td>
                             <td>
                                 <?php if (!empty($variant['options'])) : ?>
@@ -314,15 +369,30 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
 // Schema.org Product structured data with gtin13 when EAN is available
 $schemaOffers = [];
 foreach ($variants as $variant) {
+    // Use effective price (considers sale pricing)
+    $schemaEffectivePrice = (int) ($variant['effective_price_cents'] ?? $variant['price_cents'] ?? 0);
+    $schemaRegularPrice   = (int) ($variant['price_cents'] ?? 0);
+    $schemaSaleActive     = !empty($variant['sale_active']);
+
     $offer = [
         '@type'         => 'Offer',
         'sku'           => (string) ($variant['sku'] ?? ''),
-        'price'         => number_format((int) ($variant['price_cents'] ?? 0) / 100, 2, '.', ''),
+        'price'         => number_format($schemaEffectivePrice / 100, 2, '.', ''),
         'priceCurrency' => $currency,
         'availability'  => ((int) ($variant['stock'] ?? 0)) > 0
             ? 'https://schema.org/InStock'
             : 'https://schema.org/OutOfStock',
     ];
+
+    // Add priceSpecification for sale price display with strikethrough regular price
+    if ($schemaSaleActive && $schemaRegularPrice > $schemaEffectivePrice) {
+        $offer['priceSpecification'] = [
+            '@type'                 => 'UnitPriceSpecification',
+            'price'                 => number_format($schemaEffectivePrice / 100, 2, '.', ''),
+            'priceCurrency'         => $currency,
+            'priceType'             => 'https://schema.org/SalePrice',
+        ];
+    }
 
     // Add gtin13 if EAN-13 is present (13 digits)
     $ean = $variant['ean'] ?? null;

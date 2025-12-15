@@ -26,6 +26,15 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 
 ### Recent Enhancements
 
+- **Sale pricing for variants (v0.2.0)**: Time-limited discounted prices on individual product variants:
+    - **Per-variant sale configuration**: Each variant can have its own sale price, start date, and end date (all optional).
+    - **Automatic activation**: Sales automatically start and end based on configured UTC timestamps; no manual intervention required.
+    - **PriceHelper centralisation**: New `Administrator\Helper\PriceHelper` class provides consistent sale price resolution across all contexts (product pages, category listings, cart, checkout, coupons).
+    - **Visual indicators**: Sale badges, strikethrough regular prices, and highlighted sale prices appear on product pages, category/landing cards, cart line items, and checkout summary.
+    - **Savings display**: Cart and checkout show total sale savings separately from coupon discounts.
+    - **Coupon integration**: Coupon validation correctly uses effective (sale) prices, so percentage/fixed discounts stack properly with sale pricing.
+    - **Admin UI**: Product editor includes sale price, sale start, and sale end fields per variant with datetime-local inputs and UTC conversion.
+    - See `docs/sale-pricing.md` for complete documentation.
 - **Digital products & downloads (v0.1.13)**: Products can be marked digital; variants include an `is_digital` flag; digital files upload/list/delete via the admin product editor; settings tab for download limits/expiry/storage path/auto-fulfill; digital-only orders skip shipping and can auto-fulfill on payment; storefront checkout hides shipping for digital-only carts; order status page + confirmation email show tokenised download links with remaining count and expiry. Files are stored under `/media/com_nxpeasycart/downloads` with `.htaccess` deny and streamed via `DownloadController`.
 - **Digital file upload security (v0.1.14)**: Comprehensive file validation and server protection for digital product uploads:
     - **47 allowed file types**: Predefined whitelist covering archives (zip, rar, 7z, tar, gz, tgz), audio (mp3, wav, flac), video (mp4, webm, mov, avi, mkv), images (jpg, png, gif, svg, webp, avif), documents (pdf, txt, rtf, doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, csv), ebooks (epub, mobi), and installers (exe, msi, deb, rpm, dmg, app, pkg, apk, ipa).

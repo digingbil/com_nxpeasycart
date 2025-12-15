@@ -77,12 +77,22 @@ export default function mountCheckoutIsland(el) {
                     <div>
                       <strong>{{ item.product_title || item.title }}</strong>
                       <span
+                        v-if="item.is_on_sale"
+                        class="nxp-ec-checkout__badge nxp-ec-checkout__badge--sale"
+                      >{{ labels.sale_badge }}</span>
+                      <span
                         v-if="item.is_digital"
                         class="nxp-ec-checkout__badge"
                       >{{ labels.digital_badge }}</span>
                       <span class="nxp-ec-checkout__qty">× {{ item.qty }}</span>
                     </div>
-                    <div class="nxp-ec-checkout__price">{{ formatMoney(item.total_cents) }}</div>
+                    <div class="nxp-ec-checkout__price" :class="{ 'nxp-ec-checkout__price--sale': item.is_on_sale }">
+                      <template v-if="item.is_on_sale">
+                        <span class="nxp-ec-checkout__regular-price">{{ formatMoney(item.regular_total_cents || item.regular_price_cents * item.qty) }}</span>
+                        <span class="nxp-ec-checkout__sale-price">{{ formatMoney(item.total_cents) }}</span>
+                      </template>
+                      <template v-else>{{ formatMoney(item.total_cents) }}</template>
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -123,6 +133,10 @@ export default function mountCheckoutIsland(el) {
                 <div>
                   <span>{{ labels.subtotal }}</span>
                   <strong>{{ formatMoney(subtotal) }}</strong>
+                </div>
+                <div v-if="saleSavings > 0" class="nxp-ec-checkout__totals-savings">
+                  <span>{{ labels.sale_savings }}</span>
+                  <strong class="nxp-ec-checkout__savings-amount">-{{ formatMoney(saleSavings) }}</strong>
                 </div>
                 <div v-if="discountCents > 0">
                   <span>{{ labels.discount }}</span>
@@ -617,6 +631,8 @@ export default function mountCheckoutIsland(el) {
                 digital_note:
                     labelsPayload.digital_note ||
                     "No shipping needed for digital items.",
+                sale_badge: labelsPayload.sale_badge || "Sale",
+                sale_savings: labelsPayload.sale_savings || "Sale savings",
             };
 
             const updateCartFlags = (dataCart) => {
@@ -861,6 +877,17 @@ export default function mountCheckoutIsland(el) {
                     0
                 )
             );
+
+            // Calculate total sale savings (difference between regular and sale prices)
+            const saleSavings = computed(() => {
+                return cartItems.reduce((total, item) => {
+                    if (item.is_on_sale && item.regular_price_cents > item.unit_price_cents) {
+                        const savingsPerItem = item.regular_price_cents - item.unit_price_cents;
+                        return total + (savingsPerItem * item.qty);
+                    }
+                    return total;
+                }, 0);
+            });
 
             const discountCents = computed(() => {
                 return coupon.value?.discount_cents || 0;
@@ -1383,6 +1410,7 @@ export default function mountCheckoutIsland(el) {
                 requiresShipping,
                 isDigitalOnly,
                 subtotal,
+                saleSavings,
                 discountCents,
                 selectedShippingCost,
                 taxAmount,

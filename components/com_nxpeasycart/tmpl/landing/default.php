@@ -155,8 +155,17 @@ $ctaEnabled  = isset($hero['cta']['enabled']) ? (bool) $hero['cta']['enabled'] :
                                         </p>
                                     <?php endif; ?>
                                     <?php if (!empty($item['price_label'])) : ?>
-                                        <p class="nxp-ec-landing__card-price">
-                                            <?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php $hasActiveSale = !empty($item['has_active_sale']); ?>
+                                        <p class="nxp-ec-landing__card-price<?php echo $hasActiveSale ? ' nxp-ec-landing__card-price--sale' : ''; ?>">
+                                            <?php if ($hasActiveSale) : ?>
+                                                <span class="nxp-ec-landing__card-sale-badge"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'); ?></span>
+                                                <?php if (!empty($item['regular_price_label'])) : ?>
+                                                    <span class="nxp-ec-landing__card-regular-price"><?php echo htmlspecialchars($item['regular_price_label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                <?php endif; ?>
+                                                <span class="nxp-ec-landing__card-sale-price"><?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                            <?php else : ?>
+                                                <?php echo htmlspecialchars($item['price_label'], ENT_QUOTES, 'UTF-8'); ?>
+                                            <?php endif; ?>
                                         </p>
                                     <?php endif; ?>
                                     <a class="<?php echo htmlspecialchars($secondaryBtnClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($item['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">

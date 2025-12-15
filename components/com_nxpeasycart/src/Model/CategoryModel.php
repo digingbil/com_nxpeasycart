@@ -19,6 +19,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
@@ -188,6 +189,20 @@ class CategoryModel extends BaseDatabaseModel
         $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
         $limit = (int) $this->getState('list.limit', ConfigHelper::getCategoryPageSize());
         $start = (int) $this->getState('list.start', 0);
+        // Use CASE expression to compute effective price (sale price when active, regular otherwise)
+        // Sale is active if: sale_price_cents IS NOT NULL AND (sale_start IS NULL OR sale_start <= NOW()) AND (sale_end IS NULL OR sale_end >= NOW())
+        $effectivePriceExpr = 'CASE WHEN '
+            . $db->quoteName('v.sale_price_cents') . ' IS NOT NULL AND '
+            . '(' . $db->quoteName('v.sale_start') . ' IS NULL OR ' . $db->quoteName('v.sale_start') . ' <= UTC_TIMESTAMP()) AND '
+            . '(' . $db->quoteName('v.sale_end') . ' IS NULL OR ' . $db->quoteName('v.sale_end') . ' >= UTC_TIMESTAMP()) '
+            . 'THEN ' . $db->quoteName('v.sale_price_cents') . ' ELSE ' . $db->quoteName('v.price_cents') . ' END';
+
+        $hasSaleExpr = 'MAX(CASE WHEN '
+            . $db->quoteName('v.sale_price_cents') . ' IS NOT NULL AND '
+            . '(' . $db->quoteName('v.sale_start') . ' IS NULL OR ' . $db->quoteName('v.sale_start') . ' <= UTC_TIMESTAMP()) AND '
+            . '(' . $db->quoteName('v.sale_end') . ' IS NULL OR ' . $db->quoteName('v.sale_end') . ' >= UTC_TIMESTAMP()) '
+            . 'THEN 1 ELSE 0 END)';
+
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -202,6 +217,9 @@ class CategoryModel extends BaseDatabaseModel
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_min'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('price_max'),
+                'MIN(' . $effectivePriceExpr . ') AS ' . $db->quoteName('effective_price_min'),
+                'MAX(' . $effectivePriceExpr . ') AS ' . $db->quoteName('effective_price_max'),
+                $hasSaleExpr . ' AS ' . $db->quoteName('has_active_sale'),
                 'MAX(' . $db->quoteName('v.currency') . ') AS ' . $db->quoteName('price_currency'),
             ])
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
@@ -344,13 +362,20 @@ class CategoryModel extends BaseDatabaseModel
 
             $minCents = $row->price_min !== null ? (int) $row->price_min : null;
             $maxCents = $row->price_max !== null ? (int) $row->price_max : null;
+            $effectiveMinCents = $row->effective_price_min !== null ? (int) $row->effective_price_min : $minCents;
+            $effectiveMaxCents = $row->effective_price_max !== null ? (int) $row->effective_price_max : $maxCents;
+            $hasActiveSale = !empty($row->has_active_sale);
             // Always use base currency from config (Option A - single currency source of truth)
             $currency = ConfigHelper::getBaseCurrency();
             $price    = [
-                'currency'  => $currency,
-                'min_cents' => $minCents,
-                'max_cents' => $maxCents,
-                'label'     => $this->formatPriceLabel($minCents, $maxCents, $currency),
+                'currency'            => $currency,
+                'min_cents'           => $minCents,
+                'max_cents'           => $maxCents,
+                'effective_min_cents' => $effectiveMinCents,
+                'effective_max_cents' => $effectiveMaxCents,
+                'has_active_sale'     => $hasActiveSale,
+                'label'               => $this->formatPriceLabel($effectiveMinCents, $effectiveMaxCents, $currency),
+                'regular_label'       => $hasActiveSale ? $this->formatPriceLabel($minCents, $maxCents, $currency) : null,
             ];
 
             $primaryPath = [];

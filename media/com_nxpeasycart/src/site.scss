@@ -2449,3 +2449,236 @@
         }
     }
 }
+
+// Sale Price Styles
+:root {
+    --nxp-ec-color-sale: #dc2626;
+    --nxp-ec-color-sale-bg: #fef2f2;
+    --nxp-ec-color-sale-contrast: #ffffff;
+}
+
+// Sale badge - shared component
+@mixin sale-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    background: var(--nxp-ec-color-sale);
+    color: var(--nxp-ec-color-sale-contrast);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: var(--nxp-ec-radius-pill);
+    margin-right: 0.5rem;
+}
+
+// Regular price strikethrough
+@mixin regular-price-strikethrough {
+    text-decoration: line-through;
+    color: var(--nxp-ec-color-muted);
+    font-weight: 400;
+    opacity: 0.7;
+    margin-right: 0.5rem;
+}
+
+// Sale price highlight
+@mixin sale-price-highlight {
+    color: var(--nxp-ec-color-sale);
+    font-weight: 700;
+}
+
+// Discount badge
+@mixin discount-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.5rem;
+    background: var(--nxp-ec-color-sale-bg);
+    color: var(--nxp-ec-color-sale);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: var(--nxp-ec-radius-pill);
+    margin-left: 0.5rem;
+}
+
+// Product page sale prices
+.nxp-ec-product {
+    &__price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__sale-badge {
+        @include sale-badge;
+    }
+
+    &__regular-price {
+        @include regular-price-strikethrough;
+        font-size: 1.15rem;
+    }
+
+    &__sale-price {
+        @include sale-price-highlight;
+        font-size: 1.5rem;
+    }
+
+    // Variants table sale prices
+    &__variant-row--sale {
+        background: var(--nxp-ec-color-sale-bg);
+    }
+
+    &__variant-price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__variant-regular-price {
+        @include regular-price-strikethrough;
+        font-size: 0.9rem;
+    }
+
+    &__variant-sale-price {
+        @include sale-price-highlight;
+    }
+
+    &__variant-discount {
+        @include discount-badge;
+    }
+}
+
+// Product card (category listing) sale prices
+.nxp-ec-product-card {
+    &__price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__sale-badge {
+        @include sale-badge;
+    }
+
+    &__regular-price {
+        @include regular-price-strikethrough;
+    }
+
+    &__sale-price {
+        @include sale-price-highlight;
+    }
+}
+
+// Landing page card sale prices
+.nxp-ec-landing {
+    &__card-price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__card-sale-badge {
+        @include sale-badge;
+    }
+
+    &__card-regular-price {
+        @include regular-price-strikethrough;
+    }
+
+    &__card-sale-price {
+        @include sale-price-highlight;
+    }
+}
+
+// Cart table sale prices (desktop)
+.nxp-ec-cart {
+    &__price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__sale-badge {
+        @include sale-badge;
+    }
+
+    &__regular-price {
+        @include regular-price-strikethrough;
+    }
+
+    &__sale-price {
+        @include sale-price-highlight;
+    }
+
+    &__item-price--sale {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    &__item-regular-price {
+        @include regular-price-strikethrough;
+        font-size: 0.85rem;
+    }
+
+    &__item-sale-price {
+        @include sale-price-highlight;
+    }
+
+    &__item-discount {
+        @include discount-badge;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+    }
+}
+
+// Mobile cart item sale prices
+.nxp-ec-cart-item {
+    &__price--sale {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    &__sale-badge {
+        @include sale-badge;
+    }
+
+    &__regular-price {
+        @include regular-price-strikethrough;
+        font-size: 0.8rem;
+    }
+
+    &__sale-price {
+        @include sale-price-highlight;
+    }
+}
+
+// Checkout summary sale prices
+.nxp-ec-checkout {
+    &__item-price--sale {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.15rem;
+    }
+
+    &__item-regular-price {
+        @include regular-price-strikethrough;
+        font-size: 0.8rem;
+    }
+
+    &__item-sale-price {
+        @include sale-price-highlight;
+    }
+
+    &__item-discount {
+        @include discount-badge;
+        font-size: 0.7rem;
+    }
+}

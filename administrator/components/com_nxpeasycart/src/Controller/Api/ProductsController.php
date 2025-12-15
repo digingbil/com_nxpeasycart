@@ -420,20 +420,27 @@ class ProductsController extends AbstractJsonController
         foreach ($item->variants ?? [] as $variant) {
             $variant = (array) $variant;
 
-            $priceCents = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
+            $priceCents     = isset($variant['price_cents']) ? (int) $variant['price_cents'] : 0;
+            $salePriceCents = isset($variant['sale_price_cents']) && $variant['sale_price_cents'] !== null && $variant['sale_price_cents'] !== ''
+                ? (int) $variant['sale_price_cents']
+                : null;
 
             $variants[] = [
-                'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
-                'sku'         => (string) ($variant['sku'] ?? ''),
-                'ean'         => isset($variant['ean']) && $variant['ean'] !== '' ? (string) $variant['ean'] : null,
-                'price_cents' => $priceCents,
-                'price'       => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
-                'currency'    => $baseCurrency,
-                'stock'       => isset($variant['stock']) ? (int) $variant['stock'] : 0,
-                'options'     => $variant['options'] ?? null,
-                'weight'      => $variant['weight']  ?? null,
-                'active'      => isset($variant['active']) ? (bool) $variant['active'] : false,
-                'is_digital'  => !empty($variant['is_digital']),
+                'id'               => isset($variant['id']) ? (int) $variant['id'] : 0,
+                'sku'              => (string) ($variant['sku'] ?? ''),
+                'ean'              => isset($variant['ean']) && $variant['ean'] !== '' ? (string) $variant['ean'] : null,
+                'price_cents'      => $priceCents,
+                'price'            => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
+                'sale_price_cents' => $salePriceCents,
+                'sale_price'       => $salePriceCents !== null ? $this->formatPrice($salePriceCents) : null,
+                'sale_start'       => $variant['sale_start'] ?? null,
+                'sale_end'         => $variant['sale_end'] ?? null,
+                'currency'         => $baseCurrency,
+                'stock'            => isset($variant['stock']) ? (int) $variant['stock'] : 0,
+                'options'          => $variant['options'] ?? null,
+                'weight'           => $variant['weight']  ?? null,
+                'active'           => isset($variant['active']) ? (bool) $variant['active'] : false,
+                'is_digital'       => !empty($variant['is_digital']),
             ];
         }
 

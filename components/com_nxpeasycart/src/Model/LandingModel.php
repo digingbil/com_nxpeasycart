@@ -20,6 +20,7 @@ use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
@@ -338,6 +339,20 @@ class LandingModel extends BaseDatabaseModel
         $db    = $this->getDatabase();
         $activeStatus = ProductStatus::ACTIVE;
         $outOfStockStatus = ProductStatus::OUT_OF_STOCK;
+
+        // Use CASE expression to compute effective price (sale price when active, regular otherwise)
+        $effectivePriceExpr = 'CASE WHEN '
+            . $db->quoteName('v.sale_price_cents') . ' IS NOT NULL AND '
+            . '(' . $db->quoteName('v.sale_start') . ' IS NULL OR ' . $db->quoteName('v.sale_start') . ' <= UTC_TIMESTAMP()) AND '
+            . '(' . $db->quoteName('v.sale_end') . ' IS NULL OR ' . $db->quoteName('v.sale_end') . ' >= UTC_TIMESTAMP()) '
+            . 'THEN ' . $db->quoteName('v.sale_price_cents') . ' ELSE ' . $db->quoteName('v.price_cents') . ' END';
+
+        $hasSaleExpr = 'MAX(CASE WHEN '
+            . $db->quoteName('v.sale_price_cents') . ' IS NOT NULL AND '
+            . '(' . $db->quoteName('v.sale_start') . ' IS NULL OR ' . $db->quoteName('v.sale_start') . ' <= UTC_TIMESTAMP()) AND '
+            . '(' . $db->quoteName('v.sale_end') . ' IS NULL OR ' . $db->quoteName('v.sale_end') . ' >= UTC_TIMESTAMP()) '
+            . 'THEN 1 ELSE 0 END)';
+
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('p.id'),
@@ -353,6 +368,9 @@ class LandingModel extends BaseDatabaseModel
                 'MIN(' . $db->quoteName('v.id') . ') AS ' . $db->quoteName('primary_variant_id'),
                 'MIN(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('min_price_cents'),
                 'MAX(' . $db->quoteName('v.price_cents') . ') AS ' . $db->quoteName('max_price_cents'),
+                'MIN(' . $effectivePriceExpr . ') AS ' . $db->quoteName('effective_min_price_cents'),
+                'MAX(' . $effectivePriceExpr . ') AS ' . $db->quoteName('effective_max_price_cents'),
+                $hasSaleExpr . ' AS ' . $db->quoteName('has_active_sale'),
                 'MAX(' . $db->quoteName('v.currency') . ') AS ' . $db->quoteName('currency'),
             ])
             ->from($db->quoteName('#__nxp_easycart_products', 'p'))
@@ -424,20 +442,37 @@ class LandingModel extends BaseDatabaseModel
 
             $minPrice = $row->min_price_cents !== null ? (int) $row->min_price_cents : null;
             $maxPrice = $row->max_price_cents !== null ? (int) $row->max_price_cents : null;
+            $effectiveMinPrice = $row->effective_min_price_cents !== null ? (int) $row->effective_min_price_cents : $minPrice;
+            $effectiveMaxPrice = $row->effective_max_price_cents !== null ? (int) $row->effective_max_price_cents : $maxPrice;
+            $hasActiveSale = !empty($row->has_active_sale);
 
             $priceLabel = null;
+            $regularPriceLabel = null;
 
-            if ($minPrice !== null && $minPrice > 0) {
-                if ($maxPrice !== null && $maxPrice > $minPrice) {
+            if ($effectiveMinPrice !== null && $effectiveMinPrice > 0) {
+                if ($effectiveMaxPrice !== null && $effectiveMaxPrice > $effectiveMinPrice) {
                     // Multiple variants with different prices - show range
                     $priceLabel = Text::sprintf(
                         'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
-                        MoneyHelper::format($minPrice, $currency),
-                        MoneyHelper::format($maxPrice, $currency)
+                        MoneyHelper::format($effectiveMinPrice, $currency),
+                        MoneyHelper::format($effectiveMaxPrice, $currency)
                     );
                 } else {
                     // Single price (min equals max, or only one variant) - show plain price
-                    $priceLabel = MoneyHelper::format($minPrice, $currency);
+                    $priceLabel = MoneyHelper::format($effectiveMinPrice, $currency);
+                }
+
+                // Show regular price if there's an active sale (for strikethrough display)
+                if ($hasActiveSale && $minPrice !== null) {
+                    if ($maxPrice !== null && $maxPrice > $minPrice) {
+                        $regularPriceLabel = Text::sprintf(
+                            'COM_NXPEASYCART_PRODUCT_PRICE_RANGE',
+                            MoneyHelper::format($minPrice, $currency),
+                            MoneyHelper::format($maxPrice, $currency)
+                        );
+                    } else {
+                        $regularPriceLabel = MoneyHelper::format($minPrice, $currency);
+                    }
                 }
             }
 
@@ -457,18 +492,20 @@ class LandingModel extends BaseDatabaseModel
             $linkCategoryPath = !empty($primaryPath) ? implode('/', $primaryPath) : '';
 
             $products[] = [
-                'id'          => (int) $row->id,
-                'title'       => (string) $row->title,
-                'slug'        => (string) $row->slug,
-                'short_desc'  => (string) ($row->short_desc ?? ''),
-                'images'      => $images,
-                'featured'    => (bool) $row->featured,
-                'status'      => $status,
-                'out_of_stock' => ProductStatus::isOutOfStock($status),
-                'price_label' => $priceLabel,
-                'primary_variant_id' => $primaryVariantId,
-                'variant_count' => $variantCount,
-                'link'        => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: null, false),
+                'id'                   => (int) $row->id,
+                'title'                => (string) $row->title,
+                'slug'                 => (string) $row->slug,
+                'short_desc'           => (string) ($row->short_desc ?? ''),
+                'images'               => $images,
+                'featured'             => (bool) $row->featured,
+                'status'               => $status,
+                'out_of_stock'         => ProductStatus::isOutOfStock($status),
+                'price_label'          => $priceLabel,
+                'regular_price_label'  => $regularPriceLabel,
+                'has_active_sale'      => $hasActiveSale,
+                'primary_variant_id'   => $primaryVariantId,
+                'variant_count'        => $variantCount,
+                'link'                 => RouteHelper::getProductRoute((string) $row->slug, $linkCategoryPath ?: null, false),
             ];
         }
 

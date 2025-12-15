@@ -41,6 +41,8 @@ export default function mountCartIsland(el) {
         canceled_message:
             labelsPayload.canceled_message ||
             "Your payment was canceled. Your cart items are still saved - you can try again when you're ready.",
+        sale_badge: labelsPayload.sale_badge || "Sale",
+        sale_savings: labelsPayload.sale_savings || "You save",
     };
     const links = {
         browse:
@@ -121,7 +123,14 @@ export default function mountCartIsland(el) {
                     </li>
                   </ul>
                 </td>
-                <td :data-label="labels.price">{{ format(item.unit_price_cents) }}</td>
+                <td :data-label="labels.price" :class="{ 'nxp-ec-cart__price--sale': item.is_on_sale }">
+                  <template v-if="item.is_on_sale">
+                    <span class="nxp-ec-cart__sale-badge">{{ labels.sale_badge }}</span>
+                    <span class="nxp-ec-cart__regular-price">{{ format(item.regular_price_cents) }}</span>
+                    <span class="nxp-ec-cart__sale-price">{{ format(item.unit_price_cents) }}</span>
+                  </template>
+                  <template v-else>{{ format(item.unit_price_cents) }}</template>
+                </td>
                 <td class="nxp-ec-cart__qty" :data-label="labels.qty">
                   <input
                     class="nxp-ec-cart__qty-input"
@@ -182,7 +191,15 @@ export default function mountCartIsland(el) {
                   <li v-for="(option, index) in item.options" :key="index">{{ option.name }}: {{ option.value }}</li>
                 </ul>
                 <div class="nxp-ec-cart-item__meta">
-                  <span class="nxp-ec-cart-item__price">{{ format(item.unit_price_cents) }} {{ labels.each || 'each' }}</span>
+                  <span class="nxp-ec-cart-item__price" :class="{ 'nxp-ec-cart-item__price--sale': item.is_on_sale }">
+                    <template v-if="item.is_on_sale">
+                      <span class="nxp-ec-cart-item__sale-badge">{{ labels.sale_badge }}</span>
+                      <span class="nxp-ec-cart-item__regular-price">{{ format(item.regular_price_cents) }}</span>
+                      <span class="nxp-ec-cart-item__sale-price">{{ format(item.unit_price_cents) }}</span>
+                    </template>
+                    <template v-else>{{ format(item.unit_price_cents) }}</template>
+                    {{ labels.each || 'each' }}
+                  </span>
                   <div class="nxp-ec-cart-item__qty-group">
                     <label :for="'qty-mobile-' + item.id" class="nxp-ec-cart-item__qty-label">{{ labels.qty }}:</label>
                     <input
@@ -206,6 +223,10 @@ export default function mountCartIsland(el) {
               <div>
                 <dt>{{ labels.subtotal }}</dt>
                 <dd>{{ format(summary.subtotal_cents) }}</dd>
+              </div>
+              <div v-if="saleSavings > 0" class="nxp-ec-cart__summary-savings">
+                <dt>{{ labels.sale_savings }}</dt>
+                <dd class="nxp-ec-cart__savings-amount">-{{ format(saleSavings) }}</dd>
               </div>
               <div v-if="requiresShipping">
                 <dt>{{ labels.shipping }}</dt>
@@ -273,6 +294,17 @@ export default function mountCartIsland(el) {
             const requiresShipping = computed(() =>
                 items.some((item) => !item.is_digital)
             );
+
+            // Calculate total sale savings
+            const saleSavings = computed(() => {
+                return items.reduce((total, item) => {
+                    if (item.is_on_sale && item.regular_price_cents > item.unit_price_cents) {
+                        const savingsPerItem = item.regular_price_cents - item.unit_price_cents;
+                        return total + (savingsPerItem * item.qty);
+                    }
+                    return total;
+                }, 0);
+            });
 
             const recalcSummary = () => {
                 const subtotal = items.reduce(
@@ -500,6 +532,7 @@ export default function mountCartIsland(el) {
                 summary,
                 showTax,
                 requiresShipping,
+                saleSavings,
                 canceled,
                 dismissCanceled,
                 remove,

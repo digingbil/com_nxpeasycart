@@ -60,6 +60,9 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `sku` VARCHAR(64) NOT NULL,
   `ean` VARCHAR(13) NULL DEFAULT NULL,
   `price_cents` INT NOT NULL,
+  `sale_price_cents` INT NULL DEFAULT NULL,
+  `sale_start` DATETIME NULL DEFAULT NULL,
+  `sale_end` DATETIME NULL DEFAULT NULL,
   `currency` CHAR(3) NOT NULL,
   `stock` INT NOT NULL DEFAULT 0,
   `options` JSON NULL,
@@ -70,6 +73,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   UNIQUE KEY `idx_nxp_variants_sku` (`sku`),
   KEY `idx_nxp_variants_product` (`product_id`),
   KEY `idx_nxp_variants_ean` (`ean`),
+  KEY `idx_nxp_variants_sale_active` (`sale_start`, `sale_end`),
   CONSTRAINT `fk_nxp_variants_product`
     FOREIGN KEY (`product_id`) REFERENCES `#__nxp_easycart_products` (`id`)
     ON DELETE CASCADE
@@ -200,10 +204,28 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_coupons` (
   `start` DATETIME NULL,
   `end` DATETIME NULL,
   `max_uses` INT NULL,
+  `max_uses_per_user` INT UNSIGNED NULL DEFAULT NULL,
   `times_used` INT NOT NULL DEFAULT 0,
+  `allow_sale_items` TINYINT(1) NOT NULL DEFAULT 1,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_coupons_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_coupon_usage` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `coupon_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NULL,
+  `guest_email` VARCHAR(255) NULL,
+  `order_id` INT UNSIGNED NOT NULL,
+  `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_nxp_coupon_usage_coupon` (`coupon_id`),
+  KEY `idx_nxp_coupon_usage_user` (`coupon_id`, `user_id`),
+  KEY `idx_nxp_coupon_usage_email` (`coupon_id`, `guest_email`(100)),
+  KEY `idx_nxp_coupon_usage_order` (`order_id`),
+  CONSTRAINT `fk_nxp_coupon_usage_coupon` FOREIGN KEY (`coupon_id`)
+    REFERENCES `#__nxp_easycart_coupons` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_audit` (

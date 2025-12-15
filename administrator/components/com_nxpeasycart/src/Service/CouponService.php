@@ -170,12 +170,20 @@ class CouponService
      *
      * @param string $code Coupon code
      * @param int $subtotalCents Order subtotal in cents
+     * @param bool $hasSaleItems Whether the cart contains items currently on sale
+     * @param int|null $userId Logged-in user ID (null for guests)
+     * @param string|null $guestEmail Guest email for tracking (used when userId is null)
      * @return array{valid: bool, coupon: ?array, error: ?string, discount_cents: int}
      *
      * @since 0.1.5
      */
-    public function validate(string $code, int $subtotalCents): array
-    {
+    public function validate(
+        string $code,
+        int $subtotalCents,
+        bool $hasSaleItems = false,
+        ?int $userId = null,
+        ?string $guestEmail = null
+    ): array {
         $coupon = $this->getByCode($code);
 
         if (!$coupon) {
@@ -227,12 +235,50 @@ class CouponService
             }
         }
 
-        // Check usage limits
+        // Check global usage limits
         if ($coupon['max_uses'] !== null && $coupon['times_used'] >= $coupon['max_uses']) {
             return [
                 'valid'          => false,
                 'coupon'         => $coupon,
                 'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_MAX_USES_REACHED'),
+                'discount_cents' => 0,
+            ];
+        }
+
+        // Check per-user usage limit
+        if ($coupon['max_uses_per_user'] !== null) {
+            // Require login for coupons with per-user limits to prevent abuse via multiple emails
+            if ($userId === null || $userId <= 0) {
+                return [
+                    'valid'          => false,
+                    'coupon'         => $coupon,
+                    'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_LOGIN_REQUIRED'),
+                    'discount_cents' => 0,
+                ];
+            }
+
+            $userUsageCount = $this->getUserUsageCount(
+                (int) $coupon['id'],
+                $userId,
+                $guestEmail
+            );
+
+            if ($userUsageCount >= $coupon['max_uses_per_user']) {
+                return [
+                    'valid'          => false,
+                    'coupon'         => $coupon,
+                    'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_USER_LIMIT_REACHED'),
+                    'discount_cents' => 0,
+                ];
+            }
+        }
+
+        // Check if coupon allows sale items
+        if ($hasSaleItems && !$coupon['allow_sale_items']) {
+            return [
+                'valid'          => false,
+                'coupon'         => $coupon,
+                'error'          => Text::_('COM_NXPEASYCART_ERROR_COUPON_NO_SALE_ITEMS'),
                 'discount_cents' => 0,
             ];
         }
@@ -259,6 +305,87 @@ class CouponService
             'error'          => null,
             'discount_cents' => $discountCents,
         ];
+    }
+
+    /**
+     * Count how many times a user has used a specific coupon.
+     *
+     * @param int $couponId Coupon identifier
+     * @param int|null $userId Logged-in user ID (null for guests)
+     * @param string|null $email Guest email for tracking
+     * @return int Number of times the user/email has used this coupon
+     *
+     * @since 0.2.1
+     */
+    public function getUserUsageCount(int $couponId, ?int $userId, ?string $email = null): int
+    {
+        if ($couponId <= 0) {
+            return 0;
+        }
+
+        // For logged-in users, count by user_id
+        if ($userId !== null && $userId > 0) {
+            $query = $this->db->getQuery(true)
+                ->select('COUNT(*)')
+                ->from($this->db->quoteName('#__nxp_easycart_coupon_usage'))
+                ->where($this->db->quoteName('coupon_id') . ' = :couponId')
+                ->where($this->db->quoteName('user_id') . ' = :userId')
+                ->bind(':couponId', $couponId, ParameterType::INTEGER)
+                ->bind(':userId', $userId, ParameterType::INTEGER);
+
+            $this->db->setQuery($query);
+
+            return (int) $this->db->loadResult();
+        }
+
+        // For guests, count by normalised email
+        $email = $email !== null ? strtolower(trim($email)) : '';
+
+        if ($email === '') {
+            return 0;
+        }
+
+        $query = $this->db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($this->db->quoteName('#__nxp_easycart_coupon_usage'))
+            ->where($this->db->quoteName('coupon_id') . ' = :couponId')
+            ->where($this->db->quoteName('user_id') . ' IS NULL')
+            ->where($this->db->quoteName('guest_email') . ' = :email')
+            ->bind(':couponId', $couponId, ParameterType::INTEGER)
+            ->bind(':email', $email, ParameterType::STRING);
+
+        $this->db->setQuery($query);
+
+        return (int) $this->db->loadResult();
+    }
+
+    /**
+     * Record coupon usage after successful order.
+     *
+     * @param int $couponId Coupon identifier
+     * @param int $orderId Order identifier
+     * @param int|null $userId Logged-in user ID (null for guests)
+     * @param string|null $guestEmail Guest email address
+     *
+     * @since 0.2.1
+     */
+    public function recordUsage(int $couponId, int $orderId, ?int $userId, ?string $guestEmail = null): void
+    {
+        if ($couponId <= 0 || $orderId <= 0) {
+            return;
+        }
+
+        $record = (object) [
+            'coupon_id'   => $couponId,
+            'order_id'    => $orderId,
+            'user_id'     => $userId !== null && $userId > 0 ? $userId : null,
+            'guest_email' => $userId === null || $userId <= 0
+                ? ($guestEmail !== null ? strtolower(trim($guestEmail)) : null)
+                : null,
+            'created'     => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ];
+
+        $this->db->insertObject('#__nxp_easycart_coupon_usage', $record);
     }
 
     /**
@@ -325,26 +452,39 @@ class CouponService
         }
 
         $minTotal = (float) ($data['min_total'] ?? 0);
-        $maxUses  = $data['max_uses'] !== null ? (int) $data['max_uses'] : null;
+        $maxUses  = isset($data['max_uses']) && $data['max_uses'] !== null && $data['max_uses'] !== ''
+            ? (int) $data['max_uses']
+            : null;
 
         if ($maxUses !== null && $maxUses < 0) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_COUPON_MAX_USES_INVALID'), 400);
         }
 
-        $active = isset($data['active']) ? (bool) $data['active'] : true;
+        $maxUsesPerUser = isset($data['max_uses_per_user']) && $data['max_uses_per_user'] !== null && $data['max_uses_per_user'] !== ''
+            ? (int) $data['max_uses_per_user']
+            : null;
+
+        if ($maxUsesPerUser !== null && $maxUsesPerUser < 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_COUPON_MAX_USES_PER_USER_INVALID'), 400);
+        }
+
+        $active         = isset($data['active']) ? (bool) $data['active'] : true;
+        $allowSaleItems = isset($data['allow_sale_items']) ? (bool) $data['allow_sale_items'] : true;
 
         $start = $this->normaliseDate($data['start'] ?? null);
         $end   = $this->normaliseDate($data['end'] ?? null);
 
         return [
-            'code'            => $code,
-            'type'            => $type,
-            'value'           => $value,
-            'min_total_cents' => (int) round($minTotal * 100),
-            'start'           => $start,
-            'end'             => $end,
-            'max_uses'        => $maxUses,
-            'active'          => $active ? 1 : 0,
+            'code'              => $code,
+            'type'              => $type,
+            'value'             => $value,
+            'min_total_cents'   => (int) round($minTotal * 100),
+            'start'             => $start,
+            'end'               => $end,
+            'max_uses'          => $maxUses,
+            'max_uses_per_user' => $maxUsesPerUser,
+            'allow_sale_items'  => $allowSaleItems ? 1 : 0,
+            'active'            => $active ? 1 : 0,
         ];
     }
 
@@ -384,17 +524,21 @@ class CouponService
     private function mapRow(object $row): array
     {
         return [
-            'id'              => (int) $row->id,
-            'code'            => (string) $row->code,
-            'type'            => (string) $row->type,
-            'value'           => (float) $row->value,
-            'min_total_cents' => (int) ($row->min_total_cents ?? 0),
-            'min_total'       => ((int) ($row->min_total_cents ?? 0)) / 100,
-            'start'           => $row->start ? (string) $row->start : null,
-            'end'             => $row->end ? (string) $row->end : null,
-            'max_uses'        => $row->max_uses !== null ? (int) $row->max_uses : null,
-            'times_used'      => (int) ($row->times_used ?? 0),
-            'active'          => (bool) $row->active,
+            'id'                => (int) $row->id,
+            'code'              => (string) $row->code,
+            'type'              => (string) $row->type,
+            'value'             => (float) $row->value,
+            'min_total_cents'   => (int) ($row->min_total_cents ?? 0),
+            'min_total'         => ((int) ($row->min_total_cents ?? 0)) / 100,
+            'start'             => $row->start ? (string) $row->start : null,
+            'end'               => $row->end ? (string) $row->end : null,
+            'max_uses'          => $row->max_uses !== null ? (int) $row->max_uses : null,
+            'max_uses_per_user' => isset($row->max_uses_per_user) && $row->max_uses_per_user !== null
+                ? (int) $row->max_uses_per_user
+                : null,
+            'times_used'        => (int) ($row->times_used ?? 0),
+            'allow_sale_items'  => (bool) ($row->allow_sale_items ?? true),
+            'active'            => (bool) $row->active,
         ];
     }
 }

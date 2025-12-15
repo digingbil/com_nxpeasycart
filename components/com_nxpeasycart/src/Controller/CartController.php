@@ -22,6 +22,7 @@ use Joomla\Session\SessionInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\RateLimiter;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
@@ -731,6 +732,8 @@ class CartController extends BaseController
             $variantsLookup = $this->loadVariantsForCouponBatch($db, $variantIds);
 
             $subtotalCents = 0;
+            $hasSaleItems  = false;
+
             foreach ($items as $item) {
                 $variantId = (int) ($item['variant_id'] ?? 0);
                 $qty       = max(1, (int) ($item['qty'] ?? 1));
@@ -746,8 +749,15 @@ class CartController extends BaseController
                     continue; // Skip inactive variants
                 }
 
-                $unitPrice = (int) ($variant->price_cents ?? 0);
+                // Use PriceHelper to get effective price (sale price if active, regular otherwise)
+                $priceData = PriceHelper::resolve($variant);
+                $unitPrice = $priceData['effective_price_cents'];
                 $subtotalCents += $unitPrice * $qty;
+
+                // Track if any items are currently on sale
+                if ($priceData['sale_active']) {
+                    $hasSaleItems = true;
+                }
             }
 
             if ($subtotalCents <= 0) {
@@ -755,9 +765,24 @@ class CartController extends BaseController
                 $app->close();
             }
 
+            // Get user info for per-user coupon limit validation
+            $userId     = null;
+            $guestEmail = null;
+
+            try {
+                $identity = $app->getIdentity();
+
+                if ($identity && !$identity->guest) {
+                    $userId     = (int) $identity->id;
+                    $guestEmail = !empty($identity->email) ? (string) $identity->email : null;
+                }
+            } catch (\Throwable $exception) {
+                // Non-fatal: continue without user info for coupon validation
+            }
+
             // Get coupon service
             $couponService = new \Joomla\Component\Nxpeasycart\Administrator\Service\CouponService($db);
-            $validation    = $couponService->validate($code, $subtotalCents);
+            $validation    = $couponService->validate($code, $subtotalCents, $hasSaleItems, $userId, $guestEmail);
 
             if (!$validation['valid']) {
                 echo new JsonResponse(null, $validation['error'], true);
@@ -879,6 +904,9 @@ class CartController extends BaseController
             ->select([
                 $db->quoteName('id'),
                 $db->quoteName('price_cents'),
+                $db->quoteName('sale_price_cents'),
+                $db->quoteName('sale_start'),
+                $db->quoteName('sale_end'),
                 $db->quoteName('active'),
             ])
             ->from($db->quoteName('#__nxp_easycart_variants'))
@@ -921,6 +949,9 @@ class CartController extends BaseController
             ->select([
                 $db->quoteName('id'),
                 $db->quoteName('price_cents'),
+                $db->quoteName('sale_price_cents'),
+                $db->quoteName('sale_start'),
+                $db->quoteName('sale_end'),
                 $db->quoteName('active'),
             ])
             ->from($db->quoteName('#__nxp_easycart_variants'))

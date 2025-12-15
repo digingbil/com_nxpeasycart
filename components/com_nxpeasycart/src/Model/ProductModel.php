@@ -17,6 +17,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\MoneyHelper;
+use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Helper\CategoryPathHelper;
 
@@ -256,15 +257,27 @@ class ProductModel extends BaseDatabaseModel
             // Single-currency MVP: always use configured base currency
             $currency = $baseCurrency;
 
+            // Resolve effective price considering sale pricing
+            $priceResolution = PriceHelper::resolve($row);
+
             $variants[] = [
-                'id'          => (int) $row->id,
-                'sku'         => (string) $row->sku,
-                'price_cents' => (int) $row->price_cents,
-                'price'       => MoneyHelper::format((int) $row->price_cents, $currency),
-                'currency'    => $currency,
-                'stock'       => (int) $row->stock,
-                'weight'      => $row->weight !== null ? (float) $row->weight : null,
-                'options'     => $options,
+                'id'                    => (int) $row->id,
+                'sku'                   => (string) $row->sku,
+                'price_cents'           => (int) $row->price_cents,
+                'price'                 => MoneyHelper::format((int) $row->price_cents, $currency),
+                'sale_price_cents'      => $row->sale_price_cents !== null ? (int) $row->sale_price_cents : null,
+                'sale_price'            => $row->sale_price_cents !== null ? MoneyHelper::format((int) $row->sale_price_cents, $currency) : null,
+                'sale_start'            => $row->sale_start ?? null,
+                'sale_end'              => $row->sale_end ?? null,
+                'effective_price_cents' => $priceResolution['effective_price_cents'],
+                'effective_price'       => MoneyHelper::format($priceResolution['effective_price_cents'], $currency),
+                'is_on_sale'            => $priceResolution['is_on_sale'],
+                'sale_active'           => $priceResolution['sale_active'],
+                'discount_percent'      => $priceResolution['discount_percent'],
+                'currency'              => $currency,
+                'stock'                 => (int) $row->stock,
+                'weight'                => $row->weight !== null ? (float) $row->weight : null,
+                'options'               => $options,
             ];
         }
 
@@ -336,6 +349,8 @@ class ProductModel extends BaseDatabaseModel
     /**
      * Build price summary from variants.
      *
+     * Returns both regular prices and effective prices (sale price when active).
+     *
      * @param array<int, array<string, mixed>> $variants
      *
      * @return array<string, mixed>
@@ -348,32 +363,61 @@ class ProductModel extends BaseDatabaseModel
             $currency = ConfigHelper::getBaseCurrency();
 
             return [
-                'currency'  => $currency,
-                'min_cents' => 0,
-                'max_cents' => 0,
+                'currency'             => $currency,
+                'min_cents'            => 0,
+                'max_cents'            => 0,
+                'effective_min_cents'  => 0,
+                'effective_max_cents'  => 0,
+                'has_sale'             => false,
+                'any_sale_active'      => false,
             ];
         }
 
-        $min      = null;
-        $max      = null;
-        $currency = $variants[0]['currency'] ?? ConfigHelper::getBaseCurrency();
+        $regularMin      = null;
+        $regularMax      = null;
+        $effectiveMin    = null;
+        $effectiveMax    = null;
+        $hasSale         = false;
+        $anySaleActive   = false;
+        $currency        = $variants[0]['currency'] ?? ConfigHelper::getBaseCurrency();
 
         foreach ($variants as $variant) {
-            $price = (int) ($variant['price_cents'] ?? 0);
+            // Regular price (always the original price)
+            $regularPrice = (int) ($variant['price_cents'] ?? 0);
+            // Effective price (sale price when active, regular otherwise)
+            $effectivePrice = (int) ($variant['effective_price_cents'] ?? $regularPrice);
 
-            if ($min === null || $price < $min) {
-                $min = $price;
+            if ($regularMin === null || $regularPrice < $regularMin) {
+                $regularMin = $regularPrice;
+            }
+            if ($regularMax === null || $regularPrice > $regularMax) {
+                $regularMax = $regularPrice;
             }
 
-            if ($max === null || $price > $max) {
-                $max = $price;
+            if ($effectiveMin === null || $effectivePrice < $effectiveMin) {
+                $effectiveMin = $effectivePrice;
+            }
+            if ($effectiveMax === null || $effectivePrice > $effectiveMax) {
+                $effectiveMax = $effectivePrice;
+            }
+
+            if (!empty($variant['is_on_sale'])) {
+                $hasSale = true;
+            }
+
+            if (!empty($variant['sale_active'])) {
+                $anySaleActive = true;
             }
         }
 
         return [
-            'currency'  => $currency,
-            'min_cents' => (int) $min,
-            'max_cents' => (int) $max,
+            'currency'             => $currency,
+            'min_cents'            => (int) $regularMin,
+            'max_cents'            => (int) $regularMax,
+            'effective_min_cents'  => (int) $effectiveMin,
+            'effective_max_cents'  => (int) $effectiveMax,
+            'has_sale'             => $hasSale,
+            'any_sale_active'      => $anySaleActive,
         ];
     }
 

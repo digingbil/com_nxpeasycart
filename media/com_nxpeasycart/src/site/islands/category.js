@@ -64,6 +64,7 @@ export default function mountCategoryIsland(el) {
         load_error:
             labelsPayload.load_error ||
             "Unable to load more products right now. Please try again.",
+        sale_badge: labelsPayload.sale_badge || "Sale",
     };
 
     const links = {
@@ -115,6 +116,9 @@ export default function mountCategoryIsland(el) {
                         : {};
                 const min = normaliseCents(price.min_cents);
                 const max = normaliseCents(price.max_cents);
+                const effectiveMin = normaliseCents(price.effective_min_cents);
+                const effectiveMax = normaliseCents(price.effective_max_cents);
+                const hasActiveSale = Boolean(price.has_active_sale);
                 const currency =
                     typeof price.currency === "string" && price.currency !== ""
                         ? price.currency
@@ -123,6 +127,10 @@ export default function mountCategoryIsland(el) {
                 let priceLabel =
                     typeof item.price_label === "string"
                         ? item.price_label
+                        : "";
+                let regularPriceLabel =
+                    typeof price.regular_label === "string"
+                        ? price.regular_label
                         : "";
 
                 const status = Number.isFinite(Number(item.status))
@@ -135,11 +143,28 @@ export default function mountCategoryIsland(el) {
                         ? Boolean(item.out_of_stock)
                         : status === -1;
 
-                if (!priceLabel && min !== null && max !== null) {
-                    if (min === max) {
-                        priceLabel = formatMoney(min, currency, locale);
+                // Use effective prices (with sale) if available, else regular
+                const displayMin = effectiveMin !== null ? effectiveMin : min;
+                const displayMax = effectiveMax !== null ? effectiveMax : max;
+
+                if (!priceLabel && displayMin !== null && displayMax !== null) {
+                    if (displayMin === displayMax) {
+                        priceLabel = formatMoney(displayMin, currency, locale);
                     } else {
-                        priceLabel = `${formatMoney(min, currency, locale)} - ${formatMoney(
+                        priceLabel = `${formatMoney(displayMin, currency, locale)} - ${formatMoney(
+                            displayMax,
+                            currency,
+                            locale
+                        )}`;
+                    }
+                }
+
+                // Generate regular price label for sale display
+                if (hasActiveSale && !regularPriceLabel && min !== null && max !== null) {
+                    if (min === max) {
+                        regularPriceLabel = formatMoney(min, currency, locale);
+                    } else {
+                        regularPriceLabel = `${formatMoney(min, currency, locale)} - ${formatMoney(
                             max,
                             currency,
                             locale
@@ -181,8 +206,13 @@ export default function mountCategoryIsland(el) {
                         currency,
                         min_cents: min,
                         max_cents: max,
+                        effective_min_cents: effectiveMin,
+                        effective_max_cents: effectiveMax,
+                        has_active_sale: hasActiveSale,
                     },
                     price_label: priceLabel,
+                    regular_price_label: regularPriceLabel,
+                    has_active_sale: hasActiveSale,
                     primary_variant_id: Number.isFinite(primaryVariantId)
                         ? primaryVariantId
                         : null,
@@ -368,8 +398,10 @@ export default function mountCategoryIsland(el) {
               <p v-if="product.short_desc" class="nxp-ec-product-card__intro">
                 {{ product.short_desc }}
               </p>
-              <p v-if="product.price_label" class="nxp-ec-product-card__price">
-                {{ product.price_label }}
+              <p v-if="product.price_label" class="nxp-ec-product-card__price" :class="{ 'nxp-ec-product-card__price--sale': product.has_active_sale }">
+                <span v-if="product.has_active_sale" class="nxp-ec-product-card__sale-badge">{{ labels.sale_badge }}</span>
+                <span v-if="product.has_active_sale && product.regular_price_label" class="nxp-ec-product-card__regular-price">{{ product.regular_price_label }}</span>
+                <span :class="{ 'nxp-ec-product-card__sale-price': product.has_active_sale }">{{ product.price_label }}</span>
               </p>
               <div class="nxp-ec-product-card__actions">
                 <a class="nxp-ec-btn nxp-ec-btn--ghost" :href="product.link">
