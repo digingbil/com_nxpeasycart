@@ -6,7 +6,7 @@
     <authorEmail>hello@nexusplugins.com</authorEmail>
     <authorUrl>https://nexusplugins.com</authorUrl>
     <copyright>Copyright (C) 2024 NXP Commerce - 2025 nexusplugins.com. All rights reserved.</copyright>
-    <version>0.1.16</version>
+    <version>0.1.17</version>
     <license>GNU General Public License version 2 or later; see LICENSE.txt</license>
     <description>COM_NXPEASYCART_XML_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>

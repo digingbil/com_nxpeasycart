@@ -527,9 +527,14 @@ class ProductModel extends AdminModel
                 $weight = null;
             }
 
+            // EAN is optional, passed through as-is (validated by VariantTable)
+            $ean = isset($variant['ean']) ? trim((string) $variant['ean']) : null;
+            $ean = ($ean !== '' && $ean !== null) ? $ean : null;
+
             $variants[] = [
                 'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
                 'sku'         => $sku,
+                'ean'         => $ean,
                 'price_cents' => $priceCents,
                 'currency'    => $currency,
                 'stock'       => max(0, (int) ($variant['stock'] ?? 0)),
@@ -729,6 +734,7 @@ class ProductModel extends AdminModel
                 'id'          => $variant['id'] ?? 0,
                 'product_id'  => $productId,
                 'sku'         => $variant['sku'],
+                'ean'         => $variant['ean'] ?? null,
                 'price_cents' => (int) $variant['price_cents'],
                 'currency'    => $variant['currency'],
                 'stock'       => (int) $variant['stock'],
@@ -1072,6 +1078,7 @@ class ProductModel extends AdminModel
             ->select([
                 $db->quoteName('id'),
                 $db->quoteName('sku'),
+                $db->quoteName('ean'),
                 $db->quoteName('price_cents'),
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
@@ -1093,6 +1100,7 @@ class ProductModel extends AdminModel
             $variants[] = [
                 'id'          => (int) $row->id,
                 'sku'         => (string) $row->sku,
+                'ean'         => $row->ean !== null ? (string) $row->ean : null,
                 'price_cents' => (int) $row->price_cents,
                 'price'       => $this->formatPriceCents((int) $row->price_cents),
                 'currency'    => (string) $row->currency,
@@ -1130,6 +1138,7 @@ class ProductModel extends AdminModel
                 $db->quoteName('product_id'),
                 $db->quoteName('id'),
                 $db->quoteName('sku'),
+                $db->quoteName('ean'),
                 $db->quoteName('price_cents'),
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
@@ -1156,6 +1165,7 @@ class ProductModel extends AdminModel
             $variantsById[$productId][] = [
                 'id'          => (int) $row->id,
                 'sku'         => (string) $row->sku,
+                'ean'         => $row->ean !== null ? (string) $row->ean : null,
                 'price_cents' => (int) $row->price_cents,
                 'price'       => $this->formatPriceCents((int) $row->price_cents),
                 'currency'    => (string) $row->currency,

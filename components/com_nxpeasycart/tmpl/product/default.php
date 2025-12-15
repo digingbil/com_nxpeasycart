@@ -110,6 +110,7 @@ $variantPayload = array_map(
         return [
             'id'           => (int) ($variant['id'] ?? 0),
             'sku'          => (string) ($variant['sku'] ?? ''),
+            'ean'          => isset($variant['ean']) ? (string) $variant['ean'] : null,
             'price_cents'  => $priceCents,
             'currency'     => $currency,
             'price_label'  => MoneyHelper::format($priceCents, $currency),
@@ -309,3 +310,63 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
         </section>
     <?php endif; ?>
 </article>
+<?php
+// Schema.org Product structured data with gtin13 when EAN is available
+$schemaOffers = [];
+foreach ($variants as $variant) {
+    $offer = [
+        '@type'         => 'Offer',
+        'sku'           => (string) ($variant['sku'] ?? ''),
+        'price'         => number_format((int) ($variant['price_cents'] ?? 0) / 100, 2, '.', ''),
+        'priceCurrency' => $currency,
+        'availability'  => ((int) ($variant['stock'] ?? 0)) > 0
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+    ];
+
+    // Add gtin13 if EAN-13 is present (13 digits)
+    $ean = $variant['ean'] ?? null;
+    if ($ean !== null && strlen((string) $ean) === 13) {
+        $offer['gtin13'] = (string) $ean;
+    } elseif ($ean !== null && strlen((string) $ean) === 8) {
+        // EAN-8 can be expressed as gtin8
+        $offer['gtin8'] = (string) $ean;
+    }
+
+    $schemaOffers[] = $offer;
+}
+
+$schemaProduct = [
+    '@context'    => 'https://schema.org',
+    '@type'       => 'Product',
+    'name'        => (string) ($product['title'] ?? ''),
+    'description' => (string) ($product['short_desc'] ?? ''),
+];
+
+if (!empty($primaryImage)) {
+    $schemaProduct['image'] = $primaryImage;
+}
+
+if (!empty($product['sku'])) {
+    $schemaProduct['sku'] = (string) $product['sku'];
+}
+
+// If there's only one variant with EAN, add gtin at product level too
+if (count($variants) === 1 && !empty($variants[0]['ean'])) {
+    $singleEan = (string) $variants[0]['ean'];
+    if (strlen($singleEan) === 13) {
+        $schemaProduct['gtin13'] = $singleEan;
+    } elseif (strlen($singleEan) === 8) {
+        $schemaProduct['gtin8'] = $singleEan;
+    }
+}
+
+if (!empty($schemaOffers)) {
+    $schemaProduct['offers'] = count($schemaOffers) === 1 ? $schemaOffers[0] : $schemaOffers;
+}
+
+$schemaJson = json_encode($schemaProduct, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+?>
+<script type="application/ld+json">
+<?php echo $schemaJson; ?>
+</script>

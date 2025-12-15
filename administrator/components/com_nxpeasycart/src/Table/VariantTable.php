@@ -80,6 +80,9 @@ class VariantTable extends Table
             $this->weight = null;
         }
 
+        // Validate EAN (optional barcode field)
+        $this->ean = $this->validateEan($this->ean ?? '');
+
         // Enforce unique SKU
         $db  = $this->getDatabase();
         $sku = (string) $this->sku;
@@ -103,5 +106,77 @@ class VariantTable extends Table
         }
 
         return parent::check();
+    }
+
+    /**
+     * Validate and normalise an EAN barcode.
+     *
+     * Accepts EAN-8 or EAN-13. Returns null if empty, or the validated code.
+     * Throws an exception if the format is invalid or the check digit fails.
+     *
+     * @param string $ean Raw EAN input
+     *
+     * @return string|null Validated EAN or null if empty
+     *
+     * @throws RuntimeException If format is invalid or check digit fails
+     *
+     * @since 0.1.17
+     */
+    private function validateEan(string $ean): ?string
+    {
+        $ean = trim($ean);
+
+        if ($ean === '') {
+            return null;
+        }
+
+        // Must be digits only
+        if (!preg_match('/^\d+$/', $ean)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_EAN_FORMAT'));
+        }
+
+        $length = strlen($ean);
+
+        // Must be 8 or 13 digits (EAN-8 or EAN-13)
+        if ($length !== 8 && $length !== 13) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_EAN_LENGTH'));
+        }
+
+        // Validate check digit
+        if (!$this->verifyEanCheckDigit($ean)) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_VARIANT_EAN_CHECKSUM'));
+        }
+
+        return $ean;
+    }
+
+    /**
+     * Verify the check digit of an EAN-8 or EAN-13 barcode.
+     *
+     * Uses the standard GS1 checksum algorithm.
+     *
+     * @param string $ean EAN code (8 or 13 digits)
+     *
+     * @return bool True if the check digit is valid
+     *
+     * @since 0.1.17
+     */
+    private function verifyEanCheckDigit(string $ean): bool
+    {
+        $length = strlen($ean);
+        $sum    = 0;
+
+        // GS1 algorithm: from right to left, alternate weights of 1 and 3
+        // The last digit is the check digit
+        for ($i = 0; $i < $length - 1; $i++) {
+            $digit  = (int) $ean[$length - 2 - $i];
+            $weight = ($i % 2 === 0) ? 3 : 1;
+            $sum   += $digit * $weight;
+        }
+
+        $checkDigit           = (10 - ($sum % 10)) % 10;
+        $providedCheckDigit   = (int) $ean[$length - 1];
+
+        return $checkDigit === $providedCheckDigit;
     }
 }

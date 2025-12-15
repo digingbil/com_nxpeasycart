@@ -425,6 +425,7 @@ class ProductsController extends AbstractJsonController
             $variants[] = [
                 'id'          => isset($variant['id']) ? (int) $variant['id'] : 0,
                 'sku'         => (string) ($variant['sku'] ?? ''),
+                'ean'         => isset($variant['ean']) && $variant['ean'] !== '' ? (string) $variant['ean'] : null,
                 'price_cents' => $priceCents,
                 'price'       => isset($variant['price']) ? (string) $variant['price'] : $this->formatPrice($priceCents),
                 'currency'    => $baseCurrency,

@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `product_id` INT UNSIGNED NOT NULL,
   `sku` VARCHAR(64) NOT NULL,
+  `ean` VARCHAR(13) NULL DEFAULT NULL,
   `price_cents` INT NOT NULL,
   `currency` CHAR(3) NOT NULL,
   `stock` INT NOT NULL DEFAULT 0,
@@ -68,6 +69,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_variants_sku` (`sku`),
   KEY `idx_nxp_variants_product` (`product_id`),
+  KEY `idx_nxp_variants_ean` (`ean`),
   CONSTRAINT `fk_nxp_variants_product`
     FOREIGN KEY (`product_id`) REFERENCES `#__nxp_easycart_products` (`id`)
     ON DELETE CASCADE

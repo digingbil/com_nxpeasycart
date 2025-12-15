@@ -615,6 +615,34 @@
                             <div class="nxp-ec-form-field">
                                 <label
                                     class="nxp-ec-form-label"
+                                    :for="`variant-ean-${index}`"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_EAN",
+                                            "EAN"
+                                        )
+                                    }}
+                                </label>
+                                <input
+                                    :id="`variant-ean-${index}`"
+                                    class="nxp-ec-form-input"
+                                    type="text"
+                                    v-model.trim="variant.ean"
+                                    :placeholder="
+                                        __(
+                                            'COM_NXPEASYCART_FIELD_VARIANT_EAN_PLACEHOLDER',
+                                            '8 or 13 digits'
+                                        )
+                                    "
+                                    maxlength="13"
+                                    pattern="\d{8}|\d{13}"
+                                />
+                            </div>
+
+                            <div class="nxp-ec-form-field">
+                                <label
+                                    class="nxp-ec-form-label"
                                     :for="`variant-price-${index}`"
                                 >
                                     {{
@@ -1407,6 +1435,7 @@ const mode = computed(() =>
 const blankVariant = () => ({
     id: 0,
     sku: "",
+    ean: "",
     price: "",
     currency: baseCurrency.value,
     stock: 0,
@@ -1529,6 +1558,7 @@ const normaliseVariants = (variants) => {
     return variants.map((variant) => ({
         id: Number.parseInt(variant?.id ?? 0, 10) || 0,
         sku: String(variant?.sku ?? "").trim(),
+        ean: variant?.ean != null ? String(variant.ean).trim() : "",
         price:
             variant?.price != null
                 ? String(variant.price)
@@ -2407,9 +2437,15 @@ const submit = () => {
                 ? String(variant.weight).trim()
                 : null;
 
+        // EAN: normalise to null if empty
+        const ean = variant.ean && String(variant.ean).trim() !== ""
+            ? String(variant.ean).trim()
+            : null;
+
         return {
             id: variant.id || 0,
             sku: variant.sku.trim(),
+            ean,
             price:
                 variant.price !== null && variant.price !== undefined
                     ? String(variant.price).trim()
