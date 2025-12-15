@@ -316,6 +316,8 @@ class ProductModel extends AdminModel
             $item->product_type = isset($item->product_type)
                 ? strtolower((string) $item->product_type)
                 : 'physical';
+            $item->checked_out = isset($item->checked_out) ? (int) $item->checked_out : 0;
+            $item->checked_out_time = $item->checked_out_time ?? null;
             $items[$index]     = $item;
         }
 

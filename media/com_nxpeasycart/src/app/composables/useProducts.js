@@ -33,6 +33,10 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         endpoints?.update ?? deriveEndpoint(listEndpoint, "update");
     const deleteEndpoint =
         endpoints?.delete ?? deriveEndpoint(listEndpoint, "delete");
+    const checkoutEndpoint =
+        endpoints?.checkout ?? deriveEndpoint(listEndpoint, "checkout");
+    const checkinEndpoint =
+        endpoints?.checkin ?? deriveEndpoint(listEndpoint, "checkin");
 
     const abortSupported = typeof AbortController !== "undefined";
 
@@ -40,6 +44,7 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         loading: false,
         saving: false,
         deleting: false,
+        locking: false,
         error: "",
         validationErrors: [],
         items: [],
@@ -186,6 +191,70 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         state.error = error?.message ?? "Unknown error";
     };
 
+    const checkoutProduct = async (id) => {
+        if (!checkoutEndpoint || !id) {
+            return null;
+        }
+
+        state.locking = true;
+        state.error = "";
+
+        try {
+            const item = await api.checkoutProduct({
+                endpoint: checkoutEndpoint,
+                id,
+            });
+
+            if (item) {
+                const index = state.items.findIndex(
+                    (existing) => existing.id === item.id
+                );
+
+                if (index !== -1) {
+                    state.items.splice(index, 1, item);
+                }
+            }
+
+            return item;
+        } catch (error) {
+            state.error = error?.message ?? "Unknown error";
+            throw error;
+        } finally {
+            state.locking = false;
+        }
+    };
+
+    const checkinProduct = async (id, { force = false } = {}) => {
+        if (!checkinEndpoint || !id) {
+            return null;
+        }
+
+        try {
+            const item = await api.checkinProduct({
+                endpoint: checkinEndpoint,
+                id,
+                force,
+            });
+
+            if (item) {
+                const index = state.items.findIndex(
+                    (existing) => existing.id === item.id
+                );
+
+                if (index !== -1) {
+                    state.items.splice(index, 1, item);
+                }
+            }
+
+            return item;
+        } catch (error) {
+            state.error = error?.message ?? "Unknown error";
+            return null;
+        }
+    };
+
+    const forceCheckinProduct = async (id) => checkinProduct(id, { force: true });
+
     const createProduct = async (payload) => {
         if (!createEndpoint) {
             throw new Error("Create endpoint unavailable.");
@@ -299,6 +368,9 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         createProduct,
         updateProduct,
         deleteProducts,
+        checkoutProduct,
+        checkinProduct,
+        forceCheckinProduct,
         metrics: perf.metrics,
     };
 }

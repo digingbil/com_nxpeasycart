@@ -78,10 +78,14 @@ $productsEndpointList         = $adminBase . '/index.php?option=com_nxpeasycart&
 $productsEndpointStore        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.store&format=json&' . $tokenQuery;
 $productsEndpointUpdate       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.update&format=json&' . $tokenQuery;
 $productsEndpointDelete       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.delete&format=json&' . $tokenQuery;
+$productsEndpointCheckout     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.checkout&format=json&' . $tokenQuery;
+$productsEndpointCheckin      = $adminBase . '/index.php?option=com_nxpeasycart&task=api.products.checkin&format=json&' . $tokenQuery;
 $categoriesEndpointList       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.list&format=json';
 $categoriesEndpointStore      = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.store&format=json&' . $tokenQuery;
 $categoriesEndpointUpdate     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.update&format=json&' . $tokenQuery;
 $categoriesEndpointDelete     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.delete&format=json&' . $tokenQuery;
+$categoriesEndpointCheckout   = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.checkout&format=json&' . $tokenQuery;
+$categoriesEndpointCheckin    = $adminBase . '/index.php?option=com_nxpeasycart&task=api.categories.checkin&format=json&' . $tokenQuery;
 $ordersEndpointList           = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.list&format=json';
 $ordersEndpointShow           = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.show&format=json';
 $ordersEndpointTransition     = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.transition&format=json&' . $tokenQuery;
@@ -89,6 +93,8 @@ $ordersEndpointBulkTransition = $adminBase . '/index.php?option=com_nxpeasycart&
 $ordersEndpointNote           = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.note&format=json&' . $tokenQuery;
 $ordersEndpointTracking       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.tracking&format=json&' . $tokenQuery;
 $ordersEndpointInvoice        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.invoice&format=json&' . $tokenQuery;
+$ordersEndpointCheckout       = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.checkout&format=json&' . $tokenQuery;
+$ordersEndpointCheckin        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.orders.checkin&format=json&' . $tokenQuery;
 $dashboardEndpoint            = $adminBase . '/index.php?option=com_nxpeasycart&task=api.dashboard.summary&format=json';
 $customersEndpointList        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.list&format=json';
 $customersEndpointShow        = $adminBase . '/index.php?option=com_nxpeasycart&task=api.customers.show&format=json';
@@ -187,6 +193,11 @@ $appConfig = [
     'siteRoot'      => Uri::root(),
     'navItems'      => $navItems,
     'orderStates'   => $orderStates,
+    'user'          => [
+        'id'       => (int) $user->id,
+        'name'     => (string) $user->name,
+        'username' => (string) $user->username,
+    ],
     'preload'       => [
         'orders'    => $ordersPreload,
         'dashboard' => [
@@ -208,12 +219,16 @@ $appConfig = [
             'create' => $productsEndpointStore,
             'update' => $productsEndpointUpdate,
             'delete' => $productsEndpointDelete,
+            'checkout' => $productsEndpointCheckout,
+            'checkin'  => $productsEndpointCheckin,
         ],
         'categories' => [
             'list'   => $categoriesEndpointList,
             'create' => $categoriesEndpointStore,
             'update' => $categoriesEndpointUpdate,
             'delete' => $categoriesEndpointDelete,
+            'checkout' => $categoriesEndpointCheckout,
+            'checkin'  => $categoriesEndpointCheckin,
         ],
         'orders' => [
             'list'           => $ordersEndpointList,
@@ -223,6 +238,8 @@ $appConfig = [
             'note'           => $ordersEndpointNote,
             'tracking'       => $ordersEndpointTracking,
             'invoice'        => $ordersEndpointInvoice ?? '',
+            'checkout'       => $ordersEndpointCheckout,
+            'checkin'        => $ordersEndpointCheckin,
         ],
         'customers' => [
             'list' => $customersEndpointList,
@@ -319,15 +336,23 @@ $dataAttributes = [
     'products-endpoint-create'           => $productsEndpointStore,
     'products-endpoint-update'           => $productsEndpointUpdate,
     'products-endpoint-delete'           => $productsEndpointDelete,
+    'products-endpoint-checkout'         => $productsEndpointCheckout,
+    'products-endpoint-checkin'          => $productsEndpointCheckin,
     'categories-endpoint'                => $categoriesEndpointList,
     'categories-endpoint-create'         => $categoriesEndpointStore,
     'categories-endpoint-update'         => $categoriesEndpointUpdate,
     'categories-endpoint-delete'         => $categoriesEndpointDelete,
+    'categories-endpoint-checkout'       => $categoriesEndpointCheckout,
+    'categories-endpoint-checkin'        => $categoriesEndpointCheckin,
     'orders-endpoint'                    => $ordersEndpointList,
     'orders-endpoint-show'               => $ordersEndpointShow,
     'orders-endpoint-transition'         => $ordersEndpointTransition,
     'orders-endpoint-tracking'           => $ordersEndpointTracking,
     'orders-endpoint-invoice'            => $ordersEndpointInvoice,
+    'orders-endpoint-checkout'           => $ordersEndpointCheckout,
+    'orders-endpoint-checkin'            => $ordersEndpointCheckin,
+    'user-id'                            => (int) $user->id,
+    'user-name'                          => $user->name,
     'app-title'                          => $appTitle,
     'app-lead'                           => $appLead,
     'app-title-key'                      => $appTitleKey,

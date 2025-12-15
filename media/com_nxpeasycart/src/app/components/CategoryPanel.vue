@@ -189,6 +189,12 @@
                                 >
                                     {{ category.indentedTitle }}
                                 </span>
+                                <div v-if="category.checked_out" class="nxp-ec-admin-table__meta">
+                                    <span class="nxp-ec-status nxp-ec-status--muted">
+                                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                        {{ lockLabel(category) }}
+                                    </span>
+                                </div>
                             </th>
                             <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_SLUG', 'Slug')">{{ category.slug || "—" }}</td>
                             <td :data-label="__('COM_NXPEASYCART_CATEGORIES_TABLE_PARENT', 'Parent')">
@@ -210,6 +216,7 @@
                                     type="button"
                                     @click="startEdit(category)"
                                     :title="__('JEDIT', 'Edit')"
+                                    :disabled="state.saving"
                                     :aria-label="__('JEDIT', 'Edit')"
                                 >
                                     <i class="fa-solid fa-pen-to-square"></i>
@@ -218,7 +225,7 @@
                                 <button
                                     class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--danger nxp-ec-btn--icon"
                                     type="button"
-                                    :disabled="state.deleting"
+                                    :disabled="state.deleting || isLockedByOther(category)"
                                     @click="confirmDelete(category)"
                                     :title="__('COM_NXPEASYCART_REMOVE', 'Remove')"
                                     :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
@@ -467,7 +474,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, onBeforeUnmount } from "vue";
 import SkeletonLoader from "./SkeletonLoader.vue";
 
 const props = defineProps({
@@ -483,6 +490,22 @@ const props = defineProps({
         type: Function,
         default: null,
     },
+    checkoutCategory: {
+        type: Function,
+        default: null,
+    },
+    checkinCategory: {
+        type: Function,
+        default: null,
+    },
+    forceCheckinCategory: {
+        type: Function,
+        default: null,
+    },
+    currentUserId: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const emit = defineEmits(["refresh", "search", "page", "save", "delete"]);
@@ -492,6 +515,8 @@ const __ = props.translate;
 const formOpen = ref(false);
 const slugEdited = ref(false);
 const parentOptions = ref([]);
+const lockedCategoryId = ref(null);
+const currentUserId = computed(() => Number(props.currentUserId || 0));
 
 const buildHierarchy = (sourceItems) => {
     const itemsArray = Array.isArray(sourceItems) ? sourceItems : [];
@@ -601,6 +626,58 @@ const buildHierarchy = (sourceItems) => {
     return result;
 };
 
+const isLockedByOther = (category) =>
+    category?.checked_out &&
+    Number(category.checked_out) !== 0 &&
+    Number(category.checked_out) !== currentUserId.value;
+
+const lockOwnerName = (category) => {
+    if (!category) {
+        return "";
+    }
+
+    const ownerId = Number(category.checked_out) || 0;
+    const userIdFromMeta =
+        category.checked_out_user && category.checked_out_user.id
+            ? Number(category.checked_out_user.id)
+            : 0;
+    const effectiveOwnerId = ownerId || userIdFromMeta;
+
+    if (effectiveOwnerId !== 0 && effectiveOwnerId === currentUserId.value) {
+        return __("JGLOBAL_YOU", "You");
+    }
+
+    const name = category.checked_out_user?.name ?? "";
+
+    if (name) {
+        return name;
+    }
+
+    return "";
+};
+
+const lockLabel = (category) =>
+    __(
+        "COM_NXPEASYCART_CHECKED_OUT_BY",
+        "Checked out by %s",
+        [lockOwnerName(category) || __("COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC", "another user")]
+    );
+
+const releaseLock = async () => {
+    if (!lockedCategoryId.value || !props.checkinCategory) {
+        lockedCategoryId.value = null;
+        return;
+    }
+
+    try {
+        await props.checkinCategory(lockedCategoryId.value);
+    } catch (error) {
+        // Ignore check-in failures.
+    } finally {
+        lockedCategoryId.value = null;
+    }
+};
+
 const hierarchicalItems = computed(() =>
     buildHierarchy(props.state?.items ?? [])
 );
@@ -697,6 +774,9 @@ const fetchParentOptions = async (excludeId = 0) => {
 };
 
 const startCreate = async () => {
+    await releaseLock();
+    props.state.error = "";
+    props.state.validationErrors = [];
     resetDraft();
     await fetchParentOptions();
     formOpen.value = true;
@@ -707,14 +787,62 @@ const startEdit = async (category) => {
         return;
     }
 
-    draft.id = Number.parseInt(category.id ?? 0, 10) || 0;
-    draft.title = String(category.title ?? "").trim();
-    draft.slug = String(category.slug ?? "").trim();
+    props.state.error = "";
+    props.state.validationErrors = [];
+    const lockedByName = lockOwnerName(category);
+
+    if (isLockedByOther(category)) {
+        const forced = await forceCheckinIfAllowed(category, lockedByName);
+
+        if (!forced) {
+            props.state.error =
+                lockedByName !== ""
+                    ? __(
+                          "COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT",
+                          "This category is currently checked out by %s.",
+                          [lockedByName]
+                      )
+                    : __(
+                          "COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC",
+                          "This category is currently checked out by another user."
+                      );
+
+            return;
+        }
+
+        return;
+    }
+
+    await releaseLock();
+
+    let sourceCategory = category;
+
+    if (category?.id && props.checkoutCategory) {
+        try {
+            const locked = await props.checkoutCategory(category.id);
+            if (locked) {
+                lockedCategoryId.value = locked.id;
+                sourceCategory = locked;
+            }
+        } catch (error) {
+            props.state.error =
+                error?.message ||
+                __(
+                    "COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC",
+                    "Unable to edit this category right now."
+                );
+            return;
+        }
+    }
+
+    draft.id = Number.parseInt(sourceCategory.id ?? 0, 10) || 0;
+    draft.title = String(sourceCategory.title ?? "").trim();
+    draft.slug = String(sourceCategory.slug ?? "").trim();
     draft.parent_id =
-        category.parent_id != null
-            ? Number.parseInt(category.parent_id, 10) || null
+        sourceCategory.parent_id != null
+            ? Number.parseInt(sourceCategory.parent_id, 10) || null
             : null;
-    draft.sort = Number.parseInt(category.sort ?? 0, 10) || 0;
+    draft.sort = Number.parseInt(sourceCategory.sort ?? 0, 10) || 0;
     slugEdited.value = Boolean(draft.slug);
 
     await fetchParentOptions(draft.id);
@@ -722,8 +850,60 @@ const startEdit = async (category) => {
     formOpen.value = true;
 };
 
-const cancelEdit = () => {
+const forceCheckinIfAllowed = async (category, lockedByName = "") => {
+    if (!category?.id || typeof props.forceCheckinCategory !== "function") {
+        return null;
+    }
+
+    const prompt = __(
+        "COM_NXPEASYCART_FORCE_CHECKIN_CATEGORY",
+        "This category is checked out by %s. Force check-in?",
+        [
+            lockedByName ||
+                __(
+                    "COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC",
+                    "another user"
+                ),
+        ]
+    );
+
+    if (typeof window !== "undefined" && !window.confirm(prompt)) {
+        return null;
+    }
+
+    try {
+        const unlocked = await props.forceCheckinCategory(category.id);
+
+        if (unlocked) {
+            lockedCategoryId.value = unlocked.id;
+            draft.id = Number.parseInt(unlocked.id ?? 0, 10) || 0;
+            draft.title = String(unlocked.title ?? "").trim();
+            draft.slug = String(unlocked.slug ?? "").trim();
+            draft.parent_id =
+                unlocked.parent_id != null
+                    ? Number.parseInt(unlocked.parent_id, 10) || null
+                    : null;
+            draft.sort = Number.parseInt(unlocked.sort ?? 0, 10) || 0;
+            slugEdited.value = Boolean(draft.slug);
+            await fetchParentOptions(draft.id);
+            formOpen.value = true;
+            return unlocked;
+        }
+    } catch (error) {
+        props.state.error =
+            error?.message ||
+            __(
+                "COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC",
+                "Unable to check in this category."
+            );
+    }
+
+    return null;
+};
+
+const cancelEdit = async () => {
     formOpen.value = false;
+    await releaseLock();
     resetDraft();
 };
 
@@ -805,15 +985,20 @@ const formatTimestamp = (timestamp) => {
     }
 };
 
+onBeforeUnmount(() => {
+    releaseLock();
+});
+
 watch(
     () => props.state?.saving,
-    (saving, previous) => {
+    async (saving, previous) => {
         if (previous && !saving) {
             const hasErrors =
                 (props.state?.validationErrors ?? []).length > 0 ||
                 props.state?.error;
 
             if (!hasErrors) {
+                await releaseLock();
                 formOpen.value = false;
                 resetDraft();
             }

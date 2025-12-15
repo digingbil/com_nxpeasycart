@@ -22,28 +22,37 @@ if (!mount) {
         }
     }
 
-    const productsEndpoints = config?.endpoints?.products ?? {
-        list: dataset.productsEndpoint ?? "",
-        create: dataset.productsEndpointCreate ?? "",
-        update: dataset.productsEndpointUpdate ?? "",
-        delete: dataset.productsEndpointDelete ?? "",
+    const productsEndpoints = {
+        ...(config?.endpoints?.products ?? {}),
+        list: config?.endpoints?.products?.list ?? dataset.productsEndpoint ?? "",
+        create: config?.endpoints?.products?.create ?? dataset.productsEndpointCreate ?? "",
+        update: config?.endpoints?.products?.update ?? dataset.productsEndpointUpdate ?? "",
+        delete: config?.endpoints?.products?.delete ?? dataset.productsEndpointDelete ?? "",
+        checkout: config?.endpoints?.products?.checkout ?? dataset.productsEndpointCheckout ?? "",
+        checkin: config?.endpoints?.products?.checkin ?? dataset.productsEndpointCheckin ?? "",
     };
 
-    const categoriesEndpoints = config?.endpoints?.categories ?? {
-        list: dataset.categoriesEndpoint ?? "",
-        create: dataset.categoriesEndpointCreate ?? "",
-        update: dataset.categoriesEndpointUpdate ?? "",
-        delete: dataset.categoriesEndpointDelete ?? "",
+    const categoriesEndpoints = {
+        ...(config?.endpoints?.categories ?? {}),
+        list: config?.endpoints?.categories?.list ?? dataset.categoriesEndpoint ?? "",
+        create: config?.endpoints?.categories?.create ?? dataset.categoriesEndpointCreate ?? "",
+        update: config?.endpoints?.categories?.update ?? dataset.categoriesEndpointUpdate ?? "",
+        delete: config?.endpoints?.categories?.delete ?? dataset.categoriesEndpointDelete ?? "",
+        checkout: config?.endpoints?.categories?.checkout ?? dataset.categoriesEndpointCheckout ?? "",
+        checkin: config?.endpoints?.categories?.checkin ?? dataset.categoriesEndpointCheckin ?? "",
     };
 
-    const ordersEndpoints = config?.endpoints?.orders ?? {
-        list: dataset.ordersEndpoint ?? "",
-        show: dataset.ordersEndpointShow ?? "",
-        transition: dataset.ordersEndpointTransition ?? "",
-        bulkTransition: dataset.ordersEndpointBulk ?? "",
-        note: dataset.ordersEndpointNote ?? "",
-        tracking: dataset.ordersEndpointTracking ?? "",
-        invoice: dataset.ordersEndpointInvoice ?? "",
+    const ordersEndpoints = {
+        ...(config?.endpoints?.orders ?? {}),
+        list: config?.endpoints?.orders?.list ?? dataset.ordersEndpoint ?? "",
+        show: config?.endpoints?.orders?.show ?? dataset.ordersEndpointShow ?? "",
+        transition: config?.endpoints?.orders?.transition ?? dataset.ordersEndpointTransition ?? "",
+        bulkTransition: config?.endpoints?.orders?.bulkTransition ?? dataset.ordersEndpointBulk ?? "",
+        note: config?.endpoints?.orders?.note ?? dataset.ordersEndpointNote ?? "",
+        tracking: config?.endpoints?.orders?.tracking ?? dataset.ordersEndpointTracking ?? "",
+        invoice: config?.endpoints?.orders?.invoice ?? dataset.ordersEndpointInvoice ?? "",
+        checkout: config?.endpoints?.orders?.checkout ?? dataset.ordersEndpointCheckout ?? "",
+        checkin: config?.endpoints?.orders?.checkin ?? dataset.ordersEndpointCheckin ?? "",
     };
 
     const customersEndpoints = config?.endpoints?.customers ?? {

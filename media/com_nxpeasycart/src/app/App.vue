@@ -73,6 +73,10 @@
             :media-modal-url="mediaModalUrl"
             :digital-endpoints="digitalFileEndpoints"
             :csrf-token="props.csrfToken"
+            :checkout-product="checkoutProduct"
+            :checkin-product="checkinProduct"
+            :force-checkin-product="forceCheckinProduct"
+            :current-user-id="currentUserId"
             @create="onProductCreate"
             @update="onProductUpdate"
             @delete="onProductDelete"
@@ -85,6 +89,10 @@
             :state="categoriesState"
             :translate="__"
             :load-options="loadCategoryOptions"
+            :checkout-category="checkoutCategory"
+            :checkin-category="checkinCategory"
+            :force-checkin-category="forceCheckinCategory"
+            :current-user-id="currentUserId"
             @refresh="onCategoriesRefresh"
             @search="onCategoriesSearch"
             @page="onCategoriesPage"
@@ -97,6 +105,8 @@
             :state="ordersState"
             :translate="__"
             :site-root="siteRoot"
+            :current-user-id="currentUserId"
+            :force-checkin-order="forceCheckinOrder"
             @refresh="onOrdersRefresh"
             @search="onOrdersSearch"
             @filter="onOrdersFilter"
@@ -237,7 +247,7 @@ import { useTaxRates } from "./composables/useTaxRates.js";
 import { useShippingRules } from "./composables/useShippingRules.js";
 import { useLogs } from "./composables/useLogs.js";
 import { usePayments } from "./composables/usePayments.js";
-import { clearCachedData } from "./composables/usePerformance.js";
+import { clearCachedData, getCacheMetadata } from "./composables/usePerformance.js";
 
 const props = defineProps({
     csrfToken: {
@@ -336,6 +346,13 @@ const settingsInitialTab = computed(
 
 const sectionIs = (id) => activeSection.value === id;
 
+const currentUserId = computed(() =>
+    Number.parseInt(
+        props.config?.user?.id ?? props.dataset?.userId ?? 0,
+        10
+    ) || 0
+);
+
 const shouldLoadDashboard = computed(() => sectionIs("dashboard"));
 const shouldLoadProducts = computed(() => sectionIs("products"));
 const shouldLoadCategories = computed(
@@ -349,26 +366,37 @@ const shouldLoadTax = computed(() => sectionIs("tax"));
 const shouldLoadShipping = computed(() => sectionIs("shipping"));
 const shouldLoadLogs = computed(() => sectionIs("logs"));
 
-const productsEndpoints = props.endpoints?.products ?? {
-    list: props.dataset?.productsEndpoint ?? "",
-    create: props.dataset?.productsEndpointCreate ?? "",
-    update: props.dataset?.productsEndpointUpdate ?? "",
-    delete: props.dataset?.productsEndpointDelete ?? "",
+const productsEndpoints = {
+    ...(props.endpoints?.products ?? {}),
+    list: props.endpoints?.products?.list ?? props.dataset?.productsEndpoint ?? "",
+    create: props.endpoints?.products?.create ?? props.dataset?.productsEndpointCreate ?? "",
+    update: props.endpoints?.products?.update ?? props.dataset?.productsEndpointUpdate ?? "",
+    delete: props.endpoints?.products?.delete ?? props.dataset?.productsEndpointDelete ?? "",
+    checkout: props.endpoints?.products?.checkout ?? props.dataset?.productsEndpointCheckout ?? "",
+    checkin: props.endpoints?.products?.checkin ?? props.dataset?.productsEndpointCheckin ?? "",
 };
 
-const categoriesEndpoints = props.endpoints?.categories ?? {
-    list: props.dataset?.categoriesEndpoint ?? "",
-    create: props.dataset?.categoriesEndpointCreate ?? "",
-    update: props.dataset?.categoriesEndpointUpdate ?? "",
-    delete: props.dataset?.categoriesEndpointDelete ?? "",
+const categoriesEndpoints = {
+    ...(props.endpoints?.categories ?? {}),
+    list: props.endpoints?.categories?.list ?? props.dataset?.categoriesEndpoint ?? "",
+    create: props.endpoints?.categories?.create ?? props.dataset?.categoriesEndpointCreate ?? "",
+    update: props.endpoints?.categories?.update ?? props.dataset?.categoriesEndpointUpdate ?? "",
+    delete: props.endpoints?.categories?.delete ?? props.dataset?.categoriesEndpointDelete ?? "",
+    checkout: props.endpoints?.categories?.checkout ?? props.dataset?.categoriesEndpointCheckout ?? "",
+    checkin: props.endpoints?.categories?.checkin ?? props.dataset?.categoriesEndpointCheckin ?? "",
 };
 
-const ordersEndpoints = props.endpoints?.orders ?? {
-    list: props.dataset?.ordersEndpoint ?? "",
-    show: props.dataset?.ordersEndpointShow ?? "",
-    transition: props.dataset?.ordersEndpointTransition ?? "",
-    bulkTransition: props.dataset?.ordersEndpointBulk ?? "",
-    note: props.dataset?.ordersEndpointNote ?? "",
+const ordersEndpoints = {
+    ...(props.endpoints?.orders ?? {}),
+    list: props.endpoints?.orders?.list ?? props.dataset?.ordersEndpoint ?? "",
+    show: props.endpoints?.orders?.show ?? props.dataset?.ordersEndpointShow ?? "",
+    transition: props.endpoints?.orders?.transition ?? props.dataset?.ordersEndpointTransition ?? "",
+    bulkTransition: props.endpoints?.orders?.bulkTransition ?? props.dataset?.ordersEndpointBulk ?? "",
+    note: props.endpoints?.orders?.note ?? props.dataset?.ordersEndpointNote ?? "",
+    tracking: props.endpoints?.orders?.tracking ?? props.dataset?.ordersEndpointTracking ?? "",
+    invoice: props.endpoints?.orders?.invoice ?? props.dataset?.ordersEndpointInvoice ?? "",
+    checkout: props.endpoints?.orders?.checkout ?? props.dataset?.ordersEndpointCheckout ?? "",
+    checkin: props.endpoints?.orders?.checkin ?? props.dataset?.ordersEndpointCheckin ?? "",
 };
 
 const customersEndpoints = props.endpoints?.customers ?? {
@@ -440,6 +468,10 @@ const {
     createProduct,
     updateProduct,
     deleteProducts,
+    checkoutProduct,
+    checkinProduct,
+    forceCheckinProduct,
+    metrics: productMetrics,
 } = useProducts({
     endpoints: productsEndpoints,
     token: props.csrfToken,
@@ -454,6 +486,10 @@ const {
     saveCategory,
     deleteCategories: removeCategories,
     loadOptions: loadCategoryOptions,
+    checkoutCategory,
+    checkinCategory,
+    forceCheckinCategory,
+    metrics: categoryMetrics,
 } = useCategories({
     endpoints: categoriesEndpoints,
     token: props.csrfToken,
@@ -488,6 +524,10 @@ const {
     setFilterState: setOrdersFilter,
     viewOrder,
     closeOrder,
+    checkoutOrder,
+    checkinOrder,
+    forceCheckinOrder,
+    releaseLock: releaseOrderLock,
     transitionOrder,
     goToPage: goToOrdersPage,
     bulkTransition: bulkTransitionOrders,
@@ -501,6 +541,7 @@ const {
     recordTransaction: recordOrderTransaction,
     resendDownloads,
     resetDownload,
+    metrics: orderMetrics,
 } = useOrders({
     endpoints: ordersEndpoints,
     token: props.csrfToken,
@@ -865,7 +906,12 @@ const {
     token: props.csrfToken,
 });
 
-watch(activeSection, (section) => {
+watch(activeSection, (section, previous) => {
+    if (previous === "orders" && section !== "orders") {
+        closeOrder();
+        releaseOrderLock?.();
+    }
+
     switch (section) {
         case "dashboard":
             refreshDashboard();
@@ -908,10 +954,36 @@ watch(activeSection, (section) => {
 
 onMounted(() => {
     if (typeof window !== "undefined") {
+        // Performance metrics helper - call window.__NXP_EASYCART__.logMetrics() in console
+        const getPerformanceMetrics = () => ({
+            products: productMetrics.value,
+            categories: categoryMetrics.value,
+            orders: orderMetrics.value,
+            cache: getCacheMetadata(),
+        });
+
+        const logMetrics = () => {
+            const metrics = getPerformanceMetrics();
+            console.group("[NXP Easy Cart] Performance Metrics");
+            console.table({
+                Products: metrics.products,
+                Categories: metrics.categories,
+                Orders: metrics.orders,
+            });
+            console.log("Cache Status:", metrics.cache);
+            console.groupEnd();
+            return metrics;
+        };
+
         window.__NXP_EASYCART__ = {
             ...(window.__NXP_EASYCART__ || {}),
             adminMounted: true,
             dataset: props.dataset,
+            // Performance debugging tools
+            getMetrics: getPerformanceMetrics,
+            logMetrics,
+            clearCache: clearCachedData,
+            getCacheStatus: getCacheMetadata,
         };
 
         try {

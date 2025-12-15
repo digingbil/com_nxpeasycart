@@ -338,6 +338,7 @@
                                     class="nxp-ec-admin-checkbox"
                                     :checked="isSelected(order.id)"
                                     @change="emitToggleSelection(order.id)"
+                                    :disabled="isLocked(order)"
                                     :aria-label="
                                         __(
                                             'COM_NXPEASYCART_ORDERS_SELECT_ORDER',
@@ -353,9 +354,19 @@
                                     class="nxp-ec-link-button"
                                     type="button"
                                     @click="emitView(order)"
+                                    :disabled="state.saving"
                                 >
                                     {{ order.order_no }}
                                 </button>
+                                <div
+                                    v-if="order.checked_out"
+                                    class="nxp-ec-admin-table__meta"
+                                >
+                                    <span class="nxp-ec-status nxp-ec-status--muted">
+                                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                                        {{ lockLabel(order) }}
+                                    </span>
+                                </div>
                             </th>
                             <td :data-label="__('COM_NXPEASYCART_ORDERS_TABLE_CUSTOMER', 'Customer')">
                                 <div>{{ order.email }}</div>
@@ -397,6 +408,7 @@
                                 <select
                                     class="nxp-ec-admin-select"
                                     v-model="selections[order.id]"
+                                    :disabled="isLocked(order)"
                                     :aria-label="
                                         __(
                                             'COM_NXPEASYCART_ORDERS_CHANGE_STATE',
@@ -421,7 +433,9 @@
                                     class="nxp-ec-btn"
                                     type="button"
                                     :disabled="
-                                        state.saving || !hasStateChanged(order)
+                                        state.saving ||
+                                        !hasStateChanged(order) ||
+                                        isLocked(order)
                                     "
                                     @click="emitTransition(order)"
                                 >
@@ -698,7 +712,7 @@
                                     v-if="canResendDownloads"
                                     type="button"
                                     class="nxp-ec-btn nxp-ec-btn--small"
-                                    :disabled="state.saving"
+                                    :disabled="state.saving || activeOrderLocked"
                                     @click="emitResendDownloads"
                                 >
                                     <i class="fa-solid fa-envelope"></i>
@@ -736,7 +750,7 @@
                                         <button
                                             type="button"
                                             class="nxp-ec-btn nxp-ec-btn--link nxp-ec-btn--small"
-                                            :disabled="state.saving"
+                                            :disabled="state.saving || activeOrderLocked"
                                             @click="emitResetDownload(download)"
                                             :title="__(
                                                 'COM_NXPEASYCART_ORDERS_RESET_DOWNLOAD_TITLE',
@@ -956,7 +970,11 @@
                                 <button
                                     class="nxp-ec-btn"
                                     type="button"
-                                    :disabled="!trackingChanged || state.saving"
+                                    :disabled="
+                                        !trackingChanged ||
+                                        state.saving ||
+                                        activeOrderLocked
+                                    "
                                     @click="emitSaveTracking"
                                 >
                                     <i class="fa-solid fa-truck"></i>
@@ -991,7 +1009,7 @@
                                     v-if="state.activeOrder.state === 'fulfilled'"
                                     class="nxp-ec-btn"
                                     type="button"
-                                    :disabled="state.saving"
+                                    :disabled="state.saving || activeOrderLocked"
                                     @click="emitSendEmail('shipped')"
                                 >
                                     <i class="fa-solid fa-envelope"></i>
@@ -1015,7 +1033,7 @@
                                     v-if="state.activeOrder.state === 'refunded'"
                                     class="nxp-ec-btn"
                                     type="button"
-                                    :disabled="state.saving"
+                                    :disabled="state.saving || activeOrderLocked"
                                     @click="emitSendEmail('refunded')"
                                 >
                                     <i class="fa-solid fa-envelope"></i>
@@ -1156,7 +1174,11 @@
                                 <button
                                     class="nxp-ec-btn nxp-ec-btn--primary"
                                     type="button"
-                                    :disabled="state.saving"
+                                    :disabled="
+                                        state.saving ||
+                                        activeOrderLocked ||
+                                        !canRecordPayment
+                                    "
                                     @click="emitRecordPayment"
                                 >
                                     <i class="icon-credit"></i>
@@ -1241,7 +1263,11 @@
                                     <button
                                         class="nxp-ec-btn"
                                         type="submit"
-                                        :disabled="!noteReady || state.saving"
+                                        :disabled="
+                                            !noteReady ||
+                                            state.saving ||
+                                            activeOrderLocked
+                                        "
                                     >
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         {{
@@ -1304,7 +1330,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, onBeforeUnmount } from "vue";
 import SkeletonLoader from "./SkeletonLoader.vue";
 
 const props = defineProps({
@@ -1319,6 +1345,14 @@ const props = defineProps({
     siteRoot: {
         type: String,
         default: "",
+    },
+    currentUserId: {
+        type: Number,
+        default: 0,
+    },
+    forceCheckinOrder: {
+        type: Function,
+        default: null,
     },
 });
 
@@ -1344,6 +1378,7 @@ const emit = defineEmits([
 ]);
 
 const __ = props.translate;
+const currentUserId = computed(() => Number(props.currentUserId || 0));
 
 const selections = reactive({});
 const bulkState = ref("");
@@ -1396,10 +1431,37 @@ const paymentReady = computed(() => {
     return canRecordPayment.value;
 });
 
+const isLocked = (order) =>
+    order?.checked_out &&
+    Number(order.checked_out) !== 0 &&
+    Number(order.checked_out) !== currentUserId.value;
+
+const lockLabel = (order) => {
+    const name = order?.checked_out_user?.name ?? "";
+    const displayName =
+        order?.checked_out === currentUserId.value
+            ? __("JGLOBAL_YOU", "You")
+            : name || __("COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC", "another user");
+
+    return __(
+        "COM_NXPEASYCART_CHECKED_OUT_BY",
+        "Checked out by %s",
+        [displayName]
+    );
+};
+
+const activeOrderLocked = computed(() =>
+    isLocked(props.state?.activeOrder)
+);
+
 watch(selectedIds, (ids) => {
     if (!ids.length) {
         bulkState.value = "";
     }
+});
+
+onBeforeUnmount(() => {
+    emitClose();
 });
 
 watch(
@@ -1744,7 +1806,19 @@ const emitFilter = () => {
     emit("filter", props.state.filterState);
 };
 
-const emitView = (order) => {
+const emitView = async (order) => {
+    if (!order) {
+        return;
+    }
+
+    if (isLocked(order)) {
+        const forced = await forceCheckinIfAllowed(order);
+
+        if (!forced) {
+            return;
+        }
+    }
+
     emit("view", order);
 };
 
@@ -1752,7 +1826,45 @@ const emitClose = () => {
     emit("close");
 };
 
+const forceCheckinIfAllowed = async (order) => {
+    if (!order?.id || typeof props.forceCheckinOrder !== "function") {
+        return null;
+    }
+
+    const prompt = __(
+        "COM_NXPEASYCART_FORCE_CHECKIN_ORDER",
+        "This order is checked out by %s. Force check-in?",
+        [
+            order.checked_out_user?.name ||
+                __(
+                    "COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC",
+                    "another user"
+                ),
+        ]
+    );
+
+    if (typeof window !== "undefined" && !window.confirm(prompt)) {
+        return null;
+    }
+
+    try {
+        return await props.forceCheckinOrder(order.id);
+    } catch (error) {
+        state.transitionError =
+            error?.message ||
+            __(
+                "COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC",
+                "Unable to check in this order."
+            );
+        return null;
+    }
+};
+
 const emitTransition = (order) => {
+    if (!order || isLocked(order)) {
+        return;
+    }
+
     const targetState = selections[order.id] || order.state;
 
     if (targetState === order.state) {
@@ -1769,6 +1881,13 @@ const emitPage = (page) => {
 const isSelected = (orderId) => props.state?.selection?.has?.(orderId) ?? false;
 
 const emitToggleSelection = (orderId) => {
+    const order =
+        props.state?.items?.find?.((item) => item.id === orderId) ?? null;
+
+    if (isLocked(order)) {
+        return;
+    }
+
     emit("toggle-selection", orderId);
 };
 
@@ -1782,14 +1901,25 @@ const emitBulkTransition = () => {
         return;
     }
 
+    const ids = [...selectedIds.value].filter((id) => {
+        const order =
+            props.state?.items?.find?.((item) => item.id === id) ?? null;
+
+        return !isLocked(order);
+    });
+
+    if (!ids.length) {
+        return;
+    }
+
     emit("bulk-transition", {
-        ids: [...selectedIds.value],
+        ids,
         state: bulkState.value,
     });
 };
 
 const emitAddNote = () => {
-    if (!props.state.activeOrder) {
+    if (!props.state.activeOrder || activeOrderLocked.value) {
         return;
     }
 
@@ -1816,7 +1946,11 @@ const emitInvoice = () => {
 };
 
 const emitSaveTracking = () => {
-    if (!props.state.activeOrder || !trackingChanged.value) {
+    if (
+        !props.state.activeOrder ||
+        !trackingChanged.value ||
+        activeOrderLocked.value
+    ) {
         return;
     }
 
@@ -1832,7 +1966,7 @@ const emitSaveTracking = () => {
 };
 
 const emitSendEmail = (type) => {
-    if (!props.state.activeOrder) {
+    if (!props.state.activeOrder || activeOrderLocked.value) {
         return;
     }
 
@@ -1843,7 +1977,11 @@ const emitSendEmail = (type) => {
 };
 
 const emitRecordPayment = () => {
-    if (!props.state.activeOrder || !canRecordPayment.value) {
+    if (
+        !props.state.activeOrder ||
+        !canRecordPayment.value ||
+        activeOrderLocked.value
+    ) {
         return;
     }
 
@@ -1867,7 +2005,11 @@ const emitRecordPayment = () => {
 };
 
 const emitResendDownloads = () => {
-    if (!props.state.activeOrder || !canResendDownloads.value) {
+    if (
+        !props.state.activeOrder ||
+        !canResendDownloads.value ||
+        activeOrderLocked.value
+    ) {
         return;
     }
 
@@ -1877,7 +2019,11 @@ const emitResendDownloads = () => {
 };
 
 const emitResetDownload = (download) => {
-    if (!props.state.activeOrder || !download?.id) {
+    if (
+        !props.state.activeOrder ||
+        !download?.id ||
+        activeOrderLocked.value
+    ) {
         return;
     }
 

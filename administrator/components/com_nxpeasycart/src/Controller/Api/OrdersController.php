@@ -70,6 +70,8 @@ class OrdersController extends AbstractJsonController
             'recordtransaction', 'recordpayment' => $this->recordTransaction(),
             'resenddownloads' => $this->resendDownloads(),
             'resetdownload' => $this->resetDownload(),
+            'checkout' => $this->checkout(),
+            'checkin' => $this->checkin(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -191,7 +193,7 @@ class OrdersController extends AbstractJsonController
                 ], 400);
             }
 
-            throw $e;
+            return $this->respondException($e);
         }
 
         return $this->respond(['order' => $order]);
@@ -228,7 +230,11 @@ class OrdersController extends AbstractJsonController
 
         $service = $this->getOrderService();
         $actorId = $this->app?->getIdentity()?->id ?? null;
-        $result  = $service->bulkTransition($ids, $state, $actorId);
+        try {
+            $result = $service->bulkTransition($ids, $state, $actorId);
+        } catch (RuntimeException $exception) {
+            return $this->respondException($exception);
+        }
 
         return $this->respond([
             'updated' => $result['updated'],
@@ -265,7 +271,11 @@ class OrdersController extends AbstractJsonController
 
         $actorId = $this->app?->getIdentity()?->id ?? null;
         $service = $this->getOrderService();
-        $order   = $service->addNote($id, $message, $actorId);
+        try {
+            $order   = $service->addNote($id, $message, $actorId);
+        } catch (RuntimeException $exception) {
+            return $this->respondException($exception);
+        }
 
         return $this->respond(['order' => $order]);
     }
@@ -381,11 +391,7 @@ class OrdersController extends AbstractJsonController
         try {
             $order = $service->updateTracking($id, $tracking, $actorId);
         } catch (RuntimeException $e) {
-            // Return validation errors (invalid state transition, order not found, etc.) as 400
-            return $this->respond([
-                'error'   => true,
-                'message' => $e->getMessage(),
-            ], 400);
+            return $this->respondException($e, 400);
         }
 
         return $this->respond(['order' => $order]);
@@ -422,6 +428,10 @@ class OrdersController extends AbstractJsonController
 
         if (!$order) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        if ($locked = $this->guardLockedOrder($order)) {
+            return $locked;
         }
 
         $mailService = $this->getMailService();
@@ -506,6 +516,10 @@ class OrdersController extends AbstractJsonController
             );
         }
 
+        if ($locked = $this->guardLockedOrder($order)) {
+            return $locked;
+        }
+
         $actorId = $this->app?->getIdentity()?->id ?? null;
 
         // Build transaction data
@@ -522,6 +536,7 @@ class OrdersController extends AbstractJsonController
             'status'      => 'paid',
             'amount_cents' => $amountCents,
             'currency'    => $order['currency'] ?? 'USD',
+            'actor_id'    => $actorId,
             'payload'     => [
                 'note'        => $note,
                 'recorded_by' => $actorId,
@@ -553,6 +568,8 @@ class OrdersController extends AbstractJsonController
             }
 
             return $this->respond(['order' => $updated]);
+        } catch (RuntimeException $exception) {
+            return $this->respondException($exception);
         } catch (\Throwable $e) {
             throw new RuntimeException(
                 Text::sprintf('COM_NXPEASYCART_ERROR_RECORD_PAYMENT_FAILED', $e->getMessage()),
@@ -598,6 +615,10 @@ class OrdersController extends AbstractJsonController
         $allowedStates = ['paid', 'fulfilled'];
         if (!\in_array($order['state'] ?? '', $allowedStates, true)) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_DOWNLOADS_NOT_READY'), 400);
+        }
+
+        if ($locked = $this->guardLockedOrder($order)) {
+            return $locked;
         }
 
         $mailService = $this->getMailService();
@@ -671,6 +692,16 @@ class OrdersController extends AbstractJsonController
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_DOWNLOAD_INVALID'), 400);
         }
 
+        $targetOrderId = $orderId > 0 ? $orderId : (int) ($download['order_id'] ?? 0);
+
+        if ($targetOrderId > 0) {
+            $order = $this->getOrderService()->get($targetOrderId);
+
+            if ($order && ($locked = $this->guardLockedOrder($order))) {
+                return $locked;
+            }
+        }
+
         try {
             $digitalService->resetDownloadCount($downloadId);
 
@@ -709,6 +740,53 @@ class OrdersController extends AbstractJsonController
                 $e
             );
         }
+    }
+
+    /**
+     * Check out an order for editing.
+     */
+    protected function checkout(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $id      = $this->requireId();
+        $actorId = (int) ($this->app?->getIdentity()?->id ?? 0);
+
+        try {
+            $order = $this->getOrderService()->checkout($id, $actorId);
+        } catch (RuntimeException $exception) {
+            return $this->respondException($exception);
+        }
+
+        return $this->respond(['order' => $order]);
+    }
+
+    /**
+     * Check in an order.
+     */
+    protected function checkin(): JsonResponse
+    {
+        $force = (bool) $this->input->get('force', false);
+
+        if ($force) {
+            $this->assertCan('core.manage');
+        } else {
+            $this->assertCan('core.edit');
+        }
+
+        $this->assertToken();
+
+        $id      = $this->requireId();
+        $actorId = (int) ($this->app?->getIdentity()?->id ?? 0);
+
+        try {
+            $order = $this->getOrderService()->checkin($id, $force, $actorId);
+        } catch (RuntimeException $exception) {
+            return $this->respondException($exception);
+        }
+
+        return $this->respond(['order' => $order]);
     }
 
     /**
@@ -805,6 +883,37 @@ class OrdersController extends AbstractJsonController
         }
 
         return $container->get(InvoiceService::class);
+    }
+
+    /**
+     * Normalise RuntimeException responses with status codes.
+     */
+    private function respondException(RuntimeException $exception, int $defaultStatus = 500): JsonResponse
+    {
+        $code   = $exception->getCode();
+        $status = ($code >= 400 && $code < 600) ? $code : $defaultStatus;
+
+        return $this->respond(['message' => $exception->getMessage()], $status);
+    }
+
+    /**
+     * Guard against performing write actions on locked orders.
+     */
+    private function guardLockedOrder(array $order): ?JsonResponse
+    {
+        $actorId     = (int) ($this->app?->getIdentity()?->id ?? 0);
+        $checkedOut  = isset($order['checked_out']) ? (int) $order['checked_out'] : 0;
+        $lockedBy    = $order['checked_out_user']['name'] ?? '';
+
+        if ($checkedOut !== 0 && $checkedOut !== $actorId) {
+            $message = $lockedBy !== ''
+                ? Text::sprintf('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT', $lockedBy)
+                : Text::_('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC');
+
+            return $this->respond(['message' => $message], 423);
+        }
+
+        return null;
     }
 
     /**

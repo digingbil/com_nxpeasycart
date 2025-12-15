@@ -81,6 +81,8 @@ class CategoriesModel extends ListModel
                     $db->quoteName('a.slug'),
                     $db->quoteName('a.parent_id'),
                     $db->quoteName('a.sort'),
+                    $db->quoteName('a.checked_out'),
+                    $db->quoteName('a.checked_out_time'),
                     '(SELECT COUNT(*) FROM ' . $db->quoteName('#__nxp_easycart_product_categories', 'pc') . ' WHERE ' . $db->quoteName('pc.category_id') . ' = ' . $db->quoteName('a.id') . ') AS ' . $db->quoteName('product_count'),
                 ]
             )

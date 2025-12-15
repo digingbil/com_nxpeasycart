@@ -18,6 +18,7 @@ use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
+use Joomla\Component\Nxpeasycart\Administrator\Model\CategoryModel;
 use RuntimeException;
 
 /**
@@ -27,6 +28,13 @@ use RuntimeException;
  */
 class CategoriesController extends AbstractJsonController
 {
+    /**
+     * Cache for user metadata to avoid N+1 lookups.
+     *
+     * @var array<int, array|null>
+     */
+    private array $userMetaCache = [];
+
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
         parent::__construct($config, $factory, $app);
@@ -46,6 +54,8 @@ class CategoriesController extends AbstractJsonController
             'store', 'create' => $this->store(),
             'update', 'patch' => $this->update(),
             'delete', 'destroy' => $this->destroy(),
+            'checkout' => $this->checkout(),
+            'checkin' => $this->checkin(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -71,7 +81,10 @@ class CategoriesController extends AbstractJsonController
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
 
-        $items   = $model->getItems();
+        $rawItems = $model->getItems();
+        $items   = \is_array($rawItems)
+            ? $rawItems
+            : (\is_iterable($rawItems) ? iterator_to_array($rawItems) : []);
         $ids     = array_map(static fn ($item) => (int) $item->id, $items);
         $usage   = $this->getUsageCounts($ids);
         $parents = $this->getParentTitles($items);
@@ -92,6 +105,9 @@ class CategoriesController extends AbstractJsonController
                     'parent_title' => $parentId ? ($parents[$parentId] ?? null) : null,
                     'sort'         => (int) $item->sort,
                     'usage'        => $usageCount,
+                    'checked_out'  => isset($item->checked_out) ? (int) $item->checked_out : 0,
+                    'checked_out_time' => $item->checked_out_time ?? null,
+                    'checked_out_user' => $this->resolveUserMeta(isset($item->checked_out) ? (int) $item->checked_out : 0),
                 ];
             },
             $items
@@ -183,6 +199,11 @@ class CategoriesController extends AbstractJsonController
             ($parentIdRaw === null || $parentIdRaw === '' || $parentIdRaw === 0 || $parentIdRaw === '0');
 
         $model = $this->getCategoryModel();
+
+        if ($response = $this->guardLocked($model, $id)) {
+            return $response;
+        }
+
         $form  = $model->getForm($data, false);
 
         if ($form === false) {
@@ -242,6 +263,14 @@ class CategoriesController extends AbstractJsonController
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_CATEGORY_ID_REQUIRED'), 400);
         }
 
+        $model = $this->getCategoryModel();
+
+        foreach ($ids as $categoryId) {
+            if ($response = $this->guardLocked($model, (int) $categoryId)) {
+                return $response;
+            }
+        }
+
         $db = $this->getDatabase();
         $db->transactionStart();
 
@@ -297,6 +326,93 @@ class CategoriesController extends AbstractJsonController
     }
 
     /**
+     * Check out a category record.
+     */
+    protected function checkout(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $id    = $this->requireId();
+        $model = $this->getCategoryModel();
+
+        if ($response = $this->guardLocked($model, $id)) {
+            return $response;
+        }
+
+        if (!$model->checkout($id)) {
+            $message = $model->getError() ?: $this->buildLockMessage(0);
+
+            return $this->respond(['message' => $message], 423);
+        }
+
+        $item = $model->getItem($id);
+
+        return $this->respond(['item' => $this->transformItem($item)]);
+    }
+
+    /**
+     * Check in a category record.
+     */
+    protected function checkin(): JsonResponse
+    {
+        $force = (bool) $this->input->get('force', false);
+
+        if ($force) {
+            $this->assertCan('core.manage');
+        } else {
+            $this->assertCan('core.edit');
+        }
+
+        $this->assertToken();
+
+        $id    = $this->requireId();
+        $model = $this->getCategoryModel();
+
+        // If already checked in (checked_out = 0), return success immediately (idempotent).
+        $table = $model->getTable();
+
+        if ($table->load($id) && (int) $table->checked_out === 0) {
+            $item = $model->getItem($id);
+
+            return $this->respond(['item' => $this->transformItem($item)]);
+        }
+
+        if (!$model->checkin($id)) {
+            if ($force && $this->forceCheckin($model, $id)) {
+                $item = $model->getItem($id);
+
+                return $this->respond(['item' => $this->transformItem($item)]);
+            }
+
+            $message = $model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_CATEGORY_CHECKIN_FAILED');
+
+            return $this->respond(['message' => $message], 400);
+        }
+
+        $item = $model->getItem($id);
+
+        return $this->respond(['item' => $this->transformItem($item)]);
+    }
+
+    /**
+     * Forcefully check in a category record.
+     */
+    private function forceCheckin(CategoryModel $model, int $id): bool
+    {
+        $table = $model->getTable();
+
+        if (!$table->load($id)) {
+            return false;
+        }
+
+        $table->checked_out      = 0;
+        $table->checked_out_time = null;
+
+        return $table->store();
+    }
+
+    /**
      * Decode JSON payload.
      *
      * @since 0.1.5
@@ -335,6 +451,9 @@ class CategoriesController extends AbstractJsonController
             'slug'      => (string) $item->slug,
             'parent_id' => $item->parent_id !== null ? (int) $item->parent_id : null,
             'sort'      => isset($item->sort) ? (int) $item->sort : 0,
+            'checked_out' => isset($item->checked_out) ? (int) $item->checked_out : 0,
+            'checked_out_time' => $item->checked_out_time ?? null,
+            'checked_out_user' => $this->resolveUserMeta(isset($item->checked_out) ? (int) $item->checked_out : 0),
         ];
 
         if ($payload['parent_id']) {
@@ -352,6 +471,68 @@ class CategoriesController extends AbstractJsonController
         }
 
         return $payload;
+    }
+
+    /**
+     * Resolve user metadata for lock information.
+     * Uses instance cache to avoid N+1 lookups when listing categories.
+     */
+    private function resolveUserMeta(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        if (array_key_exists($userId, $this->userMetaCache)) {
+            return $this->userMetaCache[$userId];
+        }
+
+        $user = Factory::getUser($userId);
+
+        if (!$user || !$user->id) {
+            $this->userMetaCache[$userId] = null;
+
+            return null;
+        }
+
+        $this->userMetaCache[$userId] = [
+            'id'       => (int) $user->id,
+            'name'     => (string) $user->name,
+            'username' => (string) $user->username,
+        ];
+
+        return $this->userMetaCache[$userId];
+    }
+
+    /**
+     * Ensure a category isn't locked by another user.
+     */
+    private function guardLocked(CategoryModel $model, int $id): ?JsonResponse
+    {
+        $table  = $model->getTable();
+        $userId = (int) ($this->app?->getIdentity()?->id ?? 0);
+
+        if ($table->load($id) && $table->isCheckedOut($userId) && (int) $table->checked_out !== $userId) {
+            $message = $this->buildLockMessage((int) $table->checked_out);
+
+            return $this->respond(['message' => $message], 423);
+        }
+
+        return null;
+    }
+
+    /**
+     * Build lock message for categories.
+     */
+    private function buildLockMessage(int $userId): string
+    {
+        $user = $this->resolveUserMeta($userId);
+
+        if ($user !== null && $user['name'] !== '') {
+            return Text::sprintf('COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT', $user['name']);
+        }
+
+        return Text::_('COM_NXPEASYCART_ERROR_CATEGORY_CHECKED_OUT_GENERIC');
     }
 
     /**

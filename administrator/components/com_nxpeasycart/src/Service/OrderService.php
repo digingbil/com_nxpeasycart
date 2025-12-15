@@ -69,6 +69,13 @@ class OrderService
     private ?TaxService $taxService = null;
 
     /**
+     * Cached user names keyed by user id for lock metadata.
+     *
+     * @var array<int, string>
+     */
+    private array $userNameCache = [];
+
+    /**
      * OrderService constructor.
      *
      * @param DatabaseInterface $db Database connector
@@ -150,6 +157,145 @@ class OrderService
         }
 
         return $this->taxService;
+    }
+
+    /**
+     * Resolve a user to a lightweight payload for lock metadata.
+     */
+    private function resolveUserMeta(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        if (!isset($this->userNameCache[$userId])) {
+            $user = Factory::getUser($userId);
+            $this->userNameCache[$userId] = $user && $user->id ? (string) $user->name : '';
+        }
+
+        $name = $this->userNameCache[$userId];
+
+        if ($name === '') {
+            return null;
+        }
+
+        return [
+            'id'   => $userId,
+            'name' => $name,
+        ];
+    }
+
+    /**
+     * Build a human-friendly lock message for orders.
+     */
+    private function buildLockMessage(int $userId): string
+    {
+        $user = $this->resolveUserMeta($userId);
+
+        if ($user !== null && $user['name'] !== '') {
+            return Text::sprintf('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT', $user['name']);
+        }
+
+        return Text::_('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC');
+    }
+
+    /**
+     * Fetch lock state for an order.
+     *
+     * @return array{checked_out:int, checked_out_time:mixed}
+     */
+    private function getLockState(int $orderId): array
+    {
+        $query = $this->db->getQuery(true)
+            ->select(
+                [
+                    $this->db->quoteName('checked_out'),
+                    $this->db->quoteName('checked_out_time'),
+                ]
+            )
+            ->from($this->db->quoteName('#__nxp_easycart_orders'))
+            ->where($this->db->quoteName('id') . ' = :orderId')
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+
+        $row = $this->db->loadObject();
+
+        if (!$row) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'), 404);
+        }
+
+        return [
+            'checked_out'      => isset($row->checked_out) ? (int) $row->checked_out : 0,
+            'checked_out_time' => $row->checked_out_time ?? null,
+        ];
+    }
+
+    /**
+     * Ensure the current actor can modify the order.
+     */
+    private function assertEditable(int $orderId, ?int $actorId = null): void
+    {
+        $actorId = $actorId ?? 0;
+        $lock    = $this->getLockState($orderId);
+
+        if ($lock['checked_out'] !== 0 && $lock['checked_out'] !== $actorId) {
+            throw new RuntimeException($this->buildLockMessage($lock['checked_out']), 423);
+        }
+    }
+
+    /**
+     * Check out an order for editing.
+     */
+    public function checkout(int $orderId, int $actorId): array
+    {
+        if ($actorId <= 0) {
+            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC'), 403);
+        }
+
+        $this->assertEditable($orderId, $actorId);
+
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_orders'))
+            ->set($this->db->quoteName('checked_out') . ' = :actor')
+            ->set($this->db->quoteName('checked_out_time') . ' = :time')
+            ->where($this->db->quoteName('id') . ' = :orderId')
+            ->bind(':actor', $actorId, ParameterType::INTEGER)
+            ->bind(':time', Factory::getDate()->toSql())
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+
+        return $this->get($orderId) ?? [];
+    }
+
+    /**
+     * Release a checkout lock on an order.
+     */
+    public function checkin(int $orderId, bool $force = false, ?int $actorId = null): array
+    {
+        $lock = $this->getLockState($orderId);
+
+        if (!$force) {
+            $actorId = $actorId ?? 0;
+
+            if ($lock['checked_out'] !== 0 && $lock['checked_out'] !== $actorId) {
+                throw new RuntimeException($this->buildLockMessage($lock['checked_out']), 423);
+            }
+        }
+
+        $query = $this->db->getQuery(true)
+            ->update($this->db->quoteName('#__nxp_easycart_orders'))
+            ->set($this->db->quoteName('checked_out') . ' = 0')
+            ->set($this->db->quoteName('checked_out_time') . ' = NULL')
+            ->where($this->db->quoteName('id') . ' = :orderId')
+            ->bind(':orderId', $orderId, ParameterType::INTEGER);
+
+        $this->db->setQuery($query);
+        $this->db->execute();
+
+        return $this->get($orderId) ?? [];
     }
 
     /**
@@ -494,6 +640,8 @@ class OrderService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
 
+        $this->assertEditable($orderId, $actorId);
+
         if ($current['state'] === $state) {
             return $current;
         }
@@ -752,6 +900,8 @@ class OrderService
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
 
+        $this->assertEditable($orderId, $actorId);
+
         $carrier        = substr(trim((string) ($tracking['carrier'] ?? '')), 0, 50);
         $trackingNumber = substr(trim((string) ($tracking['tracking_number'] ?? '')), 0, 64);
         $trackingUrl    = substr(trim((string) ($tracking['tracking_url'] ?? '')), 0, 255);
@@ -871,6 +1021,8 @@ class OrderService
         if (!$order) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
+
+        $this->assertEditable($orderId, $actorId);
 
         $this->getAuditService()->record(
             'order',
@@ -1532,6 +1684,9 @@ class OrderService
             'created'        => (string) $row->created,
             'modified'       => $row->modified !== null ? (string) $row->modified : null,
             'fulfillment_events' => $this->normaliseFulfillmentEvents($row->fulfillment_events ?? null),
+            'checked_out'    => isset($row->checked_out) ? (int) $row->checked_out : 0,
+            'checked_out_time' => $row->checked_out_time ?? null,
+            'checked_out_user' => $this->resolveUserMeta(isset($row->checked_out) ? (int) $row->checked_out : 0),
             'items_count'    => $itemsCount,
             'items'          => $items,
             'transactions'   => $transactions,
@@ -1913,6 +2068,8 @@ class OrderService
         if (!$order) {
             throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
         }
+
+        $this->assertEditable($orderId, $transaction['actor_id'] ?? null);
 
         $gateway = (string) ($transaction['gateway'] ?? '');
 

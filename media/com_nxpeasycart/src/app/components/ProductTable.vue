@@ -69,6 +69,15 @@
                         {{ item.title }}
                     </div>
                     <div class="nxp-ec-products-table__slug">{{ item.slug }}</div>
+                    <div
+                        v-if="item.checked_out"
+                        class="nxp-ec-products-table__badge"
+                    >
+                        <span class="nxp-ec-status nxp-ec-status--muted">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            {{ lockLabel(item) }}
+                        </span>
+                    </div>
                     <div v-if="item.featured" class="nxp-ec-products-table__badge">
                         <span class="nxp-ec-status nxp-ec-status--featured">
                             <i class="fa-solid fa-sun" aria-hidden="true"></i>
@@ -145,7 +154,7 @@
                             'nxp-ec-status-button',
                             statusMeta(item).className,
                         ]"
-                        :disabled="saving"
+                        :disabled="saving || isLocked(item)"
                         :aria-pressed="statusMeta(item).isActive ? 'true' : 'false'"
                         :title="statusMeta(item).title"
                         :aria-label="statusMeta(item).title"
@@ -175,6 +184,7 @@
                         type="button"
                         @click="$emit('edit', item)"
                         :title="__('JGLOBAL_EDIT', 'Edit')"
+                        :disabled="saving"
                         :aria-label="__('JGLOBAL_EDIT', 'Edit')"
                     >
                         <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
@@ -187,6 +197,7 @@
                         type="button"
                         @click="$emit('delete', item)"
                         :title="__('JTRASH', 'Delete')"
+                        :disabled="saving || isLocked(item)"
                         :aria-label="__('JTRASH', 'Delete')"
                     >
                         <i class="fa-solid fa-trash" aria-hidden="true"></i>
@@ -219,6 +230,10 @@ const props = defineProps({
     saving: {
         type: Boolean,
         default: false,
+    },
+    currentUserId: {
+        type: Number,
+        default: 0,
     },
 });
 
@@ -304,6 +319,26 @@ const statusMeta = (item) => {
             "productsStatusToggle"
         ),
     };
+};
+
+const isLocked = (item) =>
+    item?.checked_out &&
+    Number(item.checked_out) !== 0 &&
+    Number(item.checked_out) !== Number(props.currentUserId || 0);
+
+const lockLabel = (item) => {
+    const name = item?.checked_out_user?.name ?? "";
+    const displayName =
+        item?.checked_out === Number(props.currentUserId || 0)
+            ? __("JGLOBAL_YOU", "You")
+            : name || __("COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC", "Another user");
+
+    return __(
+        "COM_NXPEASYCART_CHECKED_OUT_BY",
+        "Checked out by %s",
+        [displayName],
+        "productLockedBy"
+    );
 };
 
 const variantPrice = (product) => {

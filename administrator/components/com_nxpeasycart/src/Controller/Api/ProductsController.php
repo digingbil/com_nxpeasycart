@@ -20,6 +20,7 @@ use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
+use Joomla\Component\Nxpeasycart\Administrator\Model\ProductModel;
 use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use RuntimeException;
 
@@ -31,6 +32,13 @@ use RuntimeException;
 class ProductsController extends AbstractJsonController
 {
     private const LOW_STOCK_THRESHOLD = 5;
+
+    /**
+     * Cache for user metadata to avoid N+1 lookups.
+     *
+     * @var array<int, array|null>
+     */
+    private array $userMetaCache = [];
 
     /**
      * Constructor.
@@ -64,6 +72,8 @@ class ProductsController extends AbstractJsonController
             'store', 'create' => $this->store(),
             'update', 'edit' => $this->update(),
             'delete', 'remove' => $this->delete(),
+            'checkout' => $this->checkout(),
+            'checkin' => $this->checkin(),
             default => $this->respond(['message' => Text::_('JLIB_APPLICATION_ERROR_TASK_NOT_FOUND')], 404),
         };
     }
@@ -89,7 +99,12 @@ class ProductsController extends AbstractJsonController
         $model->setState('list.start', max(0, $start));
 
         $productModel = $this->getProductModel();
-        $items        = $productModel->hydrateItems($model->getItems());
+        $rawItems     = $model->getItems();
+        $items        = $productModel->hydrateItems(
+            \is_array($rawItems)
+                ? $rawItems
+                : (\is_iterable($rawItems) ? iterator_to_array($rawItems) : [])
+        );
 
         // Ensure relations are always available; if bulk hydration missed them, reload the product.
         foreach ($items as $index => $item) {
@@ -197,6 +212,10 @@ class ProductsController extends AbstractJsonController
 
         $model = $this->getProductModel();
 
+        if ($response = $this->guardLocked($model, $id)) {
+            return $response;
+        }
+
         $form = $model->getForm($data, false);
 
         if ($form === false) {
@@ -244,11 +263,104 @@ class ProductsController extends AbstractJsonController
 
         $model = $this->getProductModel();
 
+        foreach ($ids as $productId) {
+            if ($response = $this->guardLocked($model, (int) $productId)) {
+                return $response;
+            }
+        }
+
         if (!$model->delete($ids)) {
             throw new RuntimeException($model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_DELETE_FAILED'), 500);
         }
 
         return $this->respond(['deleted' => $ids]);
+    }
+
+    /**
+     * Check out a product for editing.
+     */
+    protected function checkout(): JsonResponse
+    {
+        $this->assertCan('core.edit');
+        $this->assertToken();
+
+        $id    = $this->requireId();
+        $model = $this->getProductModel();
+
+        if ($response = $this->guardLocked($model, $id)) {
+            return $response;
+        }
+
+        if (!$model->checkout($id)) {
+            $message = $model->getError() ?: $this->buildLockMessage(0);
+
+            return $this->respond(['message' => $message], 423);
+        }
+
+        $item = $model->getItem($id);
+
+        return $this->respond(['item' => $this->transformProduct($item)]);
+    }
+
+    /**
+     * Check in a product.
+     */
+    protected function checkin(): JsonResponse
+    {
+        $force = (bool) $this->input->get('force', false);
+
+        if ($force) {
+            $this->assertCan('core.manage');
+        } else {
+            $this->assertCan('core.edit');
+        }
+
+        $this->assertToken();
+
+        $id    = $this->requireId();
+        $model = $this->getProductModel();
+
+        // If already checked in (checked_out = 0), return success immediately (idempotent).
+        $table = $model->getTable();
+
+        if ($table->load($id) && (int) $table->checked_out === 0) {
+            $item = $model->getItem($id);
+
+            return $this->respond(['item' => $this->transformProduct($item)]);
+        }
+
+        if (!$model->checkin($id)) {
+            if ($force && $this->forceCheckin($model, $id)) {
+                $item = $model->getItem($id);
+
+                return $this->respond(['item' => $this->transformProduct($item)]);
+            }
+
+            $message = $model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_CHECKIN_FAILED');
+
+            return $this->respond(['message' => $message], 400);
+        }
+
+        $item = $model->getItem($id);
+
+        return $this->respond(['item' => $this->transformProduct($item)]);
+    }
+
+    /**
+     * Forcefully check in a product record, ignoring existing locks.
+     */
+    private function forceCheckin(ProductModel $model, int $id): bool
+    {
+        $table = $model->getTable();
+
+        if (!$table->load($id)) {
+            return false;
+        }
+
+        $table->checked_out      = 0;
+        $table->checked_out_time = null;
+
+        return $table->store();
     }
 
     /**
@@ -371,6 +483,9 @@ class ProductsController extends AbstractJsonController
             'primary_category_id' => isset($item->primary_category_id) && (int) $item->primary_category_id > 0
                 ? (int) $item->primary_category_id
                 : null,
+            'checked_out' => isset($item->checked_out) ? (int) $item->checked_out : 0,
+            'checked_out_time' => $item->checked_out_time ?? null,
+            'checked_out_user' => $this->resolveUserMeta(isset($item->checked_out) ? (int) $item->checked_out : 0),
             'summary'    => [
                 'variants' => $this->buildVariantSummary($variants),
             ],
@@ -379,6 +494,68 @@ class ProductsController extends AbstractJsonController
             'modified'    => $item->modified,
             'modified_by' => $item->modified_by ? (int) $item->modified_by : null,
         ];
+    }
+
+    /**
+     * Resolve a user into a lightweight payload for lock metadata.
+     * Uses instance cache to avoid N+1 lookups when listing products.
+     */
+    private function resolveUserMeta(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        if (array_key_exists($userId, $this->userMetaCache)) {
+            return $this->userMetaCache[$userId];
+        }
+
+        $user = Factory::getUser($userId);
+
+        if (!$user || !$user->id) {
+            $this->userMetaCache[$userId] = null;
+
+            return null;
+        }
+
+        $this->userMetaCache[$userId] = [
+            'id'       => (int) $user->id,
+            'name'     => (string) $user->name,
+            'username' => (string) $user->username,
+        ];
+
+        return $this->userMetaCache[$userId];
+    }
+
+    /**
+     * Ensure a product is not checked out by another user.
+     */
+    private function guardLocked(ProductModel $model, int $id): ?JsonResponse
+    {
+        $table  = $model->getTable();
+        $userId = (int) ($this->app?->getIdentity()?->id ?? 0);
+
+        if ($table->load($id) && $table->isCheckedOut($userId) && (int) $table->checked_out !== $userId) {
+            $message = $this->buildLockMessage((int) $table->checked_out);
+
+            return $this->respond(['message' => $message], 423);
+        }
+
+        return null;
+    }
+
+    /**
+     * Build a human-friendly lock message for products.
+     */
+    private function buildLockMessage(int $userId): string
+    {
+        $user = $this->resolveUserMeta($userId);
+
+        if ($user !== null && $user['name'] !== '') {
+            return Text::sprintf('COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT', $user['name']);
+        }
+
+        return Text::_('COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC');
     }
 
     /**

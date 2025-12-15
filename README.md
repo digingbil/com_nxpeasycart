@@ -93,6 +93,7 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
     - **Centralised MoneyHelper**: All price formatting across PHP (templates, models, emails, invoices) and JavaScript (Vue islands) now flows through a single `MoneyHelper::format()` method that respects the locale resolution order.
     - **Both locale formats accepted**: Settings accept both Joomla-style (`mk-MK`) and ICU-style (`mk_MK`) locale codes.
     - See `docs/currency-localization.md` for implementation details.
+- **Joomla-style check-in/out** across products, categories, and orders with force check-in: schema now carries `checked_out`/`checked_out_time`, API controllers enforce locks and expose checkout/checkin endpoints, the admin SPA shows lock badges, and privileged users can force check-in locked records with a confirmation prompt.
 
 ### Performance Optimizations (Admin SPA)
 

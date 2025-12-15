@@ -57,6 +57,10 @@ export function useOrders({
         endpoints?.resendDownloads ?? deriveEndpoint(listEndpoint, "resendDownloads");
     const resetDownloadEndpoint =
         endpoints?.resetDownload ?? deriveEndpoint(listEndpoint, "resetDownload");
+    const checkoutEndpoint =
+        endpoints?.checkout ?? deriveEndpoint(listEndpoint, "checkout");
+    const checkinEndpoint =
+        endpoints?.checkin ?? deriveEndpoint(listEndpoint, "checkin");
 
     const abortSupported = typeof AbortController !== "undefined";
     const abortRef = ref(null);
@@ -89,7 +93,9 @@ export function useOrders({
         selection: new Set(),
         lastUpdated: null,
         invoiceLoading: false,
+        locking: false,
     });
+    const activeCheckoutId = ref(null);
 
     const buildCacheKey = () => {
         const page = state.pagination.current || 1;
@@ -269,16 +275,117 @@ export function useOrders({
         }
     };
 
+    const updateOrderList = (order) => {
+        if (!order?.id) {
+            return;
+        }
+
+        const index = state.items.findIndex(
+            (existing) => existing.id === order.id
+        );
+
+        if (index !== -1) {
+            state.items.splice(index, 1, order);
+        }
+    };
+
+    const checkoutOrder = async (id) => {
+        if (!checkoutEndpoint || !id) {
+            return null;
+        }
+
+        state.locking = true;
+        state.transitionError = "";
+
+        try {
+            const order = await api.checkoutOrder({
+                endpoint: checkoutEndpoint,
+                id,
+            });
+
+            if (order) {
+                updateOrderList(order);
+                activeCheckoutId.value = order.id;
+            }
+
+            return order;
+        } catch (error) {
+            state.transitionError = error?.message ?? "Unknown error";
+            throw error;
+        } finally {
+            state.locking = false;
+        }
+    };
+
+    const checkinOrder = async (id, { force = false } = {}) => {
+        if (!checkinEndpoint || !id) {
+            return null;
+        }
+
+        try {
+            const order = await api.checkinOrder({
+                endpoint: checkinEndpoint,
+                id,
+                force,
+            });
+
+            if (order) {
+                updateOrderList(order);
+
+                if (state.activeOrder && state.activeOrder.id === order.id) {
+                    state.activeOrder = order;
+                }
+
+                if (activeCheckoutId.value === order.id) {
+                    activeCheckoutId.value = null;
+                }
+            }
+
+            return order;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const forceCheckinOrder = async (id) =>
+        checkinOrder(id, { force: true });
+
+    const releaseLock = async () => {
+        if (!activeCheckoutId.value) {
+            return;
+        }
+
+        const current = activeCheckoutId.value;
+        activeCheckoutId.value = null;
+
+        await checkinOrder(current);
+    };
+
     const viewOrder = async (order) => {
         if (!order) {
+            state.transitionError = "";
             state.activeOrder = null;
-
+            await releaseLock();
             return;
         }
 
         state.transitionError = "";
 
         try {
+            if (
+                activeCheckoutId.value &&
+                activeCheckoutId.value !== order.id
+            ) {
+                await releaseLock();
+            }
+
+            const locked = await checkoutOrder(order.id);
+
+            if (locked) {
+                state.activeOrder = locked;
+                return;
+            }
+
             const detailed = await fetchOrder(order.id, order.order_no);
 
             state.activeOrder =
@@ -307,23 +414,10 @@ export function useOrders({
         }
     };
 
-    const closeOrder = () => {
+    const closeOrder = async () => {
         state.transitionError = "";
         state.activeOrder = null;
-    };
-
-    const updateOrderList = (order) => {
-        if (!order?.id) {
-            return;
-        }
-
-        const index = state.items.findIndex(
-            (existing) => existing.id === order.id
-        );
-
-        if (index !== -1) {
-            state.items.splice(index, 1, order);
-        }
+        await releaseLock();
     };
 
     const transitionOrder = async (id, nextState) => {
@@ -645,6 +739,10 @@ export function useOrders({
         goToPage,
         nextPage,
         previousPage,
+        checkoutOrder,
+        checkinOrder,
+        forceCheckinOrder,
+        releaseLock,
         viewOrder,
         closeOrder,
         transitionOrder,

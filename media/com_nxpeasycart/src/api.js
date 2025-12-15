@@ -636,6 +636,23 @@ class ApiClient {
         return payload.data ?? null;
     }
 
+    async checkoutOrder({ endpoint, id }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.order ?? null;
+    }
+
+    async checkinOrder({ endpoint, id, force = false }) {
+        const url = this.mergeParams(endpoint, {
+            id,
+            force: force ? 1 : undefined,
+        });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.order ?? null;
+    }
+
     /**
      * Create a product.
      */
@@ -670,6 +687,23 @@ class ApiClient {
         );
 
         return payload.data?.deleted ?? [];
+    }
+
+    async checkoutProduct({ endpoint, id }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.item ?? null;
+    }
+
+    async checkinProduct({ endpoint, id, force = false }) {
+        const url = this.mergeParams(endpoint, {
+            id,
+            force: force ? 1 : undefined,
+        });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.item ?? null;
     }
 
     async fetchDigitalFiles({ endpoint, productId, variantId = null, signal }) {
@@ -733,6 +767,23 @@ class ApiClient {
         });
 
         return payload.data?.deleted ?? 0;
+    }
+
+    async checkoutCategory({ endpoint, id }) {
+        const url = this.mergeParams(endpoint, { id });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.item ?? null;
+    }
+
+    async checkinCategory({ endpoint, id, force = false }) {
+        const url = this.mergeParams(endpoint, {
+            id,
+            force: force ? 1 : undefined,
+        });
+        const payload = await this.post(url, { id });
+
+        return payload.data?.item ?? null;
     }
 
     /**

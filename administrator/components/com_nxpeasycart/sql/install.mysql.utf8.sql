@@ -15,9 +15,12 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `created_by` INT UNSIGNED NULL,
   `modified` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   `modified_by` INT UNSIGNED NULL,
+  `checked_out` INT UNSIGNED NOT NULL DEFAULT 0,
+  `checked_out_time` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_products_slug` (`slug`),
-  KEY `idx_nxp_products_primary_category` (`primary_category_id`)
+  KEY `idx_nxp_products_primary_category` (`primary_category_id`),
+  KEY `idx_nxp_products_checked_out` (`checked_out`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
@@ -26,9 +29,12 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
   `title` VARCHAR(255) NOT NULL,
   `parent_id` INT UNSIGNED NULL,
   `sort` INT NOT NULL DEFAULT 0,
+  `checked_out` INT UNSIGNED NOT NULL DEFAULT 0,
+  `checked_out_time` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_categories_slug` (`slug`),
-  KEY `idx_nxp_categories_parent` (`parent_id`)
+  KEY `idx_nxp_categories_parent` (`parent_id`),
+  KEY `idx_nxp_categories_checked_out` (`checked_out`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_product_categories` (
@@ -98,13 +104,16 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_orders` (
   `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `modified` DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
   `fulfillment_events` JSON NULL,
+  `checked_out` INT UNSIGNED NOT NULL DEFAULT 0,
+  `checked_out_time` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_orders_order_no` (`order_no`),
   UNIQUE KEY `idx_nxp_orders_public_token` (`public_token`),
   KEY `idx_nxp_orders_user` (`user_id`),
   KEY `idx_nxp_orders_state` (`state`),
   KEY `idx_nxp_orders_payment_method` (`payment_method`),
-  KEY `idx_nxp_orders_needs_review` (`needs_review`)
+  KEY `idx_nxp_orders_needs_review` (`needs_review`),
+  KEY `idx_nxp_orders_checked_out` (`checked_out`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_order_items` (

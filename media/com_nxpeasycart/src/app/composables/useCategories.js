@@ -7,6 +7,19 @@ import {
     clearCachedData,
 } from "./usePerformance.js";
 
+const deriveEndpoint = (listEndpoint, action) => {
+    if (!listEndpoint) {
+        return "";
+    }
+
+    const origin =
+        typeof window !== "undefined" ? window.location.origin : "http://localhost";
+    const url = new URL(listEndpoint, origin);
+    url.searchParams.set("task", `api.categories.${action}`);
+
+    return `${url.pathname}?${url.searchParams.toString()}`;
+};
+
 export function useCategories({
     endpoints,
     token,
@@ -21,11 +34,16 @@ export function useCategories({
     const createEndpoint = endpoints?.create ?? listEndpoint;
     const updateEndpoint = endpoints?.update ?? listEndpoint;
     const deleteEndpoint = endpoints?.delete ?? listEndpoint;
+    const checkoutEndpoint =
+        endpoints?.checkout ?? deriveEndpoint(listEndpoint, "checkout");
+    const checkinEndpoint =
+        endpoints?.checkin ?? deriveEndpoint(listEndpoint, "checkin");
 
     const state = reactive({
         loading: false,
         saving: false,
         deleting: false,
+        locking: false,
         error: "",
         validationErrors: [],
         items: Array.isArray(preload.items) ? preload.items : [],
@@ -188,6 +206,61 @@ export function useCategories({
         state.error = error?.message ?? "Unknown error";
     };
 
+    const checkoutCategory = async (id) => {
+        if (!checkoutEndpoint || !id) {
+            return null;
+        }
+
+        state.locking = true;
+        state.error = "";
+
+        try {
+            const item = await api.checkoutCategory({
+                endpoint: checkoutEndpoint,
+                id,
+            });
+
+            if (item) {
+                clearCachedData(buildCacheKey());
+                await loadCategories(true);
+            }
+
+            return item;
+        } catch (error) {
+            handleApiError(error);
+            throw error;
+        } finally {
+            state.locking = false;
+        }
+    };
+
+    const checkinCategory = async (id, { force = false } = {}) => {
+        if (!checkinEndpoint || !id) {
+            return null;
+        }
+
+        try {
+            const item = await api.checkinCategory({
+                endpoint: checkinEndpoint,
+                id,
+                force,
+            });
+
+            if (item) {
+                clearCachedData(buildCacheKey());
+                await loadCategories(true);
+            }
+
+            return item;
+        } catch (error) {
+            handleApiError(error);
+            return null;
+        }
+    };
+
+    const forceCheckinCategory = async (id) =>
+        checkinCategory(id, { force: true });
+
     const saveCategory = async (payload) => {
         if (!createEndpoint || !updateEndpoint) {
             throw new Error("Category endpoints unavailable.");
@@ -292,6 +365,9 @@ export function useCategories({
         saveCategory,
         deleteCategories,
         loadOptions,
+        checkoutCategory,
+        checkinCategory,
+        forceCheckinCategory,
         metrics: perf.metrics,
     };
 }

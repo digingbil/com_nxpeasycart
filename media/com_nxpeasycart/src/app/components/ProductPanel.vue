@@ -101,6 +101,7 @@
                 :translate="__"
                 :base-currency="baseCurrency"
                 :saving="state.saving"
+                :current-user-id="currentUserId"
                 @edit="openEdit"
                 @delete="confirmDelete"
                 @toggle-active="toggleActive"
@@ -133,7 +134,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, onBeforeUnmount } from "vue";
 import ProductTable from "./ProductTable.vue";
 import ProductEditor from "./ProductEditor.vue";
 import SkeletonLoader from "./SkeletonLoader.vue";
@@ -167,6 +168,22 @@ const props = defineProps({
         type: String,
         default: "",
     },
+    checkoutProduct: {
+        type: Function,
+        default: null,
+    },
+    checkinProduct: {
+        type: Function,
+        default: null,
+    },
+    forceCheckinProduct: {
+        type: Function,
+        default: null,
+    },
+    currentUserId: {
+        type: Number,
+        default: 0,
+    },
 });
 
 const emit = defineEmits(["create", "update", "delete", "refresh", "search"]);
@@ -179,6 +196,7 @@ const editorState = reactive({
 });
 
 const isEditorOpen = ref(false);
+const lockedProductId = ref(null);
 
 const baseCurrency = computed(() =>
     (props.baseCurrency || "USD").toUpperCase()
@@ -189,6 +207,7 @@ const editorProduct = computed(() => editorState.product);
 const mediaModalUrl = computed(() => (props.mediaModalUrl || "").trim());
 const digitalEndpoints = computed(() => props.digitalEndpoints || {});
 const csrfToken = computed(() => props.csrfToken || "");
+const currentUserId = computed(() => Number(props.currentUserId || 0));
 
 const STATUS_ACTIVE = 1;
 const STATUS_OUT_OF_STOCK = -1;
@@ -242,7 +261,46 @@ const cycleStatus = (value, outOfStockFlag = false) => {
     return STATUS_ACTIVE;
 };
 
-const openCreate = () => {
+const isLockedByOther = (product) =>
+    product?.checked_out &&
+    Number(product.checked_out) !== 0 &&
+    Number(product.checked_out) !== currentUserId.value;
+
+const lockOwnerName = (product) => {
+    if (!product) {
+        return "";
+    }
+
+    const name = product.checked_out_user?.name ?? "";
+
+    if (name) {
+        return name;
+    }
+
+    if (product.checked_out === currentUserId.value) {
+        return __("JGLOBAL_YOU", "You");
+    }
+
+    return "";
+};
+
+const releaseLock = async () => {
+    if (!lockedProductId.value || !props.checkinProduct) {
+        lockedProductId.value = null;
+        return;
+    }
+
+    try {
+        await props.checkinProduct(lockedProductId.value);
+    } catch (error) {
+        // Best-effort check-in; ignore failures here.
+    } finally {
+        lockedProductId.value = null;
+    }
+};
+
+const openCreate = async () => {
+    await releaseLock();
     props.state.validationErrors = [];
     props.state.error = "";
     editorState.mode = "create";
@@ -262,7 +320,8 @@ const openCreate = () => {
     isEditorOpen.value = true;
 };
 
-const openEdit = (product) => {
+const openEdit = async (product) => {
+    await releaseLock();
     props.state.validationErrors = [];
     props.state.error = "";
     editorState.mode = "edit";
@@ -270,11 +329,92 @@ const openEdit = (product) => {
     if (!payload.product_type) {
         payload.product_type = "physical";
     }
+    const lockedByName = lockOwnerName(product);
+
+    if (isLockedByOther(product)) {
+        const forced = await forceCheckoutIfAllowed(product, lockedByName);
+
+        if (!forced) {
+            props.state.error =
+                lockedByName !== ""
+                    ? __(
+                          "COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT",
+                          "This product is currently checked out by %s.",
+                          [lockedByName]
+                      )
+                    : __(
+                          "COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC",
+                          "This product is currently checked out by another user."
+                      );
+
+            return;
+        }
+
+        return;
+    }
+
+    if (product?.id && props.checkoutProduct) {
+        try {
+            const locked = await props.checkoutProduct(product.id);
+            if (locked) {
+                lockedProductId.value = locked.id;
+                editorState.product = JSON.parse(JSON.stringify(locked));
+                isEditorOpen.value = true;
+                return;
+            }
+        } catch (error) {
+            props.state.error =
+                error?.message ||
+                __(
+                    "COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC",
+                    "Unable to edit this product right now."
+                );
+            return;
+        }
+    }
+
     editorState.product = payload;
     isEditorOpen.value = true;
 };
 
-const closeEditor = () => {
+const forceCheckoutIfAllowed = async (product, lockedByName = "") => {
+    if (!product?.id || typeof props.forceCheckinProduct !== "function") {
+        return null;
+    }
+
+    const prompt = __(
+        "COM_NXPEASYCART_FORCE_CHECKIN_PRODUCT",
+        "This product is checked out by %s. Force check-in?",
+        [lockedByName || __("COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC", "another user")]
+    );
+
+    if (typeof window !== "undefined" && !window.confirm(prompt)) {
+        return null;
+    }
+
+    try {
+        const unlocked = await props.forceCheckinProduct(product.id);
+
+        if (unlocked) {
+            lockedProductId.value = unlocked.id;
+            editorState.product = JSON.parse(JSON.stringify(unlocked));
+            isEditorOpen.value = true;
+            return unlocked;
+        }
+    } catch (error) {
+        props.state.error =
+            error?.message ||
+            __(
+                "COM_NXPEASYCART_ERROR_PRODUCT_CHECKED_OUT_GENERIC",
+                "Unable to check in this product."
+            );
+    }
+
+    return null;
+};
+
+const closeEditor = async () => {
+    await releaseLock();
     isEditorOpen.value = false;
     props.state.validationErrors = [];
 };
@@ -606,6 +746,10 @@ const formatTimestamp = (timestamp) => {
         return timestamp;
     }
 };
+
+onBeforeUnmount(() => {
+    releaseLock();
+});
 
 watch(
     () => props.state.saving,
