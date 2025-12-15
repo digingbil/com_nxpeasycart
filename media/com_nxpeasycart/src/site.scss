@@ -2681,4 +2681,21 @@
         @include discount-badge;
         font-size: 0.7rem;
     }
+
+    // Price display in checkout item list (template class names)
+    &__price--sale {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.15rem;
+    }
+
+    &__regular-price {
+        @include regular-price-strikethrough;
+        font-size: 0.8rem;
+    }
+
+    &__sale-price {
+        @include sale-price-highlight;
+    }
 }
