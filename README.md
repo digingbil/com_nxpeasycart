@@ -26,6 +26,15 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 
 ### Recent Enhancements
 
+- **Import/Export system (v0.3.0)**: Comprehensive product catalogue migration and backup:
+    - **Multi-platform import**: WooCommerce, Shopify, VirtueMart, HikaShop CSV formats with automatic platform detection from headers.
+    - **WooCommerce variant grouping**: Variations are grouped by Parent SKU; product data (title, descriptions, images, categories) inherited from the "variable" parent row.
+    - **Shopify Handle-based grouping**: All rows with the same Handle become variants of one product.
+    - **Import tracking**: All imported data tagged with `imported_from` and `original_id` for easy identification and cleanup.
+    - **Duplicate detection**: SHA-256 file hashing prevents accidental re-imports.
+    - **Export formats**: Native format for backups, WooCommerce-compatible format for migration.
+    - **Progress tracking**: Real-time progress display with counts for products, variants, categories, and skipped rows.
+    - See `docs/import-export.md` for complete documentation.
 - **Sale pricing for variants (v0.2.0)**: Time-limited discounted prices on individual product variants:
     - **Per-variant sale configuration**: Each variant can have its own sale price, start date, and end date (all optional).
     - **Automatic activation**: Sales automatically start and end based on configured UTC timestamps; no manual intervention required.

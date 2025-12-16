@@ -118,6 +118,7 @@ $digitalFilesEndpointDelete   = $adminBase . '/index.php?option=com_nxpeasycart&
 $settingsEndpointGet          = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.show&format=json';
 $settingsEndpointSave         = $adminBase . '/index.php?option=com_nxpeasycart&task=api.settings.update&format=json&' . $tokenQuery;
 $logsEndpointList             = $adminBase . '/index.php?option=com_nxpeasycart&task=api.logs.list&format=json';
+$importExportEndpoint         = $adminBase . '/index.php?option=com_nxpeasycart&format=json';
 $params                       = ComponentHelper::getParams('com_nxpeasycart');
 $baseCurrency                 = ConfigHelper::getBaseCurrency();
 $section                      = Factory::getApplication()->input->getCmd('appSection', 'dashboard');
@@ -182,6 +183,11 @@ $navItems                     = [
         'id'    => 'logs',
         'title' => Text::_('COM_NXPEASYCART_MENU_LOGS'),
         'link'  => 'index.php?option=com_nxpeasycart&view=logs',
+    ],
+    [
+        'id'    => 'importexport',
+        'title' => Text::_('COM_NXPEASYCART_MENU_IMPORT_EXPORT'),
+        'link'  => 'index.php?option=com_nxpeasycart&view=importexport',
     ],
 ];
 $orderStates = ['cart', 'pending', 'paid', 'fulfilled', 'refunded', 'canceled'];
@@ -283,6 +289,9 @@ $appConfig = [
         'logs' => [
             'list' => $logsEndpointList,
         ],
+        'importExport' => [
+            'base' => $importExportEndpoint,
+        ],
     ],
 ];
 
@@ -318,6 +327,10 @@ switch ($section) {
     case 'logs':
         $appTitleKey = 'COM_NXPEASYCART_MENU_LOGS';
         $appLeadKey  = 'COM_NXPEASYCART_VIEW_LOGS_PLACEHOLDER';
+        break;
+    case 'importexport':
+        $appTitleKey = 'COM_NXPEASYCART_MENU_IMPORT_EXPORT';
+        $appLeadKey  = 'COM_NXPEASYCART_IMPORT_EXPORT_LEAD';
         break;
     default:
         $appTitleKey = 'COM_NXPEASYCART_MENU_DASHBOARD';
@@ -525,6 +538,7 @@ $dataAttributes = [
     'payments-endpoint-show'             => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.show&format=json',
     'payments-endpoint-update'           => $adminBase . '/index.php?option=com_nxpeasycart&task=api.payments.update&format=json&' . $tokenQuery,
     'logs-endpoint'                      => $logsEndpointList,
+    'import-export-endpoint'             => $importExportEndpoint,
     'dashboard-title'                    => Text::_('COM_NXPEASYCART_MENU_DASHBOARD'),
     'dashboard-lead'                     => Text::_('COM_NXPEASYCART_DASHBOARD_LEAD'),
     'dashboard-refresh'                  => Text::_('COM_NXPEASYCART_DASHBOARD_REFRESH'),

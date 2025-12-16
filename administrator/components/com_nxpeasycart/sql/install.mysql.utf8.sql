@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   `short_desc` TEXT NULL,
   `long_desc` MEDIUMTEXT NULL,
   `images` JSON NULL,
+  `source_images` JSON NULL,
+  `imported_from` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Source platform: virtuemart, woocommerce, shopify, hikashop, native',
+  `original_id` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Original product ID from source platform',
   `featured` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `product_type` ENUM('physical','digital') NOT NULL DEFAULT 'physical',
@@ -20,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_products` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_products_slug` (`slug`),
   KEY `idx_nxp_products_primary_category` (`primary_category_id`),
-  KEY `idx_nxp_products_checked_out` (`checked_out`)
+  KEY `idx_nxp_products_checked_out` (`checked_out`),
+  KEY `idx_nxp_products_imported_from` (`imported_from`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
@@ -29,12 +33,14 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_categories` (
   `title` VARCHAR(255) NOT NULL,
   `parent_id` INT UNSIGNED NULL,
   `sort` INT NOT NULL DEFAULT 0,
+  `imported_from` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Source platform: virtuemart, woocommerce, shopify, hikashop, native',
   `checked_out` INT UNSIGNED NOT NULL DEFAULT 0,
   `checked_out_time` DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_categories_slug` (`slug`),
   KEY `idx_nxp_categories_parent` (`parent_id`),
-  KEY `idx_nxp_categories_checked_out` (`checked_out`)
+  KEY `idx_nxp_categories_checked_out` (`checked_out`),
+  KEY `idx_nxp_categories_imported_from` (`imported_from`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__nxp_easycart_product_categories` (
@@ -69,11 +75,15 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `weight` DECIMAL(10,3) NULL,
   `is_digital` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
+  `imported_from` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Source platform: virtuemart, woocommerce, shopify, hikashop, native',
+  `original_id` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Original variant ID from source platform',
+  `original_images` JSON NULL DEFAULT NULL COMMENT 'JSON array of original image URLs (not downloaded)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_nxp_variants_sku` (`sku`),
   KEY `idx_nxp_variants_product` (`product_id`),
   KEY `idx_nxp_variants_ean` (`ean`),
   KEY `idx_nxp_variants_sale_active` (`sale_start`, `sale_end`),
+  KEY `idx_nxp_variants_imported_from` (`imported_from`),
   CONSTRAINT `fk_nxp_variants_product`
     FOREIGN KEY (`product_id`) REFERENCES `#__nxp_easycart_products` (`id`)
     ON DELETE CASCADE
@@ -281,8 +291,43 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_carts` (
   KEY `idx_nxp_carts_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `#__nxp_easycart_import_jobs` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `job_type` ENUM('import', 'export') NOT NULL DEFAULT 'import',
+  `platform` VARCHAR(50) NULL DEFAULT NULL COMMENT 'virtuemart, woocommerce, shopify, hikashop, native',
+  `status` ENUM('pending', 'processing', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending',
+  `total_rows` INT UNSIGNED NOT NULL DEFAULT 0,
+  `processed_rows` INT UNSIGNED NOT NULL DEFAULT 0,
+  `last_processed_row` INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'For resume capability',
+  `imported_products` INT UNSIGNED NOT NULL DEFAULT 0,
+  `imported_variants` INT UNSIGNED NOT NULL DEFAULT 0,
+  `imported_categories` INT UNSIGNED NOT NULL DEFAULT 0,
+  `skipped_rows` INT UNSIGNED NOT NULL DEFAULT 0,
+  `errors` JSON NULL DEFAULT NULL COMMENT 'JSON array of error messages',
+  `warnings` JSON NULL DEFAULT NULL COMMENT 'JSON array of warning messages',
+  `file_path` VARCHAR(500) NULL DEFAULT NULL COMMENT 'Path to uploaded CSV or generated export',
+  `original_filename` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Original uploaded filename for display',
+  `file_hash` CHAR(64) NULL DEFAULT NULL COMMENT 'SHA-256 hash to detect re-uploads',
+  `mapping` JSON NULL DEFAULT NULL COMMENT 'JSON column mapping configuration',
+  `options` JSON NULL DEFAULT NULL COMMENT 'JSON import options (create categories, update existing, etc)',
+  `created_by` INT UNSIGNED NOT NULL,
+  `created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `started_at` DATETIME NULL DEFAULT NULL,
+  `completed_at` DATETIME NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_nxp_import_jobs_status` (`status`),
+  INDEX `idx_nxp_import_jobs_created_by` (`created_by`),
+  INDEX `idx_nxp_import_jobs_created` (`created`),
+  INDEX `idx_nxp_import_jobs_file_hash` (`file_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT IGNORE INTO `#__nxp_easycart_settings` (`key`, `value`) VALUES
   ('digital_download_max', '5'),
   ('digital_download_expiry', '30'),
   ('digital_storage_path', '/media/com_nxpeasycart/downloads'),
-  ('digital_auto_fulfill', '1');
+  ('digital_auto_fulfill', '1'),
+  ('import_max_file_size', '50'),
+  ('import_chunk_size', '50'),
+  ('import_job_retention_days', '7'),
+  ('import_create_categories', '1'),
+  ('import_default_active', '1');

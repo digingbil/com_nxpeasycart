@@ -106,6 +106,34 @@
                 @delete="confirmDelete"
                 @toggle-active="toggleActive"
             />
+
+            <!-- Pagination -->
+            <div
+                class="nxp-ec-admin-pagination"
+                v-if="state.pagination?.pages > 1"
+            >
+                <button
+                    class="nxp-ec-btn"
+                    type="button"
+                    :disabled="state.pagination.current <= 1"
+                    @click="emitPage(state.pagination.current - 1)"
+                >
+                    ‹
+                </button>
+                <span class="nxp-ec-admin-pagination__status">
+                    {{ state.pagination.current }} /
+                    {{ state.pagination.pages }}
+                </span>
+                <button
+                    class="nxp-ec-btn"
+                    type="button"
+                    :disabled="state.pagination.current >= state.pagination.pages"
+                    @click="emitPage(state.pagination.current + 1)"
+                >
+                    ›
+                </button>
+            </div>
+
             <div
                 v-if="state.lastUpdated"
                 class="nxp-ec-admin-panel__metadata"
@@ -186,7 +214,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["create", "update", "delete", "refresh", "search"]);
+const emit = defineEmits(["create", "update", "delete", "refresh", "search", "page"]);
 
 const __ = props.translate;
 
@@ -710,6 +738,10 @@ const emitRefresh = () => {
 
 const emitSearch = () => {
     emit("search");
+};
+
+const emitPage = (page) => {
+    emit("page", page);
 };
 
 const formatTimestamp = (timestamp) => {

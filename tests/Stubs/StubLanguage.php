@@ -33,4 +33,22 @@ class StubLanguage
     {
         return true;
     }
+
+    /**
+     * Transliterate the string to URL-safe ASCII.
+     *
+     * @param string $string The string to transliterate
+     *
+     * @return string
+     */
+    public function transliterate(string $string): string
+    {
+        // Simple transliteration for testing
+        $string = strtolower($string);
+        $string = preg_replace('/[^a-z0-9\s\-]/', '', $string);
+        $string = preg_replace('/[\s\-]+/', '-', $string);
+        $string = trim($string, '-');
+
+        return $string;
+    }
 }

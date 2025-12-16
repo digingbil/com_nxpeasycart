@@ -161,6 +161,21 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         loadProducts();
     };
 
+    const goToPage = (page) => {
+        const target = Number(page);
+
+        if (
+            Number.isNaN(target) ||
+            target < 1 ||
+            target > state.pagination.pages
+        ) {
+            return;
+        }
+
+        state.pagination.current = target;
+        loadProducts();
+    };
+
     const toMessage = (value) => {
         if (!value) {
             return "";
@@ -365,6 +380,7 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         loadProducts,
         refresh,
         search,
+        goToPage,
         createProduct,
         updateProduct,
         deleteProducts,

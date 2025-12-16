@@ -82,6 +82,7 @@
             @delete="onProductDelete"
             @refresh="onProductRefresh"
             @search="onProductSearch"
+            @page="onProductPage"
         />
 
         <CategoryPanel
@@ -195,6 +196,21 @@
             @page="onLogsPage"
         />
 
+        <ImportExportPanel
+            v-else-if="activeSection === 'importexport'"
+            :state="importExportState"
+            :translate="__"
+            @refresh="onImportExportRefresh"
+            @upload-file="onImportUploadFile"
+            @start-import="onImportStart"
+            @cancel-import="onImportCancel"
+            @reset-import="onImportReset"
+            @start-export="onExportStart"
+            @cancel-export="onExportCancel"
+            @download-export="onExportDownload"
+            @reset-export="onExportReset"
+        />
+
         <div v-else class="nxp-ec-admin-panel nxp-ec-admin-panel--placeholder">
             <div class="nxp-ec-admin-panel__body">
                 <p class="nxp-ec-admin-panel__lead">
@@ -234,6 +250,7 @@ import SettingsPanel from "./components/SettingsPanel.vue";
 import TaxPanel from "./components/TaxPanel.vue";
 import ShippingPanel from "./components/ShippingPanel.vue";
 import LogsPanel from "./components/LogsPanel.vue";
+import ImportExportPanel from "./components/ImportExportPanel.vue";
 import OnboardingWizard from "./components/OnboardingWizard.vue";
 import { useTranslations } from "./composables/useTranslations.js";
 import { useProducts } from "./composables/useProducts.js";
@@ -247,6 +264,7 @@ import { useTaxRates } from "./composables/useTaxRates.js";
 import { useShippingRules } from "./composables/useShippingRules.js";
 import { useLogs } from "./composables/useLogs.js";
 import { usePayments } from "./composables/usePayments.js";
+import { useImportExport } from "./composables/useImportExport.js";
 import { clearCachedData, getCacheMetadata } from "./composables/usePerformance.js";
 
 const props = defineProps({
@@ -365,6 +383,7 @@ const shouldLoadSettings = computed(() => sectionIs("settings"));
 const shouldLoadTax = computed(() => sectionIs("tax"));
 const shouldLoadShipping = computed(() => sectionIs("shipping"));
 const shouldLoadLogs = computed(() => sectionIs("logs"));
+const shouldLoadImportExport = computed(() => sectionIs("importexport"));
 
 const productsEndpoints = {
     ...(props.endpoints?.products ?? {}),
@@ -445,6 +464,10 @@ const paymentsEndpoints = props.endpoints?.payments ?? {
     update: props.dataset?.paymentsEndpointUpdate ?? "",
 };
 
+const importExportEndpoints = props.endpoints?.importExport ?? {
+    base: props.dataset?.importExportEndpoint ?? "",
+};
+
 const orderStates = computed(() => parseJSON(props.dataset?.orderStates, []));
 
 const { state: dashboardState, refresh: refreshDashboard } = useDashboard({
@@ -465,6 +488,7 @@ const {
     state: productState,
     refresh: refreshProducts,
     search: searchProducts,
+    goToPage: goToProductsPage,
     createProduct,
     updateProduct,
     deleteProducts,
@@ -906,6 +930,23 @@ const {
     token: props.csrfToken,
 });
 
+const {
+    state: importExportState,
+    uploadFile: uploadImportFile,
+    startImport,
+    cancelImport,
+    resetImport,
+    startExport,
+    cancelExport,
+    downloadExport,
+    resetExport,
+    refresh: refreshImportExport,
+} = useImportExport({
+    endpoints: importExportEndpoints,
+    token: props.csrfToken,
+    autoload: shouldLoadImportExport.value,
+});
+
 watch(activeSection, (section, previous) => {
     if (previous === "orders" && section !== "orders") {
         closeOrder();
@@ -946,6 +987,9 @@ watch(activeSection, (section, previous) => {
             break;
         case "logs":
             refreshLogs();
+            break;
+        case "importexport":
+            refreshImportExport();
             break;
         default:
             break;
@@ -1014,6 +1058,10 @@ const onProductRefresh = () => {
 
 const onProductSearch = () => {
     searchProducts();
+};
+
+const onProductPage = (page) => {
+    goToProductsPage(page);
 };
 
 const onProductCreate = async (payload) => {
@@ -1391,5 +1439,41 @@ const onPaymentsSave = async (config) => {
     // Refresh dashboard to update onboarding checklist (payments configured)
     clearCachedData("dashboard");
     refreshDashboard(true);
+};
+
+const onImportExportRefresh = () => {
+    refreshImportExport();
+};
+
+const onImportUploadFile = async (file) => {
+    await uploadImportFile(file);
+};
+
+const onImportStart = async () => {
+    await startImport();
+};
+
+const onImportCancel = async () => {
+    await cancelImport();
+};
+
+const onImportReset = () => {
+    resetImport();
+};
+
+const onExportStart = async () => {
+    await startExport();
+};
+
+const onExportCancel = async () => {
+    await cancelExport();
+};
+
+const onExportDownload = () => {
+    downloadExport();
+};
+
+const onExportReset = () => {
+    resetExport();
 };
 </script>

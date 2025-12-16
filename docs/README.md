@@ -49,6 +49,21 @@ Digital product support with secure downloads, admin upload workflow, settings, 
 - Server protection (Apache .htaccess + Nginx nginx.conf)
 - Download token security
 
+### [import-export.md](import-export.md) ⭐ **NEW v0.3.0**
+
+Product catalogue import/export for migration and backup.
+
+**Topics covered:**
+
+- Multi-platform import (WooCommerce, Shopify, VirtueMart, HikaShop)
+- Automatic platform detection from CSV headers
+- WooCommerce variant grouping by Parent SKU
+- Shopify Handle-based variant grouping
+- Import tracking and cleanup
+- Native format export for backups
+- Duplicate file detection
+- API endpoints for programmatic access
+
 ---
 
 ## 💳 Payment Gateway Setup
@@ -305,5 +320,5 @@ When adding new features:
 
 ---
 
-**Last Updated**: 2025-12-12
-**Component Version**: 0.1.14
+**Last Updated**: 2025-12-16
+**Component Version**: 0.3.0

@@ -101,6 +101,10 @@ if (!mount) {
         list: dataset.logsEndpoint ?? "",
     };
 
+    const importExportEndpoints = config?.endpoints?.importExport ?? {
+        base: dataset.importExportEndpoint ?? "",
+    };
+
     createApp(App, {
         csrfToken,
         dataset,
@@ -117,6 +121,7 @@ if (!mount) {
             digitalfiles: digitalFileEndpoints,
             settings: settingsEndpoints,
             logs: logsEndpoints,
+            importExport: importExportEndpoints,
             dashboard:
                 config?.endpoints?.dashboard ?? dataset.dashboardEndpoint ?? "",
         },
