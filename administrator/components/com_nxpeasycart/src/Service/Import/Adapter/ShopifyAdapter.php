@@ -129,11 +129,15 @@ class ShopifyAdapter extends AbstractPlatformAdapter
             // No sale dates in Shopify export
         }
 
-        // Variant image
+        // Variant image (Shopify exports variant images separately)
         $variantImage = $this->getValue($row, 'Variant Image', '');
 
         if ($variantImage !== '' && filter_var($variantImage, FILTER_VALIDATE_URL)) {
             $normalized['variant']['original_images'] = [$variantImage];
+            // Set as variant display images (will override product images on storefront)
+            $normalized['variant']['images'] = [$variantImage];
+        } else {
+            $normalized['variant']['images'] = null;
         }
 
         // Variant options (up to 3 in Shopify)

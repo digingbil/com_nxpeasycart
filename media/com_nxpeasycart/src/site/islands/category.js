@@ -5,6 +5,8 @@ import {
     ref,
     onMounted,
     onBeforeUnmount,
+    nextTick,
+    watch,
 } from "vue";
 import parsePayload from "../utils/parsePayload.js";
 import formatMoney from "../utils/formatMoney.js";
@@ -761,7 +763,13 @@ export default function mountCategoryIsland(el) {
             const sentinel = ref(null);
             let observer = null;
 
-            const observeMore = () => {
+            const setupObserver = () => {
+                // Disconnect existing observer before creating a new one
+                if (observer) {
+                    observer.disconnect();
+                    observer = null;
+                }
+
                 if (pagination.mode !== "infinite") {
                     return;
                 }
@@ -786,7 +794,21 @@ export default function mountCategoryIsland(el) {
                 observer.observe(target);
             };
 
-            onMounted(observeMore);
+            // Watch the sentinel ref - when it becomes available, set up the observer
+            watch(
+                () => sentinel.value,
+                (newValue) => {
+                    if (newValue && pagination.mode === "infinite") {
+                        nextTick(setupObserver);
+                    }
+                }
+            );
+
+            // Also try to set up on mount (in case ref is already available)
+            onMounted(() => {
+                nextTick(setupObserver);
+            });
+
             onBeforeUnmount(() => {
                 if (observer) {
                     observer.disconnect();

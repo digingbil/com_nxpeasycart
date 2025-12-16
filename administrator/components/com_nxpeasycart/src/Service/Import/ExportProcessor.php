@@ -159,7 +159,7 @@ class ExportProcessor
                 'product_type', 'featured', 'active', 'categories', 'images',
                 'variant_id', 'sku', 'price', 'sale_price', 'sale_start', 'sale_end',
                 'currency', 'stock', 'weight', 'ean', 'is_digital', 'variant_active',
-                'options', 'original_images',
+                'options', 'original_images', 'variant_images',
             ],
         };
     }
@@ -285,6 +285,7 @@ class ExportProcessor
 
         $images = $this->parseJson($product->images ?? null);
         $originalImages = $this->parseJson($variant->original_images ?? null);
+        $variantImages = $this->parseJson($variant->images ?? null);
 
         return [
             $product->id,
@@ -311,6 +312,7 @@ class ExportProcessor
             (int) $variant->active,
             $optionsStr,
             !empty($originalImages) ? implode(',', $originalImages) : '',
+            !empty($variantImages) ? implode(',', $variantImages) : '',
         ];
     }
 
@@ -328,7 +330,11 @@ class ExportProcessor
     {
         $options = $this->parseJson($variant->options ?? null);
         $images = $this->parseJson($product->images ?? null);
-        $variantImages = $this->parseJson($variant->original_images ?? null);
+        // Use variant display images if available, fall back to original_images
+        $variantImages = $this->parseJson($variant->images ?? null);
+        if (empty($variantImages)) {
+            $variantImages = $this->parseJson($variant->original_images ?? null);
+        }
 
         // Extract up to 3 options
         $opt1Name = $options[0]['name'] ?? '';

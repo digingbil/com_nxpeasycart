@@ -117,7 +117,9 @@ class ImportProcessor
             'store_images'      => true,
         ], $options);
 
-        $this->inputFilter = InputFilter::getInstance([], [], 1, 1);
+        // Allow common safe HTML tags for product descriptions
+        // Using blacklist mode (0) with empty arrays uses Joomla's default safe filtering
+        $this->inputFilter = InputFilter::getInstance([], [], 0, 0);
         $this->loadSkuCache();
     }
 
@@ -507,6 +509,20 @@ class ImportProcessor
             $originalImages = json_encode($variantData['original_images'], JSON_UNESCAPED_SLASHES);
         }
 
+        // Build variant display images JSON (for storefront image switching)
+        $variantImages = null;
+
+        if (!empty($variantData['images']) && \is_array($variantData['images']) && $this->options['store_images']) {
+            // Filter to valid non-empty strings only
+            $filteredImages = array_values(array_filter($variantData['images'], function ($img) {
+                return \is_string($img) && trim($img) !== '';
+            }));
+
+            if (!empty($filteredImages)) {
+                $variantImages = json_encode($filteredImages, JSON_UNESCAPED_SLASHES);
+            }
+        }
+
         // Insert variant
         $variant = (object) [
             'product_id'       => $productId,
@@ -519,6 +535,7 @@ class ImportProcessor
             'currency'         => $currency,
             'stock'            => max(0, (int) ($variantData['stock'] ?? 0)),
             'options'          => $options,
+            'images'           => $variantImages,
             'weight'           => round((float) ($variantData['weight'] ?? 0), 3),
             'is_digital'       => (int) ($variantData['is_digital'] ?? false),
             'active'           => (int) ($this->options['set_active'] ? ($variantData['active'] ?? true) : ($variantData['active'] ?? false)),

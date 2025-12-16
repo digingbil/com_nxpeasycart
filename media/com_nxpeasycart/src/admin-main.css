@@ -675,12 +675,20 @@
 
 .nxp-ec-variant-card {
     border: 1px solid var(--nxp-ec-border);
+    border-left: 4px solid var(--nxp-ec-primary);
     border-radius: 10px;
-    padding: 1rem;
+    padding: 1.25rem;
     background: var(--nxp-ec-card-bg);
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.nxp-ec-variant-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-left-color: var(--nxp-ec-primary-hover, var(--nxp-ec-primary));
 }
 
 .nxp-ec-variant-card__header {
@@ -691,8 +699,9 @@
 
 .nxp-ec-variant-card__title {
     margin: 0;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 600;
+    color: var(--nxp-ec-primary);
 }
 
 .nxp-ec-variant-card__grid {
@@ -725,6 +734,84 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) auto;
     gap: 0.75rem;
     align-items: center;
+}
+
+/* Variant Images */
+.nxp-ec-variant-images {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--nxp-ec-border);
+}
+
+.nxp-ec-variant-images__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+}
+
+.nxp-ec-variant-images__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.nxp-ec-variant-images__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.nxp-ec-variant-image {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--nxp-ec-border);
+    background: var(--nxp-ec-surface);
+}
+
+.nxp-ec-variant-image__thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.nxp-ec-variant-image__remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.nxp-ec-variant-image:hover .nxp-ec-variant-image__remove {
+    opacity: 1;
+}
+
+.nxp-ec-variant-image__remove:hover {
+    background: rgba(220, 53, 69, 0.9);
+}
+
+.nxp-ec-variant-images__empty {
+    margin: 0.5rem 0 0;
+    color: var(--nxp-ec-text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
 }
 
 .nxp-ec-products-table__title {

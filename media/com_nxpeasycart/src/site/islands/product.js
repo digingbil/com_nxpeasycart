@@ -50,34 +50,63 @@ const createLightbox = () => {
     return wrapper;
 };
 
+/**
+ * Sets up the product image gallery with lightbox support and variant image switching.
+ *
+ * @param {HTMLElement} el - The product island element
+ * @param {string[]} images - Array of image URLs
+ * @param {string} title - Product title for alt text
+ * @returns {Object|null} Gallery controller with updateImages method, or null if setup fails
+ */
 const setupGallery = (el, images = [], title = "") => {
     const galleryRoot =
         el?.closest(".nxp-ec-product")?.querySelector("[data-nxp-gallery]") ||
         el?.closest("[data-nxp-gallery]");
-    const imageList = normaliseImages(images);
 
-    if (!galleryRoot || imageList.length === 0 || galleryRoot.dataset.nxpGalleryReady === "1") {
-        return;
+    if (!galleryRoot) {
+        return null;
     }
 
-    galleryRoot.dataset.nxpGalleryReady = "1";
-
+    let imageList = normaliseImages(images);
     const trigger = galleryRoot.querySelector("[data-nxp-gallery-trigger]");
     const mainImage = galleryRoot.querySelector("[data-nxp-gallery-main]");
-    const thumbs = Array.from(
-        galleryRoot.querySelectorAll("[data-nxp-gallery-thumb]")
-    );
-    const lightbox = createLightbox();
-    const lightboxImage = lightbox.querySelector("[data-nxp-lightbox-image]");
-    const lightboxCounter = lightbox.querySelector("[data-nxp-lightbox-counter]");
-    const btnPrev = lightbox.querySelector("[data-nxp-lightbox-prev]");
-    const btnNext = lightbox.querySelector("[data-nxp-lightbox-next]");
-    const closeEls = lightbox.querySelectorAll("[data-nxp-lightbox-close]");
+    const thumbsContainer = galleryRoot.querySelector(".nxp-ec-product__thumbs");
 
+    // Initialize lightbox variables
+    let lightbox = null;
+    let lightboxImage = null;
+    let lightboxCounter = null;
     let current = 0;
     let keyListener = null;
 
+    // Get or create lightbox
+    if (galleryRoot.dataset.nxpGalleryReady === "1") {
+        // Reuse existing lightbox
+        lightbox = galleryRoot._nxpLightbox;
+        if (lightbox) {
+            lightboxImage = lightbox.querySelector("[data-nxp-lightbox-image]");
+            lightboxCounter = lightbox.querySelector("[data-nxp-lightbox-counter]");
+        }
+    } else {
+        // Create new lightbox
+        lightbox = createLightbox();
+        lightboxImage = lightbox.querySelector("[data-nxp-lightbox-image]");
+        lightboxCounter = lightbox.querySelector("[data-nxp-lightbox-counter]");
+        galleryRoot.dataset.nxpGalleryReady = "1";
+        galleryRoot._nxpLightbox = lightbox;
+    }
+
+    // Define all functions BEFORE using them in event handlers
+
     const markActiveThumb = (index) => {
+        if (!thumbsContainer) {
+            return;
+        }
+
+        const thumbs = Array.from(
+            thumbsContainer.querySelectorAll("[data-nxp-gallery-thumb]")
+        );
+
         thumbs.forEach((thumb) => {
             const thumbIndex = Number.parseInt(
                 thumb.dataset.nxpGalleryThumb,
@@ -96,6 +125,8 @@ const setupGallery = (el, images = [], title = "") => {
 
         if (mainImage && src) {
             mainImage.src = src;
+        } else if (mainImage && imageList.length === 0) {
+            mainImage.src = "";
         }
 
         markActiveThumb(current);
@@ -118,6 +149,10 @@ const setupGallery = (el, images = [], title = "") => {
     };
 
     const closeLightbox = () => {
+        if (!lightbox) {
+            return;
+        }
+
         lightbox.classList.remove("is-open");
         document.body.classList.remove("nxp-ec-lightbox-open");
 
@@ -128,6 +163,10 @@ const setupGallery = (el, images = [], title = "") => {
     };
 
     const openLightbox = (index = current) => {
+        if (!lightbox || imageList.length === 0) {
+            return;
+        }
+
         renderLightbox(index);
         lightbox.classList.add("is-open");
         document.body.classList.add("nxp-ec-lightbox-open");
@@ -145,39 +184,77 @@ const setupGallery = (el, images = [], title = "") => {
         window.addEventListener("keydown", keyListener);
     };
 
-    closeEls.forEach((button) => {
-        button.addEventListener("click", closeLightbox);
-    });
-
-    if (btnPrev) {
-        btnPrev.addEventListener("click", () => renderLightbox(current - 1));
-    }
-
-    if (btnNext) {
-        btnNext.addEventListener("click", () => renderLightbox(current + 1));
-    }
-
-    lightbox.addEventListener("click", (event) => {
-        if (event.target?.closest("[data-nxp-lightbox-close]")) {
-            closeLightbox();
+    const rebuildThumbs = () => {
+        if (!thumbsContainer) {
+            return;
         }
-    });
 
-    thumbs.forEach((thumb) => {
-        thumb.addEventListener("click", () => {
-            const thumbIndex = Number.parseInt(
-                thumb.dataset.nxpGalleryThumb,
-                10
-            );
+        // Clear existing thumbs
+        thumbsContainer.innerHTML = "";
 
-            if (Number.isFinite(thumbIndex)) {
-                setActive(thumbIndex);
-                openLightbox(thumbIndex);
+        // Hide thumbs container if only one image or no images
+        if (imageList.length <= 1) {
+            thumbsContainer.style.display = "none";
+            return;
+        }
+
+        thumbsContainer.style.display = "";
+
+        // Create new thumb buttons
+        imageList.forEach((imgSrc, index) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "nxp-ec-product__thumb";
+            button.dataset.nxpGalleryThumb = String(index);
+            button.setAttribute("aria-label", title || "Product image");
+
+            const img = document.createElement("img");
+            img.src = imgSrc;
+            img.alt = title || "";
+            img.loading = "lazy";
+
+            button.appendChild(img);
+            button.addEventListener("click", () => {
+                setActive(index);
+                openLightbox(index);
+            });
+
+            thumbsContainer.appendChild(button);
+        });
+
+        markActiveThumb(current);
+    };
+
+    // Attach lightbox event listeners (only for newly created lightbox)
+    if (lightbox && !lightbox._nxpEventsAttached) {
+        lightbox._nxpEventsAttached = true;
+
+        const closeEls = lightbox.querySelectorAll("[data-nxp-lightbox-close]");
+        closeEls.forEach((button) => {
+            button.addEventListener("click", closeLightbox);
+        });
+
+        const btnPrev = lightbox.querySelector("[data-nxp-lightbox-prev]");
+        const btnNext = lightbox.querySelector("[data-nxp-lightbox-next]");
+
+        if (btnPrev) {
+            btnPrev.addEventListener("click", () => renderLightbox(current - 1));
+        }
+
+        if (btnNext) {
+            btnNext.addEventListener("click", () => renderLightbox(current + 1));
+        }
+
+        lightbox.addEventListener("click", (event) => {
+            if (event.target?.closest("[data-nxp-lightbox-close]")) {
+                closeLightbox();
             }
         });
-    });
+    }
 
-    if (trigger) {
+    // Attach event listeners to trigger (only once)
+    if (trigger && !trigger._nxpGalleryInit) {
+        trigger._nxpGalleryInit = true;
         trigger.addEventListener("click", () => openLightbox(current));
         trigger.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -187,7 +264,54 @@ const setupGallery = (el, images = [], title = "") => {
         });
     }
 
-    setActive(0);
+    // Initial setup
+    if (imageList.length > 0) {
+        setActive(0);
+        rebuildThumbs();
+    }
+
+    /**
+     * Update the gallery with new images (for variant switching).
+     *
+     * @param {string[]} newImages - New array of image URLs
+     */
+    const updateImages = (newImages) => {
+        const normalised = normaliseImages(newImages);
+
+        // Skip update if images haven't changed
+        if (
+            normalised.length === imageList.length &&
+            normalised.every((img, i) => img === imageList[i])
+        ) {
+            return;
+        }
+
+        imageList = normalised;
+        current = 0;
+
+        // Update main image
+        if (mainImage) {
+            if (imageList.length > 0) {
+                mainImage.src = imageList[0];
+                // Add a subtle transition class
+                galleryRoot.classList.add("nxp-ec-gallery--switching");
+                setTimeout(() => {
+                    galleryRoot.classList.remove("nxp-ec-gallery--switching");
+                }, 200);
+            } else {
+                mainImage.src = "";
+            }
+        }
+
+        // Rebuild thumbnails
+        rebuildThumbs();
+    };
+
+    return {
+        updateImages,
+        setActive,
+        openLightbox,
+    };
 };
 
 export default function mountProductIsland(el) {
@@ -195,6 +319,7 @@ export default function mountProductIsland(el) {
     const currencyAttr = (el.dataset.nxpCurrency || "").trim() || undefined;
     const payload = parsePayload(el.dataset.nxpProduct, {});
     const product = payload.product || {};
+    const productImages = normaliseImages(product.images || []);
     const rawVariants = Array.isArray(payload.variants) ? payload.variants : [];
     const variants = rawVariants
         .map((variant) => ({
@@ -204,8 +329,41 @@ export default function mountProductIsland(el) {
                 variant.stock === null || variant.stock === undefined
                     ? null
                     : Number(variant.stock),
+            // Normalise variant images (null to inherit from product)
+            images: variant.images !== null && Array.isArray(variant.images)
+                ? normaliseImages(variant.images)
+                : null,
         }))
         .filter((variant) => Number.isFinite(variant.id) && variant.id > 0);
+
+    // Collect all unique images: product base images + all variant images
+    // This creates a combined gallery for initial display
+    const allImages = (() => {
+        const seen = new Set();
+        const combined = [];
+
+        // Add product base images first
+        productImages.forEach((img) => {
+            if (!seen.has(img)) {
+                seen.add(img);
+                combined.push(img);
+            }
+        });
+
+        // Add unique variant images
+        variants.forEach((variant) => {
+            if (variant.images && variant.images.length > 0) {
+                variant.images.forEach((img) => {
+                    if (!seen.has(img)) {
+                        seen.add(img);
+                        combined.push(img);
+                    }
+                });
+            }
+        });
+
+        return combined;
+    })();
 
     const labels = {
         add_to_cart: payload.labels?.add_to_cart || "Add to cart",
@@ -234,6 +392,9 @@ export default function mountProductIsland(el) {
         Boolean(product.out_of_stock) || productStatus === -1;
 
     const api = createApiClient(token);
+
+    // Gallery controller reference for variant image switching
+    let galleryController = null;
 
     el.innerHTML = "";
 
@@ -407,7 +568,7 @@ export default function mountProductIsland(el) {
 
             watch(
                 () => state.variantId,
-                () => {
+                (newVariantId) => {
                     state.error = "";
                     state.success = false;
                     state.successMessage = "";
@@ -416,6 +577,31 @@ export default function mountProductIsland(el) {
 
                     if (next !== state.qty) {
                         state.qty = next;
+                    }
+
+                    // Update gallery images when variant changes
+                    if (galleryController) {
+                        const variant = newVariantId
+                            ? variants.find((v) => v.id === newVariantId)
+                            : null;
+
+                        // Determine which images to show:
+                        // - No variant selected: show ALL images (product + all variants)
+                        // - Variant with images: show variant-specific images
+                        // - Variant without images: show product base images
+                        let imagesToShow;
+                        if (!variant) {
+                            // No variant selected - show combined gallery
+                            imagesToShow = allImages;
+                        } else if (variant.images && variant.images.length > 0) {
+                            // Variant has its own images
+                            imagesToShow = variant.images;
+                        } else {
+                            // Variant inherits product images
+                            imagesToShow = productImages;
+                        }
+
+                        galleryController.updateImages(imagesToShow);
                     }
                 }
             );
@@ -532,5 +718,6 @@ export default function mountProductIsland(el) {
 
     app.mount(el);
 
-    setupGallery(el, normaliseImages(product.images || []), product.title || "");
+    // Initialize gallery with ALL images (product + variant) for initial display
+    galleryController = setupGallery(el, allImages, product.title || "");
 }

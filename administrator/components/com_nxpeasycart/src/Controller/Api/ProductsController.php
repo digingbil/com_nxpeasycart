@@ -438,6 +438,7 @@ class ProductsController extends AbstractJsonController
                 'currency'         => $baseCurrency,
                 'stock'            => isset($variant['stock']) ? (int) $variant['stock'] : 0,
                 'options'          => $variant['options'] ?? null,
+                'images'           => $variant['images'] ?? null,
                 'weight'           => $variant['weight']  ?? null,
                 'active'           => isset($variant['active']) ? (bool) $variant['active'] : false,
                 'is_digital'       => !empty($variant['is_digital']),

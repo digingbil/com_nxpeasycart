@@ -552,6 +552,33 @@ class ProductModel extends AdminModel
                 $saleEnd = trim((string) $variant['sale_end']);
             }
 
+            // Variant images (array of URLs or null to inherit from product)
+            $variantImages = $variant['images'] ?? null;
+
+            if ($variantImages !== null && !\is_array($variantImages)) {
+                if (\is_string($variantImages) && $variantImages !== '') {
+                    try {
+                        $decoded = json_decode($variantImages, true, 512, JSON_THROW_ON_ERROR);
+                        $variantImages = \is_array($decoded) ? $decoded : null;
+                    } catch (JsonException $exception) {
+                        $variantImages = null;
+                    }
+                } else {
+                    $variantImages = null;
+                }
+            }
+
+            // Filter to valid string URLs only
+            if (\is_array($variantImages)) {
+                $variantImages = array_values(array_filter($variantImages, function ($img) {
+                    return \is_string($img) && $img !== '';
+                }));
+
+                if (empty($variantImages)) {
+                    $variantImages = null;
+                }
+            }
+
             $variants[] = [
                 'id'               => isset($variant['id']) ? (int) $variant['id'] : 0,
                 'sku'              => $sku,
@@ -563,6 +590,7 @@ class ProductModel extends AdminModel
                 'currency'         => $currency,
                 'stock'            => max(0, (int) ($variant['stock'] ?? 0)),
                 'options'          => $options,
+                'images'           => $variantImages,
                 'weight'           => $weight,
                 'active'           => isset($variant['active']) ? (bool) $variant['active'] : true,
                 'is_digital'       => array_key_exists('is_digital', $variant)
@@ -754,6 +782,14 @@ class ProductModel extends AdminModel
                 }
             }
 
+            // Encode variant images as JSON (null if empty)
+            $variantImages = $variant['images'] ?? null;
+            $encodedImages = null;
+
+            if (\is_array($variantImages) && !empty($variantImages)) {
+                $encodedImages = json_encode(array_values($variantImages), JSON_UNESCAPED_SLASHES);
+            }
+
             $payload = [
                 'id'               => $variant['id'] ?? 0,
                 'product_id'       => $productId,
@@ -766,6 +802,7 @@ class ProductModel extends AdminModel
                 'currency'         => $variant['currency'],
                 'stock'            => (int) $variant['stock'],
                 'options'          => $this->encodeOptions($variant['options'] ?? null),
+                'images'           => $encodedImages,
                 'weight'           => $variant['weight'],
                 'active'           => (int) (bool) $variant['active'],
                 'is_digital'       => !empty($variant['is_digital']) ? 1 : 0,
@@ -1113,6 +1150,7 @@ class ProductModel extends AdminModel
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
                 $db->quoteName('options'),
+                $db->quoteName('images'),
                 $db->quoteName('weight'),
                 $db->quoteName('active'),
                 $db->quoteName('is_digital'),
@@ -1139,6 +1177,7 @@ class ProductModel extends AdminModel
                 'currency'         => (string) $row->currency,
                 'stock'            => (int) $row->stock,
                 'options'          => $this->decodeOptions($row->options ?? null),
+                'images'           => $this->decodeVariantImages($row->images ?? null),
                 'weight'           => $row->weight !== null ? (string) $row->weight : null,
                 'active'           => (bool) $row->active,
                 'is_digital'       => !empty($row->is_digital),
@@ -1179,6 +1218,7 @@ class ProductModel extends AdminModel
                 $db->quoteName('currency'),
                 $db->quoteName('stock'),
                 $db->quoteName('options'),
+                $db->quoteName('images'),
                 $db->quoteName('weight'),
                 $db->quoteName('active'),
             ])
@@ -1210,6 +1250,7 @@ class ProductModel extends AdminModel
                 'currency'         => (string) $row->currency,
                 'stock'            => (int) $row->stock,
                 'options'          => $this->decodeOptions($row->options ?? null),
+                'images'           => $this->decodeVariantImages($row->images ?? null),
                 'weight'           => $row->weight !== null ? (string) $row->weight : null,
                 'active'           => (bool) $row->active,
             ];
@@ -1347,6 +1388,41 @@ class ProductModel extends AdminModel
         }
 
         return \is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * Decode variant images from JSON.
+     *
+     * Returns null for empty/invalid to indicate "inherit from product".
+     *
+     * @param string|null $payload JSON-encoded images array
+     *
+     * @return array|null Array of image URLs or null to inherit
+     *
+     * @since 0.3.1
+     */
+    private function decodeVariantImages(?string $payload): ?array
+    {
+        if ($payload === null || $payload === '') {
+            return null;
+        }
+
+        try {
+            $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $exception) {
+            return null;
+        }
+
+        if (!\is_array($decoded) || empty($decoded)) {
+            return null;
+        }
+
+        // Filter to valid string URLs only
+        $filtered = array_values(array_filter($decoded, function ($img) {
+            return \is_string($img) && $img !== '';
+        }));
+
+        return empty($filtered) ? null : $filtered;
     }
 
     /**

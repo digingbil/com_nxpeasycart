@@ -69,6 +69,7 @@ class NativeAdapter extends AbstractPlatformAdapter
             'variant_active'  => 'variant.active',
             'options'         => 'variant.options',
             'original_images' => 'variant.original_images',
+            'variant_images'  => 'variant.images',
         ];
     }
 
@@ -111,6 +112,10 @@ class NativeAdapter extends AbstractPlatformAdapter
         $normalized['variant']['is_digital'] = $this->parseBoolean($this->getValue($row, 'is_digital', '0'));
         $normalized['variant']['active'] = $this->parseBoolean($this->getValue($row, 'variant_active', '1'));
         $normalized['variant']['original_images'] = $this->parseImages($this->getValue($row, 'original_images', ''));
+
+        // Variant display images (for storefront image switching)
+        $variantImagesStr = $this->getValue($row, 'variant_images', '');
+        $normalized['variant']['images'] = $variantImagesStr !== '' ? $this->parseImages($variantImagesStr) : null;
 
         // Sale pricing
         $salePrice = $this->getValue($row, 'sale_price', '');

@@ -769,6 +769,7 @@ const progressBarClass = (status) => {
 .nxp-ec-progress-stat__value {
     font-size: 1.5rem;
     font-weight: 700;
+    color: var(--nxp-ec-text, #212529);
 }
 
 .nxp-ec-progress-stat__label {
@@ -780,12 +781,36 @@ const progressBarClass = (status) => {
     color: var(--nxp-ec-success, #198754);
 }
 
+.nxp-ec-progress-stat--success .nxp-ec-progress-stat__label {
+    color: var(--nxp-ec-success, #198754);
+    opacity: 0.85;
+}
+
+.nxp-ec-progress-stat--info .nxp-ec-progress-stat__value {
+    color: var(--nxp-ec-info, #0dcaf0);
+}
+
+.nxp-ec-progress-stat--info .nxp-ec-progress-stat__label {
+    color: var(--nxp-ec-info, #0dcaf0);
+    opacity: 0.85;
+}
+
 .nxp-ec-progress-stat--warning .nxp-ec-progress-stat__value {
     color: var(--nxp-ec-warning, #ffc107);
 }
 
+.nxp-ec-progress-stat--warning .nxp-ec-progress-stat__label {
+    color: var(--nxp-ec-warning, #ffc107);
+    opacity: 0.85;
+}
+
 .nxp-ec-progress-stat--error .nxp-ec-progress-stat__value {
     color: var(--nxp-ec-danger, #dc3545);
+}
+
+.nxp-ec-progress-stat--error .nxp-ec-progress-stat__label {
+    color: var(--nxp-ec-danger, #dc3545);
+    opacity: 0.85;
 }
 
 .nxp-ec-progress-errors {

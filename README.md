@@ -26,6 +26,12 @@ All custom CSS classes, data attributes, and CSS variables emitted by the compon
 
 ### Recent Enhancements
 
+- **Variant images (v0.3.1)**: Per-variant image support for storefront image switching:
+    - **Admin UI**: Each variant card includes an Images section where you can add/remove images using the Joomla Media Manager.
+    - **Storefront image switching**: When a customer selects a variant with images, the product gallery automatically updates to show that variant's images with smooth CSS transitions.
+    - **Image inheritance**: Variants without images inherit the product-level images; variants with images override them completely.
+    - **Import/export support**: WooCommerce, Shopify, and native format imports capture variant images; exports include variant images in all formats.
+    - See `docs/variant-images.md` for complete documentation.
 - **Import/Export system (v0.3.0)**: Comprehensive product catalogue migration and backup:
     - **Multi-platform import**: WooCommerce, Shopify, VirtueMart, HikaShop CSV formats with automatic platform detection from headers.
     - **WooCommerce variant grouping**: Variations are grouped by Parent SKU; product data (title, descriptions, images, categories) inherited from the "variable" parent row.

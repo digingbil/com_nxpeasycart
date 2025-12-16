@@ -219,6 +219,15 @@ class WoocommerceAdapter extends AbstractPlatformAdapter
         $normalized['variant']['options'] = $options;
         $normalized['variant']['original_images'] = [];
 
+        // Variant-specific images (for variations, the Images column contains variant images)
+        // These will be stored in the variant's images field
+        if ($productType === 'variation' && !empty($parentSku)) {
+            $variantImages = $this->parseImages($this->getValue($row, 'Images', ''));
+            $normalized['variant']['images'] = $variantImages;
+        } else {
+            $normalized['variant']['images'] = null;
+        }
+
         // Generate SKU if missing
         if (empty($normalized['variant']['sku'])) {
             $skuParts = [$normalized['product']['slug']];

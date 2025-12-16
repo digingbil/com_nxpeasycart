@@ -64,6 +64,18 @@ Product catalogue import/export for migration and backup.
 - Duplicate file detection
 - API endpoints for programmatic access
 
+### [variant-images.md](variant-images.md) ⭐ **NEW v0.3.1**
+
+Per-variant image support for product variants.
+
+**Topics covered:**
+
+- Per-variant image assignment in admin UI
+- Automatic image switching on storefront variant selection
+- Fallback to product images when variant has no images
+- Import/export support for variant images
+- Database schema and API structure
+
 ---
 
 ## 💳 Payment Gateway Setup

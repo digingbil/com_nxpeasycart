@@ -133,6 +133,12 @@ $variantPayload = array_map(
         $discountPercent    = $variant['discount_percent'] ?? null;
         $currency           = ConfigHelper::getBaseCurrency();
 
+        // Variant images (null to inherit from product)
+        $variantImages = $variant['images'] ?? null;
+        if ($variantImages !== null && !\is_array($variantImages)) {
+            $variantImages = null;
+        }
+
         return [
             'id'                    => (int) ($variant['id'] ?? 0),
             'sku'                   => (string) ($variant['sku'] ?? ''),
@@ -148,6 +154,7 @@ $variantPayload = array_map(
             'stock'                 => (int) ($variant['stock'] ?? 0),
             'options'               => $variant['options'] ?? [],
             'weight'                => $variant['weight'] ?? null,
+            'images'                => $variantImages,
         ];
     },
     $variants

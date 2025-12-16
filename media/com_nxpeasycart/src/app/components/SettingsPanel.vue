@@ -1285,15 +1285,26 @@
                 @submit.prevent="savePayments"
             >
                 <fieldset>
-                    <legend>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE",
-                                "Stripe",
-                                [],
-                                "settingsPaymentsStripe"
-                            )
-                        }}
+                    <legend class="nxp-ec-fieldset-legend-with-help">
+                        <span>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE",
+                                    "Stripe",
+                                    [],
+                                    "settingsPaymentsStripe"
+                                )
+                            }}
+                        </span>
+                        <a
+                            href="https://docs.stripe.com/keys"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="nxp-ec-btn nxp-ec-btn--sm nxp-ec-help-link"
+                            :title="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_SETUP_GUIDE', 'View Stripe setup documentation')"
+                        >
+                            📘 {{ __("COM_NXPEASYCART_SETTINGS_SETUP_GUIDE", "Setup Guide") }}
+                        </a>
                     </legend>
                     <div class="nxp-ec-form-field">
                         <label
@@ -1308,13 +1319,31 @@
                                     "settingsPaymentsStripePublishable"
                                 )
                             }}
+                            <a
+                                href="https://dashboard.stripe.com/apikeys"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_GET_STRIPE_KEYS', 'Get your API keys from Stripe Dashboard')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-stripe-publishable"
                             class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.stripe.publishable_key"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_STRIPE_PK_PLACEHOLDER', 'pk_test_... or pk_live_...')"
                         />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_STRIPE_PK_HELP",
+                                    "Find in Stripe Dashboard → Developers → API Keys. Starts with pk_test_ (test) or pk_live_ (live)."
+                                )
+                            }}
+                        </p>
                     </div>
 
                     <div class="nxp-ec-form-field">
@@ -1327,6 +1356,15 @@
                                     "settingsPaymentsStripeSecret"
                                 )
                             }}
+                            <a
+                                href="https://dashboard.stripe.com/apikeys"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_GET_STRIPE_KEYS', 'Get your API keys from Stripe Dashboard')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-stripe-secret"
@@ -1334,7 +1372,16 @@
                             type="password"
                             v-model.trim="paymentsDraft.stripe.secret_key"
                             autocomplete="off"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_STRIPE_SK_PLACEHOLDER', 'sk_test_... or sk_live_...')"
                         />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_STRIPE_SK_HELP",
+                                    "Find in Stripe Dashboard → Developers → API Keys. Click 'Reveal' to view. Starts with sk_test_ (test) or sk_live_ (live)."
+                                )
+                            }}
+                        </p>
                     </div>
 
                     <div class="nxp-ec-form-field">
@@ -1347,6 +1394,15 @@
                                     "settingsPaymentsStripeWebhook"
                                 )
                             }}
+                            <a
+                                href="https://dashboard.stripe.com/webhooks"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_CREATE_STRIPE_WEBHOOK', 'Create webhook in Stripe Dashboard')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-stripe-webhook"
@@ -1354,16 +1410,18 @@
                             type="password"
                             v-model.trim="paymentsDraft.stripe.webhook_secret"
                             autocomplete="off"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_STRIPE_WH_PLACEHOLDER', 'whsec_...')"
                         />
                         <p class="nxp-ec-form-help">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_STRIPE_HELP",
-                                    "Copy the signing secret from your Stripe webhook configuration.",
+                                    "Create webhook in Stripe Dashboard → Developers → Webhooks. Your webhook URL:",
                                     [],
                                     "settingsPaymentsStripeHelp"
                                 )
                             }}
+                            <code style="display: block; margin-top: 0.25rem; word-break: break-all;">{{ siteUrl }}/index.php?option=com_nxpeasycart&task=webhook.stripe</code>
                         </p>
                     </div>
 
@@ -1408,15 +1466,26 @@
                 </fieldset>
 
                 <fieldset>
-                    <legend>
-                        {{
-                            __(
-                                "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL",
-                                "PayPal",
-                                [],
-                                "settingsPaymentsPayPal"
-                            )
-                        }}
+                    <legend class="nxp-ec-fieldset-legend-with-help">
+                        <span>
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL",
+                                    "PayPal",
+                                    [],
+                                    "settingsPaymentsPayPal"
+                                )
+                            }}
+                        </span>
+                        <a
+                            href="https://developer.paypal.com/api/rest/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="nxp-ec-btn nxp-ec-btn--sm nxp-ec-help-link"
+                            :title="__('COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_SETUP_GUIDE', 'View PayPal setup documentation')"
+                        >
+                            📘 {{ __("COM_NXPEASYCART_SETTINGS_SETUP_GUIDE", "Setup Guide") }}
+                        </a>
                     </legend>
                     <div class="nxp-ec-form-field">
                         <label
@@ -1431,6 +1500,15 @@
                                     "settingsPaymentsPayPalClientId"
                                 )
                             }}
+                            <a
+                                href="https://developer.paypal.com/dashboard/applications/sandbox"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_GET_PAYPAL_CREDS', 'Get credentials from PayPal Developer Dashboard')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-paypal-client-id"
@@ -1438,6 +1516,14 @@
                             type="text"
                             v-model.trim="paymentsDraft.paypal.client_id"
                         />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYPAL_CLIENT_ID_HELP",
+                                    "Find in PayPal Developer Dashboard → Apps & Credentials → Your App. Long alphanumeric string."
+                                )
+                            }}
+                        </p>
                     </div>
 
                     <div class="nxp-ec-form-field">
@@ -1453,6 +1539,15 @@
                                     "settingsPaymentsPayPalClientSecret"
                                 )
                             }}
+                            <a
+                                href="https://developer.paypal.com/dashboard/applications/sandbox"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_GET_PAYPAL_CREDS', 'Get credentials from PayPal Developer Dashboard')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-paypal-client-secret"
@@ -1461,6 +1556,14 @@
                             v-model.trim="paymentsDraft.paypal.client_secret"
                             autocomplete="off"
                         />
+                        <p class="nxp-ec-form-help">
+                            {{
+                                __(
+                                    "COM_NXPEASYCART_SETTINGS_PAYPAL_CLIENT_SECRET_HELP",
+                                    "Find in PayPal Developer Dashboard → Apps & Credentials → Your App. Click 'Show' to reveal."
+                                )
+                            }}
+                        </p>
                     </div>
 
                     <div class="nxp-ec-form-field">
@@ -1476,22 +1579,33 @@
                                     "settingsPaymentsPayPalWebhook"
                                 )
                             }}
+                            <a
+                                href="https://developer.paypal.com/api/rest/webhooks/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="nxp-ec-field-help-link"
+                                :title="__('COM_NXPEASYCART_SETTINGS_CREATE_PAYPAL_WEBHOOK', 'Learn about PayPal webhooks')"
+                            >
+                                🔗
+                            </a>
                         </label>
                         <input
                             id="nxp-ec-paypal-webhook-id"
                             class="nxp-ec-form-input"
                             type="text"
                             v-model.trim="paymentsDraft.paypal.webhook_id"
+                            :placeholder="__('COM_NXPEASYCART_SETTINGS_PAYPAL_WH_PLACEHOLDER', 'WH-...')"
                         />
                         <p class="nxp-ec-form-help">
                             {{
                                 __(
                                     "COM_NXPEASYCART_SETTINGS_PAYMENTS_PAYPAL_HELP",
-                                    "Use the webhook ID from your PayPal app to verify notifications.",
+                                    "Create webhook in your PayPal app → Webhooks section. Required for signature verification. Your webhook URL:",
                                     [],
                                     "settingsPaymentsPayPalHelp"
                                 )
                             }}
+                            <code style="display: block; margin-top: 0.25rem; word-break: break-all;">{{ siteUrl }}/index.php?option=com_nxpeasycart&task=webhook.paypal</code>
                         </p>
                     </div>
 
@@ -2359,6 +2473,11 @@ const currencies = computed(() => {
     return settingsState.values?.currencies ?? [];
 });
 
+const siteUrl = computed(() => {
+    // Get site URL from Joomla's window object or fallback to current origin
+    return window.Joomla?.getOptions?.("system.paths")?.root || window.location.origin;
+});
+
 const previewStyles = computed(() => ({
     "--nxp-ec-color-primary": visualDraft.primaryColor || templateDefaults.value.primary,
     "--nxp-ec-color-text": visualDraft.textColor || templateDefaults.value.text,
@@ -3002,7 +3121,32 @@ const formatCurrency = (cents, currency) => {
 
 .nxp-ec-preview-muted {
     margin: 0;
-    color: var(--nxp-ec-color-muted);
+}
+
+/* Help link styles for payment credentials */
+.nxp-ec-fieldset-legend-with-help {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.nxp-ec-help-link {
+    text-decoration: none;
     font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nxp-ec-field-help-link {
+    margin-left: 0.375rem;
+    text-decoration: none;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.nxp-ec-field-help-link:hover {
+    opacity: 1;
 }
 </style>

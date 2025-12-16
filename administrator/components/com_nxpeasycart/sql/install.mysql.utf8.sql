@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `currency` CHAR(3) NOT NULL,
   `stock` INT NOT NULL DEFAULT 0,
   `options` JSON NULL,
+  `images` JSON NULL DEFAULT NULL COMMENT 'Variant-specific images array (overrides product images)',
   `weight` DECIMAL(10,3) NULL,
   `is_digital` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,

@@ -918,6 +918,79 @@
                                 </button>
                             </div>
                         </section>
+
+                        <!-- Variant Images Section -->
+                        <section class="nxp-ec-variant-images">
+                            <header class="nxp-ec-variant-images__header">
+                                <h5 class="nxp-ec-variant-images__title">
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_IMAGES",
+                                            "Variant Images"
+                                        )
+                                    }}
+                                </h5>
+                                <button
+                                    v-if="mediaModalUrl"
+                                    type="button"
+                                    class="nxp-ec-btn nxp-ec-btn--link"
+                                    @click="openVariantMediaModal(index)"
+                                >
+                                    {{
+                                        __(
+                                            "COM_NXPEASYCART_FIELD_VARIANT_IMAGE_ADD",
+                                            "Add image"
+                                        )
+                                    }}
+                                </button>
+                            </header>
+
+                            <p class="nxp-ec-form-help">
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_VARIANT_IMAGES_HELP",
+                                        "Add variant-specific images (e.g., different colours). Leave empty to use product images."
+                                    )
+                                }}
+                            </p>
+
+                            <div
+                                v-if="variant.images && variant.images.length > 0"
+                                class="nxp-ec-variant-images__list"
+                            >
+                                <div
+                                    v-for="(img, imgIndex) in variant.images"
+                                    :key="`variant-${index}-img-${imgIndex}`"
+                                    class="nxp-ec-variant-image"
+                                >
+                                    <img
+                                        :src="resolveImageUrl(img)"
+                                        :alt="__('COM_NXPEASYCART_VARIANT_IMAGE', 'Variant image') + ' ' + (imgIndex + 1)"
+                                        class="nxp-ec-variant-image__thumb"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="nxp-ec-variant-image__remove"
+                                        @click="removeVariantImage(index, imgIndex)"
+                                        :aria-label="__('COM_NXPEASYCART_REMOVE', 'Remove')"
+                                    >
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p
+                                v-else
+                                class="nxp-ec-variant-images__empty"
+                            >
+                                {{
+                                    __(
+                                        "COM_NXPEASYCART_FIELD_VARIANT_IMAGES_EMPTY",
+                                        "No variant images (using product images)"
+                                    )
+                                }}
+                            </p>
+                        </section>
                     </article>
                 </section>
 
@@ -1529,6 +1602,7 @@ const blankVariant = () => ({
     weight: "",
     active: true,
     options: [],
+    images: [],
     is_digital: isDigitalProduct.value,
 });
 
@@ -1701,6 +1775,14 @@ const normaliseVariants = (variants) => {
               ? (variant.sale_price_cents / 100).toFixed(2)
               : "";
 
+        // Normalise variant images (array of URL strings)
+        let variantImages = [];
+        if (Array.isArray(variant?.images)) {
+            variantImages = variant.images
+                .filter((img) => typeof img === "string" && img.trim() !== "")
+                .map((img) => img.trim());
+        }
+
         return {
             id: Number.parseInt(variant?.id ?? 0, 10) || 0,
             sku: String(variant?.sku ?? "").trim(),
@@ -1721,6 +1803,7 @@ const normaliseVariants = (variants) => {
             weight: variant?.weight != null ? String(variant.weight) : "",
             active: variant?.active !== undefined ? Boolean(variant.active) : true,
             options: normaliseOptions(variant?.options),
+            images: variantImages,
             is_digital:
                 variant?.is_digital !== undefined
                     ? Boolean(variant.is_digital)
@@ -2073,6 +2156,109 @@ const removeVariantOption = (variantIndex, optionIndex) => {
     target.options.splice(optionIndex, 1);
 };
 
+// Variant images handling
+let variantImagePickerIndex = null;
+
+const resolveImageUrl = (imgPath) => {
+    if (!imgPath || typeof imgPath !== "string") {
+        return "";
+    }
+
+    const trimmed = imgPath.trim();
+
+    if (trimmed === "") {
+        return "";
+    }
+
+    // If it's already an absolute URL, return as-is
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("//")) {
+        return trimmed;
+    }
+
+    // Get Joomla's root path
+    if (typeof window !== "undefined") {
+        try {
+            const systemPaths = window.Joomla?.getOptions?.("system.paths", {}) ?? {};
+            const root = systemPaths.root || "";
+
+            // Ensure path starts with /
+            const normalised = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+
+            return root + normalised;
+        } catch (e) {
+            // Fallback
+        }
+    }
+
+    return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+};
+
+const openVariantMediaModal = async (variantIndex) => {
+    const variant = form.variants[variantIndex];
+
+    if (!variant) {
+        return;
+    }
+
+    if (!Array.isArray(variant.images)) {
+        variant.images = [];
+    }
+
+    const picker = await ensureMediaPickerField();
+
+    if (!picker || typeof picker.show !== "function") {
+        // Fallback: prompt for URL
+        const url = window.prompt(
+            __("COM_NXPEASYCART_FIELD_IMAGE_URL_PROMPT", "Enter image URL:"),
+            ""
+        );
+
+        if (url && url.trim() !== "") {
+            variant.images.push(url.trim());
+        }
+
+        return;
+    }
+
+    // Store which variant we're editing
+    variantImagePickerIndex = variantIndex;
+    mediaPickerIndex = null; // Clear product image index
+
+    picker.setAttribute("url", buildMediaModalUrl());
+
+    if (typeof picker.setValue === "function") {
+        picker.setValue("");
+    } else if (mediaPickerInput) {
+        mediaPickerInput.value = "";
+    }
+
+    try {
+        picker.show();
+    } catch (error) {
+        variantImagePickerIndex = null;
+
+        // Fallback: prompt for URL
+        const url = window.prompt(
+            __("COM_NXPEASYCART_FIELD_IMAGE_URL_PROMPT", "Enter image URL:"),
+            ""
+        );
+
+        if (url && url.trim() !== "") {
+            variant.images.push(url.trim());
+        }
+    }
+};
+
+const removeVariantImage = (variantIndex, imgIndex) => {
+    const variant = form.variants[variantIndex];
+
+    if (!variant || !Array.isArray(variant.images)) {
+        return;
+    }
+
+    variant.images.splice(imgIndex, 1);
+};
+
 const variantKey = (variant, index) => `${variant.id || "new"}-${index}`;
 
 const duplicateVariant = (index) => {
@@ -2169,9 +2355,29 @@ const normaliseMediaValue = (value) => {
     }
 
     // Handle media adapter prefixes like local-images:/path/to/file.jpg
-    const adapterMatch = result.match(/^(?:local-[a-z0-9_-]+|images|videos|audios|documents):\/\/?(.*)$/i);
-    if (adapterMatch && adapterMatch[1]) {
-        result = adapterMatch[1];
+    // The "local-images" adapter maps to the "images/" folder in Joomla
+    const adapterMatch = result.match(/^(local-[a-z0-9_-]+|images|videos|audios|documents):\/\/?(.*)$/i);
+    if (adapterMatch && adapterMatch[2]) {
+        const adapter = adapterMatch[1].toLowerCase();
+        let extractedPath = adapterMatch[2];
+
+        // Map Joomla media adapters to their folder paths
+        // "local-images" adapter = "images/" folder
+        // "local-videos" adapter = "videos/" folder, etc.
+        if (adapter === "local-images" || adapter === "images") {
+            // If path doesn't already start with images/, prepend it
+            if (!extractedPath.startsWith("images/") && !extractedPath.startsWith("/images/")) {
+                extractedPath = "images/" + extractedPath;
+            }
+        } else if (adapter.startsWith("local-")) {
+            // Other local adapters: local-videos -> videos/, etc.
+            const folderName = adapter.replace("local-", "");
+            if (!extractedPath.startsWith(folderName + "/") && !extractedPath.startsWith("/" + folderName + "/")) {
+                extractedPath = folderName + "/" + extractedPath;
+            }
+        }
+
+        result = extractedPath;
     }
 
     // Remove Joomla image metadata suffix
@@ -2477,10 +2683,39 @@ const handleMediaFileSelected = (event) => {
             url,
             detail,
             currentIndex: mediaPickerIndex,
+            variantIndex: variantImagePickerIndex,
         });
     }
 
-    if (resolved === "" || mediaPickerIndex === null) {
+    if (resolved === "") {
+        return;
+    }
+
+    // Handle variant image selection
+    if (variantImagePickerIndex !== null) {
+        const variant = form.variants[variantImagePickerIndex];
+
+        if (variant) {
+            if (!Array.isArray(variant.images)) {
+                variant.images = [];
+            }
+
+            variant.images.push(resolved);
+
+            if (import.meta?.env?.DEV) {
+                console.debug("[ProductEditor] Added variant image", {
+                    variantIndex: variantImagePickerIndex,
+                    value: resolved,
+                });
+            }
+        }
+
+        variantImagePickerIndex = null;
+        return;
+    }
+
+    // Handle product image selection
+    if (mediaPickerIndex === null) {
         return;
     }
 
@@ -2544,6 +2779,7 @@ onBeforeUnmount(() => {
     mediaPickerWrapper = null;
     mediaPickerInput = null;
     mediaPickerIndex = null;
+    variantImagePickerIndex = null;
     pendingMediaValue = "";
 
     if (typeof document !== "undefined") {
@@ -2625,6 +2861,13 @@ const submit = () => {
         const saleStart = localToUtc(variant.sale_start_local);
         const saleEnd = localToUtc(variant.sale_end_local);
 
+        // Variant images: normalise to array of cleaned URL strings, null if empty
+        const variantImages = Array.isArray(variant.images)
+            ? variant.images
+                  .map((img) => (typeof img === "string" ? img.trim() : ""))
+                  .filter((img) => img !== "")
+            : [];
+
         return {
             id: variant.id || 0,
             sku: variant.sku.trim(),
@@ -2644,6 +2887,7 @@ const submit = () => {
             active: Boolean(variant.active),
             is_digital: Boolean(variant.is_digital),
             options,
+            images: variantImages.length > 0 ? variantImages : null,
         };
     });
 

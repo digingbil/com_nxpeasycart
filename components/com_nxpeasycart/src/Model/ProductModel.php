@@ -254,6 +254,9 @@ class ProductModel extends BaseDatabaseModel
                 }
             }
 
+            // Decode variant-specific images (null means inherit from product)
+            $variantImages = $this->decodeVariantImages($row->images ?? null);
+
             // Single-currency MVP: always use configured base currency
             $currency = $baseCurrency;
 
@@ -278,10 +281,68 @@ class ProductModel extends BaseDatabaseModel
                 'stock'                 => (int) $row->stock,
                 'weight'                => $row->weight !== null ? (float) $row->weight : null,
                 'options'               => $options,
+                'images'                => $variantImages,
             ];
         }
 
         return $variants;
+    }
+
+    /**
+     * Decode variant images JSON to an array of URLs.
+     *
+     * @param string|null $json Raw JSON from database
+     *
+     * @return array<int, string>|null Array of image URLs or null to inherit from product
+     *
+     * @since 0.3.1
+     */
+    private function decodeVariantImages(?string $json): ?array
+    {
+        if ($json === null || $json === '') {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !\is_array($decoded)) {
+            return null;
+        }
+
+        $filtered = array_filter(
+            array_map(
+                static function ($url) {
+                    if (!\is_string($url)) {
+                        return null;
+                    }
+
+                    $trimmed = trim($url);
+
+                    if ($trimmed === '') {
+                        return null;
+                    }
+
+                    // Normalise relative paths to root-relative URLs
+                    if (
+                        !str_starts_with($trimmed, 'http://')
+                        && !str_starts_with($trimmed, 'https://')
+                        && !str_starts_with($trimmed, '//')
+                    ) {
+                        $base     = rtrim(Uri::root(true), '/');
+                        $relative = '/' . ltrim($trimmed, '/');
+
+                        $trimmed = ($base === '' ? '' : $base) . $relative;
+                    }
+
+                    return $trimmed;
+                },
+                $decoded
+            )
+        );
+
+        $result = array_values($filtered);
+
+        return empty($result) ? null : $result;
     }
 
     /**

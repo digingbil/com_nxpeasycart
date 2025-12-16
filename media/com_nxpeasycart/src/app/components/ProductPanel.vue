@@ -554,6 +554,17 @@ const toggleActive = (product) => {
                       Math.round(normalizeNumber(variant.stock, 0))
                   );
 
+                  // Normalise variant images (array of strings or null)
+                  let variantImages = null;
+                  if (Array.isArray(variant.images) && variant.images.length > 0) {
+                      variantImages = variant.images
+                          .map((img) => normalizeString(img).trim())
+                          .filter((img) => img !== "");
+                      if (variantImages.length === 0) {
+                          variantImages = null;
+                      }
+                  }
+
                   return {
                       id: normalizeNumber(variant.id, 0),
                       sku,
@@ -578,6 +589,7 @@ const toggleActive = (product) => {
                           variant.is_digital === undefined
                               ? false
                               : Boolean(variant.is_digital),
+                      images: variantImages,
                   };
               })
               .filter(Boolean)

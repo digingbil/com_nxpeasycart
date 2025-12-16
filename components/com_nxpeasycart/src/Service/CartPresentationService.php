@@ -310,6 +310,7 @@ class CartPresentationService
                 $this->db->quoteName('currency'),
                 $this->db->quoteName('stock'),
                 $this->db->quoteName('options'),
+                $this->db->quoteName('images'),
                 $this->db->quoteName('is_digital'),
             ])
             ->from($this->db->quoteName('#__nxp_easycart_variants'))
@@ -331,6 +332,33 @@ class CartPresentationService
                 }
             }
 
+            // Extract variant image (first from JSON array, or null to inherit from product)
+            $variantImage = null;
+
+            if (!empty($row->images)) {
+                $decoded = json_decode((string) $row->images, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && \is_array($decoded) && isset($decoded[0])) {
+                    $candidate = $decoded[0];
+
+                    if (\is_string($candidate) && trim($candidate) !== '') {
+                        $variantImage = trim($candidate);
+
+                        // Normalise relative paths to root-relative URLs
+                        if (
+                            !str_starts_with($variantImage, 'http://')
+                            && !str_starts_with($variantImage, 'https://')
+                            && !str_starts_with($variantImage, '//')
+                        ) {
+                            $base     = rtrim(Uri::root(true), '/');
+                            $relative = '/' . ltrim($variantImage, '/');
+
+                            $variantImage = ($base === '' ? '' : $base) . $relative;
+                        }
+                    }
+                }
+            }
+
             // Use PriceHelper to resolve effective price with sale logic
             $priceData = PriceHelper::resolve($row);
 
@@ -346,7 +374,7 @@ class CartPresentationService
                 'discount_percent'     => $priceData['discount_percent'],
                 'currency'             => strtoupper((string) $row->currency),
                 'options'              => $options,
-                'image'                => null,
+                'image'                => $variantImage,
                 'is_digital'           => !empty($row->is_digital),
             ];
         }
