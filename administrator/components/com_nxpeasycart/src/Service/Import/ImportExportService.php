@@ -12,8 +12,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service\Import;
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
-use Joomla\CMS\Filesystem\File;
-use Joomla\CMS\Filesystem\Folder;
+use Joomla\Filesystem\Folder;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 
