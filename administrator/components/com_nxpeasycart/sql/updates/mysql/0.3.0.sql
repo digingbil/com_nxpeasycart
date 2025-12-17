@@ -2,6 +2,10 @@
 -- Add import tracking columns to products and variants
 -- Create import_jobs table for job management
 
+-- Add source_images column to products table (needed for import feature)
+ALTER TABLE `#__nxp_easycart_products`
+  ADD COLUMN `source_images` JSON NULL AFTER `images`;
+
 -- Add import tracking columns to products table
 ALTER TABLE `#__nxp_easycart_products`
   ADD COLUMN `imported_from` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Source platform: virtuemart, woocommerce, shopify, hikashop, native' AFTER `source_images`,
