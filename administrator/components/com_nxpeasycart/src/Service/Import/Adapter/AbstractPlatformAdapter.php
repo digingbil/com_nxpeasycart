@@ -113,7 +113,20 @@ abstract class AbstractPlatformAdapter implements PlatformAdapterInterface
      */
     protected function getValue(array $row, string $column, $default = '')
     {
-        return $row[$column] ?? $default;
+        // First try exact match
+        if (isset($row[$column])) {
+            return $row[$column];
+        }
+
+        // Try case-insensitive match
+        $columnLower = strtolower($column);
+        foreach ($row as $key => $value) {
+            if (strtolower($key) === $columnLower) {
+                return $value;
+            }
+        }
+
+        return $default;
     }
 
     /**
