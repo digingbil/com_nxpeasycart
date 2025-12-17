@@ -165,6 +165,9 @@ class ApiClient {
         limit = 20,
         start = 0,
         search = "",
+        categoryId = null,
+        sort = "",
+        sortDir = "",
         signal,
     }) {
         const params = new URLSearchParams({
@@ -176,8 +179,19 @@ class ApiClient {
             params.set("search", search);
         }
 
-        const url = `${endpoint}&${params.toString()}`;
+        if (categoryId) {
+            params.set("category_id", String(categoryId));
+        }
 
+        if (sort) {
+            params.set("sort", sort);
+        }
+
+        if (sortDir) {
+            params.set("sort_dir", sortDir);
+        }
+
+        const url = `${endpoint}&${params.toString()}`;
         const payload = await this.get(url, { signal });
         const body = payload.data ?? {};
         const items = body.items ?? body.data ?? [];

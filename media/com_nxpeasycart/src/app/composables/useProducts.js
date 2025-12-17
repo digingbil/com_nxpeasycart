@@ -55,6 +55,9 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
             current: 1,
         },
         search: "",
+        categoryId: null,
+        sort: "",
+        sortDir: "DESC",
         lastUpdated: null,
     });
 
@@ -64,8 +67,11 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         const page = state.pagination.current || 1;
         const limit = state.pagination.limit || 20;
         const search = state.search.trim();
+        const categoryId = state.categoryId || "";
+        const sort = state.sort || "";
+        const sortDir = state.sortDir || "DESC";
 
-        return `products:page=${page}:limit=${limit}:search=${search}`;
+        return `products:page=${page}:limit=${limit}:search=${search}:cat=${categoryId}:sort=${sort}:dir=${sortDir}`;
     };
 
     const loadProducts = async (forceRefresh = false) => {
@@ -81,10 +87,16 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         if (cached) {
             perf.recordCacheHit();
             state.items = cached.items;
-            state.pagination = {
-                ...state.pagination,
-                ...cached.pagination,
-            };
+
+            // Ensure cached pagination values are integers
+            if (cached.pagination) {
+                state.pagination.total = Number(cached.pagination.total) || 0;
+                state.pagination.limit = Number(cached.pagination.limit) || 20;
+                state.pagination.pages = Number(cached.pagination.pages) || 0;
+                state.pagination.current = Number(cached.pagination.current) || 1;
+                state.pagination.start = Number(cached.pagination.start) || 0;
+            }
+
             state.lastUpdated = cached.lastUpdated;
 
             return;
@@ -106,26 +118,36 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         const startMark = perf.startFetch();
 
         try {
-            const { items, pagination } = await api.fetchProducts({
+            const currentPage = Number(state.pagination.current) || 1;
+            const pageLimit = Number(state.pagination.limit) || 20;
+
+            const fetchParams = {
                 endpoint: listEndpoint,
                 signal: controller ? controller.signal : undefined,
-                limit: state.pagination.limit,
-                start: Math.max(
-                    0,
-                    (state.pagination.current - 1) * state.pagination.limit
-                ),
+                limit: pageLimit,
+                start: Math.max(0, (currentPage - 1) * pageLimit),
                 search: state.search.trim(),
-            });
+                categoryId: state.categoryId || null,
+                sort: state.sort || "",
+                sortDir: state.sortDir || "DESC",
+            };
+            const { items, pagination } = await api.fetchProducts(fetchParams);
 
             state.items = items;
-            state.pagination = {
-                ...state.pagination,
-                ...pagination,
-                current:
-                    pagination.current && pagination.current > 0
-                        ? pagination.current
-                        : 1,
-            };
+
+            // Ensure all pagination values are integers
+            const paginationTotal = Number(pagination.total) || 0;
+            const paginationLimit = Number(pagination.limit) || pageLimit;
+            const paginationPages = Number(pagination.pages) || 0;
+            const paginationCurrent = Number(pagination.current) || 1;
+            const paginationStart = Number(pagination.start) || 0;
+
+            state.pagination.total = paginationTotal;
+            state.pagination.limit = paginationLimit;
+            state.pagination.pages = paginationPages;
+            state.pagination.current = paginationCurrent > 0 ? paginationCurrent : 1;
+            state.pagination.start = paginationStart;
+
             state.lastUpdated = new Date().toISOString();
 
             setCachedData(cacheKey, {
@@ -161,13 +183,32 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         loadProducts();
     };
 
+    const filterByCategory = (categoryId) => {
+        state.categoryId = categoryId || null;
+        state.pagination.current = 1;
+        loadProducts();
+    };
+
+    const setSort = (column, direction = null) => {
+        if (state.sort === column && direction === null) {
+            // Toggle direction if same column clicked
+            state.sortDir = state.sortDir === "ASC" ? "DESC" : "ASC";
+        } else {
+            state.sort = column;
+            state.sortDir = direction || "DESC";
+        }
+        state.pagination.current = 1;
+        loadProducts();
+    };
+
     const goToPage = (page) => {
         const target = Number(page);
+        const totalPages = Number(state.pagination.pages) || 0;
 
         if (
             Number.isNaN(target) ||
             target < 1 ||
-            target > state.pagination.pages
+            (totalPages > 0 && target > totalPages)
         ) {
             return;
         }
@@ -380,6 +421,8 @@ export function useProducts({ endpoints, token, autoload = true, cacheTTL = 3000
         loadProducts,
         refresh,
         search,
+        filterByCategory,
+        setSort,
         goToPage,
         createProduct,
         updateProduct,

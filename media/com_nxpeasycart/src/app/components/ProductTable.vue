@@ -12,9 +12,13 @@
         </caption>
         <thead>
             <tr>
-                <th scope="col">{{ __("JGRID_HEADING_ID", "ID") }}</th>
-                <th scope="col">
+                <th scope="col" class="nxp-ec-admin-table__sortable" @click="handleSort('id')">
+                    {{ __("JGRID_HEADING_ID", "ID") }}
+                    <i :class="sortIcon('id')" class="nxp-ec-admin-table__sort-icon" aria-hidden="true"></i>
+                </th>
+                <th scope="col" class="nxp-ec-admin-table__sortable" @click="handleSort('title')">
                     {{ __("COM_NXPEASYCART_PRODUCTS_TABLE_TITLE", "Product") }}
+                    <i :class="sortIcon('title')" class="nxp-ec-admin-table__sort-icon" aria-hidden="true"></i>
                 </th>
                 <th scope="col">
                     {{ __("COM_NXPEASYCART_PRODUCTS_TABLE_PRICE", "Price") }}
@@ -38,11 +42,15 @@
                         )
                     }}
                 </th>
-                <th scope="col">{{ __("JSTATUS", "Status") }}</th>
-                <th scope="col">
+                <th scope="col" class="nxp-ec-admin-table__sortable" @click="handleSort('status')">
+                    {{ __("JSTATUS", "Status") }}
+                    <i :class="sortIcon('status')" class="nxp-ec-admin-table__sort-icon" aria-hidden="true"></i>
+                </th>
+                <th scope="col" class="nxp-ec-admin-table__sortable" @click="handleSort('modified')">
                     {{
                         __("COM_NXPEASYCART_PRODUCTS_TABLE_UPDATED", "Updated")
                     }}
+                    <i :class="sortIcon('modified')" class="nxp-ec-admin-table__sort-icon" aria-hidden="true"></i>
                 </th>
                 <th scope="col" class="nxp-ec-admin-table__actions">
                     {{ __("JGLOBAL_ACTIONS", "Actions") }}
@@ -235,9 +243,29 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    sortColumn: {
+        type: String,
+        default: "",
+    },
+    sortDirection: {
+        type: String,
+        default: "DESC",
+    },
 });
 
-defineEmits(["edit", "delete", "toggle-active"]);
+const emit = defineEmits(["edit", "delete", "toggle-active", "sort"]);
+
+const handleSort = (column) => {
+    emit("sort", column);
+};
+
+const isSorted = (column) => props.sortColumn === column;
+const sortIcon = (column) => {
+    if (props.sortColumn !== column) {
+        return "fa-solid fa-sort";
+    }
+    return props.sortDirection === "ASC" ? "fa-solid fa-sort-up" : "fa-solid fa-sort-down";
+};
 
 const __ = props.translate;
 

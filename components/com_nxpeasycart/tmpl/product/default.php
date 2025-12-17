@@ -322,7 +322,6 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
                     <tr>
                         <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_SKU_LABEL'); ?></th>
                         <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_PRICE_LABEL'); ?></th>
-                        <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_STOCK_LABEL'); ?></th>
                         <th scope="col"><?php echo Text::_('COM_NXPEASYCART_PRODUCT_VARIANT_OPTIONS_LABEL'); ?></th>
                     </tr>
                 </thead>
@@ -345,7 +344,6 @@ $payloadJsonAttr = htmlspecialchars($payloadJson, ENT_QUOTES, 'UTF-8');
                                     <?php echo htmlspecialchars(MoneyHelper::format($variantRegularPrice, ConfigHelper::getBaseCurrency(), $locale), ENT_QUOTES, 'UTF-8'); ?>
                                 <?php endif; ?>
                             </td>
-                            <td><?php echo (int) $variant['stock']; ?></td>
                             <td>
                                 <?php if (!empty($variant['options'])) : ?>
                                     <ul class="nxp-ec-product__variant-options">

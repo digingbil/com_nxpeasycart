@@ -14,7 +14,6 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Controller\Api;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Factory;
-use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
@@ -52,12 +51,6 @@ class ProductsController extends AbstractJsonController
     public function __construct($config = [], MVCFactoryInterface $factory = null, CMSApplicationInterface $app = null)
     {
         parent::__construct($config, $factory, $app);
-
-        Log::addLogger(
-            ['text_file' => 'com_nxpeasycart-products.php', 'extension' => 'com_nxpeasycart-products'],
-            Log::ALL,
-            ['com_nxpeasycart.products']
-        );
     }
 
     /**
@@ -90,13 +83,30 @@ class ProductsController extends AbstractJsonController
 
         $model = $this->getModel('Products', 'Administrator', ['ignore_request' => true]);
 
-        $search = $this->input->getString('search', '');
-        $limit  = $this->input->getInt('limit', 20);
-        $start  = $this->input->getInt('start', 0);
+        $search     = $this->input->getString('search', '');
+        $limit      = $this->input->getInt('limit', 20);
+        $start      = $this->input->getInt('start', 0);
+        $categoryId = $this->input->getInt('category_id', 0);
+        $sort       = $this->input->getCmd('sort', '');
+        $sortDir    = $this->input->getCmd('sort_dir', 'DESC');
 
         $model->setState('filter.search', $search);
+        $model->setState('filter.category_id', $categoryId > 0 ? $categoryId : null);
         $model->setState('list.limit', max(0, $limit));
         $model->setState('list.start', max(0, $start));
+
+        // Handle sorting
+        $sortMap = [
+            'id'       => 'a.id',
+            'title'    => 'a.title',
+            'status'   => 'a.active',
+            'modified' => 'a.modified',
+        ];
+
+        if ($sort !== '' && isset($sortMap[$sort])) {
+            $model->setState('list.ordering', $sortMap[$sort]);
+            $model->setState('list.direction', strtoupper($sortDir) === 'ASC' ? 'ASC' : 'DESC');
+        }
 
         $productModel = $this->getProductModel();
         $rawItems     = $model->getItems();
@@ -134,8 +144,8 @@ class ProductsController extends AbstractJsonController
                 'pagination' => [
                     'total'   => (int) $pagination->total,
                     'limit'   => (int) $pagination->limit,
-                    'pages'   => $pagination->pagesTotal,
-                    'current' => $pagination->pagesCurrent,
+                    'pages'   => (int) $pagination->pagesTotal,
+                    'current' => (int) $pagination->pagesCurrent,
                     'start'   => (int) $pagination->limitstart,
                 ],
             ]
@@ -152,33 +162,26 @@ class ProductsController extends AbstractJsonController
      */
     protected function store(): JsonResponse
     {
-        $this->debug('store: entry point reached');
         $this->assertCan('core.create');
         $this->assertToken();
 
         $data = $this->decodePayload();
-        $this->debug('store: incoming payload', $data);
 
         $model = $this->getProductModel();
 
         $form = $model->getForm($data, false);
 
         if ($form === false) {
-            $this->debug('store: getForm failed', [$model->getError()]);
             throw new RuntimeException($model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SAVE_FAILED'), 500);
         }
 
         $validData = $model->validate($form, $data);
 
         if ($validData === false) {
-            $errors = $model->getErrors();
-            $this->debug('store: validation failed', $errors);
-
-            return $this->respond(['errors' => $errors], 422);
+            return $this->respond(['errors' => $model->getErrors()], 422);
         }
 
         if (!$model->save($validData)) {
-            $this->debug('store: save failed', [$model->getError(), $model->getErrors()]);
             throw new RuntimeException($model->getError() ?: Text::_('COM_NXPEASYCART_ERROR_PRODUCT_SAVE_FAILED'), 500);
         }
 
@@ -189,7 +192,6 @@ class ProductsController extends AbstractJsonController
         }
 
         $item = $model->getItem($id);
-        $this->debug('store: product created', ['id' => $id]);
 
         return $this->respond(['item' => $this->transformProduct($item)], 201);
     }
@@ -643,20 +645,5 @@ class ProductsController extends AbstractJsonController
         }
 
         return null;
-    }
-
-    /*
-     * Debugging helper.
-     *
-     * @param string $message Message to log.
-     * @param mixed $context Optional context to log.
-     */
-    private function debug(string $message, $context = null): void
-    {
-        if ($context !== null) {
-            $message .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        }
-
-        Log::add($message, Log::INFO, 'com_nxpeasycart.products');
     }
 }

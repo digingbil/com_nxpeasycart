@@ -24,6 +24,28 @@
                 </p>
             </div>
             <div class="nxp-ec-admin-panel__actions">
+                <select
+                    class="nxp-ec-admin-select"
+                    v-model="state.categoryId"
+                    @change="emitFilterCategory"
+                    :aria-label="__(
+                        'COM_NXPEASYCART_PRODUCTS_FILTER_CATEGORY',
+                        'Filter by category',
+                        [],
+                        'productsFilterCategory'
+                    )"
+                >
+                    <option :value="null">
+                        {{ __("COM_NXPEASYCART_PRODUCTS_ALL_CATEGORIES", "All categories") }}
+                    </option>
+                    <option
+                        v-for="cat in categoryOptions"
+                        :key="cat.id"
+                        :value="cat.id"
+                    >
+                        {{ cat.title }}
+                    </option>
+                </select>
                 <input
                     type="search"
                     class="nxp-ec-admin-search"
@@ -102,9 +124,12 @@
                 :base-currency="baseCurrency"
                 :saving="state.saving"
                 :current-user-id="currentUserId"
+                :sort-column="state.sort"
+                :sort-direction="state.sortDir"
                 @edit="openEdit"
                 @delete="confirmDelete"
                 @toggle-active="toggleActive"
+                @sort="emitSort"
             />
 
             <!-- Pagination -->
@@ -214,7 +239,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["create", "update", "delete", "refresh", "search", "page"]);
+const emit = defineEmits(["create", "update", "delete", "refresh", "search", "page", "filter-category", "sort"]);
 
 const __ = props.translate;
 
@@ -750,6 +775,14 @@ const emitRefresh = () => {
 
 const emitSearch = () => {
     emit("search");
+};
+
+const emitFilterCategory = () => {
+    emit("filter-category", props.state.categoryId);
+};
+
+const emitSort = (column) => {
+    emit("sort", column);
 };
 
 const emitPage = (page) => {

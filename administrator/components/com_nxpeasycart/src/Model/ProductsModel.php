@@ -37,8 +37,11 @@ class ProductsModel extends ListModel
                 'title',
                 'slug',
                 'active',
+                'status',
                 'featured',
                 'created',
+                'modified',
+                'category_id',
             ];
         }
 
@@ -60,13 +63,30 @@ class ProductsModel extends ListModel
         $app   = Factory::getApplication();
         $input = $app->input;
 
-        $search = $input->getString('search', '');
-        $limit  = $input->getInt('limit', $app->get('list_limit', 20));
-        $start  = $input->getInt('start', 0);
+        $search     = $input->getString('search', '');
+        $limit      = $input->getInt('limit', $app->get('list_limit', 20));
+        $start      = $input->getInt('start', 0);
+        $categoryId = $input->getInt('category_id', 0);
+        $sortColumn = $input->getCmd('sort', '');
+        $sortDir    = $input->getCmd('sort_dir', 'DESC');
 
         $this->setState('filter.search', $search);
+        $this->setState('filter.category_id', $categoryId > 0 ? $categoryId : null);
         $this->setState('list.limit', max(0, $limit));
         $this->setState('list.start', max(0, $start));
+
+        // Map frontend column names to database columns
+        $sortMap = [
+            'id'       => 'a.id',
+            'title'    => 'a.title',
+            'status'   => 'a.active',
+            'modified' => 'a.modified',
+        ];
+
+        if ($sortColumn !== '' && isset($sortMap[$sortColumn])) {
+            $ordering  = $sortMap[$sortColumn];
+            $direction = strtoupper($sortDir) === 'ASC' ? 'ASC' : 'DESC';
+        }
 
         parent::populateState($ordering, $direction);
     }
@@ -102,6 +122,20 @@ class ProductsModel extends ListModel
             )
             ->from($db->quoteName('#__nxp_easycart_products', 'a'));
 
+        // Filter by category
+        $categoryId = $this->getState('filter.category_id');
+
+        if ($categoryId !== null && $categoryId > 0) {
+            $query->join(
+                'INNER',
+                $db->quoteName('#__nxp_easycart_product_categories', 'pc')
+                . ' ON ' . $db->quoteName('pc.product_id') . ' = ' . $db->quoteName('a.id')
+            )
+            ->where($db->quoteName('pc.category_id') . ' = :categoryId')
+            ->bind(':categoryId', $categoryId, ParameterType::INTEGER)
+            ->group($db->quoteName('a.id'));
+        }
+
         $search = $this->getState('filter.search');
 
         if ($search !== '') {
@@ -123,7 +157,16 @@ class ProductsModel extends ListModel
         $orderCol = $this->state->get('list.ordering', 'a.created');
         $orderDir = $this->state->get('list.direction', 'DESC');
 
-        $query->order($db->escape($orderCol) . ' ' . $db->escape($orderDir));
+        // When sorting by modified, use COALESCE to fall back to created date for NULL values
+        // This matches the UI display which shows (modified || created)
+        if ($orderCol === 'a.modified') {
+            $orderClause = 'COALESCE(' . $db->quoteName('a.modified') . ', ' . $db->quoteName('a.created') . ') ' . $db->escape($orderDir);
+        } else {
+            $orderClause = $db->escape($orderCol) . ' ' . $db->escape($orderDir);
+        }
+
+        // Add secondary sort by ID for deterministic pagination when primary column has duplicate values
+        $query->order($orderClause . ', ' . $db->quoteName('a.id') . ' ' . $db->escape($orderDir));
 
         return $query;
     }

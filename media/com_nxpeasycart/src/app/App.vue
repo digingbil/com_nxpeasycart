@@ -83,6 +83,8 @@
             @refresh="onProductRefresh"
             @search="onProductSearch"
             @page="onProductPage"
+            @filter-category="onProductFilterCategory"
+            @sort="onProductSort"
         />
 
         <CategoryPanel
@@ -488,6 +490,8 @@ const {
     state: productState,
     refresh: refreshProducts,
     search: searchProducts,
+    filterByCategory: filterProductsByCategory,
+    setSort: setProductSort,
     goToPage: goToProductsPage,
     createProduct,
     updateProduct,
@@ -1062,6 +1066,14 @@ const onProductSearch = () => {
 
 const onProductPage = (page) => {
     goToProductsPage(page);
+};
+
+const onProductFilterCategory = (categoryId) => {
+    filterProductsByCategory(categoryId);
+};
+
+const onProductSort = (column) => {
+    setProductSort(column);
 };
 
 const onProductCreate = async (payload) => {
