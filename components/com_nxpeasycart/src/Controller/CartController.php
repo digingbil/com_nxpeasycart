@@ -26,6 +26,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Helper\PriceHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
+use Joomla\Component\Nxpeasycart\Site\Trait\CsrfValidation;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\DI\Container;
@@ -37,6 +38,7 @@ use Joomla\DI\Container;
  */
 class CartController extends BaseController
 {
+    use CsrfValidation;
     /**
      * Append a product or variant to the active cart session.
      *
@@ -50,11 +52,7 @@ class CartController extends BaseController
     {
         $app = Factory::getApplication();
 
-        if (!Session::checkToken('post')) {
-            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
-            $app->close();
-        }
-
+        $this->requireCsrfToken();
         $this->enforceRateLimit();
 
         $input     = $app->input;
@@ -178,11 +176,7 @@ class CartController extends BaseController
     {
         $app = Factory::getApplication();
 
-        if (!Session::checkToken('post')) {
-            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
-            $app->close();
-        }
-
+        $this->requireCsrfToken();
         $this->enforceRateLimit();
 
         $input     = $app->input;
@@ -261,11 +255,7 @@ class CartController extends BaseController
     {
         $app = Factory::getApplication();
 
-        if (!Session::checkToken('post')) {
-            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
-            $app->close();
-        }
-
+        $this->requireCsrfToken();
         $this->enforceRateLimit();
 
         $input     = $app->input;
@@ -671,11 +661,7 @@ class CartController extends BaseController
     {
         $app = Factory::getApplication();
 
-        // CSRF protection - check 'request' to also validate X-CSRF-Token header
-        if (!Session::checkToken('request')) {
-            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
-            $app->close();
-        }
+        $this->requireCsrfToken();
 
         $input = $app->input;
 
@@ -837,11 +823,7 @@ class CartController extends BaseController
     {
         $app = Factory::getApplication();
 
-        // CSRF protection - check 'request' to also validate X-CSRF-Token header
-        if (!Session::checkToken('request')) {
-            echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
-            $app->close();
-        }
+        $this->requireCsrfToken();
 
         $container = Factory::getContainer();
         $this->ensureCartServices($container);

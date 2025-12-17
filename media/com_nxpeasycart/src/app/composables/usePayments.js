@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { reactive, ref, computed } from "vue";
 import { createApiClient } from "../../api.js";
 
 const defaultConfig = () => ({
@@ -39,6 +39,28 @@ export function usePayments({ endpoints = {}, token = "" }) {
         message: "",
     });
 
+    // Track original config for dirty detection
+    const originalConfig = ref(null);
+
+    /**
+     * Check if current config differs from the last saved/loaded state.
+     * Useful for showing "unsaved changes" warnings.
+     */
+    const isDirty = computed(() => {
+        if (!originalConfig.value) return false;
+        return JSON.stringify(state.config) !== JSON.stringify(originalConfig.value);
+    });
+
+    /**
+     * Reset config to the last saved/loaded state.
+     * Discards any unsaved changes.
+     */
+    const resetDraft = () => {
+        if (originalConfig.value) {
+            state.config = JSON.parse(JSON.stringify(originalConfig.value));
+        }
+    };
+
     const refresh = async () => {
         if (!endpoints.show) {
             return;
@@ -52,6 +74,9 @@ export function usePayments({ endpoints = {}, token = "" }) {
             state.config = normalize(
                 payload?.data?.config ?? payload?.config ?? {}
             );
+
+            // Store original config for dirty detection
+            originalConfig.value = JSON.parse(JSON.stringify(state.config));
         } catch (error) {
             state.error =
                 error.message ?? "Unable to load payment configuration.";
@@ -75,6 +100,9 @@ export function usePayments({ endpoints = {}, token = "" }) {
                 payload?.data?.config ?? payload?.config ?? {}
             );
             state.message = payload?.data?.message ?? payload?.message ?? "";
+
+            // Update original config after successful save (no longer dirty)
+            originalConfig.value = JSON.parse(JSON.stringify(state.config));
         } catch (error) {
             state.error =
                 error.message ?? "Unable to save payment configuration.";
@@ -110,6 +138,8 @@ export function usePayments({ endpoints = {}, token = "" }) {
         state,
         refresh,
         save,
+        isDirty,
+        resetDraft,
     };
 }
 

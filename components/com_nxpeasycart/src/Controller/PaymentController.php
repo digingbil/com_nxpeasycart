@@ -34,6 +34,7 @@ use Joomla\Component\Nxpeasycart\Administrator\Event\EasycartEventDispatcher;
 use Joomla\Component\Nxpeasycart\Site\Service\CartSessionService;
 use Joomla\Component\Nxpeasycart\Site\Service\CartPresentationService;
 use Joomla\Component\Nxpeasycart\Site\Helper\RouteHelper;
+use Joomla\Component\Nxpeasycart\Site\Trait\CsrfValidation;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Session\SessionInterface;
@@ -46,6 +47,7 @@ use RuntimeException;
  */
 class PaymentController extends BaseController
 {
+    use CsrfValidation;
     public function checkout(): void
     {
         $app   = Factory::getApplication();
@@ -59,7 +61,7 @@ class PaymentController extends BaseController
             $identity = null;
         }
 
-        if (!$this->hasValidToken()) {
+        if (!$this->hasValidCsrfToken()) {
             $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
             return;
         }
@@ -606,32 +608,6 @@ class PaymentController extends BaseController
 
         echo new JsonResponse($payload, '', $hasError);
         $app->close();
-    }
-
-    /**
-     * Verify a CSRF token via header or request payload.
-     * Supports both POST form token and X-CSRF-Token header for API compatibility.
-     *
-     * @since 0.1.5
-     */
-    private function hasValidToken(): bool
-    {
-        $input       = Factory::getApplication()->getInput();
-        $headerToken = (string) $input->server->getString('HTTP_X_CSRF_TOKEN', '');
-        $sessionToken = Session::getFormToken();
-
-        // Check X-CSRF-Token header (for JSON API calls)
-        if ($headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
-            return true;
-        }
-
-        // Check form token in POST body
-        if (Session::checkToken('post')) {
-            return true;
-        }
-
-        // Also check 'request' for broader compatibility (query string + post + json)
-        return Session::checkToken('request');
     }
 
     /**

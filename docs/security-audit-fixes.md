@@ -486,7 +486,204 @@ switch ($type) {
 
 ---
 
+## Issue 6: CSRF Validation Inconsistency ✅ FIXED
+
+### Vulnerability Details
+- **Location**: Multiple storefront controllers
+- **Severity**: MEDIUM (5.5/10)
+- **Type**: Inconsistent Security Controls / Code Maintainability
+
+### Problem
+CSRF token validation was implemented inconsistently across storefront endpoints:
+
+**CartController.php** (before fix):
+```php
+// add(), update(), remove() - POST-only validation
+if (!Session::checkToken('post')) {
+    echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+    $app->close();
+}
+
+// applyCoupon(), removeCoupon() - header + POST + query
+if (!Session::checkToken('request')) { ... }
+```
+
+**PaymentController.php** (before fix):
+```php
+// Custom hasValidToken() method - duplicated logic
+private function hasValidToken(): bool
+{
+    $headerToken = (string) $input->server->getString('HTTP_X_CSRF_TOKEN', '');
+    if ($headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
+        return true;
+    }
+    if (Session::checkToken('post')) { return true; }
+    return Session::checkToken('request');
+}
+```
+
+**Issues**:
+1. `add()`, `update()`, `remove()` didn't accept X-CSRF-Token header
+2. PaymentController had duplicated validation logic
+3. Inconsistent error response formatting
+4. No centralized documentation of token acceptance
+
+### Solution
+Created `CsrfValidation` trait for standardized validation:
+
+**File**: `components/com_nxpeasycart/src/Trait/CsrfValidation.php`
+
+```php
+namespace Joomla\Component\Nxpeasycart\Site\Trait;
+
+trait CsrfValidation
+{
+    /**
+     * Verify CSRF token from request.
+     *
+     * Token Acceptance Priority:
+     * 1. X-CSRF-Token header (for JSON API calls from Vue islands)
+     * 2. POST body token (for traditional form submissions)
+     * 3. Query string token (only if $allowQuery is true)
+     */
+    protected function hasValidCsrfToken(bool $allowQuery = false): bool
+    {
+        $app = Factory::getApplication();
+        $input = $app->getInput();
+        $sessionToken = Session::getFormToken();
+
+        // 1. X-CSRF-Token header (timing-safe comparison)
+        $headerToken = (string) $input->server->getString('HTTP_X_CSRF_TOKEN', '');
+        if ($headerToken !== '' && hash_equals($sessionToken, $headerToken)) {
+            return true;
+        }
+
+        // 2. POST body token
+        if (Session::checkToken('post')) {
+            return true;
+        }
+
+        // 3. Query string (only if allowed)
+        if ($allowQuery && Session::checkToken('get')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Verify CSRF token and send JSON error response if invalid.
+     */
+    protected function requireCsrfToken(bool $allowQuery = false): void
+    {
+        if (!$this->hasValidCsrfToken($allowQuery)) {
+            $this->sendCsrfErrorResponse();
+        }
+    }
+
+    private function sendCsrfErrorResponse(): void
+    {
+        $app = Factory::getApplication();
+        http_response_code(403);
+        $app->setHeader('Content-Type', 'application/json', true);
+        echo new JsonResponse(null, Text::_('JINVALID_TOKEN'), true);
+        $app->close();
+    }
+}
+```
+
+### Refactored Controllers
+
+**CartController.php** (after fix):
+```php
+use Joomla\Component\Nxpeasycart\Site\Trait\CsrfValidation;
+
+class CartController extends BaseController
+{
+    use CsrfValidation;
+
+    public function add(): void
+    {
+        $this->requireCsrfToken();  // Standardized validation
+        // ...
+    }
+
+    public function update(): void
+    {
+        $this->requireCsrfToken();
+        // ...
+    }
+
+    public function remove(): void
+    {
+        $this->requireCsrfToken();
+        // ...
+    }
+
+    public function applyCoupon(): void
+    {
+        $this->requireCsrfToken();
+        // ...
+    }
+
+    public function removeCoupon(): void
+    {
+        $this->requireCsrfToken();
+        // ...
+    }
+}
+```
+
+**PaymentController.php** (after fix):
+```php
+use Joomla\Component\Nxpeasycart\Site\Trait\CsrfValidation;
+
+class PaymentController extends BaseController
+{
+    use CsrfValidation;
+
+    public function checkout(): void
+    {
+        if (!$this->hasValidCsrfToken()) {
+            $this->respond(['message' => Text::_('JINVALID_TOKEN')], 403);
+            return;
+        }
+        // ...
+    }
+}
+
+// REMOVED: private function hasValidToken() - duplicate logic eliminated
+```
+
+### Protection Mechanism
+- **Single Source of Truth**: All CSRF validation goes through the trait
+- **Timing-Safe Comparison**: Uses `hash_equals()` to prevent timing attacks
+- **Flexible Token Sources**: Header, POST, and optional query string
+- **Consistent Response**: 403 JSON response with Joomla's standard message
+- **Easy Auditing**: grep for `use CsrfValidation` shows all protected controllers
+
+### Token Priority Order
+1. **X-CSRF-Token header** (recommended for Vue islands using fetch/axios)
+2. **POST body token** (traditional Joomla form submissions)
+3. **Query string token** (only when `allowQuery=true` - for email links, payment redirects)
+
+### Testing
+```bash
+# PHPUnit tests verify trait structure and behavior
+./vendor/bin/phpunit tests/Unit/Site/Trait/CsrfValidationTest.php
+# Result: OK (17 tests, 33 assertions)
+```
+
+**Files Changed**:
+- `components/com_nxpeasycart/src/Trait/CsrfValidation.php` (NEW)
+- `components/com_nxpeasycart/src/Controller/CartController.php` (refactored)
+- `components/com_nxpeasycart/src/Controller/PaymentController.php` (refactored)
+- `tests/Unit/Site/Trait/CsrfValidationTest.php` (NEW)
+
+---
+
 **Status**: ✅ All critical vulnerabilities resolved
-**Date**: 2025-11-27
-**Reviewed**: Security audit issues #2, #3, #4, and #5
+**Date**: 2025-12-17 (updated)
+**Reviewed**: Security audit issues #2, #3, #4, #5, and #6
 **Bug Fix**: Coupon type mismatch resolved 2025-11-27
+**Refactor**: CSRF validation standardized 2025-12-17

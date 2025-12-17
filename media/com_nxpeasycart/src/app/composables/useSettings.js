@@ -1,4 +1,4 @@
-import { onMounted, reactive } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
 import { createApiClient } from "../../api.js";
 import {
     usePerformance,
@@ -141,6 +141,28 @@ export function useSettings({
         lastUpdated: null,
     });
 
+    // Track original values for dirty detection
+    const originalValues = ref(null);
+
+    /**
+     * Check if current values differ from the last saved/loaded state.
+     * Useful for showing "unsaved changes" warnings.
+     */
+    const isDirty = computed(() => {
+        if (!originalValues.value) return false;
+        return JSON.stringify(state.values) !== JSON.stringify(originalValues.value);
+    });
+
+    /**
+     * Reset values to the last saved/loaded state.
+     * Discards any unsaved changes.
+     */
+    const resetDraft = () => {
+        if (originalValues.value) {
+            state.values = JSON.parse(JSON.stringify(originalValues.value));
+        }
+    };
+
     const refresh = async (forceRefresh = false) => {
         if (!showEndpoint) {
             state.error = "Settings endpoint unavailable.";
@@ -154,6 +176,9 @@ export function useSettings({
             perf.recordCacheHit();
             state.values = cached.values;
             state.lastUpdated = cached.lastUpdated;
+
+            // Store original values for dirty detection
+            originalValues.value = JSON.parse(JSON.stringify(state.values));
 
             return;
         }
@@ -169,6 +194,9 @@ export function useSettings({
             const data = await api.fetchSettings({ endpoint: showEndpoint });
             state.values = normaliseSettings(data);
             state.lastUpdated = new Date().toISOString();
+
+            // Store original values for dirty detection
+            originalValues.value = JSON.parse(JSON.stringify(state.values));
 
             setCachedData(cacheKey, {
                 values: state.values,
@@ -202,6 +230,9 @@ export function useSettings({
             state.lastUpdated = new Date().toISOString();
             state.message = "Settings saved.";
 
+            // Update original values after successful save (no longer dirty)
+            originalValues.value = JSON.parse(JSON.stringify(state.values));
+
             clearCachedData("settings:data");
             setCachedData("settings:data", {
                 values: state.values,
@@ -229,6 +260,8 @@ export function useSettings({
         state,
         refresh,
         save,
+        isDirty,
+        resetDraft,
         metrics: perf.metrics,
     };
 }

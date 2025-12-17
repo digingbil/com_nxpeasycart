@@ -528,10 +528,33 @@ const {
     autoload: shouldLoadCategories.value,
 });
 
+// All categories for dropdowns (loaded separately to avoid pagination limits)
+const allCategoryOptionsRef = ref([]);
+const categoryOptionsLoading = ref(false);
+
+const loadAllCategoryOptions = async () => {
+    if (categoryOptionsLoading.value) {
+        return;
+    }
+
+    categoryOptionsLoading.value = true;
+
+    try {
+        const items = await loadCategoryOptions();
+        allCategoryOptionsRef.value = items;
+    } catch (error) {
+        // Fall back to paginated items on error
+        console.warn("[App] Failed to load all category options:", error);
+    } finally {
+        categoryOptionsLoading.value = false;
+    }
+};
+
 const categoryOptions = computed(() => {
-    const items = Array.isArray(categoriesState.items)
-        ? categoriesState.items
-        : [];
+    // Prefer all categories if loaded, otherwise fall back to paginated state
+    const items = allCategoryOptionsRef.value.length > 0
+        ? allCategoryOptionsRef.value
+        : (Array.isArray(categoriesState.items) ? categoriesState.items : []);
 
     return items
         .map((item) => ({
@@ -544,6 +567,13 @@ const categoryOptions = computed(() => {
         }))
         .filter((item) => item.title !== "");
 });
+
+// Load all categories when entering products section (for dropdown)
+watch(shouldLoadProducts, (shouldLoad) => {
+    if (shouldLoad && allCategoryOptionsRef.value.length === 0) {
+        loadAllCategoryOptions();
+    }
+}, { immediate: true });
 
 const {
     state: ordersState,
@@ -1125,6 +1155,9 @@ const onCategoriesSave = async (payload) => {
     try {
         await saveCategory(payload);
         refreshCategories();
+        // Refresh dropdown options for product editor
+        allCategoryOptionsRef.value = [];
+        loadAllCategoryOptions();
     } catch (error) {
         // Validation errors bubble via categories state.
     }
@@ -1134,6 +1167,9 @@ const onCategoriesDelete = async (ids) => {
     try {
         await removeCategories(ids);
         refreshCategories();
+        // Refresh dropdown options for product editor
+        allCategoryOptionsRef.value = [];
+        loadAllCategoryOptions();
     } catch (error) {
         // Errors surface via categories state.
     }

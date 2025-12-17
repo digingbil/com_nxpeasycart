@@ -145,7 +145,15 @@
                     <span v-if="item.categories?.length">
                         {{ categorySummary(item.categories) }}
                     </span>
-                    <span v-else>
+                    <span
+                        v-else
+                        class="nxp-ec-status nxp-ec-status--warning"
+                        :title="__(
+                            'COM_NXPEASYCART_PRODUCTS_NO_CATEGORIES_WARNING',
+                            'This product has no categories and may not appear in category listings'
+                        )"
+                    >
+                        <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
                         {{
                             __(
                                 "COM_NXPEASYCART_PRODUCTS_NO_CATEGORIES",
