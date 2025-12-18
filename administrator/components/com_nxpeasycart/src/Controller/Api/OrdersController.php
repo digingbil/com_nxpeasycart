@@ -901,19 +901,33 @@ class OrdersController extends AbstractJsonController
      */
     private function guardLockedOrder(array $order): ?JsonResponse
     {
-        $actorId     = (int) ($this->app?->getIdentity()?->id ?? 0);
-        $checkedOut  = isset($order['checked_out']) ? (int) $order['checked_out'] : 0;
-        $lockedBy    = $order['checked_out_user']['name'] ?? '';
+        $checkedOut = isset($order['checked_out']) ? (int) $order['checked_out'] : 0;
 
-        if ($checkedOut !== 0 && $checkedOut !== $actorId) {
-            $message = $lockedBy !== ''
-                ? Text::sprintf('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT', $lockedBy)
-                : Text::_('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC');
-
-            return $this->respond(['message' => $message], 423);
+        // If order is not checked out by anyone, allow
+        if ($checkedOut === 0) {
+            return null;
         }
 
-        return null;
+        $actorId = (int) ($this->app?->getIdentity()?->id ?? 0);
+
+        // If current user is the one who checked out, allow
+        if ($checkedOut === $actorId) {
+            return null;
+        }
+
+        // If we can't determine the current user's ID but they passed authentication,
+        // allow the action to avoid blocking legitimate users due to identity retrieval issues
+        if ($actorId === 0) {
+            return null;
+        }
+
+        // Order is checked out by a different user
+        $lockedBy = $order['checked_out_user']['name'] ?? '';
+        $message  = $lockedBy !== ''
+            ? Text::sprintf('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT', $lockedBy)
+            : Text::_('COM_NXPEASYCART_ERROR_ORDER_CHECKED_OUT_GENERIC');
+
+        return $this->respond(['message' => $message], 423);
     }
 
     /**

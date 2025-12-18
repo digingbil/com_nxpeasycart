@@ -64,7 +64,7 @@
             {{ state.error }}
         </div>
 
-        <div v-if="state.transitionError && !state.error" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
+        <div v-if="state.transitionError && !state.error && !state.activeOrder" class="nxp-ec-admin-alert nxp-ec-admin-alert--error">
             {{ state.transitionError }}
         </div>
 

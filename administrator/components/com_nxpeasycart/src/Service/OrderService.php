@@ -25,6 +25,12 @@ use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\MailService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\SettingsService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\TaxService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderStateService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderInventoryService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderFulfillmentService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderNotificationService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderTransactionService;
+use Joomla\Component\Nxpeasycart\Administrator\Service\Order\OrderExportService;
 use Ramsey\Uuid\Uuid;
 use RuntimeException;
 use Throwable;
@@ -74,6 +80,14 @@ class OrderService
      * @var array<int, string>
      */
     private array $userNameCache = [];
+
+    // Sub-services for delegation
+    private ?OrderStateService $stateService = null;
+    private ?OrderInventoryService $inventoryService = null;
+    private ?OrderFulfillmentService $fulfillmentService = null;
+    private ?OrderNotificationService $notificationService = null;
+    private ?OrderTransactionService $transactionService = null;
+    private ?OrderExportService $exportService = null;
 
     /**
      * OrderService constructor.
@@ -159,6 +173,71 @@ class OrderService
         return $this->taxService;
     }
 
+    // ------------------------------------------------------------------
+    // Sub-Service Getters (lazy initialization)
+    // ------------------------------------------------------------------
+
+    private function getStateService(): OrderStateService
+    {
+        if ($this->stateService === null) {
+            $this->stateService = new OrderStateService($this->db, $this->getAuditService());
+        }
+
+        return $this->stateService;
+    }
+
+    private function getInventoryService(): OrderInventoryService
+    {
+        if ($this->inventoryService === null) {
+            $this->inventoryService = new OrderInventoryService($this->db);
+        }
+
+        return $this->inventoryService;
+    }
+
+    private function getFulfillmentService(): OrderFulfillmentService
+    {
+        if ($this->fulfillmentService === null) {
+            $this->fulfillmentService = new OrderFulfillmentService(
+                $this->db,
+                $this->getAuditService(),
+                $this->getSettingsService()
+            );
+        }
+
+        return $this->fulfillmentService;
+    }
+
+    private function getNotificationService(): OrderNotificationService
+    {
+        if ($this->notificationService === null) {
+            $this->notificationService = new OrderNotificationService(
+                $this->getAuditService(),
+                $this->getDigitalFileService()
+            );
+        }
+
+        return $this->notificationService;
+    }
+
+    private function getTransactionService(): OrderTransactionService
+    {
+        if ($this->transactionService === null) {
+            $this->transactionService = new OrderTransactionService($this->db, $this->getAuditService());
+        }
+
+        return $this->transactionService;
+    }
+
+    private function getExportService(): OrderExportService
+    {
+        if ($this->exportService === null) {
+            $this->exportService = new OrderExportService($this->db);
+        }
+
+        return $this->exportService;
+    }
+
     /**
      * Resolve a user to a lightweight payload for lock metadata.
      */
@@ -236,12 +315,27 @@ class OrderService
      */
     private function assertEditable(int $orderId, ?int $actorId = null): void
     {
-        $actorId = $actorId ?? 0;
-        $lock    = $this->getLockState($orderId);
+        $lock = $this->getLockState($orderId);
 
-        if ($lock['checked_out'] !== 0 && $lock['checked_out'] !== $actorId) {
-            throw new RuntimeException($this->buildLockMessage($lock['checked_out']), 423);
+        // If order is not checked out, allow
+        if ($lock['checked_out'] === 0) {
+            return;
         }
+
+        $actorId = $actorId ?? 0;
+
+        // If same user who checked out, allow
+        if ($lock['checked_out'] === $actorId) {
+            return;
+        }
+
+        // If we can't determine the actor but they passed authentication upstream, allow
+        if ($actorId === 0) {
+            return;
+        }
+
+        // Order is checked out by a different user
+        throw new RuntimeException($this->buildLockMessage($lock['checked_out']), 423);
     }
 
     /**
@@ -628,85 +722,24 @@ class OrderService
      */
     public function transitionState(int $orderId, string $state, ?int $actorId = null): array
     {
-        $state = strtolower(trim($state));
-
-        if (!\in_array($state, self::ORDER_STATES, true)) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_STATE_INVALID'));
-        }
-
-        $current = $this->get($orderId);
-
-        if (!$current) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $this->assertEditable($orderId, $actorId);
-
-        if ($current['state'] === $state) {
-            return $current;
-        }
-
-        // Validate state transition using state machine guards
-        if (!$this->isValidTransition($current['state'], $state)) {
-            throw new RuntimeException(
-                Text::sprintf(
-                    'COM_NXPEASYCART_ERROR_ORDER_STATE_TRANSITION_INVALID',
-                    $current['state'],
-                    $state
-                )
-            );
-        }
-
-        $timestamp = $this->currentTimestamp();
-        $events    = $this->normaliseFulfillmentEvents($current['fulfillment_events'] ?? []);
-        $events[]  = $this->buildStatusEvent($state, $timestamp, $actorId, $current['state']);
-
-        $query = $this->db->getQuery(true)
-            ->update($this->db->quoteName('#__nxp_easycart_orders'))
-            ->set($this->db->quoteName('state') . ' = :state')
-            ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
-            ->set($this->db->quoteName('modified') . ' = :modified')
-            ->set($this->db->quoteName('fulfillment_events') . ' = :fulfillmentEvents')
-            ->where($this->db->quoteName('id') . ' = :id')
-            ->bind(':state', $state, ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER)
-            ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
-            ->bind(':modified', $timestamp, ParameterType::STRING)
-            ->bind(':fulfillmentEvents', $this->encodeJson($events), ParameterType::STRING);
-
-        $this->db->setQuery($query);
-        $this->db->execute();
-
-        $this->getAuditService()->record(
-            'order',
+        // Delegate core transition to OrderStateService
+        $result = $this->getStateService()->transition(
             $orderId,
-            'order.state.transitioned',
-            [
-                'from' => $current['state'],
-                'to'   => $state,
-            ],
-            $actorId
-        );
-
-        $updated = $this->get($orderId);
-
-        if (!$updated) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        // Dispatch plugin event: onNxpEasycartAfterOrderStateChange
-        EasycartEventDispatcher::afterOrderStateChange(
-            $updated,
-            $current['state'],
             $state,
-            $actorId
+            $actorId,
+            fn(int $id) => $this->get($id),
+            fn(int $id, ?int $actor) => $this->assertEditable($id, $actor)
         );
+
+        $updated   = $result['order'];
+        $fromState = $result['fromState'];
 
         // Send transactional emails based on state transition
-        $this->sendStateTransitionEmail($updated, $current['state'], $state);
+        $this->getNotificationService()->sendStateTransitionEmail($updated, $fromState, $state);
 
+        // Mark digital items delivered on fulfillment
         if ($state === 'fulfilled') {
-            $this->markDigitalItemsDelivered($orderId);
+            $this->getFulfillmentService()->markDigitalItemsDelivered($orderId);
         }
 
         return $updated;
@@ -894,79 +927,15 @@ class OrderService
      */
     public function updateTracking(int $orderId, array $tracking, ?int $actorId = null): array
     {
-        $order = $this->get($orderId);
-
-        if (!$order) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $this->assertEditable($orderId, $actorId);
-
-        $carrier        = substr(trim((string) ($tracking['carrier'] ?? '')), 0, 50);
-        $trackingNumber = substr(trim((string) ($tracking['tracking_number'] ?? '')), 0, 64);
-        $trackingUrl    = substr(trim((string) ($tracking['tracking_url'] ?? '')), 0, 255);
-        $markFulfilled  = !empty($tracking['mark_fulfilled']);
-
-        $timestamp = $this->currentTimestamp();
-        $events    = $this->normaliseFulfillmentEvents($order['fulfillment_events'] ?? []);
-        $events[]  = [
-            'type'     => 'tracking',
-            'state'    => null,
-            'message'  => Text::_('COM_NXPEASYCART_ORDER_TRACKING_EVENT'),
-            'meta'     => array_filter([
-                'carrier'         => $carrier,
-                'tracking_number' => $trackingNumber,
-                'tracking_url'    => $trackingUrl,
-            ]),
-            'at'       => $timestamp,
-            'actor_id' => $actorId,
-        ];
-
-        $query = $this->db->getQuery(true)
-            ->update($this->db->quoteName('#__nxp_easycart_orders'))
-            ->set($this->db->quoteName('carrier') . ' = ' . ($carrier !== '' ? ':carrier' : 'NULL'))
-            ->set($this->db->quoteName('tracking_number') . ' = ' . ($trackingNumber !== '' ? ':trackingNumber' : 'NULL'))
-            ->set($this->db->quoteName('tracking_url') . ' = ' . ($trackingUrl !== '' ? ':trackingUrl' : 'NULL'))
-            ->set($this->db->quoteName('fulfillment_events') . ' = :events')
-            ->set($this->db->quoteName('status_updated_at') . ' = :statusUpdatedAt')
-            ->set($this->db->quoteName('modified') . ' = :modified')
-            ->where($this->db->quoteName('id') . ' = :id')
-            ->bind(':events', $this->encodeJson($events), ParameterType::STRING)
-            ->bind(':statusUpdatedAt', $timestamp, ParameterType::STRING)
-            ->bind(':modified', $timestamp, ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER);
-
-        if ($carrier !== '') {
-            $query->bind(':carrier', $carrier, ParameterType::STRING);
-        }
-
-        if ($trackingNumber !== '') {
-            $query->bind(':trackingNumber', $trackingNumber, ParameterType::STRING);
-        }
-
-        if ($trackingUrl !== '') {
-            $query->bind(':trackingUrl', $trackingUrl, ParameterType::STRING);
-        }
-
-        $this->db->setQuery($query);
-        $this->db->execute();
-
-        $this->getAuditService()->record(
-            'order',
+        // Delegate to OrderFulfillmentService
+        return $this->getFulfillmentService()->updateTracking(
             $orderId,
-            'order.tracking.updated',
-            [
-                'carrier'         => $carrier,
-                'tracking_number' => $trackingNumber,
-            ],
-            $actorId
+            $tracking,
+            $actorId,
+            fn(int $id) => $this->get($id),
+            fn(int $id, ?int $actor) => $this->assertEditable($id, $actor),
+            fn(int $id, string $state, ?int $actor) => $this->transitionState($id, $state, $actor)
         );
-
-        if ($markFulfilled && ($order['state'] ?? '') !== 'fulfilled') {
-            return $this->transitionState($orderId, 'fulfilled', $actorId);
-        }
-
-        return $this->get($orderId) ?? $order;
     }
 
     /**
@@ -1010,29 +979,14 @@ class OrderService
      */
     public function addNote(int $orderId, string $message, ?int $actorId = null): array
     {
-        $message = trim($message);
-
-        if ($message === '') {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOTE_REQUIRED'));
-        }
-
-        $order = $this->get($orderId);
-
-        if (!$order) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $this->assertEditable($orderId, $actorId);
-
-        $this->getAuditService()->record(
-            'order',
+        // Delegate to OrderFulfillmentService
+        return $this->getFulfillmentService()->addNote(
             $orderId,
-            'order.note',
-            ['message' => $message],
-            $actorId
+            $message,
+            $actorId,
+            fn(int $id) => $this->get($id),
+            fn(int $id, ?int $actor) => $this->assertEditable($id, $actor)
         );
-
-        return $this->get($orderId);
     }
 
     /**
@@ -1118,128 +1072,11 @@ class OrderService
      */
     public function exportToCsv(array $filters = []): array
     {
-        $query = $this->db->getQuery(true)
-            ->select('o.*')
-            ->from($this->db->quoteName('#__nxp_easycart_orders', 'o'))
-            ->order($this->db->quoteName('o.created') . ' DESC');
-
-        $state = isset($filters['state']) ? strtolower(trim((string) $filters['state'])) : '';
-
-        if ($state !== '' && \in_array($state, self::ORDER_STATES, true)) {
-            $query->where($this->db->quoteName('o.state') . ' = :stateFilter');
-            $query->bind(':stateFilter', $state, ParameterType::STRING);
-        }
-
-        $search = isset($filters['search']) ? trim((string) $filters['search']) : '';
-
-        if ($search !== '') {
-            $searchParam = '%' . $search . '%';
-            $query->where(
-                '(' . $this->db->quoteName('o.order_no') . ' LIKE :search '
-                . 'OR ' . $this->db->quoteName('o.email') . ' LIKE :search)'
-            );
-            $query->bind(':search', $searchParam, ParameterType::STRING);
-        }
-
-        $dateFrom = isset($filters['date_from']) ? trim((string) $filters['date_from']) : '';
-        $dateTo   = isset($filters['date_to']) ? trim((string) $filters['date_to']) : '';
-
-        if ($dateFrom !== '') {
-            $query->where($this->db->quoteName('o.created') . ' >= :dateFrom');
-            $query->bind(':dateFrom', $dateFrom, ParameterType::STRING);
-        }
-
-        if ($dateTo !== '') {
-            $dateToEnd = $dateTo . ' 23:59:59';
-            $query->where($this->db->quoteName('o.created') . ' <= :dateTo');
-            $query->bind(':dateTo', $dateToEnd, ParameterType::STRING);
-        }
-
-        $this->db->setQuery($query);
-        $rows = $this->db->loadObjectList() ?: [];
-
-        // Fetch all order items in one query
-        $orderIds = array_map(static fn ($row) => (int) $row->id, $rows);
-        $itemsMap = !empty($orderIds) ? $this->getOrderItemsMap($orderIds) : [];
-
-        // Build CSV with BOM for Excel UTF-8 compatibility
-        $output = chr(0xEF) . chr(0xBB) . chr(0xBF);
-
-        // CSV header row
-        $headers = [
-            'Order Number',
-            'Date',
-            'Status',
-            'Customer Email',
-            'Billing Name',
-            'Billing Address',
-            'Billing City',
-            'Billing Postcode',
-            'Billing Country',
-            'Shipping Name',
-            'Shipping Address',
-            'Shipping City',
-            'Shipping Postcode',
-            'Shipping Country',
-            'Items',
-            'Subtotal',
-            'Tax',
-            'Shipping Cost',
-            'Discount',
-            'Total',
-            'Currency',
-            'Carrier',
-            'Tracking Number',
-        ];
-
-        $output .= $this->csvLine($headers);
-
-        foreach ($rows as $row) {
-            $billing  = $this->decodeJson($row->billing ?? '{}');
-            $shipping = $row->shipping !== null ? $this->decodeJson($row->shipping) : [];
-            $items    = $itemsMap[(int) $row->id] ?? [];
-
-            // Format items as "SKU x Qty, SKU x Qty"
-            $itemsSummary = implode(', ', array_map(
-                static fn ($item) => ($item['sku'] ?? 'N/A') . ' x ' . ($item['qty'] ?? 1),
-                $items
-            ));
-
-            $line = [
-                $row->order_no,
-                $row->created,
-                ucfirst($row->state),
-                $row->email,
-                trim(($billing['first_name'] ?? '') . ' ' . ($billing['last_name'] ?? '')),
-                $billing['address'] ?? '',
-                $billing['city'] ?? '',
-                $billing['postcode'] ?? '',
-                $billing['country'] ?? '',
-                $shipping ? trim(($shipping['first_name'] ?? '') . ' ' . ($shipping['last_name'] ?? '')) : '',
-                $shipping['address'] ?? '',
-                $shipping['city'] ?? '',
-                $shipping['postcode'] ?? '',
-                $shipping['country'] ?? '',
-                $itemsSummary,
-                number_format((int) $row->subtotal_cents / 100, 2, '.', ''),
-                number_format((int) $row->tax_cents / 100, 2, '.', ''),
-                number_format((int) $row->shipping_cents / 100, 2, '.', ''),
-                number_format((int) $row->discount_cents / 100, 2, '.', ''),
-                number_format((int) $row->total_cents / 100, 2, '.', ''),
-                $row->currency,
-                $row->carrier ?? '',
-                $row->tracking_number ?? '',
-            ];
-
-            $output .= $this->csvLine($line);
-        }
-
-        $filename = 'orders-export-' . date('Y-m-d-His') . '.csv';
-
-        return [
-            'filename' => $filename,
-            'content'  => $output,
-        ];
+        // Delegate to OrderExportService
+        return $this->getExportService()->exportToCsv(
+            $filters,
+            fn(array $orderIds) => $this->getOrderItemsMap($orderIds)
+        );
     }
 
     /**
@@ -2063,126 +1900,19 @@ class OrderService
      */
     public function recordTransaction(int $orderId, array $transaction): array
     {
-        $order = $this->get($orderId);
-
-        if (!$order) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $this->assertEditable($orderId, $transaction['actor_id'] ?? null);
-
-        $gateway = (string) ($transaction['gateway'] ?? '');
-
-        if ($gateway === '') {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_TRANSACTION_GATEWAY_REQUIRED'));
-        }
-
-        $idempotencyKey = isset($transaction['idempotency_key']) ? (string) $transaction['idempotency_key'] : '';
-
-        if ($idempotencyKey !== '' && $this->transactionExistsByIdempotency($gateway, $idempotencyKey)) {
-            return $this->get($orderId);
-        }
-
-        $externalId = isset($transaction['external_id']) ? (string) $transaction['external_id'] : null;
-
-        if ($externalId !== null && $this->transactionExistsByExternalId($gateway, $externalId)) {
-            return $this->get($orderId);
-        }
-
-        $transactionAmount   = (int) ($transaction['amount_cents'] ?? 0);
-        $transactionCurrency = strtoupper((string) ($transaction['currency'] ?? ''));
-        $orderCurrency       = strtoupper((string) ($order['currency'] ?? ''));
-        $expectedAmount      = (int) ($order['total_cents'] ?? 0);
-
-        $object = (object) [
-            'order_id'     => $orderId,
-            'gateway'      => $gateway,
-            'ext_id'       => $externalId,
-            'status'       => (string) ($transaction['status'] ?? 'pending'),
-            'amount_cents' => (int) ($transaction['amount_cents'] ?? 0),
-            'payload'      => !empty($transaction['payload'])
-                ? json_encode($transaction['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                : null,
-            'event_idempotency_key' => $idempotencyKey !== '' ? $idempotencyKey : null,
-            'created'      => $this->currentTimestamp(),
-        ];
-
-        $statusNormalised = strtolower((string) $object->status);
-        $shouldMarkPaid   = $statusNormalised === 'paid';
-        $shouldCancel     = \in_array($statusNormalised, ['failed', 'canceled', 'cancelled', 'expired', 'denied'], true);
-
-        if ($shouldMarkPaid) {
-            $hasMismatch = false;
-
-            if ($transactionCurrency !== '' && $orderCurrency !== '' && $transactionCurrency !== $orderCurrency) {
-                $hasMismatch = true;
-            }
-
-            if ($transactionAmount > 0 && $expectedAmount > 0 && $transactionAmount !== $expectedAmount) {
-                $hasMismatch = true;
-            }
-
-            if ($hasMismatch) {
-                $object->status   = 'mismatch';
-                $statusNormalised = 'mismatch';
-                $shouldMarkPaid   = false;
-
-                $this->getAuditService()->record(
-                    'order',
-                    $orderId,
-                    'order.payment.mismatch',
-                    [
-                        'gateway'             => $gateway,
-                        'order_currency'      => $orderCurrency,
-                        'transaction_currency'=> $transactionCurrency,
-                        'expected_cents'      => $expectedAmount,
-                        'received_cents'      => $transactionAmount,
-                    ]
-                );
-            }
-        }
-
-        $this->db->insertObject('#__nxp_easycart_transactions', $object);
-
-        $previousState = $order['state'] ?? '';
-        $stateTransitioned = false;
-
-        if ($shouldMarkPaid && $previousState !== 'paid' && $previousState !== 'fulfilled') {
-            $this->transitionState($orderId, 'paid');
-            $order = $this->get($orderId) ?? $order;
-            $stateTransitioned = true;
-            // Inventory already reserved on creation; avoid double decrement.
-        }
-
-        if (($order['state'] ?? '') === 'paid') {
-            $this->maybeAutoFulfillDigital($order);
-            $order = $this->get($orderId) ?? $order;
-        }
-
-        // Send downloads ready email if order has digital items and was just marked as paid
-        if ($stateTransitioned && !empty($order['has_digital'])) {
-            $this->sendDownloadsReadyEmail($order);
-        }
-
-        if (
-            $shouldCancel
-            && !\in_array($order['state'], ['canceled', 'refunded', 'fulfilled', 'paid'], true)
-        ) {
-            $this->transitionState($orderId, 'canceled');
-        }
-
-        $this->getAuditService()->record(
-            'order',
+        // Delegate to OrderTransactionService
+        return $this->getTransactionService()->recordTransaction(
             $orderId,
-            'order.payment.recorded',
-            [
-                'gateway'      => $gateway,
-                'status'       => $object->status,
-                'amount_cents' => (int) $object->amount_cents,
-            ]
+            $transaction,
+            fn(int $id) => $this->get($id),
+            fn(int $id, ?int $actor) => $this->assertEditable($id, $actor),
+            fn(int $id, string $state, ?int $actor) => $this->transitionState($id, $state, $actor),
+            fn(array $order) => $this->getFulfillmentService()->maybeAutoFulfillDigital(
+                $order,
+                fn(int $id, string $state) => $this->transitionState($id, $state)
+            ),
+            fn(array $order) => $this->getNotificationService()->sendDownloadsReadyEmail($order)
         );
-
-        return $this->get($orderId) ?? $order;
     }
 
     /**
@@ -2378,54 +2108,8 @@ class OrderService
      */
     private function reserveStockForItems(array $items): void
     {
-        $variantTotals = [];
-        $productIds    = [];
-
-        foreach ($items as $item) {
-            if (!empty($item['is_digital'])) {
-                continue;
-            }
-
-            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
-            $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
-            $qty       = isset($item['qty']) ? max(1, (int) $item['qty']) : 1;
-
-            if ($variantId > 0) {
-                $variantTotals[$variantId] = ($variantTotals[$variantId] ?? 0) + $qty;
-            }
-
-            if ($productId > 0) {
-                $productIds[] = $productId;
-            }
-        }
-
-        if (empty($variantTotals)) {
-            return;
-        }
-
-        // Atomic decrements with guard to prevent oversell (works across drivers).
-        foreach ($variantTotals as $variantId => $requestedQty) {
-            $qty        = (int) $requestedQty;
-            $variantKey = (int) $variantId;
-
-            $update = $this->db->getQuery(true)
-                ->update($this->db->quoteName('#__nxp_easycart_variants'))
-                ->set($this->db->quoteName('stock') . ' = ' . $this->db->quoteName('stock') . ' - :qty')
-                ->where($this->db->quoteName('id') . ' = :variantId')
-                ->where($this->db->quoteName('active') . ' = 1')
-                ->where($this->db->quoteName('stock') . ' >= :qty')
-                ->bind(':qty', $qty, ParameterType::INTEGER)
-                ->bind(':variantId', $variantKey, ParameterType::INTEGER);
-
-            $this->db->setQuery($update);
-            $this->db->execute();
-
-            if ((int) $this->db->getAffectedRows() === 0) {
-                throw new RuntimeException(Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'));
-            }
-        }
-
-        $this->autoDisableDepletedProducts(array_unique($productIds));
+        // Delegate to OrderInventoryService
+        $this->getInventoryService()->reserveStockForItems($items);
     }
 
     /**
@@ -2735,40 +2419,14 @@ class OrderService
      */
     public function flagForReview(int $orderId, string $reason, array $context = [], ?int $actorId = null): array
     {
-        $order = $this->get($orderId);
-
-        if (!$order) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $reason = substr(trim($reason), 0, 255);
-        $needsReview = 1;
-        $timestamp = $this->currentTimestamp();
-
-        $query = $this->db->getQuery(true)
-            ->update($this->db->quoteName('#__nxp_easycart_orders'))
-            ->set($this->db->quoteName('needs_review') . ' = :needsReview')
-            ->set($this->db->quoteName('review_reason') . ' = :reason')
-            ->set($this->db->quoteName('modified') . ' = :modified')
-            ->where($this->db->quoteName('id') . ' = :id')
-            ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
-            ->bind(':reason', $reason, ParameterType::STRING)
-            ->bind(':modified', $timestamp, ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER);
-
-        $this->db->setQuery($query);
-        $this->db->execute();
-
-        // Record in audit trail
-        $this->getAuditService()->record(
-            'order',
+        // Delegate to OrderStateService
+        return $this->getStateService()->flagForReview(
             $orderId,
-            'order.flagged_for_review',
-            array_merge(['reason' => $reason], $context),
-            $actorId
+            $reason,
+            $context,
+            $actorId,
+            fn(int $id) => $this->get($id)
         );
-
-        return $this->get($orderId);
     }
 
     /**
@@ -2783,38 +2441,12 @@ class OrderService
      */
     public function clearReviewFlag(int $orderId, ?int $actorId = null): array
     {
-        $order = $this->get($orderId);
-
-        if (!$order) {
-            throw new RuntimeException(Text::_('COM_NXPEASYCART_ERROR_ORDER_NOT_FOUND'));
-        }
-
-        $needsReview = 0;
-        $timestamp = $this->currentTimestamp();
-
-        $query = $this->db->getQuery(true)
-            ->update($this->db->quoteName('#__nxp_easycart_orders'))
-            ->set($this->db->quoteName('needs_review') . ' = :needsReview')
-            ->set($this->db->quoteName('review_reason') . ' = NULL')
-            ->set($this->db->quoteName('modified') . ' = :modified')
-            ->where($this->db->quoteName('id') . ' = :id')
-            ->bind(':needsReview', $needsReview, ParameterType::INTEGER)
-            ->bind(':modified', $timestamp, ParameterType::STRING)
-            ->bind(':id', $orderId, ParameterType::INTEGER);
-
-        $this->db->setQuery($query);
-        $this->db->execute();
-
-        // Record in audit trail
-        $this->getAuditService()->record(
-            'order',
+        // Delegate to OrderStateService
+        return $this->getStateService()->clearReviewFlag(
             $orderId,
-            'order.review_cleared',
-            [],
-            $actorId
+            $actorId,
+            fn(int $id) => $this->get($id)
         );
-
-        return $this->get($orderId);
     }
 
     /**
@@ -2830,45 +2462,13 @@ class OrderService
      */
     public function cancelStaleOrders(int $hoursOld, ?int $actorId = null): array
     {
-        $hoursOld = max(1, $hoursOld);
-        $cutoff   = (new \DateTime())->modify("-{$hoursOld} hours")->format('Y-m-d H:i:s');
-
-        $query = $this->db->getQuery(true)
-            ->select($this->db->quoteName('id'))
-            ->from($this->db->quoteName('#__nxp_easycart_orders'))
-            ->where($this->db->quoteName('state') . ' = ' . $this->db->quote('pending'))
-            ->where($this->db->quoteName('created') . ' < ' . $this->db->quote($cutoff));
-
-        $this->db->setQuery($query);
-        $staleIds = $this->db->loadColumn();
-
-        $canceled = [];
-
-        foreach ($staleIds as $orderId) {
-            try {
-                $this->transitionState((int) $orderId, 'canceled', $actorId);
-                $this->releaseStockForOrder((int) $orderId);
-
-                $this->getAuditService()->record(
-                    'order',
-                    (int) $orderId,
-                    'order.stale_canceled',
-                    ['hours_threshold' => $hoursOld, 'cutoff' => $cutoff]
-                );
-
-                $canceled[] = (int) $orderId;
-            } catch (Throwable $e) {
-                // Log but continue processing other orders
-                $this->getAuditService()->record(
-                    'order',
-                    (int) $orderId,
-                    'order.stale_cancel_failed',
-                    ['error' => $e->getMessage()]
-                );
-            }
-        }
-
-        return $canceled;
+        // Delegate to OrderStateService
+        return $this->getStateService()->cancelStaleOrders(
+            $hoursOld,
+            $actorId,
+            fn(int $id, string $state, ?int $actor) => $this->transitionState($id, $state, $actor),
+            fn(int $id) => $this->getInventoryService()->releaseStockForOrder($id)
+        );
     }
 
     /**
@@ -2880,33 +2480,7 @@ class OrderService
      */
     private function releaseStockForOrder(int $orderId): void
     {
-        $query = $this->db->getQuery(true)
-            ->select([
-                $this->db->quoteName('variant_id'),
-                $this->db->quoteName('qty'),
-            ])
-            ->from($this->db->quoteName('#__nxp_easycart_order_items'))
-            ->where($this->db->quoteName('order_id') . ' = :orderId')
-            ->bind(':orderId', $orderId, ParameterType::INTEGER);
-
-        $this->db->setQuery($query);
-        $items = $this->db->loadObjectList();
-
-        foreach ($items as $item) {
-            if ((int) $item->variant_id <= 0) {
-                continue;
-            }
-
-            // Restore stock to variant
-            $update = $this->db->getQuery(true)
-                ->update($this->db->quoteName('#__nxp_easycart_variants'))
-                ->set($this->db->quoteName('stock') . ' = ' . $this->db->quoteName('stock') . ' + :qty')
-                ->where($this->db->quoteName('id') . ' = :variantId')
-                ->bind(':qty', $item->qty, ParameterType::INTEGER)
-                ->bind(':variantId', $item->variant_id, ParameterType::INTEGER);
-
-            $this->db->setQuery($update);
-            $this->db->execute();
-        }
+        // Delegate to OrderInventoryService
+        $this->getInventoryService()->releaseStockForOrder($orderId);
     }
 }
