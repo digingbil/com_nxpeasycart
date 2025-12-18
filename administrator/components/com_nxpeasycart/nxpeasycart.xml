@@ -66,6 +66,8 @@
             <menu link="option=com_nxpeasycart&amp;view=tax">COM_NXPEASYCART_MENU_TAX</menu>
             <menu link="option=com_nxpeasycart&amp;view=shipping">COM_NXPEASYCART_MENU_SHIPPING</menu>
             <menu link="option=com_nxpeasycart&amp;view=settings">COM_NXPEASYCART_MENU_SETTINGS</menu>
+            <menu link="option=com_nxpeasycart&amp;view=importexport">COM_NXPEASYCART_MENU_IMPORT_EXPORT</menu>
+            <menu link="option=com_nxpeasycart&amp;view=logs">COM_NXPEASYCART_MENU_LOGS</menu>
         </submenu>
 
         <files folder="admin">
@@ -79,6 +81,7 @@
             <filename>access.xml</filename>
             <filename>config.xml</filename>
             <filename>LICENSE.txt</filename>
+            <filename>DISCLAIMER.md</filename>
         </files>
 
         <languages folder="admin/language">

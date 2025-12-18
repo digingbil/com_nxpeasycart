@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade" version="5.0">
-    <name>mod_nxpeasycart_cart</name>
+    <name>MOD_NXPEASYCART_CART</name>
     <creationDate>2025-12-11</creationDate>
     <author>nexusplugins.com</author>
     <authorEmail>hello@nexusplugins.com</authorEmail>
@@ -15,6 +15,7 @@
     </files>
     <languages>
         <language tag="en-GB">language/en-GB/mod_nxpeasycart_cart.ini</language>
+        <language tag="en-GB">language/en-GB/mod_nxpeasycart_cart.sys.ini</language>
     </languages>
     <config>
         <fields name="params">
