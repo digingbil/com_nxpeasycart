@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Stubs;
 
+use Joomla\CMS\Language\Language;
+
 /**
  * Minimal language stub returning raw translation keys.
  */
-class StubLanguage
+class StubLanguage extends Language
 {
+    public function __construct()
+    {
+        // Skip parent constructor to avoid dependencies
+    }
+
     public function _($string, $jsSafe = false, $interpretBackSlashes = true)
     {
         return (string) $string;
@@ -19,7 +26,7 @@ class StubLanguage
         return false;
     }
 
-    public function getPluralSuffixes(int $count): array
+    public function getPluralSuffixes($count)
     {
         return [];
     }
@@ -29,7 +36,7 @@ class StubLanguage
         return 'en-GB';
     }
 
-    public function load($extension = null, $basePath = null): bool
+    public function load($extension = null, $basePath = null, $lang = null, $reload = false, $default = true): bool
     {
         return true;
     }
@@ -41,10 +48,10 @@ class StubLanguage
      *
      * @return string
      */
-    public function transliterate(string $string): string
+    public function transliterate($string)
     {
         // Simple transliteration for testing
-        $string = strtolower($string);
+        $string = strtolower((string) $string);
         $string = preg_replace('/[^a-z0-9\s\-]/', '', $string);
         $string = preg_replace('/[\s\-]+/', '-', $string);
         $string = trim($string, '-');

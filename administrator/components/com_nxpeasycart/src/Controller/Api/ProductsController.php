@@ -17,6 +17,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ConfigHelper;
 use Joomla\Component\Nxpeasycart\Administrator\Helper\ProductStatus;
 use Joomla\Component\Nxpeasycart\Administrator\Model\ProductModel;
@@ -521,7 +522,8 @@ class ProductsController extends AbstractJsonController
             return $this->userMetaCache[$userId];
         }
 
-        $user = Factory::getUser($userId);
+        $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
+        $user = $userFactory->loadUserById($userId);
 
         if (!$user || !$user->id) {
             $this->userMetaCache[$userId] = null;

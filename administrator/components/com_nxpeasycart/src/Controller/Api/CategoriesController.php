@@ -16,6 +16,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\Factory\MVCFactoryInterface;
 use Joomla\CMS\Response\JsonResponse;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Component\Nxpeasycart\Administrator\Model\CategoryModel;
@@ -487,7 +488,8 @@ class CategoriesController extends AbstractJsonController
             return $this->userMetaCache[$userId];
         }
 
-        $user = Factory::getUser($userId);
+        $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
+        $user = $userFactory->loadUserById($userId);
 
         if (!$user || !$user->id) {
             $this->userMetaCache[$userId] = null;

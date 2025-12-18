@@ -32,6 +32,7 @@ use Joomla\Event\DispatcherInterface;
 use Joomla\Component\Nxpeasycart\Administrator\Extension\NxpEasyCartComponent;
 use Joomla\Component\Nxpeasycart\Administrator\Factory\EasyCartMVCFactory;
 use Joomla\Component\Nxpeasycart\Administrator\Payment\PaymentGatewayManager;
+use Joomla\Component\Nxpeasycart\Administrator\Service\AuditService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CacheService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\CartService;
 use Joomla\Component\Nxpeasycart\Administrator\Service\DigitalFileService;
@@ -87,6 +88,8 @@ return new class () implements ServiceProviderInterface {
      * @param Container $container The DI container
      *
      * @return void
+     *
+     * @since 0.1.5
       */
     public function register(Container $container): void
     {
@@ -150,6 +153,7 @@ return new class () implements ServiceProviderInterface {
         // Expose the MVC factory under a component-specific alias for legacy lookups.
         $container->alias('mvc.factory.com_nxpeasycart', MVCFactoryInterface::class);
 
+        // Register the services to the container.
         $container->set(
             ComponentInterface::class,
             static function (Container $container): NxpEasyCartComponent {
@@ -187,11 +191,18 @@ return new class () implements ServiceProviderInterface {
         );
 
         $container->set(
+            AuditService::class,
+            static fn (Container $container): AuditService => new AuditService(
+                $container->get(DatabaseInterface::class)
+            )
+        );
+
+        $container->set(
             OrderService::class,
             static fn (Container $container): OrderService => new OrderService(
                 $container->get(DatabaseInterface::class),
-                null,
-                $container->has(DigitalFileService::class) ? $container->get(DigitalFileService::class) : null
+                $container->get(AuditService::class),
+                $container->get(DigitalFileService::class)
             )
         );
 
@@ -292,6 +303,7 @@ return new class () implements ServiceProviderInterface {
      *
      * @param Container $container
      * @return void
+     * @since 0.1.5
       */
     private function attachLandingAliasRule(Container $container): void
     {

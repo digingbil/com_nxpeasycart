@@ -14,6 +14,7 @@ namespace Joomla\Component\Nxpeasycart\Administrator\Service;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use JsonException;
@@ -106,16 +107,8 @@ class OrderService
     private function getAuditService(): AuditService
     {
         if ($this->audit === null) {
-            $container = Factory::getContainer();
-
-            if (!$container->has(AuditService::class)) {
-                $container->set(
-                    AuditService::class,
-                    static fn ($container) => new AuditService($container->get(DatabaseInterface::class))
-                );
-            }
-
-            $this->audit = $container->get(AuditService::class);
+            // Fallback for edge cases where OrderService is instantiated outside DI container
+            $this->audit = new AuditService($this->db);
         }
 
         return $this->audit;
@@ -248,7 +241,8 @@ class OrderService
         }
 
         if (!isset($this->userNameCache[$userId])) {
-            $user = Factory::getUser($userId);
+            $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
+            $user = $userFactory->loadUserById($userId);
             $this->userNameCache[$userId] = $user && $user->id ? (string) $user->name : '';
         }
 
@@ -349,13 +343,15 @@ class OrderService
 
         $this->assertEditable($orderId, $actorId);
 
+        $time = Factory::getDate()->toSql();
+
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_orders'))
             ->set($this->db->quoteName('checked_out') . ' = :actor')
             ->set($this->db->quoteName('checked_out_time') . ' = :time')
             ->where($this->db->quoteName('id') . ' = :orderId')
             ->bind(':actor', $actorId, ParameterType::INTEGER)
-            ->bind(':time', Factory::getDate()->toSql())
+            ->bind(':time', $time)
             ->bind(':orderId', $orderId, ParameterType::INTEGER);
 
         $this->db->setQuery($query);
@@ -1905,13 +1901,15 @@ class OrderService
      */
     private function markDigitalItemsDelivered(int $orderId): void
     {
+        $deliveredAt = $this->currentTimestamp();
+
         $query = $this->db->getQuery(true)
             ->update($this->db->quoteName('#__nxp_easycart_order_items'))
             ->set($this->db->quoteName('delivered_at') . ' = :deliveredAt')
             ->where($this->db->quoteName('order_id') . ' = :orderId')
             ->where($this->db->quoteName('is_digital') . ' = 1')
             ->where($this->db->quoteName('delivered_at') . ' IS NULL')
-            ->bind(':deliveredAt', $this->currentTimestamp(), ParameterType::STRING)
+            ->bind(':deliveredAt', $deliveredAt, ParameterType::STRING)
             ->bind(':orderId', $orderId, ParameterType::INTEGER);
 
         $this->db->setQuery($query);

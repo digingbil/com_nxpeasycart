@@ -194,8 +194,6 @@ Notes
 
 -   **Permissions**: Joomla ACL assets per controller/task; deny by default.
 
--   **Headers**: send `Content-Security-Policy` (no inline where possible), `SameSite=Lax` cookies; secure cookies.
-
 -   **Payment**: tokenized/hosted (Stripe/PayPal) → PCI SAQ-A scope.
 
 -   **Idempotency**: store and check gateway event ids \+ app-generated idempotency keys.

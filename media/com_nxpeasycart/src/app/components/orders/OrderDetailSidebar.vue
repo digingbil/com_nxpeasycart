@@ -797,4 +797,36 @@ watch(
     text-decoration: none;
     opacity: 0.7;
 }
+
+/* Download cards */
+.nxp-ec-download-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nxp-ec-download-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: var(--nxp-ec-surface, #f8f9fa);
+    border: 1px solid var(--nxp-ec-border, #e4e7ec);
+    border-radius: 6px;
+}
+
+.nxp-ec-download-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.nxp-ec-download-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--nxp-ec-border, #e4e7ec);
+}
 </style>

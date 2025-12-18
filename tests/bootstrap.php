@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\LanguageFactoryInterface;
 use Joomla\DI\Container;
 use Tests\Stubs\StubApplication;
 use Tests\Stubs\StubLanguage;
@@ -71,6 +72,14 @@ $container->set(CacheControllerFactoryInterface::class, static function () {
         public function createCacheController($type = 'output', $options = []): CacheController
         {
             return new CacheController($options);
+        }
+    };
+});
+$container->set(LanguageFactoryInterface::class, static function () {
+    return new class () implements LanguageFactoryInterface {
+        public function createLanguage($lang, $debug = false): \Joomla\CMS\Language\Language
+        {
+            return new StubLanguage();
         }
     };
 });
