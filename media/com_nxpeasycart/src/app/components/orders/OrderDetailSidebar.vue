@@ -19,13 +19,13 @@
                 class="nxp-ec-admin-panel__sidebar nxp-ec-admin-panel__sidebar--orders"
                 aria-live="polite"
             >
-                <header class="nxp-ec-admin-panel__sidebar-header">
-                    <h3 id="order-modal-title">
+                <header class="nxp-ec-modal__header">
+                    <h3 id="order-modal-title" class="nxp-ec-modal__title">
                         {{ __("COM_NXPEASYCART_ORDERS_DETAILS_TITLE", "Order details") }}
                         · {{ order.order_no }}
                     </h3>
                     <button
-                        class="nxp-ec-link-button nxp-ec-btn--icon"
+                        class="nxp-ec-link-button nxp-ec-btn--icon nxp-ec-modal__close-btn"
                         type="button"
                         @click="$emit('close')"
                         :title="__('COM_NXPEASYCART_ORDERS_DETAILS_CLOSE', 'Close details')"
@@ -58,6 +58,8 @@
                         <h4>{{ __("COM_NXPEASYCART_ORDERS_STATUS_LINK", "Status link") }}</h4>
                         <div class="nxp-ec-admin-copy">
                             <input type="text" class="nxp-ec-form-input" :value="statusLink" readonly />
+                        </div>
+                        <div class="nxp-ec-admin-panel__section-actions">
                             <button
                                 class="nxp-ec-btn nxp-ec-btn--small"
                                 type="button"
@@ -67,11 +69,6 @@
                                 <i class="fa-solid fa-link"></i>
                                 {{ __("COM_NXPEASYCART_ORDERS_COPY_LINK", "Copy link") }}
                             </button>
-                        </div>
-                        <p v-if="statusClipboard.message.value" class="nxp-ec-admin-panel__muted">
-                            {{ statusClipboard.message.value }}
-                        </p>
-                        <div class="nxp-ec-admin-copy" style="margin-top: 0.75rem;">
                             <button
                                 class="nxp-ec-btn nxp-ec-btn--small"
                                 type="button"
@@ -81,10 +78,13 @@
                                 <i class="fa-solid fa-file-pdf"></i>
                                 {{ __("COM_NXPEASYCART_ORDERS_INVOICE_DOWNLOAD", "Download invoice (PDF)") }}
                             </button>
-                            <span v-if="invoiceLoading" class="nxp-ec-admin-panel__muted">
-                                {{ __("COM_NXPEASYCART_LOADING", "Loading…") }}
-                            </span>
                         </div>
+                        <p v-if="statusClipboard.message.value" class="nxp-ec-admin-panel__muted">
+                            {{ statusClipboard.message.value }}
+                        </p>
+                        <p v-if="invoiceLoading" class="nxp-ec-admin-panel__muted">
+                            {{ __("COM_NXPEASYCART_LOADING", "Loading…") }}
+                        </p>
                     </section>
 
                     <!-- Items Section -->
@@ -696,15 +696,10 @@ watch(
     padding: 0;
 }
 
-.nxp-ec-admin-panel__sidebar--orders .nxp-ec-admin-panel__sidebar-header {
+.nxp-ec-admin-panel__sidebar--orders .nxp-ec-modal__header {
     flex-shrink: 0;
-    background: var(--nxp-ec-sidebar-bg, #f8f9fa);
     padding: 1.25rem;
-    border-bottom: 1px solid var(--nxp-ec-border, #dee2e6);
     margin: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .nxp-ec-admin-panel__sidebar-content {
@@ -713,15 +708,64 @@ watch(
     padding: 1.25rem;
 }
 
+.nxp-ec-admin-panel__section {
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--nxp-ec-border, #e4e7ec);
+}
+
+.nxp-ec-admin-panel__section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.nxp-ec-admin-panel__section h4 {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--nxp-ec-text-muted, #6c757d);
+}
+
+.nxp-ec-admin-panel__section-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.nxp-ec-admin-panel__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.nxp-ec-admin-panel__section-header h4 {
+    margin: 0;
+}
+
 .nxp-ec-admin-panel__addresses {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    margin-bottom: 1.5rem;
 }
 
 .nxp-ec-admin-panel__addresses .nxp-ec-admin-panel__section {
     margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.nxp-ec-admin-copy {
+    margin-bottom: 0;
+}
+
+.nxp-ec-admin-copy .nxp-ec-form-input {
+    font-size: 0.85rem;
 }
 
 .nxp-ec-admin-form {
@@ -737,5 +781,20 @@ watch(
 .nxp-ec-admin-form__actions--stacked {
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.nxp-ec-modal__close-btn {
+    width: auto;
+    height: auto;
+    padding: 0;
+}
+
+.nxp-ec-modal__close-btn i {
+    font-size: 1.25rem;
+}
+
+.nxp-ec-modal__close-btn:hover {
+    text-decoration: none;
+    opacity: 0.7;
 }
 </style>

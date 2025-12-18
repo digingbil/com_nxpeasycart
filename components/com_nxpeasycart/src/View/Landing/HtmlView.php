@@ -49,6 +49,19 @@ class HtmlView extends BaseHtmlView
     protected array $categoryTiles = [];
 
     /**
+     * Category display settings (visibility, collapsibility).
+     *
+     * @var array{visible_initial: int, total_count: int, is_collapsible: bool}
+     *
+     * @since 0.3.3
+     */
+    protected array $categorySettings = [
+        'visible_initial' => 8,
+        'total_count'     => 0,
+        'is_collapsible'  => false,
+    ];
+
+    /**
      * @var array<int, array<string, mixed>>
      *
      * @since 0.1.5
@@ -108,12 +121,13 @@ class HtmlView extends BaseHtmlView
         $this->theme = TemplateAdapter::resolve();
 
         if ($model) {
-            $this->hero          = $model->getHero();
-            $this->search        = $model->getSearch();
-            $this->categoryTiles = $model->getCategoryTiles();
-            $this->sectionTitles = $model->getSectionTitles();
+            $this->hero             = $model->getHero();
+            $this->search           = $model->getSearch();
+            $this->categoryTiles    = $model->getCategoryTiles();
+            $this->categorySettings = $model->getCategorySettings();
+            $this->sectionTitles    = $model->getSectionTitles();
 
-            $collections   = $model->getCollections();
+            $collections    = $model->getCollections();
             $this->featured = $collections['featured'] ?? [];
             $this->arrivals = $collections['arrivals'] ?? [];
             $this->deals    = $collections['deals'] ?? [];
@@ -151,6 +165,7 @@ class HtmlView extends BaseHtmlView
             'hero' => $this->hero,
             'search' => $this->search,
             'categories' => $this->categoryTiles,
+            'categorySettings' => $this->categorySettings,
             'sections' => [
                 [
                     'key'   => 'featured',
@@ -169,17 +184,19 @@ class HtmlView extends BaseHtmlView
                 ],
             ],
             'labels' => [
-                'search_label'    => Text::_('COM_NXPEASYCART_LANDING_SEARCH_LABEL'),
-                'search_button'   => Text::_('COM_NXPEASYCART_LANDING_SEARCH_SUBMIT'),
-                'view_all'        => Text::_('COM_NXPEASYCART_LANDING_VIEW_ALL'),
-                'view_product'    => Text::_('COM_NXPEASYCART_LANDING_CARD_VIEW'),
-                'add_to_cart'     => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'),
-                'added'           => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
-                'view_cart'       => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
-                'select_variant'  => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
-                'out_of_stock'    => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
-                'categories_aria' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
-                'sale_badge'      => Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'),
+                'search_label'         => Text::_('COM_NXPEASYCART_LANDING_SEARCH_LABEL'),
+                'search_button'        => Text::_('COM_NXPEASYCART_LANDING_SEARCH_SUBMIT'),
+                'view_all'             => Text::_('COM_NXPEASYCART_LANDING_VIEW_ALL'),
+                'view_product'         => Text::_('COM_NXPEASYCART_LANDING_CARD_VIEW'),
+                'add_to_cart'          => Text::_('COM_NXPEASYCART_PRODUCT_ADD_TO_CART'),
+                'added'                => Text::_('COM_NXPEASYCART_PRODUCT_ADDED_TO_CART'),
+                'view_cart'            => Text::_('COM_NXPEASYCART_PRODUCT_VIEW_CART'),
+                'select_variant'       => Text::_('COM_NXPEASYCART_PRODUCT_SELECT_VARIANT'),
+                'out_of_stock'         => Text::_('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK'),
+                'categories_aria'      => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'),
+                'sale_badge'           => Text::_('COM_NXPEASYCART_PRODUCT_SALE_BADGE'),
+                'categories_show_more' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_SHOW_MORE'),
+                'categories_show_less' => Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_SHOW_LESS'),
             ],
             'trust' => [
                 'text' => $this->trustBadge,

@@ -34,11 +34,19 @@ $payloadJson = htmlspecialchars(
     'UTF-8'
 );
 
-$hero        = $payload['hero'] ?? [];
-$search      = $payload['search'] ?? [];
-$categories  = $payload['categories'] ?? [];
-$sections    = $payload['sections'] ?? [];
-$trustBadge  = $payload['trust']['text'] ?? '';
+$hero             = $payload['hero'] ?? [];
+$search           = $payload['search'] ?? [];
+$categories       = $payload['categories'] ?? [];
+$categorySettings = $payload['categorySettings'] ?? [];
+$sections         = $payload['sections'] ?? [];
+$trustBadge       = $payload['trust']['text'] ?? '';
+$labels           = $payload['labels'] ?? [];
+
+// Category collapsible settings
+$visibleInitial = (int) ($categorySettings['visible_initial'] ?? 8);
+$totalCategories = (int) ($categorySettings['total_count'] ?? \count($categories));
+$isCollapsible = (bool) ($categorySettings['is_collapsible'] ?? false);
+$hiddenCount = $isCollapsible ? $totalCategories - $visibleInitial : 0;
 $searchRoute = isset($search['action']) && \is_string($search['action'])
     ? $search['action']
     : 'index.php?option=com_nxpeasycart&view=category';
@@ -97,14 +105,41 @@ $ctaEnabled  = isset($hero['cta']['enabled']) ? (bool) $hero['cta']['enabled'] :
             </header>
 
             <?php if (!empty($categories)) : ?>
-                <section class="nxp-ec-landing__categories" aria-label="<?php echo Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'); ?>">
-                    <?php foreach ($categories as $category) : ?>
-                        <a class="<?php echo htmlspecialchars($categoryClass, ENT_QUOTES, 'UTF-8'); ?>" href="<?php echo htmlspecialchars($category['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                <section
+                    class="nxp-ec-landing__categories<?php echo $isCollapsible ? ' nxp-ec-landing__categories--collapsible' : ''; ?>"
+                    aria-label="<?php echo Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_ARIA'); ?>"
+                    data-nxp-categories-collapsible="<?php echo $isCollapsible ? '1' : '0'; ?>"
+                    data-nxp-categories-visible="<?php echo $visibleInitial; ?>"
+                >
+                    <?php foreach ($categories as $index => $category) : ?>
+                        <?php $isHidden = $isCollapsible && $index >= $visibleInitial; ?>
+                        <a
+                            class="<?php echo htmlspecialchars($categoryClass, ENT_QUOTES, 'UTF-8'); ?><?php echo $isHidden ? ' nxp-ec-landing__category--hidden' : ''; ?>"
+                            href="<?php echo htmlspecialchars($category['link'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            <?php if ($isHidden) : ?>data-nxp-category-hidden="1"<?php endif; ?>
+                        >
                             <span class="nxp-ec-landing__category-title">
                                 <?php echo htmlspecialchars($category['title'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </a>
                     <?php endforeach; ?>
+                    <?php if ($isCollapsible) : ?>
+                        <?php
+                        $showMoreLabel = Text::sprintf('COM_NXPEASYCART_LANDING_CATEGORIES_SHOW_MORE', $totalCategories);
+                        $showLessLabel = Text::_('COM_NXPEASYCART_LANDING_CATEGORIES_SHOW_LESS');
+                        ?>
+                        <button
+                            type="button"
+                            class="nxp-ec-landing__categories-toggle"
+                            data-nxp-categories-toggle
+                            data-show-more="<?php echo htmlspecialchars($showMoreLabel, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-show-less="<?php echo htmlspecialchars($showLessLabel, ENT_QUOTES, 'UTF-8'); ?>"
+                            aria-expanded="false"
+                        >
+                            <span class="nxp-ec-landing__categories-toggle-text"><?php echo htmlspecialchars($showMoreLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="nxp-ec-landing__categories-toggle-icon" aria-hidden="true">▼</span>
+                        </button>
+                    <?php endif; ?>
                 </section>
             <?php endif; ?>
 
@@ -187,3 +222,30 @@ $ctaEnabled  = isset($hero['cta']['enabled']) ? (bool) $hero['cta']['enabled'] :
             <?php endif; ?>
     </div>
 </section>
+
+<?php if ($isCollapsible) : ?>
+<script>
+(function() {
+    'use strict';
+    var toggle = document.querySelector('[data-nxp-categories-toggle]');
+    if (!toggle) return;
+
+    var section = toggle.closest('.nxp-ec-landing__categories');
+    var textEl = toggle.querySelector('.nxp-ec-landing__categories-toggle-text');
+    var iconEl = toggle.querySelector('.nxp-ec-landing__categories-toggle-icon');
+    var showMore = toggle.getAttribute('data-show-more');
+    var showLess = toggle.getAttribute('data-show-less');
+
+    toggle.addEventListener('click', function() {
+        var isExpanded = section.classList.toggle('nxp-ec-landing__categories--expanded');
+        toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        if (textEl) {
+            textEl.textContent = isExpanded ? showLess : showMore;
+        }
+        if (iconEl) {
+            iconEl.textContent = isExpanded ? '▲' : '▼';
+        }
+    });
+})();
+</script>
+<?php endif; ?>

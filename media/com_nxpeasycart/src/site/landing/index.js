@@ -18,6 +18,12 @@ export function mountLandingIsland(el) {
     const categories = Array.isArray(payload.categories)
         ? payload.categories
         : [];
+    const categorySettings = payload.categorySettings || {
+        visible_initial: 8,
+        total_count: categories.length,
+        is_collapsible: false,
+    };
+    const theme = payload.theme || {};
 
     const searchAction = search.action || DEFAULT_SEARCH_ACTION;
     const heroData = {
@@ -52,6 +58,10 @@ export function mountLandingIsland(el) {
             "This product is currently out of stock.",
         categories_aria:
             labelsPayload.categories_aria || "Browse categories",
+        categories_show_more:
+            labelsPayload.categories_show_more || "Show all %s categories",
+        categories_show_less:
+            labelsPayload.categories_show_less || "Show fewer categories",
     };
 
     el.innerHTML = "";
@@ -60,8 +70,10 @@ export function mountLandingIsland(el) {
         hero: heroData,
         cta,
         categories,
+        categorySettings,
         sections,
         labels,
+        theme,
         trust: typeof trust.text === "string" ? trust : { text: "" },
         searchAction,
         searchPlaceholder:

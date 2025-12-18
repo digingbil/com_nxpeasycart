@@ -72,10 +72,20 @@
                 type="number"
                 label="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT"
                 description="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT_DESC"
-                default="6"
+                default="0"
                 min="0"
-                max="12"
                 filter="integer"
+                hint="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_LIMIT_HINT"
+            />
+            <field
+                name="category_visible_initial"
+                type="number"
+                label="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_VISIBLE"
+                description="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_VISIBLE_DESC"
+                default="8"
+                min="0"
+                filter="integer"
+                hint="COM_NXPEASYCART_LANDING_FIELD_CATEGORY_VISIBLE_HINT"
             />
         </fieldset>
 

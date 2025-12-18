@@ -89,6 +89,11 @@ media/com_nxpeasycart/imports/*
 !media/com_nxpeasycart/imports/.htaccess
 !media/com_nxpeasycart/imports/index.html
 
+# Exports uploads storage (keep placeholders)
+media/com_nxpeasycart/exports/*
+!media/com_nxpeasycart/exports/.htaccess
+!media/com_nxpeasycart/exports/index.html
+
 # Sample CSV files for import testing (dev only)
 /samples/
 

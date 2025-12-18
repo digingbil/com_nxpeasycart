@@ -533,6 +533,18 @@ const progressBarClass = (status) => {
 </script>
 
 <style scoped>
+/* Panel constraints */
+.nxp-ec-admin-panel--import-export {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.nxp-ec-admin-panel--import-export .nxp-ec-admin-panel__body {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
 .nxp-ec-tabs {
     display: flex;
     gap: 0;
@@ -671,9 +683,19 @@ const progressBarClass = (status) => {
     color: var(--nxp-ec-text-muted, #6c757d);
 }
 
+/* Configure */
+.nxp-ec-import-configure {
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
 /* Preview */
 .nxp-ec-import-preview {
     margin: 1.5rem 0;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .nxp-ec-import-preview h4 {
@@ -683,6 +705,9 @@ const progressBarClass = (status) => {
 }
 
 .nxp-ec-import-preview__table-wrapper {
+    display: block;
+    width: 0;
+    min-width: 100%;
     overflow-x: auto;
     border: 1px solid var(--nxp-ec-border, #dee2e6);
     border-radius: 0.375rem;
@@ -690,6 +715,7 @@ const progressBarClass = (status) => {
 
 .nxp-ec-admin-table--sm {
     font-size: 0.8125rem;
+    min-width: 100%;
 }
 
 .nxp-ec-admin-table--sm th,

@@ -50,6 +50,7 @@ class LandingModel extends BaseDatabaseModel
 
         $this->setState('landing.category_ids', $this->normaliseIds($params->get('category_root_ids', [])));
         $this->setState('landing.category_limit', $categoryLimit);
+        $this->setState('landing.category_visible_initial', max(0, (int) $params->get('category_visible_initial', 8)));
         $this->setState('landing.featured_limit', $this->clampPositive((int) $params->get('featured_limit', 6), 1));
         $this->setState('landing.arrivals_limit', $this->clampPositive((int) $params->get('new_arrivals_limit', 4), 1));
         $this->setState('landing.deals_limit', $this->clampPositive((int) $params->get('deals_limit', 4), 1));
@@ -211,6 +212,29 @@ class LandingModel extends BaseDatabaseModel
     }
 
     /**
+     * Retrieve category display settings.
+     *
+     * @return array{visible_initial: int, total_count: int, is_collapsible: bool}
+     *
+     * @since 0.3.3
+     */
+    public function getCategorySettings(): array
+    {
+        $tiles = $this->getCategoryTiles();
+        $totalCount = \count($tiles);
+        $visibleInitial = (int) $this->getState('landing.category_visible_initial', 8);
+
+        // If visible_initial is 0 or >= total, show all without collapsing
+        $isCollapsible = $visibleInitial > 0 && $totalCount > $visibleInitial;
+
+        return [
+            'visible_initial' => $visibleInitial,
+            'total_count'     => $totalCount,
+            'is_collapsible'  => $isCollapsible,
+        ];
+    }
+
+    /**
      * Retrieve section titles organised by key.
      *
      * @return array<string, string>
@@ -287,7 +311,27 @@ class LandingModel extends BaseDatabaseModel
             $excludeIds = array_merge($excludeIds, array_column($newArrivals, 'id'));
         }
 
-        $deals = $this->fetchProducts($dealsLimit, $categoryIds, $excludeIds, false);
+        // Deals section: prioritize products with active sales, then fall back to regular products
+        $deals = [];
+
+        if ($dealsLimit > 0) {
+            // First, try to fetch products that are actually on sale
+            $deals = $this->fetchProducts($dealsLimit, $categoryIds, $excludeIds, false, true);
+
+            // If not enough on-sale products, fill remaining slots with regular products
+            if (\count($deals) < $dealsLimit) {
+                $dealsIds = array_column($deals, 'id');
+                $remaining = $dealsLimit - \count($deals);
+                $fallback = $this->fetchProducts(
+                    $remaining,
+                    $categoryIds,
+                    array_merge($excludeIds, $dealsIds),
+                    false,
+                    false
+                );
+                $deals = array_merge($deals, $fallback);
+            }
+        }
 
         return [
             'featured' => $featured,
@@ -321,6 +365,7 @@ class LandingModel extends BaseDatabaseModel
      * @param array<int, int>      $categoryIds  Optional category filter
      * @param array<int, int>      $excludeIds   Product IDs to exclude
      * @param bool                 $featuredOnly Limit results to featured items
+     * @param bool                 $onSaleOnly   Limit results to items with active sale pricing
      *
      * @return array<int, array<string, mixed>>
      *
@@ -330,7 +375,8 @@ class LandingModel extends BaseDatabaseModel
         int $limit,
         array $categoryIds = [],
         array $excludeIds = [],
-        bool $featuredOnly = false
+        bool $featuredOnly = false,
+        bool $onSaleOnly = false
     ): array {
         if ($limit <= 0) {
             return [];
@@ -394,6 +440,11 @@ class LandingModel extends BaseDatabaseModel
 
         if ($featuredOnly) {
             $query->where($db->quoteName('p.featured') . ' = 1');
+        }
+
+        // Filter for products with at least one variant on active sale
+        if ($onSaleOnly) {
+            $query->having($hasSaleExpr . ' > 0');
         }
 
         $excludeIds = array_values(

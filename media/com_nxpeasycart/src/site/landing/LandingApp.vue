@@ -12,6 +12,9 @@
 
         <LandingCategories
             :categories="categories"
+            :category-settings="categorySettings"
+            :labels="labels"
+            :theme="theme"
             :aria-label="labels.categories_aria"
         />
 
@@ -53,11 +56,23 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    categorySettings: {
+        type: Object,
+        default: () => ({
+            visible_initial: 8,
+            total_count: 0,
+            is_collapsible: false,
+        }),
+    },
     sections: {
         type: Array,
         default: () => [],
     },
     labels: {
+        type: Object,
+        default: () => ({}),
+    },
+    theme: {
         type: Object,
         default: () => ({}),
     },
@@ -107,8 +122,18 @@ const labels = computed(() => ({
         props.labels?.out_of_stock || "This product is currently out of stock.",
     categories_aria:
         props.labels?.categories_aria || "Browse categories",
+    categories_show_more:
+        props.labels?.categories_show_more || "Show all %s categories",
+    categories_show_less:
+        props.labels?.categories_show_less || "Show fewer categories",
 }));
 const categories = computed(() => props.categories ?? []);
+const categorySettings = computed(() => ({
+    visible_initial: props.categorySettings?.visible_initial ?? 8,
+    total_count: props.categorySettings?.total_count ?? categories.value.length,
+    is_collapsible: props.categorySettings?.is_collapsible ?? false,
+}));
+const theme = computed(() => props.theme ?? {});
 const sectionsRef = computed(() => props.sections ?? []);
 const visibleSections = useCatalogSections(sectionsRef);
 const trustBlock = computed(() => {
