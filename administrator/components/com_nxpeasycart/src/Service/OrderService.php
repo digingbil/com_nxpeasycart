@@ -1285,39 +1285,21 @@ class OrderService
             return [];
         }
 
-        $variantIds = [];
         $productIds = [];
 
         foreach ($items as $item) {
-            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
             $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
-
-            if ($variantId > 0) {
-                $variantIds[] = $variantId;
-            }
 
             if ($productId > 0) {
                 $productIds[] = $productId;
             }
         }
 
-        $variantFlags = $this->loadVariantDigitalFlags($variantIds);
         $productTypes = $this->loadProductTypes($productIds);
 
         foreach ($items as $index => $item) {
-            $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
             $productId = isset($item['product_id']) ? (int) $item['product_id'] : 0;
-
-            $isDigital = false;
-
-            if ($variantId > 0 && !empty($variantFlags[$variantId])) {
-                $isDigital = true;
-            }
-
-            if (!$isDigital && $productId > 0 && ($productTypes[$productId] ?? 'physical') === 'digital') {
-                $isDigital = true;
-            }
-
+            $isDigital = $productId > 0 && ($productTypes[$productId] ?? 'physical') === 'digital';
             $items[$index]['is_digital'] = $isDigital;
         }
 
@@ -1421,43 +1403,6 @@ class OrderService
         }
 
         return $types;
-    }
-
-    /**
-     * Load variant digital flags.
-     *
-     * @param array<int, int> $variantIds
-     *
-     * @return array<int, bool> Keyed by variant ID
-     *
-     * @since 0.1.13
-     */
-    private function loadVariantDigitalFlags(array $variantIds): array
-    {
-        $variantIds = array_values(array_unique(array_filter($variantIds)));
-
-        if (empty($variantIds)) {
-            return [];
-        }
-
-        $query = $this->db->getQuery(true)
-            ->select([
-                $this->db->quoteName('id'),
-                $this->db->quoteName('is_digital'),
-            ])
-            ->from($this->db->quoteName('#__nxp_easycart_variants'))
-            ->whereIn($this->db->quoteName('id'), $variantIds);
-
-        $this->db->setQuery($query);
-        $rows = $this->db->loadObjectList() ?: [];
-
-        $flags = [];
-
-        foreach ($rows as $row) {
-            $flags[(int) $row->id] = !empty($row->is_digital);
-        }
-
-        return $flags;
     }
 
     /**

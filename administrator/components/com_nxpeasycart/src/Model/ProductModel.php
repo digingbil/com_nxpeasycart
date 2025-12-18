@@ -593,9 +593,7 @@ class ProductModel extends AdminModel
                 'images'           => $variantImages,
                 'weight'           => $weight,
                 'active'           => isset($variant['active']) ? (bool) $variant['active'] : true,
-                'is_digital'       => array_key_exists('is_digital', $variant)
-                    ? (bool) $variant['is_digital']
-                    : ($productType === 'digital'),
+                'is_digital'       => $productType === 'digital',
             ];
         }
 
@@ -805,7 +803,6 @@ class ProductModel extends AdminModel
                 'images'           => $encodedImages,
                 'weight'           => $variant['weight'],
                 'active'           => (int) (bool) $variant['active'],
-                'is_digital'       => !empty($variant['is_digital']) ? 1 : 0,
             ];
 
             if (!$table->bind($payload)) {
@@ -1137,7 +1134,18 @@ class ProductModel extends AdminModel
             return [];
         }
 
-        $db    = $this->getDatabase();
+        $db = $this->getDatabase();
+
+        $productTypeQuery = $db->getQuery(true)
+            ->select($db->quoteName('product_type'))
+            ->from($db->quoteName('#__nxp_easycart_products'))
+            ->where($db->quoteName('id') . ' = :productId')
+            ->bind(':productId', $productId, ParameterType::INTEGER);
+
+        $db->setQuery($productTypeQuery);
+        $productType = strtolower((string) ($db->loadResult() ?? 'physical'));
+        $isDigital   = $productType === 'digital';
+
         $query = $db->getQuery(true)
             ->select([
                 $db->quoteName('id'),
@@ -1153,7 +1161,6 @@ class ProductModel extends AdminModel
                 $db->quoteName('images'),
                 $db->quoteName('weight'),
                 $db->quoteName('active'),
-                $db->quoteName('is_digital'),
             ])
             ->from($db->quoteName('#__nxp_easycart_variants'))
             ->where($db->quoteName('product_id') . ' = :productId')
@@ -1180,7 +1187,7 @@ class ProductModel extends AdminModel
                 'images'           => $this->decodeVariantImages($row->images ?? null),
                 'weight'           => $row->weight !== null ? (string) $row->weight : null,
                 'active'           => (bool) $row->active,
-                'is_digital'       => !empty($row->is_digital),
+                'is_digital'       => $isDigital,
             ];
         }
 

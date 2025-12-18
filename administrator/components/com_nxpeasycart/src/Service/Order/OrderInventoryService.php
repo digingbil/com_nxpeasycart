@@ -258,7 +258,7 @@ class OrderInventoryService
     }
 
     /**
-     * Load variant digital flags.
+     * Load variant digital flags (derived from product_type).
      *
      * @return array<int, bool> Keyed by variant ID
      */
@@ -272,11 +272,12 @@ class OrderInventoryService
 
         $query = $this->db->getQuery(true)
             ->select([
-                $this->db->quoteName('id'),
-                $this->db->quoteName('is_digital'),
+                $this->db->quoteName('v.id'),
+                $this->db->quoteName('p.product_type'),
             ])
-            ->from($this->db->quoteName('#__nxp_easycart_variants'))
-            ->whereIn($this->db->quoteName('id'), $variantIds);
+            ->from($this->db->quoteName('#__nxp_easycart_variants', 'v'))
+            ->join('LEFT', $this->db->quoteName('#__nxp_easycart_products', 'p') . ' ON ' . $this->db->quoteName('v.product_id') . ' = ' . $this->db->quoteName('p.id'))
+            ->whereIn($this->db->quoteName('v.id'), $variantIds);
 
         $this->db->setQuery($query);
         $rows = $this->db->loadObjectList() ?: [];
@@ -284,7 +285,8 @@ class OrderInventoryService
         $flags = [];
 
         foreach ($rows as $row) {
-            $flags[(int) $row->id] = !empty($row->is_digital);
+            $productType = isset($row->product_type) ? strtolower((string) $row->product_type) : 'physical';
+            $flags[(int) $row->id] = $productType === 'digital';
         }
 
         return $flags;

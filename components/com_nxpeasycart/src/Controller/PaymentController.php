@@ -325,10 +325,16 @@ class PaymentController extends BaseController
                 }
             }
 
-            $mailer->sendOrderConfirmation($order, [
-                'payment'     => $paymentContext,
-                'attachments' => $attachments,
-            ]);
+            try {
+                $mailer->sendOrderConfirmation($order, [
+                    'payment'     => $paymentContext,
+                    'attachments' => $attachments,
+                ]);
+            } catch (\Throwable $mailException) {
+                // Non-fatal: log but don't block checkout if email fails
+                $this->logEmailFailure('order_confirmation', $order, $mailException);
+            }
+
             $this->clearCart($cartSession, $cart);
 
             $this->respond([
@@ -464,7 +470,7 @@ class PaymentController extends BaseController
             }
 
             $productType = isset($variant->product_type) ? strtolower((string) $variant->product_type) : 'physical';
-            $isDigital   = ((int) ($variant->is_digital ?? 0) === 1) || $productType === 'digital';
+            $isDigital   = $productType === 'digital';
 
             // Use database price, NOT cart price
             $unitPriceCents = (int) ($variant->price_cents ?? 0);
@@ -478,7 +484,7 @@ class PaymentController extends BaseController
                 'unit_price_cents' => $unitPriceCents,  // FROM DATABASE
                 'total_cents'      => $totalCents,       // RECALCULATED
                 'currency'         => $currency,
-                'product_id'       => isset($item['product_id']) ? (int) $item['product_id'] : null,
+                'product_id'       => isset($variant->product_id) ? (int) $variant->product_id : null,
                 'variant_id'       => $variantId,
                 'tax_rate'         => '0.00',
                 'is_digital'       => $isDigital,
@@ -888,10 +894,6 @@ class PaymentController extends BaseController
         $variantIds = [];
 
         foreach ($items as $item) {
-            if (!empty($item['is_digital'])) {
-                continue;
-            }
-
             $variantId = isset($item['variant_id']) ? (int) $item['variant_id'] : 0;
 
             if ($variantId > 0) {
@@ -907,15 +909,16 @@ class PaymentController extends BaseController
 
         $query = $db->getQuery(true)
             ->select([
-                $db->quoteName('id'),
-                $db->quoteName('sku'),
-                $db->quoteName('stock'),
-                $db->quoteName('active'),
+                $db->quoteName('v.id'),
+                $db->quoteName('v.sku'),
+                $db->quoteName('v.stock'),
+                $db->quoteName('v.active'),
+                $db->quoteName('p.product_type'),
             ])
-            ->from($db->quoteName('#__nxp_easycart_variants'));
+            ->from($db->quoteName('#__nxp_easycart_variants', 'v'))
+            ->join('LEFT', $db->quoteName('#__nxp_easycart_products', 'p') . ' ON ' . $db->quoteName('v.product_id') . ' = ' . $db->quoteName('p.id'));
 
-        // Use whereIn for safe parameterized IN clause
-        $query->whereIn($db->quoteName('id'), $variantIds);
+        $query->whereIn($db->quoteName('v.id'), $variantIds);
 
         $db->setQuery($query);
 
@@ -941,6 +944,12 @@ class PaymentController extends BaseController
                     ['message' => Text::sprintf('COM_NXPEASYCART_PRODUCT_OUT_OF_STOCK_NAMED', $productTitle)],
                     400
                 );
+            }
+
+            $productType = isset($row->product_type) ? strtolower((string) $row->product_type) : 'physical';
+
+            if ($productType === 'digital') {
+                continue;
             }
 
             $requestedQty = max(1, (int) ($item['qty'] ?? 1));
@@ -1167,6 +1176,40 @@ class PaymentController extends BaseController
         }
     }
 
+    /**
+     * Log an email sending failure without blocking the main flow.
+     *
+     * @param string     $emailType Type of email that failed (e.g., 'order_confirmation')
+     * @param array      $order     Order data for context
+     * @param \Throwable $exception The exception that occurred
+     *
+     * @since 0.3.3
+     */
+    private function logEmailFailure(string $emailType, array $order, \Throwable $exception): void
+    {
+        try {
+            $audit = $this->getAuditService();
+
+            if (!$audit) {
+                return;
+            }
+
+            $audit->record(
+                'order',
+                (int) ($order['id'] ?? 0),
+                'order.email.failed',
+                [
+                    'email_type' => $emailType,
+                    'order_no'   => $order['order_no'] ?? '',
+                    'recipient'  => $order['email'] ?? '',
+                    'error'      => $exception->getMessage(),
+                ]
+            );
+        } catch (\Throwable $logException) {
+            // Swallow logging failures to avoid blocking checkout.
+        }
+    }
+
     private function getAuditService(): ?AuditService
     {
         $container = Factory::getContainer();
@@ -1324,7 +1367,6 @@ class PaymentController extends BaseController
                 $db->quoteName('v.currency'),
                 $db->quoteName('v.stock'),
                 $db->quoteName('v.active'),
-                $db->quoteName('v.is_digital'),
                 $db->quoteName('p.product_type', 'product_type'),
                 $db->quoteName('p.active', 'product_active'),
             ])

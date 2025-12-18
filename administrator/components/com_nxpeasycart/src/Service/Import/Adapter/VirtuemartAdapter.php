@@ -116,7 +116,7 @@ class VirtuemartAdapter extends AbstractPlatformAdapter
         $normalized['variant']['price'] = $this->parsePrice($this->getValue($row, 'product_price', '0'));
         $normalized['variant']['currency'] = $this->defaultCurrency;
         $normalized['variant']['stock'] = $this->parseStock($this->getValue($row, 'product_in_stock', '0'));
-        $normalized['variant']['is_digital'] = false;
+        $normalized['variant']['is_digital'] = $normalized['product']['product_type'] === 'digital';
         $normalized['variant']['active'] = $normalized['product']['active'];
 
         // Weight handling with unit

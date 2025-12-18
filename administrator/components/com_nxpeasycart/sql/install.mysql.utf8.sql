@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS `#__nxp_easycart_variants` (
   `options` JSON NULL,
   `images` JSON NULL DEFAULT NULL COMMENT 'Variant-specific images array (overrides product images)',
   `weight` DECIMAL(10,3) NULL,
-  `is_digital` TINYINT(1) NOT NULL DEFAULT 0,
   `active` TINYINT(1) NOT NULL DEFAULT 1,
   `imported_from` VARCHAR(50) NULL DEFAULT NULL COMMENT 'Source platform: virtuemart, woocommerce, shopify, hikashop, native',
   `original_id` VARCHAR(100) NULL DEFAULT NULL COMMENT 'Original variant ID from source platform',

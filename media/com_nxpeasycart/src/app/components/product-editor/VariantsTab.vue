@@ -199,8 +199,8 @@
                     </p>
                 </div>
 
-                <!-- Stock -->
-                <div class="nxp-ec-form-field">
+                <!-- Stock (physical products only) -->
+                <div v-if="isPhysical" class="nxp-ec-form-field">
                     <label
                         class="nxp-ec-form-label"
                         :for="`variant-stock-${index}`"
@@ -217,8 +217,8 @@
                     />
                 </div>
 
-                <!-- Weight -->
-                <div class="nxp-ec-form-field">
+                <!-- Weight (physical products only) -->
+                <div v-if="isPhysical" class="nxp-ec-form-field">
                     <label
                         class="nxp-ec-form-label"
                         :for="`variant-weight-${index}`"
@@ -233,25 +233,6 @@
                         step="0.001"
                         v-model.trim="variant.weight"
                     />
-                </div>
-
-                <!-- Digital Item -->
-                <div class="nxp-ec-form-field nxp-ec-form-field--inline">
-                    <label
-                        class="nxp-ec-form-label"
-                        :for="`variant-digital-${index}`"
-                    >
-                        {{ __("COM_NXPEASYCART_FIELD_VARIANT_DIGITAL", "Digital item") }}
-                    </label>
-                    <input
-                        :id="`variant-digital-${index}`"
-                        class="nxp-ec-form-checkbox"
-                        type="checkbox"
-                        v-model="variant.is_digital"
-                    />
-                    <p class="nxp-ec-form-help">
-                        {{ __("COM_NXPEASYCART_FIELD_VARIANT_DIGITAL_HELP", "Digital variants skip shipping.") }}
-                    </p>
                 </div>
 
                 <!-- Published -->
@@ -386,6 +367,8 @@
  * @since 0.3.2
  */
 
+import { computed } from "vue";
+
 const props = defineProps({
     /**
      * Array of variant objects.
@@ -400,6 +383,13 @@ const props = defineProps({
     baseCurrency: {
         type: String,
         default: "USD",
+    },
+    /**
+     * Product type (physical or digital).
+     */
+    productType: {
+        type: String,
+        default: "physical",
     },
     /**
      * Whether the media modal is available.
@@ -422,6 +412,13 @@ const props = defineProps({
         type: Function,
         required: true,
     },
+});
+
+/**
+ * Check if this is a physical product (needs stock/weight).
+ */
+const isPhysical = computed(() => {
+    return props.productType?.toLowerCase() !== "digital";
 });
 
 defineEmits([

@@ -103,7 +103,7 @@ class CartController extends BaseController
             $items   = \is_array($payload['items'] ?? null) ? $payload['items'] : [];
 
             $existingQty = 0;
-            $isDigital   = !empty($variant->is_digital) || (isset($product->product_type) && strtolower((string) $product->product_type) === 'digital');
+            $isDigital   = isset($product->product_type) && strtolower((string) $product->product_type) === 'digital';
 
             foreach ($items as $existing) {
                 if ((int) ($existing['variant_id'] ?? 0) === $variantId) {
@@ -293,12 +293,16 @@ class CartController extends BaseController
                 if (($variantId > 0 && $itemVariantId === $variantId) ||
                     ($productId > 0 && $itemProductId === $productId)) {
 
-                    // Check stock availability
-                    $isDigitalItem = !empty($item['is_digital']);
+                    // Check stock availability - digital determined by product_type only
+                    $isDigitalItem = false;
+                    $itemProductId = (int) ($item['product_id'] ?? 0);
+                    if ($itemProductId > 0) {
+                        $product = $this->loadProduct($db, $itemProductId);
+                        $isDigitalItem = $product && isset($product->product_type) && strtolower((string) $product->product_type) === 'digital';
+                    }
+
                     if ($variantId > 0) {
                         $variant = $this->loadVariant($db, $variantId);
-                        $variantIsDigital = $variant ? !empty($variant->is_digital) : false;
-                        $isDigitalItem = $isDigitalItem || $variantIsDigital;
 
                         if ($variant && !$isDigitalItem && (int) ($variant->stock ?? 0) < $qty) {
                             echo new JsonResponse(
@@ -545,8 +549,7 @@ class CartController extends BaseController
         $baseCurrency = ConfigHelper::getBaseCurrency();
         $unitPrice    = (int) ($variant->price_cents ?? 0);
         $options      = [];
-        $isDigital    = !empty($variant->is_digital)
-            || (isset($product->product_type) && strtolower((string) $product->product_type) === 'digital');
+        $isDigital    = isset($product->product_type) && strtolower((string) $product->product_type) === 'digital';
 
         if (!empty($variant->options)) {
             $decoded = json_decode((string) $variant->options, true);

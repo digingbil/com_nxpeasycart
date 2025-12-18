@@ -113,7 +113,6 @@ final class NativeAdapterTest extends TestCase
         $this->assertArrayHasKey('stock', $mapping);
         $this->assertArrayHasKey('weight', $mapping);
         $this->assertArrayHasKey('ean', $mapping);
-        $this->assertArrayHasKey('is_digital', $mapping);
         $this->assertArrayHasKey('variant_active', $mapping);
         $this->assertArrayHasKey('options', $mapping);
         $this->assertArrayHasKey('original_images', $mapping);

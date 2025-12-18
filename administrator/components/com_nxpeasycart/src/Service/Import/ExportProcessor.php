@@ -308,7 +308,7 @@ class ExportProcessor
             $variant->stock,
             $variant->weight ?? '0.000',
             $variant->ean ?? '',
-            (int) $variant->is_digital,
+            (int) (strtolower($product->product_type ?? 'physical') === 'digital'),
             (int) $variant->active,
             $optionsStr,
             !empty($originalImages) ? implode(',', $originalImages) : '',

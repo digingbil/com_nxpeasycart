@@ -537,7 +537,6 @@ class ImportProcessor
             'options'          => $options,
             'images'           => $variantImages,
             'weight'           => round((float) ($variantData['weight'] ?? 0), 3),
-            'is_digital'       => (int) ($variantData['is_digital'] ?? false),
             'active'           => (int) ($this->options['set_active'] ? ($variantData['active'] ?? true) : ($variantData['active'] ?? false)),
             'imported_from'    => $this->adapter->getName(),
             'original_id'      => $variantData['original_id'] ?? null,

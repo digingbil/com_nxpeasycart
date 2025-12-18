@@ -65,7 +65,6 @@ class NativeAdapter extends AbstractPlatformAdapter
             'stock'           => 'variant.stock',
             'weight'          => 'variant.weight',
             'ean'             => 'variant.ean',
-            'is_digital'      => 'variant.is_digital',
             'variant_active'  => 'variant.active',
             'options'         => 'variant.options',
             'original_images' => 'variant.original_images',
@@ -79,7 +78,7 @@ class NativeAdapter extends AbstractPlatformAdapter
     public function getSignatureHeaders(): array
     {
         // Unique combination that identifies our native format
-        return ['product_id', 'product_slug', 'variant_id', 'sku', 'is_digital'];
+        return ['product_id', 'product_slug', 'variant_id', 'sku', 'product_type'];
     }
 
     /**
@@ -109,7 +108,7 @@ class NativeAdapter extends AbstractPlatformAdapter
         $normalized['variant']['stock'] = $this->parseStock($this->getValue($row, 'stock', '0'));
         $normalized['variant']['weight'] = (float) $this->getValue($row, 'weight', '0');
         $normalized['variant']['ean'] = $this->parseEan($this->getValue($row, 'ean', ''));
-        $normalized['variant']['is_digital'] = $this->parseBoolean($this->getValue($row, 'is_digital', '0'));
+        $normalized['variant']['is_digital'] = $normalized['product']['product_type'] === 'digital';
         $normalized['variant']['active'] = $this->parseBoolean($this->getValue($row, 'variant_active', '1'));
         $normalized['variant']['original_images'] = $this->parseImages($this->getValue($row, 'original_images', ''));
 

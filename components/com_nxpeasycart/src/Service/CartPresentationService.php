@@ -129,8 +129,7 @@ class CartPresentationService
                     $product = $productId !== null && isset($products[$productId]) ? $products[$productId] : null;
                     $variant = $variantId !== null && isset($variants[$variantId]) ? $variants[$variantId] : null;
                     $productType = $product['product_type'] ?? 'physical';
-                    $variantDigital = !empty($variant['is_digital']);
-                    $isDigital = $variantDigital || $productType === 'digital';
+                    $isDigital = $productType === 'digital';
 
                     // SECURITY: Always use database price, never trust cart-stored prices
                     // price_cents from variant is already the effective price (sale or regular) via PriceHelper
@@ -300,21 +299,22 @@ class CartPresentationService
     {
         $query = $this->db->getQuery(true)
             ->select([
-                $this->db->quoteName('id'),
-                $this->db->quoteName('product_id'),
-                $this->db->quoteName('sku'),
-                $this->db->quoteName('price_cents'),
-                $this->db->quoteName('sale_price_cents'),
-                $this->db->quoteName('sale_start'),
-                $this->db->quoteName('sale_end'),
-                $this->db->quoteName('currency'),
-                $this->db->quoteName('stock'),
-                $this->db->quoteName('options'),
-                $this->db->quoteName('images'),
-                $this->db->quoteName('is_digital'),
+                $this->db->quoteName('v.id'),
+                $this->db->quoteName('v.product_id'),
+                $this->db->quoteName('v.sku'),
+                $this->db->quoteName('v.price_cents'),
+                $this->db->quoteName('v.sale_price_cents'),
+                $this->db->quoteName('v.sale_start'),
+                $this->db->quoteName('v.sale_end'),
+                $this->db->quoteName('v.currency'),
+                $this->db->quoteName('v.stock'),
+                $this->db->quoteName('v.options'),
+                $this->db->quoteName('v.images'),
+                $this->db->quoteName('p.product_type'),
             ])
-            ->from($this->db->quoteName('#__nxp_easycart_variants'))
-            ->where($this->db->quoteName('id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
+            ->from($this->db->quoteName('#__nxp_easycart_variants', 'v'))
+            ->join('LEFT', $this->db->quoteName('#__nxp_easycart_products', 'p') . ' ON ' . $this->db->quoteName('v.product_id') . ' = ' . $this->db->quoteName('p.id'))
+            ->where($this->db->quoteName('v.id') . ' IN (' . implode(',', array_map('intval', $ids)) . ')');
 
         $this->db->setQuery($query);
         $rows = $this->db->loadObjectList() ?: [];
@@ -375,7 +375,7 @@ class CartPresentationService
                 'currency'             => strtoupper((string) $row->currency),
                 'options'              => $options,
                 'image'                => $variantImage,
-                'is_digital'           => !empty($row->is_digital),
+                'is_digital'           => isset($row->product_type) && strtolower((string) $row->product_type) === 'digital',
             ];
         }
 

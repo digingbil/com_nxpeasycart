@@ -140,6 +140,7 @@
                     data-tab="variants"
                     :variants="form.variants"
                     :base-currency="baseCurrency"
+                    :product-type="form.product_type"
                     :has-media-modal="mediaPicker.hasMediaModal.value"
                     :resolve-image-url="mediaPicker.resolveImageUrl"
                     :translate="__"

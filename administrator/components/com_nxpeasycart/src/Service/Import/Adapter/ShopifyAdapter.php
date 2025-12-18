@@ -113,7 +113,7 @@ class ShopifyAdapter extends AbstractPlatformAdapter
         $normalized['variant']['stock'] = $this->parseStock($this->getValue($row, 'Variant Inventory Qty', '0'));
         $normalized['variant']['weight'] = $this->parseWeight($this->getValue($row, 'Variant Grams', '0'));
         $normalized['variant']['ean'] = $this->parseEan($this->getValue($row, 'Variant Barcode', ''));
-        $normalized['variant']['is_digital'] = false;
+        $normalized['variant']['is_digital'] = $normalized['product']['product_type'] === 'digital';
         $normalized['variant']['active'] = true;
         $normalized['variant']['original_id'] = $this->getValue($row, 'Variant SKU', '');
 

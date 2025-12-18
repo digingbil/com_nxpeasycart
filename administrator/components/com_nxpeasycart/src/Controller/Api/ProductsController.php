@@ -443,7 +443,7 @@ class ProductsController extends AbstractJsonController
                 'images'           => $variant['images'] ?? null,
                 'weight'           => $variant['weight']  ?? null,
                 'active'           => isset($variant['active']) ? (bool) $variant['active'] : false,
-                'is_digital'       => !empty($variant['is_digital']),
+                'is_digital'       => strtolower($productType) === 'digital',
             ];
         }
 

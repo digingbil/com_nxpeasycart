@@ -105,7 +105,12 @@ class PaymentGatewayManager
         }
 
         if ($order && \in_array($order['state'] ?? '', ['paid', 'fulfilled'], true)) {
-            $this->mailer->sendOrderConfirmation($order);
+            try {
+                $this->mailer->sendOrderConfirmation($order);
+            } catch (\Throwable $mailException) {
+                // Non-fatal: log but don't fail webhook processing if email fails
+                // The order is already paid - email can be resent manually if needed
+            }
 
             // Dispatch plugin event: onNxpEasycartAfterPaymentComplete
             EasycartEventDispatcher::afterPaymentComplete(

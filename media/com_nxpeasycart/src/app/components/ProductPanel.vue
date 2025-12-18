@@ -611,9 +611,8 @@ const toggleActive = (product) => {
                               ? true
                               : Boolean(variant.active),
                       is_digital:
-                          variant.is_digital === undefined
-                              ? false
-                              : Boolean(variant.is_digital),
+                          (typeof product.product_type === "string" &&
+                              product.product_type.toLowerCase() === "digital"),
                       images: variantImages,
                   };
               })
