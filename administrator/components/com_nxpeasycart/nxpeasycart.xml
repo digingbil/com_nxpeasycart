@@ -99,6 +99,6 @@
     </administration>
 
     <updateservers>
-        <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nexusplugins.com/com_nxpeasycart.xml</server>
+        <server type="extension" priority="1" name="NXP Easy Cart Updates">https://updates.nexusplugins.com/joomla/components/com_nxpeasycart/updates.xml</server>
     </updateservers>
 </extension>

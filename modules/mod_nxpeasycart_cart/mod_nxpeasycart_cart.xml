@@ -45,4 +45,7 @@
             </fieldset>
         </fields>
     </config>
+    <updateservers>
+        <server type="extension" priority="1" name="NXP Easy Cart Module Updates">https://updates.nexusplugins.com/joomla/modules/mod_nxpeasycart_cart/updates.xml</server>
+    </updateservers>
 </extension>
